@@ -1,0 +1,11 @@
+Checks: >
+  -*,
+  modernize-use-nullptr,
+  modernize-use-auto,
+  modernize-use-range-for,
+  modernize-use-override,
+  bugprone-use-after-move
+
+HeaderFilterRegex: '.*Ash2.*\.(hpp|h)$'
+WarningsAsErrors: ''
+FormatStyle: file
