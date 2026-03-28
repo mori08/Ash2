@@ -13,7 +13,7 @@ C++ / Siv3D v0.6.15 / Visual Studio 2022
 
 ## コーディングスタイル
 
-[CODING_STYLE.md](CODING_STYLE.md) を参照。
+[CODING_STYLE.md](docs/CODING_STYLE.md) を参照。
 
 ## ビルド
 

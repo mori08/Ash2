@@ -4,7 +4,36 @@ Checks: >
   modernize-use-auto,
   modernize-use-range-for,
   modernize-use-override,
-  bugprone-use-after-move
+  modernize-use-scoped-enum,
+  bugprone-use-after-move,
+  readability-identifier-naming
+
+CheckOptions:
+  # 変数: camelCase
+  - key: readability-identifier-naming.VariableCase
+    value: camelCase
+  # 関数: PascalCase
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  # クラス: PascalCase
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  # 構造体: PascalCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  # プライベートメンバ変数: m_ + camelCase
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: m_
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: camelCase
+  # enum class: PascalCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  # constexpr 定数: PascalCase
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: CamelCase
 
 HeaderFilterRegex: '.*Ash2.*\.(hpp|h)$'
 WarningsAsErrors: ''
