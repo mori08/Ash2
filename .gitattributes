@@ -1,0 +1,16 @@
+# 改行コードの自動変換（リポジトリ内はLF、Windows checkout時はCRLF）
+* text=auto
+
+# バイナリファイルは変換しない
+*.png binary
+*.jpg binary
+*.ico binary
+*.mp3 binary
+*.mp4 binary
+*.ttf binary
+*.otf binary
+*.dll binary
+*.exe binary
+*.sf2 binary
+*.zstdcmp binary
+*.zip binary
