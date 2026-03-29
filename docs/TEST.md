@@ -24,15 +24,17 @@ Debug ビルドで実行すると自動的にテストが走る。
 
 `tests/` に `.cpp` ファイルを追加し、`USE_TEST` ガードで囲む。
 
+テスト名は英語で書き、日本語はコメントで補足する（コンソール出力の文字化け対策）。
+
 ```cpp
 # if USE_TEST
 # include <ThirdParty/Catch2/catch.hpp>
 # include "WorldPos.hpp"
 
-TEST_CASE("説明")
+TEST_CASE("WorldPos::ToScreen - far objects have smaller y")
 {
+    // 奥にあるものほどy座標が小さい
     REQUIRE(...);
-    REQUIRE_FALSE(...);
 }
 
 # endif
