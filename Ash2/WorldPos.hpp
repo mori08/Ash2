@@ -10,7 +10,7 @@ struct WorldPos
 	double w = 0.0;
 	double h = 0.0;
 	double d = 0.0;
-
+	
 	Vec2 ToScreen() const
 	{
 		return { w, h + d };
