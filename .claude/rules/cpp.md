@@ -1,3 +1,10 @@
+---
+paths:
+  - "Ash2/src/**/*.cpp"
+  - "Ash2/src/**/*.hpp"
+  - "Ash2/tests/**/*.cpp"
+---
+
 # コーディングスタイル
 
 フォーマットは `.clang-format`、静的解析は `.clang-tidy` で自動管理。以下は自動化できないルールのみ記載。
@@ -26,6 +33,10 @@
 | ファイル名 | PascalCase | `Player.cpp`, `GameScene.hpp` |
 
 構造体（`struct`）は公開メンバのみの場合に使用し、それ以外は `class` を使用する。
+
+## ファイルの追加
+
+新しい `.cpp` / `.hpp` ファイルを追加するときは、`Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
 
 ## コードスタイル
 

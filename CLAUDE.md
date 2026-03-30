@@ -11,10 +11,6 @@ C++ / Siv3D v0.6.15 / Visual Studio 2022
 2. モダンなC++の勉強（新しい書き方・機能を積極的に採用する）
 3. バイブコーディングの経験
 
-## コーディングスタイル
-
-[CODING_STYLE.md](docs/CODING_STYLE.md) を参照。
-
 ## ビルド
 
 ビルド・動作確認・デバッグはすべてユーザーが Visual Studio 2022 で行う。Claude はビルドコマンドを実行しない。

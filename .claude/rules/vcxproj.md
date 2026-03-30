@@ -1,6 +1,10 @@
-# .vcxproj 操作メモ
+---
+paths:
+  - "Ash2/*.vcxproj"
+  - "Ash2/*.vcxproj.filters"
+---
 
-## ファイルの構造
+# .vcxproj の編集
 
 `Ash2.vcxproj` は400行超の XML。ファイル全体を読まず、Grep で対象箇所だけ探すこと。
 
