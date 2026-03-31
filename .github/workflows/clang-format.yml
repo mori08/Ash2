@@ -1,0 +1,17 @@
+name: clang-format
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format-19
+      - name: Check formatting
+        run: |
+          find Ash2/src Ash2/tests -name '*.cpp' -o -name '*.hpp' | \
+          xargs clang-format-19 --dry-run --Werror
