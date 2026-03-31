@@ -2,7 +2,13 @@ name: clang-format
 
 on:
   push:
+    paths:
+      - '**/*.cpp'
+      - '**/*.hpp'
   pull_request:
+    paths:
+      - '**/*.cpp'
+      - '**/*.hpp'
 
 jobs:
   check:
