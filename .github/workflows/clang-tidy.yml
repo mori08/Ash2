@@ -50,16 +50,18 @@ jobs:
           $sdkBase = "${{ steps.msvc.outputs.winsdk_base }}"
           $sdkVer  = "${{ steps.msvc.outputs.winsdk_ver }}"
           $flags = @(
-            "--driver-mode=cl",
-            "/std:c++latest",
-            "/EHsc",
-            "/I$sdk\include",
-            "/I$sdk\include\ThirdParty",
-            "/I$msvc",
-            "/I$sdkBase\$sdkVer\ucrt",
-            "/I$sdkBase\$sdkVer\um",
-            "/I$sdkBase\$sdkVer\shared",
-            "/w"
+            "-std=c++23",
+            "-fms-compatibility",
+            "-fms-extensions",
+            "-fdelayed-template-parsing",
+            "-fexceptions",
+            "-I$sdk\include",
+            "-I$sdk\include\ThirdParty",
+            "-I$msvc",
+            "-I$sdkBase\$sdkVer\ucrt",
+            "-I$sdkBase\$sdkVer\um",
+            "-I$sdkBase\$sdkVer\shared",
+            "-w"
           )
           $flags | Set-Content "Ash2\src\compile_flags.txt"
           Copy-Item "Ash2\src\compile_flags.txt" "Ash2\tests\compile_flags.txt"
