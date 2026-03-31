@@ -29,9 +29,27 @@ jobs:
           Expand-Archive -Path "C:\OpenSiv3D_SDK.zip" -DestinationPath "C:"
         shell: powershell
 
+      - name: Find MSVC and Windows SDK paths
+        id: msvc
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -property installationPath
+          $msvcDir = Get-ChildItem "$vsPath\VC\Tools\MSVC" | Sort-Object Name -Descending | Select-Object -First 1
+          $msvcInclude = "$($msvcDir.FullName)\include"
+          $winSdkBase = "${env:ProgramFiles(x86)}\Windows Kits\10\Include"
+          $winSdkVer = (Get-ChildItem $winSdkBase | Sort-Object Name -Descending | Select-Object -First 1).Name
+          echo "msvc_include=$msvcInclude" >> $env:GITHUB_OUTPUT
+          echo "winsdk_base=$winSdkBase" >> $env:GITHUB_OUTPUT
+          echo "winsdk_ver=$winSdkVer" >> $env:GITHUB_OUTPUT
+        shell: powershell
+
       - name: Run clang-tidy
         run: |
-          $sdk = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
+          $sdk     = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
+          $msvc    = "${{ steps.msvc.outputs.msvc_include }}"
+          $sdkBase = "${{ steps.msvc.outputs.winsdk_base }}"
+          $sdkVer  = "${{ steps.msvc.outputs.winsdk_ver }}"
+
           $files = Get-ChildItem -Recurse -Include "*.cpp" -Path "Ash2\src", "Ash2\tests" |
                    Where-Object { $_.Name -ne "stdafx.cpp" } |
                    ForEach-Object { $_.FullName }
@@ -39,12 +57,15 @@ jobs:
           foreach ($file in $files) {
             Write-Output "Checking: $file"
             clang-tidy $file `
-              --extra-arg="-std=c++23" `
-              --extra-arg="-I$sdk\include" `
-              --extra-arg="-I$sdk\include\ThirdParty" `
-              --extra-arg="-fms-compatibility" `
-              --extra-arg="-fms-extensions" `
-              --extra-arg="-w"
+              --extra-arg="--driver-mode=cl" `
+              --extra-arg="/std:c++20" `
+              --extra-arg="/I$sdk\include" `
+              --extra-arg="/I$sdk\include\ThirdParty" `
+              --extra-arg="/I$msvc" `
+              --extra-arg="/I$sdkBase\$sdkVer\ucrt" `
+              --extra-arg="/I$sdkBase\$sdkVer\um" `
+              --extra-arg="/I$sdkBase\$sdkVer\shared" `
+              --extra-arg="/w"
             if ($LASTEXITCODE -ne 0) { $failed = $true }
           }
           if ($failed) { exit 1 }
