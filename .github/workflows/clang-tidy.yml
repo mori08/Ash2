@@ -6,11 +6,13 @@ on:
       - 'Ash2/src/**'
       - 'Ash2/tests/**'
       - '.clang-tidy'
+      - '.github/workflows/clang-tidy.yml'
   pull_request:
     paths:
       - 'Ash2/src/**'
       - 'Ash2/tests/**'
       - '.clang-tidy'
+      - '.github/workflows/clang-tidy.yml'
 
 env:
   SIV3D_VERSION: 0.6.15
