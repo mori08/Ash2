@@ -58,7 +58,8 @@ jobs:
             Write-Output "Checking: $file"
             clang-tidy $file `
               --extra-arg="--driver-mode=cl" `
-              --extra-arg="/std:c++20" `
+              --extra-arg="/std:c++latest" `
+              --extra-arg="/EHsc" `
               --extra-arg="/I$sdk\include" `
               --extra-arg="/I$sdk\include\ThirdParty" `
               --extra-arg="/I$msvc" `
