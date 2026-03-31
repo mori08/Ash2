@@ -37,10 +37,12 @@ jobs:
 
       - name: Run clang-tidy via MSBuild
         run: |
+          $clangTidy = (Get-Command clang-tidy).Source
+          Write-Output "Using clang-tidy: $clangTidy"
           msbuild Ash2/Ash2.sln `
             /p:Configuration=Debug `
             /p:Platform=x64 `
             /p:EnableClangTidyCodeAnalysis=True `
             /p:RunCodeAnalysis=True `
-            /p:ClangTidyToolExe=clang-tidy.exe
+            /p:ClangTidyToolExe="$clangTidy"
         shell: powershell
