@@ -1,18 +1,10 @@
-BasedOnStyle: Microsoft
-IndentWidth: 4
-TabWidth: 4
-UseTab: ForIndentation
-BreakBeforeBraces: Allman
-ColumnLimit: 120
-AccessModifierOffset: -4
-IndentAccessModifiers: false
-NamespaceIndentation: None
+BasedOnStyle: Google
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '<Siv3D\.hpp>'
+    Priority: -1
+  - Regex: '<.*>'
     Priority: 1
   - Regex: '".*"'
     Priority: 2
-  - Regex: '<.*>'
-    Priority: 3
