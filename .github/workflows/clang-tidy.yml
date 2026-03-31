@@ -23,62 +23,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: Download Siv3D SDK
         run: |
           bitsadmin /transfer s3d-download "https://siv3d.jp/downloads/Siv3D/manual/${{ env.SIV3D_VERSION }}/OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}.zip" "C:\OpenSiv3D_SDK.zip"
           Expand-Archive -Path "C:\OpenSiv3D_SDK.zip" -DestinationPath "C:"
+          [Environment]::SetEnvironmentVariable("SIV3D_" + "${{ env.SIV3D_VERSION }}".Replace(".", "_"), "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}")
         shell: powershell
 
-      - name: Find MSVC and Windows SDK paths
-        id: msvc
+      - name: Run clang-tidy via MSBuild
         run: |
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          $vsPath = & $vswhere -latest -property installationPath
-          $msvcDir = Get-ChildItem "$vsPath\VC\Tools\MSVC" | Sort-Object Name -Descending | Select-Object -First 1
-          $msvcInclude = "$($msvcDir.FullName)\include"
-          $winSdkBase = "${env:ProgramFiles(x86)}\Windows Kits\10\Include"
-          $winSdkVer = (Get-ChildItem $winSdkBase | Sort-Object Name -Descending | Select-Object -First 1).Name
-          echo "msvc_include=$msvcInclude" >> $env:GITHUB_OUTPUT
-          echo "winsdk_base=$winSdkBase" >> $env:GITHUB_OUTPUT
-          echo "winsdk_ver=$winSdkVer" >> $env:GITHUB_OUTPUT
-        shell: powershell
-
-      - name: Generate compile_flags.txt
-        run: |
-          $sdk     = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
-          $msvc    = "${{ steps.msvc.outputs.msvc_include }}"
-          $sdkBase = "${{ steps.msvc.outputs.winsdk_base }}"
-          $sdkVer  = "${{ steps.msvc.outputs.winsdk_ver }}"
-          $flags = @(
-            "-std=c++23",
-            "-fms-compatibility",
-            "-fms-extensions",
-            "-fdelayed-template-parsing",
-            "-fexceptions",
-            "-I$sdk\include",
-            "-I$sdk\include\ThirdParty",
-            "-I$msvc",
-            "-I$sdkBase\$sdkVer\ucrt",
-            "-I$sdkBase\$sdkVer\um",
-            "-I$sdkBase\$sdkVer\shared",
-            "-w"
-          )
-          $flags | Set-Content "Ash2\src\compile_flags.txt"
-          Copy-Item "Ash2\src\compile_flags.txt" "Ash2\tests\compile_flags.txt"
-          Write-Output "compile_flags.txt:"
-          Get-Content "Ash2\src\compile_flags.txt"
-        shell: powershell
-
-      - name: Run clang-tidy
-        run: |
-          $files = Get-ChildItem -Recurse -Include "*.cpp" -Path "Ash2\src", "Ash2\tests" |
-                   Where-Object { $_.Name -ne "stdafx.cpp" } |
-                   ForEach-Object { $_.FullName }
-          $failed = $false
-          foreach ($file in $files) {
-            Write-Output "Checking: $file"
-            clang-tidy $file
-            if ($LASTEXITCODE -ne 0) { $failed = $true }
-          }
-          if ($failed) { exit 1 }
+          msbuild Ash2/Ash2.sln `
+            /p:Configuration=Debug `
+            /p:Platform=x64 `
+            /p:EnableClangTidyCodeAnalysis=True `
+            /p:RunCodeAnalysis=True `
+            /p:ClangTidyToolExe=clang-tidy.exe
         shell: powershell
