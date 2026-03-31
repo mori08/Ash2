@@ -30,7 +30,9 @@ jobs:
         run: |
           bitsadmin /transfer s3d-download "https://siv3d.jp/downloads/Siv3D/manual/${{ env.SIV3D_VERSION }}/OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}.zip" "C:\OpenSiv3D_SDK.zip"
           Expand-Archive -Path "C:\OpenSiv3D_SDK.zip" -DestinationPath "C:"
-          [Environment]::SetEnvironmentVariable("SIV3D_" + "${{ env.SIV3D_VERSION }}".Replace(".", "_"), "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}")
+          $varName = "SIV3D_" + "${{ env.SIV3D_VERSION }}".Replace(".", "_")
+          $varValue = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
+          echo "$varName=$varValue" >> $env:GITHUB_ENV
         shell: powershell
 
       - name: Run clang-tidy via MSBuild
