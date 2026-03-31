@@ -40,6 +40,8 @@ jobs:
               --extra-arg="-std=c++23" `
               --extra-arg="-I$sdk\include" `
               --extra-arg="-I$sdk\include\ThirdParty" `
+              --extra-arg="-fms-compatibility" `
+              --extra-arg="-fms-extensions" `
               --extra-arg="-w"
             if ($LASTEXITCODE -ne 0) { $failed = $true }
           }
