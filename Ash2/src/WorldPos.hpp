@@ -10,7 +10,7 @@ struct WorldPos {
   double h = 0.0;
   double d = 0.0;
 
-  Vec2 ToScreen() const { return {w, -(d + h)}; }
+  [[nodiscard]] Vec2 ToScreen() const { return {w, -(d + h)}; }
 };
 
 // 描画順比較：奥（d 大）から手前（d 小）の順

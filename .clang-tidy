@@ -1,17 +1,24 @@
 Checks: >
   -*,
-  modernize-use-nullptr,
-  modernize-use-auto,
-  modernize-use-range-for,
-  modernize-use-override,
-  modernize-use-scoped-enum,
-  bugprone-use-after-move,
-  readability-identifier-naming
+  bugprone-*,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  readability-identifier-naming,
+  readability-make-member-function-const,
+  readability-non-const-parameter,
+  readability-else-after-return,
+  readability-simplify-boolean-expr,
+  readability-qualified-auto,
+  readability-inconsistent-declaration-parameter-name,
+  readability-redundant-control-flow,
+  readability-unnecessary-value-param,
+  readability-magic-numbers
 
 CheckOptions:
   # 変数: camelCase
   - key: readability-identifier-naming.VariableCase
-    value: camelCase
+    value: camelBack
   # 関数: PascalCase
   - key: readability-identifier-naming.FunctionCase
     value: CamelCase
@@ -25,7 +32,7 @@ CheckOptions:
   - key: readability-identifier-naming.PrivateMemberPrefix
     value: m_
   - key: readability-identifier-naming.PrivateMemberCase
-    value: camelCase
+    value: camelBack
   # enum class: PascalCase
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
@@ -34,7 +41,12 @@ CheckOptions:
   # constexpr 定数: PascalCase
   - key: readability-identifier-naming.ConstexprVariableCase
     value: CamelCase
+  # マジックナンバー: 0, 1, -1, 2 は例外
+  - key: readability-magic-numbers.IgnoredIntegerValues
+    value: '0;1;-1;2'
+  - key: readability-magic-numbers.IgnoredFloatingPointValues
+    value: '0.0;1.0;0.5'
 
 HeaderFilterRegex: '.*Ash2.*\.(hpp|h)$'
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 FormatStyle: file

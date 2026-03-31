@@ -20,5 +20,6 @@ void Main() {
 #endif
 
   while (System::Update()) {
+    int a = 1;
   }
 }
