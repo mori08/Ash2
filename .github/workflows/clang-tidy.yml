@@ -43,6 +43,5 @@ jobs:
             /p:Configuration=Debug `
             /p:Platform=x64 `
             /p:EnableClangTidyCodeAnalysis=True `
-            /p:RunCodeAnalysis=True `
             /p:ClangTidyToolExe="$clangTidy"
         shell: powershell

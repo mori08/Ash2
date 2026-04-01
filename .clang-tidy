@@ -1,6 +1,7 @@
 Checks: >
   -*,
   bugprone-*,
+  -bugprone-chained-comparison,
   modernize-*,
   -modernize-use-trailing-return-type,
   performance-*,
