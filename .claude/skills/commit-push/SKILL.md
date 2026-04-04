@@ -7,6 +7,7 @@ Run git status and git diff in parallel to understand what has changed.
 
 Then stage the relevant files, commit, and push using these rules:
 - Commit message: English, imperative mood, no prefix (e.g. "Add X", "Fix Y", "Update Z")
+- Always include a related issue reference in the commit message (e.g. `#3` to reference, `close #3` to auto-close on merge)
 - Always push immediately after committing
 - Stage specific files by name, not `git add -A`
 - Append to commit message: Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>

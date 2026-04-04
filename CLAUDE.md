@@ -18,3 +18,7 @@ C++ / Siv3D v0.6.15 / Visual Studio 2022
 ## テスト
 
 [TEST.md](docs/TEST.md) を参照。
+
+## Git / GitHub 運用
+
+[GIT.md](docs/GIT.md) を参照。
