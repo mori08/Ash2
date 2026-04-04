@@ -9,6 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\Scene">
+      <UniqueIdentifier>{c1d2e3f4-a5b6-7c8d-9e0f-1a2b3c4d5e6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scene">
+      <UniqueIdentifier>{d2e3f4a5-b6c7-8d9e-0f1a-2b3c4d5e6f7a}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
     </Filter>
@@ -146,6 +152,9 @@
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\PhaseStack.cpp">
+      <Filter>Source Files\Scene</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
@@ -820,6 +829,12 @@
     </ClInclude>
     <ClInclude Include="WorldPos.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\IPhase.hpp">
+      <Filter>Header Files\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\PhaseStack.hpp">
+      <Filter>Header Files\Scene</Filter>
     </ClInclude>
     <ClInclude Include="ThirdParty\entt\entt.hpp">
       <Filter>ThirdParty\entt</Filter>
