@@ -9,6 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\entt">
+      <UniqueIdentifier>{a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -814,6 +820,9 @@
     </ClInclude>
     <ClInclude Include="WorldPos.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\entt\entt.hpp">
+      <Filter>ThirdParty\entt</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

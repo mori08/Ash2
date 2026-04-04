@@ -1,5 +1,7 @@
 #include <Siv3D.hpp>
 
+#include <ThirdParty/entt/entt.hpp>
+
 #include "WorldPos.hpp"
 
 #if USE_TEST
