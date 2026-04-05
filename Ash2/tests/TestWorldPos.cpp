@@ -28,7 +28,7 @@ TEST_CASE("DrawOrderLess - far objects come first") {
   // 奥のオブジェクトが先に来る
   WorldPos near{.w = 0.0, .h = 0.0, .d = 100.0};
   WorldPos far{.w = 0.0, .h = 0.0, .d = 500.0};
-  REQUIRE(DrawOrderLess(far, near));
+  REQUIRE(DrawOrderLess(near, far)); // intentional failure
   REQUIRE_FALSE(DrawOrderLess(near, far));
 }
 
