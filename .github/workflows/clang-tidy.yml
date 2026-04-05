@@ -2,12 +2,16 @@ name: clang-tidy
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'Ash2/src/**'
       - 'Ash2/tests/**'
       - '.clang-tidy'
       - '.github/workflows/clang-tidy.yml'
   pull_request:
+    branches:
+      - main
     paths:
       - 'Ash2/src/**'
       - 'Ash2/tests/**'
@@ -15,7 +19,7 @@ on:
       - '.github/workflows/clang-tidy.yml'
 
 env:
-  SIV3D_VERSION: 0.6.15
+  SIV3D_VERSION: 0.6.16
 
 jobs:
   clang-tidy:
@@ -23,25 +27,61 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
       - name: Download Siv3D SDK
+        shell: pwsh
         run: |
           bitsadmin /transfer s3d-download "https://siv3d.jp/downloads/Siv3D/manual/${{ env.SIV3D_VERSION }}/OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}.zip" "C:\OpenSiv3D_SDK.zip"
           Expand-Archive -Path "C:\OpenSiv3D_SDK.zip" -DestinationPath "C:"
-          $varName = "SIV3D_" + "${{ env.SIV3D_VERSION }}".Replace(".", "_")
-          $varValue = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
-          echo "$varName=$varValue" >> $env:GITHUB_ENV
-        shell: powershell
 
-      - name: Run clang-tidy via MSBuild
+      - name: Run clang-tidy
+        shell: pwsh
         run: |
-          $clangTidy = (Get-Command clang-tidy).Source
-          Write-Output "Using clang-tidy: $clangTidy"
-          msbuild Ash2/Ash2.sln `
-            /p:Configuration=Debug `
-            /p:Platform=x64 `
-            /p:EnableClangTidyCodeAnalysis=True `
-            /p:ClangTidyToolExe="$clangTidy"
-        shell: powershell
+          $sdkRoot    = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
+          $projectDir = "$env:GITHUB_WORKSPACE\Ash2"
+
+          # clang-tidy オプション
+          $tidyOpts = @(
+            "--header-filter=.*Ash2[\\/](src|tests)[\\/].*"
+          )
+
+          # -- の後に渡すコンパイルフラグ
+          # --driver-mode=cl で clang-cl（MSVC 互換）モードにする。
+          # MSVC ヘッダーの正しい解析と / プレフィックスのフラグ使用に必要。
+          $compileFlags = @(
+            "--driver-mode=cl",
+            "/std:c++latest",
+            "/Zc:__cplusplus",
+            "/utf-8",
+
+            # stdafx.h を強制インクルード（ForcedIncludeFiles の再現）
+            "/FI$projectDir\src\stdafx.h",
+
+            # プリプロセッサ定義（Debug 構成）
+            "-D_DEBUG",
+            "-D_WINDOWS",
+            "-D_ENABLE_EXTENDED_ALIGNED_STORAGE",
+            "-D_SILENCE_CXX20_CISO646_REMOVED_WARNING",
+            "-D_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS",
+            "-D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
+            "-DUSE_TEST",
+
+            # プロジェクトのインクルードパス
+            "-I$projectDir\src",
+            "-I$projectDir",
+
+            # Siv3D SDK をシステムヘッダー扱いにして警告を抑制する
+            # clang-cl モードでは -isystem の代わりに -imsvc を使う
+            "-imsvc", "$sdkRoot\include",
+            "-imsvc", "$sdkRoot\include\ThirdParty"
+          )
+
+          $failed = $false
+          Get-ChildItem -Path "$projectDir\src", "$projectDir\tests" -Filter "*.cpp" -Recurse |
+            Where-Object { $_.Name -ne "stdafx.cpp" } |
+            ForEach-Object {
+              Write-Host "Checking: $($_.Name)"
+              clang-tidy @tidyOpts $_.FullName '--' @compileFlags
+              if ($LASTEXITCODE -ne 0) { $failed = $true }
+            }
+
+          if ($failed) { exit 1 }

@@ -12,7 +12,7 @@ struct WorldPos {
 
   /// @brief ワールド座標を画面座標に変換する
   /// @return 画面座標（右方向・下方向が正）
-  [[nodiscard]] Vec2 ToScreen() const { return {w, -(d + h)}; }
+  [[nodiscard]] Vec2 toScreen() const { return {w, -(d + h)}; }
 };
 
 /// @brief 描画順の比較関数（奥から手前の順）

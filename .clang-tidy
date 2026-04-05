@@ -1,5 +1,6 @@
 Checks: >
   -*,
+  -clang-diagnostic-*,
   bugprone-*,
   -bugprone-chained-comparison,
   modernize-*,
@@ -20,8 +21,14 @@ CheckOptions:
   # 変数: camelCase
   - key: readability-identifier-naming.VariableCase
     value: camelBack
-  # 関数: PascalCase
+  # 通常関数（free function）: PascalCase
   - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  # 非静的メンバ関数: camelCase
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+  # 静的メンバ関数: PascalCase
+  - key: readability-identifier-naming.ClassMethodCase
     value: CamelCase
   # クラス: PascalCase
   - key: readability-identifier-naming.ClassCase
@@ -48,6 +55,6 @@ CheckOptions:
   - key: readability-magic-numbers.IgnoredFloatingPointValues
     value: '0.0;1.0;0.5'
 
-HeaderFilterRegex: '.*Ash2.*\.(hpp|h)$'
+HeaderFilterRegex: '.*Ash2[\\/](src|tests)[\\/].*'
 WarningsAsErrors: '*'
 FormatStyle: file
