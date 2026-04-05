@@ -15,10 +15,6 @@ class PhaseStack {
   /// @param registry ECS レジストリ
   void update(entt::registry& registry);
 
-  /// @brief 毎フレームの描画処理（スタックの下から順に描画）
-  /// @param registry ECS レジストリ
-  void draw(const entt::registry& registry) const;
-
  private:
   /// @brief スタックの先頭フェーズを取り出す
   /// @param registry ECS レジストリ

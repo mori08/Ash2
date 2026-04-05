@@ -50,10 +50,6 @@ class IPhase {
   /// @return フェーズスタックへの操作
   [[nodiscard]] virtual PhaseCommand update(entt::registry& registry) = 0;
 
-  /// @brief 毎フレームの描画処理
-  /// @param registry ECS レジストリ
-  virtual void draw(const entt::registry& registry) const = 0;
-
   /// @brief スタックから取り出される直前に呼ばれる
   /// @param registry ECS レジストリ
   virtual void onBeforePop(entt::registry&) {}

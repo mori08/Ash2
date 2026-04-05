@@ -33,12 +33,6 @@ void PhaseStack::update(entt::registry& registry) {
   }
 }
 
-void PhaseStack::draw(const entt::registry& registry) const {
-  for (const auto& phase : stack_) {
-    phase->draw(registry);
-  }
-}
-
 void PhaseStack::pop(entt::registry& registry) {
   stack_.back()->onBeforePop(registry);
   stack_.pop_back();
