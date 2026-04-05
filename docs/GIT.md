@@ -31,6 +31,7 @@ Fix collision detection, close #5   # mainマージ時にissueが自動クロー
 
 | ラベル | 用途 |
 |--------|------|
+| `epic` | 複数のsub-issueをまとめる親チケット |
 | `enhancement` | 新機能・改善 |
 | `bug` | 不具合修正 |
 | `chore` | リファクタリング・環境整備など |
