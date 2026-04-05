@@ -5,11 +5,11 @@
 ## 動作環境
 
 - OS: Windows 10 / 11
-- [Siv3D](https://siv3d.github.io/) v0.6.15
+- [Siv3D](https://siv3d.github.io/) v0.6.16
 - Visual Studio 2022
 
 ## ビルド方法
 
-1. Siv3D v0.6.15 をインストール
+1. Siv3D v0.6.16 をインストール
 2. `Ash2.sln` を Visual Studio 2022 で開く
 3. ビルド & 実行
