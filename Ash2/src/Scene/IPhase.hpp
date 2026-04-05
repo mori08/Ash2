@@ -8,7 +8,7 @@ class IPhase {
   /// @brief フェーズスタックへの操作を表す構造体
   struct PhaseCommand {
     /// @brief 操作の種類
-    enum class Type {
+    enum class Type : uint8 {
       None,
       Pop,
       Push,
@@ -56,19 +56,19 @@ class IPhase {
 };
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::None() {
-  return {Type::None, nullptr};
+  return {.type = Type::None, .nextPhase = nullptr};
 }
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::Pop() {
-  return {Type::Pop, nullptr};
+  return {.type = Type::Pop, .nextPhase = nullptr};
 }
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::Push(
     std::unique_ptr<IPhase>&& phase) {
-  return {Type::Push, std::move(phase)};
+  return {.type = Type::Push, .nextPhase = std::move(phase)};
 }
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::Reset(
     std::unique_ptr<IPhase>&& phase) {
-  return {Type::Reset, std::move(phase)};
+  return {.type = Type::Reset, .nextPhase = std::move(phase)};
 }
