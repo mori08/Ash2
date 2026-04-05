@@ -6,11 +6,11 @@ PhaseStack::PhaseStack(std::unique_ptr<IPhase>&& initialPhase,
 }
 
 void PhaseStack::update(entt::registry& registry) {
-  if (stack_.empty()) {
+  if (m_stack.empty()) {
     return;
   }
 
-  auto command = stack_.back()->update(registry);
+  auto command = m_stack.back()->update(registry);
 
   switch (command.type) {
     case IPhase::PhaseCommand::Type::None:
@@ -25,7 +25,7 @@ void PhaseStack::update(entt::registry& registry) {
       break;
 
     case IPhase::PhaseCommand::Type::Reset:
-      while (not stack_.empty()) {
+      while (not m_stack.empty()) {
         pop(registry);
       }
       push(registry, std::move(command.nextPhase));
@@ -34,12 +34,12 @@ void PhaseStack::update(entt::registry& registry) {
 }
 
 void PhaseStack::pop(entt::registry& registry) {
-  stack_.back()->onBeforePop(registry);
-  stack_.pop_back();
+  m_stack.back()->onBeforePop(registry);
+  m_stack.pop_back();
 }
 
 void PhaseStack::push(entt::registry& registry,
                       std::unique_ptr<IPhase>&& phase) {
-  stack_.push_back(std::move(phase));
-  stack_.back()->onAfterPush(registry);
+  m_stack.push_back(std::move(phase));
+  m_stack.back()->onAfterPush(registry);
 }

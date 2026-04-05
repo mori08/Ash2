@@ -26,5 +26,5 @@ class PhaseStack {
   void push(entt::registry& registry, std::unique_ptr<IPhase>&& phase);
 
   /// スタック（末尾が最前面）
-  Array<std::unique_ptr<IPhase>> stack_;
+  Array<std::unique_ptr<IPhase>> m_stack;
 };
