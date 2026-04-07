@@ -50,3 +50,15 @@ inline bool DrawOrderLess(const WorldPos& a, const WorldPos& b);
 ## ファイルの追加
 
 新しい `.cpp` / `.hpp` ファイルを追加するときは、`Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
+
+## ARCHITECTURE.md の更新
+
+`docs/ARCHITECTURE.md` はプロジェクトの構造をまとめたドキュメント。  
+以下のような大きな構造変更を行ったときは、内容が古くなっていないか確認し、必要なら更新する。
+
+- 新しいクラス・構造体の追加
+- ディレクトリ構成の変更
+- アーキテクチャ方針の変更（フェーズ管理・ECS の使い方など）
+- 座標系・ゲームループの変更
+
+ARCHITECTURE.md は **200 行以内**を目安に保つ。超過しそうな場合は重要度の低い情報（自明な詳細・コード例・冗長な説明）を省略してコンパクトにまとめ直す。
