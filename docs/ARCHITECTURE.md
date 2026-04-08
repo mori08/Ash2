@@ -98,7 +98,7 @@ PhaseStack
 - `registry.ctx()` に格納してフェーズ間で共有
 
 ```cpp
-registry.ctx().emplace<PlayerConfig>(PlayerConfig::fromTOML(toml[U"player"]));
+registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(toml[U"player"]));
 auto& cfg = registry.ctx().get<PlayerConfig>();
 ```
 

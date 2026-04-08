@@ -13,5 +13,5 @@ struct PlayerConfig {
   /// @brief TOML からプレイヤー設定を生成する
   /// @param toml TOML 値
   /// @return PlayerConfig
-  [[nodiscard]] static PlayerConfig fromTOML(const s3d::TOMLValue& toml);
+  [[nodiscard]] static PlayerConfig FromToml(const s3d::TOMLValue& toml);
 };
