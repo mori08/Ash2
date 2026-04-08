@@ -43,6 +43,9 @@ jobs:
 
           $env:LIB = "$sdkRoot\lib\Windows;$env:LIB"
 
+          $testFiles = Get-ChildItem -Path "$projectDir\tests" -Filter "*.cpp" |
+            Select-Object -ExpandProperty FullName
+
           cl.exe `
             /std:c++latest /Zc:__cplusplus /utf-8 /EHsc `
             /DUSE_TEST `
@@ -51,7 +54,7 @@ jobs:
             /I"$sdkRoot\include" `
             /I"$sdkRoot\include\ThirdParty" `
             "$outDir\main.cpp" `
-            "$projectDir\tests\TestWorldPos.cpp" `
+            $testFiles `
             /Fe:"$outDir\tests.exe"
 
           if ($LASTEXITCODE -ne 0) { exit 1 }

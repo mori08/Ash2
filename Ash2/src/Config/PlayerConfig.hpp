@@ -1,4 +1,5 @@
 #pragma once
+#include <Siv3D.hpp>
 
 /// @brief プレイヤーの設定値
 struct PlayerConfig {
