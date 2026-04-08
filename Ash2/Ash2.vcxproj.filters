@@ -15,6 +15,12 @@
     <Filter Include="Source Files\Scene">
       <UniqueIdentifier>{d2e3f4a5-b6c7-8d9e-0f1a-2b3c4d5e6f7a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Config">
+      <UniqueIdentifier>{e3f4a5b6-c7d8-9e0f-1a2b-3c4d5e6f7a8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Config">
+      <UniqueIdentifier>{f4a5b6c7-d8e9-0f1a-2b3c-4d5e6f7a8b9c}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
     </Filter>
@@ -150,6 +156,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Config\PlayerConfig.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -824,6 +833,9 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Config\PlayerConfig.hpp">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>

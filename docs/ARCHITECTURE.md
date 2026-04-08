@@ -16,12 +16,19 @@ Ash2/
 │   │   ├── Main.cpp            # エントリーポイント
 │   │   ├── stdafx.h            # プリコンパイルヘッダ（Siv3D 一括インクルード）
 │   │   ├── WorldPos.hpp        # ワールド座標
+│   │   ├── Config/
+│   │   │   ├── PlayerConfig.hpp  # プレイヤー設定値
+│   │   │   └── PlayerConfig.cpp  # fromTOML() 実装
 │   │   └── Scene/
 │   │       ├── IPhase.hpp      # フェーズ基底クラス
 │   │       ├── PhaseStack.hpp  # フェーズスタック
 │   │       └── PhaseStack.cpp
+│   ├── App/
+│   │   └── config/
+│   │       └── player.toml     # プレイヤー設定ファイル
 │   ├── tests/
 │   │   ├── TestWorldPos.cpp    # WorldPos ユニットテスト
+│   │   ├── TestPlayerConfig.cpp # PlayerConfig ユニットテスト
 │   │   └── standalone/main.cpp # スタンドアロンテスト実行環境
 │   └── ThirdParty/
 │       └── entt/entt.hpp       # EnTT v3.16.0（ECS ライブラリ）
@@ -82,6 +89,19 @@ PhaseStack
 エンティティ（キャラクター・弾・エフェクト等）のデータを `entt::registry` で管理する。  
 コンポーネントの設計はゲームロジックの実装時に都度追加していく。
 
+### 設定値管理（Config）
+
+ゲームの定数値を型付き構造体（`PlayerConfig` 等）として管理する。
+
+- 構造体メンバは plain C++ 型のみ（Siv3D 型不使用）→ TOML なしでテスト構築可能
+- `fromTOML()` 静的メソッドで TOML ファイルから生成
+- `registry.ctx()` に格納してフェーズ間で共有
+
+```cpp
+registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(toml[U"player"]));
+auto& cfg = registry.ctx().get<PlayerConfig>();
+```
+
 ### 座標系（WorldPos）
 
 疑似3Dの奥行き表現に使うワールド座標。
@@ -106,6 +126,7 @@ Vec2 toScreen() → { w, -(d + h) }
 | ファイル | クラス / 構造体 | 説明 |
 |---------|---------------|------|
 | `src/WorldPos.hpp` | `WorldPos` | ワールド座標（w, h, d）と画面座標変換 |
+| `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤー設定値（速度・ジャンプ・重力） |
 | `src/Scene/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Scene/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Scene/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
