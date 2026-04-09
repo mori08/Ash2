@@ -119,6 +119,7 @@
   <ItemGroup>
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Scene\DemoPhase.cpp" />
     <ClCompile Include="src\Scene\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -333,6 +334,7 @@
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\WorldPos.hpp" />
+    <ClInclude Include="src\Scene\DemoPhase.hpp" />
     <ClInclude Include="src\Scene\IPhase.hpp" />
     <ClInclude Include="src\Scene\PhaseStack.hpp" />
     <ClInclude Include="ThirdParty\entt\entt.hpp" />

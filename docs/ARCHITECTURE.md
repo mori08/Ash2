@@ -22,7 +22,9 @@ Ash2/
 │   │   └── Scene/
 │   │       ├── IPhase.hpp      # フェーズ基底クラス
 │   │       ├── PhaseStack.hpp  # フェーズスタック
-│   │       └── PhaseStack.cpp
+│   │       ├── PhaseStack.cpp
+│   │       ├── DemoPhase.hpp   # プレイヤー操作デモシーン
+│   │       └── DemoPhase.cpp
 │   ├── App/
 │   │   └── config/
 │   │       └── player.toml     # プレイヤー設定ファイル
@@ -130,3 +132,4 @@ Vec2 toScreen() → { w, -(d + h) }
 | `src/Scene/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Scene/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Scene/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
+| `src/Scene/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |

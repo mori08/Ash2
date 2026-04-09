@@ -2,7 +2,9 @@
 
 #include <ThirdParty/entt/entt.hpp>
 
-#include "WorldPos.hpp"
+#include "Config/PlayerConfig.hpp"
+#include "Scene/DemoPhase.hpp"
+#include "Scene/PhaseStack.hpp"
 
 #if USE_TEST
 #define CATCH_CONFIG_RUNNER
@@ -21,6 +23,14 @@ void Main() {
   RunTests();
 #endif
 
+  entt::registry registry;
+
+  const TOMLReader toml(U"config/player.toml");
+  registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(toml));
+
+  PhaseStack phaseStack(std::make_unique<DemoPhase>(), registry);
+
   while (System::Update()) {
+    phaseStack.update(registry);
   }
 }
