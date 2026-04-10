@@ -21,4 +21,5 @@ C++ / Siv3D v0.6.16 / Visual Studio 2022
 
 ## Git / GitHub 運用
 
-[GIT.md](docs/GIT.md) を参照。
+git または GitHub の操作（commit・push・PR・issue 等）を始める前に、
+一連の作業の最初に一度 [GIT.md](docs/GIT.md) を読むこと。
