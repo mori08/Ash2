@@ -36,6 +36,21 @@ Fix collision detection, close #5   # mainマージ時にissueが自動クロー
 | `bug` | 不具合修正 |
 | `chore` | リファクタリング・環境整備など |
 
+## git コマンドの実行形式
+
+ディレクトリを指定して git を実行する場合は、`cd` を使わず `git -C <path>` を使うこと。
+
+```bash
+# NG
+cd ~/path/to/repo && git status
+
+# OK
+git -C ~/path/to/repo status
+```
+
+`~/.claude/settings.json` の allow パターンが `git -C *` 形式で定義されているため、
+`cd && git` 形式だとルールが適用されない。
+
 ## PRのマージ方針
 
 - 通常マージ（Merge commit）を使用する
