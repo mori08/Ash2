@@ -106,7 +106,7 @@ PhaseStack
 
 プレイヤー操作のキー割り当てを `PlayerInputAction` 構造体で管理する。
 
-- 各アクション（moveLeft / moveRight 等）を Siv3D の `InputGroup` で保持
+- 各アクション（moveLeft / moveRight / moveForward / moveBackward / jump 等）を Siv3D の `InputGroup` で保持
 - `InputGroup` は複数のキーを OR でまとめられるため、「左矢印またはA」のような複合割り当てが可能
 - `Default()` ファクトリでデフォルト割り当てを生成し、`registry.ctx()` に格納
 - キーコンフィグ対応時は `PlayerInputAction` の中身を差し替えるだけでよい
@@ -143,10 +143,12 @@ struct WorldPos {
 };
 
 Vec2 toScreen() → { w, -(d + h) }
+bool isOnGround() → h <= 0.0
 ```
 
 - 画面上の y 座標は `-(d + h)` で計算。奥にあるほど・高いほど画面上方に表示される。
 - `DrawOrderLess(a, b)` で奥 → 手前の描画順ソートができる。
+- `isOnGround()` で着地判定（重力・ジャンプ処理で使用）。
 
 ---
 

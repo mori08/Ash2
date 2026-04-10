@@ -7,6 +7,12 @@ struct PlayerInputAction {
   InputGroup moveLeft;
   /// 右移動
   InputGroup moveRight;
+  /// 奥へ移動
+  InputGroup moveForward;
+  /// 手前へ移動
+  InputGroup moveBackward;
+  /// ジャンプ
+  InputGroup jump;
 
   /// @brief デフォルトのキー割り当てを返す
   /// @return デフォルトの PlayerInputAction
@@ -17,5 +23,8 @@ inline PlayerInputAction PlayerInputAction::Default() {
   return {
       .moveLeft = KeyLeft | KeyA,
       .moveRight = KeyRight | KeyD,
+      .moveForward = KeyUp | KeyW,
+      .moveBackward = KeyDown | KeyS,
+      .jump = KeySpace,
   };
 }
