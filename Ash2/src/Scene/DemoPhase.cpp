@@ -1,6 +1,32 @@
 #include "Scene/DemoPhase.hpp"
 
-IPhase::PhaseCommand DemoPhase::update(
-    [[maybe_unused]] entt::registry& registry) {
+#include "Component/Player.hpp"
+#include "Component/Velocity.hpp"
+#include "Config/PlayerConfig.hpp"
+#include "Input/PlayerInputAction.hpp"
+#include "WorldPos.hpp"
+
+void DemoPhase::onAfterPush(entt::registry& registry) {
+  auto player = registry.create();
+  registry.emplace<Player>(player);
+  registry.emplace<WorldPos>(player);
+  registry.emplace<Velocity>(player);
+}
+
+IPhase::PhaseCommand DemoPhase::update(entt::registry& registry) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& actions = registry.ctx().get<PlayerInputAction>();
+  const double dt = Scene::DeltaTime();
+
+  const double vw = actions.moveRight.pressed()  ? cfg.speed
+                    : actions.moveLeft.pressed() ? -cfg.speed
+                                                 : 0.0;
+
+  auto view = registry.view<Player, WorldPos, Velocity>();
+  for (auto [entity, pos, vel] : view.each()) {
+    vel.w = vw;
+    pos.w += vel.w * dt;
+  }
+
   return PhaseCommand::None();
 }

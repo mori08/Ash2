@@ -18,6 +18,9 @@
     <Filter Include="Header Files\Component">
       <UniqueIdentifier>{a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\Config">
       <UniqueIdentifier>{e3f4a5b6-c7d8-9e0f-1a2b-3c4d5e6f7a8b}</UniqueIdentifier>
     </Filter>
@@ -839,6 +842,9 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Input\PlayerInputAction.hpp">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Player.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>

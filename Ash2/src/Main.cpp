@@ -3,6 +3,7 @@
 #include <ThirdParty/entt/entt.hpp>
 
 #include "Config/PlayerConfig.hpp"
+#include "Input/PlayerInputAction.hpp"
 #include "Scene/DemoPhase.hpp"
 #include "Scene/PhaseStack.hpp"
 
@@ -27,6 +28,7 @@ void Main() {
 
   const TOMLReader toml(U"config/player.toml");
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(toml));
+  registry.ctx().emplace<PlayerInputAction>(PlayerInputAction::Default());
 
   PhaseStack phaseStack(std::make_unique<DemoPhase>(), registry);
 

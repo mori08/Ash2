@@ -22,6 +22,8 @@ Ash2/
 │   │   ├── Config/
 │   │   │   ├── PlayerConfig.hpp  # プレイヤー設定値
 │   │   │   └── PlayerConfig.cpp  # fromTOML() 実装
+│   │   ├── Input/
+│   │   │   └── PlayerInputAction.hpp  # プレイヤー操作のキー割り当て
 │   │   └── Scene/
 │   │       ├── IPhase.hpp      # フェーズ基底クラス
 │   │       ├── PhaseStack.hpp  # フェーズスタック
@@ -100,6 +102,22 @@ PhaseStack
 | `Velocity` | 速度（w/h/d、ピクセル/秒） |
 | `Player` | プレイヤーを示すタグ（空構造体） |
 
+### 入力管理（Input）
+
+プレイヤー操作のキー割り当てを `PlayerInputAction` 構造体で管理する。
+
+- 各アクション（moveLeft / moveRight 等）を Siv3D の `InputGroup` で保持
+- `InputGroup` は複数のキーを OR でまとめられるため、「左矢印またはA」のような複合割り当てが可能
+- `Default()` ファクトリでデフォルト割り当てを生成し、`registry.ctx()` に格納
+- キーコンフィグ対応時は `PlayerInputAction` の中身を差し替えるだけでよい
+
+```cpp
+// デフォルト割り当て
+auto actions = PlayerInputAction::Default();
+// カスタム割り当て（将来）
+actions.moveLeft = KeyLeft | KeyA | GamepadButton(0);
+```
+
 ### 設定値管理（Config）
 
 ゲームの定数値を型付き構造体（`PlayerConfig` 等）として管理する。
@@ -140,6 +158,7 @@ Vec2 toScreen() → { w, -(d + h) }
 | `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
 | `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント（w, h, d、ピクセル/秒） |
 | `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤー設定値（速度・ジャンプ・重力） |
+| `src/Input/PlayerInputAction.hpp` | `PlayerInputAction` | プレイヤー操作のキー割り当て（InputGroup） |
 | `src/Scene/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Scene/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Scene/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
