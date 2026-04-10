@@ -16,6 +16,9 @@ Ash2/
 │   │   ├── Main.cpp            # エントリーポイント
 │   │   ├── stdafx.h            # プリコンパイルヘッダ（Siv3D 一括インクルード）
 │   │   ├── WorldPos.hpp        # ワールド座標
+│   │   ├── Component/
+│   │   │   ├── Player.hpp      # プレイヤータグ
+│   │   │   └── Velocity.hpp    # 速度コンポーネント
 │   │   ├── Config/
 │   │   │   ├── PlayerConfig.hpp  # プレイヤー設定値
 │   │   │   └── PlayerConfig.cpp  # fromTOML() 実装
@@ -89,7 +92,13 @@ PhaseStack
 ### ECS（EnTT）
 
 エンティティ（キャラクター・弾・エフェクト等）のデータを `entt::registry` で管理する。  
-コンポーネントの設計はゲームロジックの実装時に都度追加していく。
+コンポーネントは `src/Component/` に配置する。位置は `WorldPos` を直接使用する。
+
+| コンポーネント | 役割 |
+|--------------|------|
+| `WorldPos` | 位置（w/h/d） |
+| `Velocity` | 速度（w/h/d、ピクセル/秒） |
+| `Player` | プレイヤーを示すタグ（空構造体） |
 
 ### 設定値管理（Config）
 
@@ -128,6 +137,8 @@ Vec2 toScreen() → { w, -(d + h) }
 | ファイル | クラス / 構造体 | 説明 |
 |---------|---------------|------|
 | `src/WorldPos.hpp` | `WorldPos` | ワールド座標（w, h, d）と画面座標変換 |
+| `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
+| `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント（w, h, d、ピクセル/秒） |
 | `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤー設定値（速度・ジャンプ・重力） |
 | `src/Scene/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Scene/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
