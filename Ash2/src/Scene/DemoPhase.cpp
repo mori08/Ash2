@@ -21,11 +21,28 @@ IPhase::PhaseCommand DemoPhase::update(entt::registry& registry) {
   const double vw = actions.moveRight.pressed()  ? cfg.speed
                     : actions.moveLeft.pressed() ? -cfg.speed
                                                  : 0.0;
+  const double vd = actions.moveForward.pressed()    ? cfg.speed
+                    : actions.moveBackward.pressed() ? -cfg.speed
+                                                     : 0.0;
 
   auto view = registry.view<Player, WorldPos, Velocity>();
   for (auto [entity, pos, vel] : view.each()) {
     vel.w = vw;
+    vel.d = vd;
     pos.w += vel.w * dt;
+    pos.d += vel.d * dt;
+
+    if (actions.jump.down() && pos.isOnGround()) {
+      vel.h = cfg.jumpSpeed;
+    }
+
+    vel.h -= cfg.gravity * dt;
+    pos.h += vel.h * dt;
+
+    if (pos.h < 0.0) {
+      pos.h = 0.0;
+      vel.h = 0.0;
+    }
   }
 
   return PhaseCommand::None();
