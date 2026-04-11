@@ -24,6 +24,18 @@ TEST_CASE("WorldPos::ToScreen - x maps to horizontal position") {
   REQUIRE(left.toScreen().x < right.toScreen().x);
 }
 
+TEST_CASE("WorldPos::isOnGround - on ground when h is 0") {
+  // h=0 は地面上
+  WorldPos pos{.w = 0.0, .h = 0.0, .d = 0.0};
+  REQUIRE(pos.isOnGround());
+}
+
+TEST_CASE("WorldPos::isOnGround - not on ground when h is positive") {
+  // h>0 は地面上ではない
+  WorldPos pos{.w = 0.0, .h = 1.0, .d = 0.0};
+  REQUIRE_FALSE(pos.isOnGround());
+}
+
 TEST_CASE("DrawOrderLess - far objects come first") {
   // 奥のオブジェクトが先に来る
   WorldPos near{.w = 0.0, .h = 0.0, .d = 100.0};
