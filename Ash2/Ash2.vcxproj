@@ -120,6 +120,7 @@
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Scene\DemoPhase.cpp" />
+    <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\Scene\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -331,9 +332,11 @@
     <Xml Include="App\example\xml\test.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Component\Drawable.hpp" />
     <ClInclude Include="src\Input\PlayerInputAction.hpp" />
     <ClInclude Include="src\Component\Player.hpp" />
     <ClInclude Include="src\Component\Velocity.hpp" />
+    <ClInclude Include="src\System\DrawSystem.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\WorldPos.hpp" />

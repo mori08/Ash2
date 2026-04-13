@@ -6,6 +6,7 @@
 #include "Input/PlayerInputAction.hpp"
 #include "Scene/DemoPhase.hpp"
 #include "Scene/PhaseStack.hpp"
+#include "System/DrawSystem.hpp"
 
 #if USE_TEST
 #define CATCH_CONFIG_RUNNER
@@ -34,5 +35,6 @@ void Main() {
 
   while (System::Update()) {
     phaseStack.update(registry);
+    DrawSystem::Draw(registry);
   }
 }

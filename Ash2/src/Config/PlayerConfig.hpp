@@ -9,6 +9,16 @@ struct PlayerConfig {
   double jumpSpeed;
   /// 重力加速度（ピクセル/秒^2）
   double gravity;
+  /// スプライト幅（ピクセル）
+  double spriteWidth;
+  /// スプライト高さ（ピクセル）
+  double spriteHeight;
+  /// スプライト色 R
+  double spriteColorR;
+  /// スプライト色 G
+  double spriteColorG;
+  /// スプライト色 B
+  double spriteColorB;
 
   /// @brief TOML からプレイヤー設定を生成する
   /// @param toml TOML 値

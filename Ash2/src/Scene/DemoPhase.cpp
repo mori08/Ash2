@@ -1,5 +1,6 @@
 #include "Scene/DemoPhase.hpp"
 
+#include "Component/Drawable.hpp"
 #include "Component/Player.hpp"
 #include "Component/Velocity.hpp"
 #include "Config/PlayerConfig.hpp"
@@ -7,10 +8,16 @@
 #include "WorldPos.hpp"
 
 void DemoPhase::onAfterPush(entt::registry& registry) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+
   auto player = registry.create();
   registry.emplace<Player>(player);
   registry.emplace<WorldPos>(player);
   registry.emplace<Velocity>(player);
+  registry.emplace<Drawable>(
+      player, RectDrawable{.size = SizeF{cfg.spriteWidth, cfg.spriteHeight},
+                           .color = ColorF{cfg.spriteColorR, cfg.spriteColorG,
+                                           cfg.spriteColorB}});
 }
 
 IPhase::PhaseCommand DemoPhase::update(entt::registry& registry) {
