@@ -27,6 +27,12 @@
     <Filter Include="Source Files\Config">
       <UniqueIdentifier>{f4a5b6c7-d8e9-0f1a-2b3c-4d5e6f7a8b9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\System">
+      <UniqueIdentifier>{c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\System">
+      <UniqueIdentifier>{d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ThirdParty">
       <UniqueIdentifier>{b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
     </Filter>
@@ -164,6 +170,9 @@
   <ItemGroup>
     <ClCompile Include="Config\PlayerConfig.cpp">
       <Filter>Source Files\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="System\DrawSystem.cpp">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
@@ -845,8 +854,14 @@
     <ClInclude Include="Input\PlayerInputAction.hpp">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Drawable.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Player.hpp">
       <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\DrawSystem.hpp">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Component\Velocity.hpp">
       <Filter>Header Files\Component</Filter>

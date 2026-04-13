@@ -17,6 +17,7 @@ Ash2/
 │   │   ├── stdafx.h            # プリコンパイルヘッダ（Siv3D 一括インクルード）
 │   │   ├── WorldPos.hpp        # ワールド座標
 │   │   ├── Component/
+│   │   │   ├── Drawable.hpp    # 描画コンポーネント（variant）
 │   │   │   ├── Player.hpp      # プレイヤータグ
 │   │   │   └── Velocity.hpp    # 速度コンポーネント
 │   │   ├── Config/
@@ -24,6 +25,9 @@ Ash2/
 │   │   │   └── PlayerConfig.cpp  # fromTOML() 実装
 │   │   ├── Input/
 │   │   │   └── PlayerInputAction.hpp  # プレイヤー操作のキー割り当て
+│   │   ├── System/
+│   │   │   ├── DrawSystem.hpp  # 描画システム
+│   │   │   └── DrawSystem.cpp
 │   │   └── Scene/
 │   │       ├── IPhase.hpp      # フェーズ基底クラス
 │   │       ├── PhaseStack.hpp  # フェーズスタック
@@ -65,8 +69,9 @@ Ash2/
 ```
 Main()
   └─ System::Update() ループ
-       └─ PhaseStack::update(registry)
-            └─ IPhase::update(registry)  ← 現在の最前面フェーズ
+       ├─ PhaseStack::update(registry)
+       │    └─ IPhase::update(registry)  ← 現在の最前面フェーズ
+       └─ DrawSystem::draw(registry)     ← 描画（depth ソート後）
 ```
 
 `entt::registry` をゲーム全体で共有し、フェーズ間でエンティティの状態を引き継ぐ。
@@ -101,6 +106,7 @@ PhaseStack
 | `WorldPos` | 位置（w/h/d） |
 | `Velocity` | 速度（w/h/d、ピクセル/秒） |
 | `Player` | プレイヤーを示すタグ（空構造体） |
+| `Drawable` | 描画形状の variant（`RectDrawable` 等） |
 
 ### 入力管理（Input）
 
@@ -157,6 +163,7 @@ bool isOnGround() → h <= 0.0
 | ファイル | クラス / 構造体 | 説明 |
 |---------|---------------|------|
 | `src/WorldPos.hpp` | `WorldPos` | ワールド座標（w, h, d）と画面座標変換 |
+| `src/Component/Drawable.hpp` | `RectDrawable`, `Drawable` | 描画コンポーネント（形状の variant） |
 | `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
 | `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント（w, h, d、ピクセル/秒） |
 | `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤー設定値（速度・ジャンプ・重力） |
@@ -165,3 +172,4 @@ bool isOnGround() → h <= 0.0
 | `src/Scene/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Scene/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
 | `src/Scene/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
+| `src/System/DrawSystem.hpp/.cpp` | `DrawSystem` | depth ソート後に Drawable を描画 |
