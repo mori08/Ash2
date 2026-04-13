@@ -35,6 +35,6 @@ void Main() {
 
   while (System::Update()) {
     phaseStack.update(registry);
-    DrawSystem::draw(registry);
+    DrawSystem::Draw(registry);
   }
 }

@@ -15,9 +15,9 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<WorldPos>(player);
   registry.emplace<Velocity>(player);
   registry.emplace<Drawable>(
-      player, RectDrawable{SizeF{cfg.spriteWidth, cfg.spriteHeight},
-                           ColorF{cfg.spriteColorR, cfg.spriteColorG,
-                                  cfg.spriteColorB}});
+      player, RectDrawable{.size = SizeF{cfg.spriteWidth, cfg.spriteHeight},
+                           .color = ColorF{cfg.spriteColorR, cfg.spriteColorG,
+                                           cfg.spriteColorB}});
 }
 
 IPhase::PhaseCommand DemoPhase::update(entt::registry& registry) {

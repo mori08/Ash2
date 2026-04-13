@@ -6,5 +6,5 @@ class DrawSystem {
  public:
   /// @brief WorldPos + Drawable を持つエンティティを奥から順に描画する
   /// @param registry ECS レジストリ
-  static void draw(const entt::registry& registry);
+  static void Draw(const entt::registry& registry);
 };

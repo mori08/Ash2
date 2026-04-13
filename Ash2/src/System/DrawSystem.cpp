@@ -3,7 +3,7 @@
 #include "Component/Drawable.hpp"
 #include "WorldPos.hpp"
 
-void DrawSystem::draw(const entt::registry& registry) {
+void DrawSystem::Draw(const entt::registry& registry) {
   const Vec2 cameraOffset = Scene::Center();
 
   struct DrawEntry {
@@ -12,15 +12,14 @@ void DrawSystem::draw(const entt::registry& registry) {
   };
 
   Array<DrawEntry> entries;
-  for (auto [entity, pos, drawable] :
+  for (auto& [entity, pos, drawable] :
        registry.view<const WorldPos, const Drawable>().each()) {
     entries.push_back({std::cref(pos), std::cref(drawable)});
   }
 
-  std::sort(entries.begin(), entries.end(),
-            [](const DrawEntry& a, const DrawEntry& b) {
-              return DrawOrderLess(a.pos.get(), b.pos.get());
-            });
+  std::ranges::sort(entries, [](const DrawEntry& a, const DrawEntry& b) {
+    return DrawOrderLess(a.pos.get(), b.pos.get());
+  });
 
   for (const auto& entry : entries) {
     const Vec2 screenPos = cameraOffset + entry.pos.get().toScreen();
