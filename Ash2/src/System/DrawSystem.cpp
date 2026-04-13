@@ -12,7 +12,7 @@ void DrawSystem::Draw(const entt::registry& registry) {
   };
 
   Array<DrawEntry> entries;
-  for (auto& [entity, pos, drawable] :
+  for (const auto& [entity, pos, drawable] :
        registry.view<const WorldPos, const Drawable>().each()) {
     entries.push_back({std::cref(pos), std::cref(drawable)});
   }
