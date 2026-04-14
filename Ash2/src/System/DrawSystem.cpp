@@ -3,6 +3,13 @@
 #include "Component/Drawable.hpp"
 #include "WorldPos.hpp"
 
+namespace {
+template <class... Ts>
+struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+}  // namespace
+
 void DrawSystem::Draw(const entt::registry& registry) {
   const Vec2 cameraOffset = Scene::Center();
 
@@ -24,12 +31,11 @@ void DrawSystem::Draw(const entt::registry& registry) {
   for (const auto& entry : entries) {
     const Vec2 screenPos = cameraOffset + entry.pos.get().toScreen();
     std::visit(
-        [&screenPos](const auto& shape) {
-          using T = std::decay_t<decltype(shape)>;
-          if constexpr (std::is_same_v<T, RectDrawable>) {
-            RectF{Arg::bottomCenter(screenPos), shape.size.x, shape.size.y}
-                .draw(shape.color);
-          }
+        overloaded{
+            [&screenPos](const RectDrawable& shape) {
+              RectF{Arg::bottomCenter(screenPos), shape.size.x, shape.size.y}
+                  .draw(shape.color);
+            },
         },
         entry.drawable.get());
   }
