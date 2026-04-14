@@ -136,6 +136,13 @@ registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(toml[U"player"]));
 auto& cfg = registry.ctx().get<PlayerConfig>();
 ```
 
+### 描画システム（DrawSystem）
+
+`Drawable` コンポーネントは描画形状の `std::variant` で、現在 `RectDrawable`（矩形）に対応している。
+形状を追加する場合は `Drawable` に型を追加し、`DrawSystem` の `std::visit` にハンドラを追記する。
+
+毎フレーム、`WorldPos` を持つエンティティを `DrawOrderLess`（奥 → 手前）でソートしてから描画することで、疑似3Dの前後関係を再現する。
+
 ### 座標系（WorldPos）
 
 疑似3Dの奥行き表現に使うワールド座標。
