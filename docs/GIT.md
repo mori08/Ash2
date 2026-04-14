@@ -27,6 +27,18 @@ Fix collision detection, close #5   # mainマージ時にissueが自動クロー
 
 `close` の代わりに `fixes` / `resolves` も使用可。
 
+## コミットの修正
+
+GitHub Actions の失敗など、直前のコミットへの軽微な追加・修正は `git commit --amend` を使う。
+
+```bash
+git commit --amend --no-edit   # メッセージを変えない場合
+git commit --amend             # メッセージも修正する場合
+```
+
+ただし **push 済みのコミットを amend した場合は force push が必要**になるため、
+main への直接 amend は避け、feature ブランチ上でのみ使用する。
+
 ## issueラベル
 
 | ラベル | 用途 |
