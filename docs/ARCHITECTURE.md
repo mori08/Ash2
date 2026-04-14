@@ -128,7 +128,6 @@ actions.moveLeft = KeyLeft | KeyA | GamepadButton(0);
 
 ゲームの定数値を型付き構造体（`PlayerConfig` 等）として管理する。
 
-- 構造体メンバは plain C++ 型のみ（Siv3D 型不使用）→ TOML なしでテスト構築可能
 - `fromTOML()` 静的メソッドで TOML ファイルから生成
 - `registry.ctx()` に格納してフェーズ間で共有
 
