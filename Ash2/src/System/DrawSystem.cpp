@@ -5,7 +5,7 @@
 
 namespace {
 template <class... Ts>
-struct overloaded : Ts... {
+struct Overloaded : Ts... {
   using Ts::operator()...;
 };
 }  // namespace
@@ -31,7 +31,7 @@ void DrawSystem::Draw(const entt::registry& registry) {
   for (const auto& entry : entries) {
     const Vec2 screenPos = cameraOffset + entry.pos.get().toScreen();
     std::visit(
-        overloaded{
+        Overloaded{
             [&screenPos](const RectDrawable& shape) {
               RectF{Arg::bottomCenter(screenPos), shape.size.x, shape.size.y}
                   .draw(shape.color);
