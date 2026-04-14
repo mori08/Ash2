@@ -47,6 +47,30 @@ struct WorldPos {
 inline bool DrawOrderLess(const WorldPos& a, const WorldPos& b);
 ```
 
+## 命名規則
+
+静的メンバ関数・通常関数（free function）は PascalCase（大文字始まり）で書く。
+
+```cpp
+// OK
+static PlayerConfig FromToml(const TOMLValue& toml);
+bool DrawOrderLess(const WorldPos& a, const WorldPos& b);
+
+// NG
+static PlayerConfig fromToml(const TOMLValue& toml);
+```
+
+## マジックナンバー
+
+`readability-magic-numbers` により、以下の値のみリテラルとして直接使用できる。
+
+| 種別 | 許可値 |
+|------|--------|
+| 整数 | `0`, `1`, `-1`, `2` |
+| 浮動小数点 | `0.0`, `1.0`, `0.5` |
+
+それ以外はマジックナンバーとみなされエラーになる。`constexpr` 定数として定義すること。
+
 ## ファイルの追加
 
 新しい `.cpp` / `.hpp` ファイルを追加するときは、`Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
