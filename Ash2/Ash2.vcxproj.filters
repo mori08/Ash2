@@ -171,6 +171,12 @@
     <ClCompile Include="Config\PlayerConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
+    <ClCompile Include="Config\ScenarioData.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\ScenarioPhase.cpp">
+      <Filter>Source Files\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="System\DrawSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -857,10 +863,16 @@
     <ClInclude Include="Component\Drawable.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Name.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Player.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="System\DrawSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\NameLookup.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Component\Velocity.hpp">
@@ -868,6 +880,12 @@
     </ClInclude>
     <ClInclude Include="Config\PlayerConfig.hpp">
       <Filter>Header Files\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ScenarioData.hpp">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\ScenarioPhase.hpp">
+      <Filter>Header Files\Scene</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>

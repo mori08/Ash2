@@ -3,10 +3,12 @@
 #include <ThirdParty/entt/entt.hpp>
 
 #include "Config/PlayerConfig.hpp"
+#include "Config/ScenarioData.hpp"
 #include "Input/PlayerInputAction.hpp"
-#include "Scene/DemoPhase.hpp"
 #include "Scene/PhaseStack.hpp"
+#include "Scene/ScenarioPhase.hpp"
 #include "System/DrawSystem.hpp"
+#include "System/NameLookup.hpp"
 
 #if USE_TEST
 #define CATCH_CONFIG_RUNNER
@@ -26,12 +28,16 @@ void Main() {
 #endif
 
   entt::registry registry;
+  registry.ctx().emplace<NameLookup>();
 
-  const TOMLReader toml(U"config/player.toml");
-  registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(toml));
+  const TOMLReader playerToml(U"config/player.toml");
+  registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
   registry.ctx().emplace<PlayerInputAction>(PlayerInputAction::Default());
 
-  PhaseStack phaseStack(std::make_unique<DemoPhase>(), registry);
+  const TOMLReader scenarioToml(U"config/scenario.toml");
+  registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
+
+  PhaseStack phaseStack(std::make_unique<ScenarioPhase>(U"init"), registry);
 
   while (System::Update()) {
     phaseStack.update(registry);

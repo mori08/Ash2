@@ -18,25 +18,32 @@ Ash2/
 │   │   ├── WorldPos.hpp        # ワールド座標
 │   │   ├── Component/
 │   │   │   ├── Drawable.hpp    # 描画コンポーネント（variant）
+│   │   │   ├── Name.hpp        # エンティティ名コンポーネント
 │   │   │   ├── Player.hpp      # プレイヤータグ
 │   │   │   └── Velocity.hpp    # 速度コンポーネント
 │   │   ├── Config/
-│   │   │   ├── PlayerConfig.hpp  # プレイヤー設定値
-│   │   │   └── PlayerConfig.cpp  # fromTOML() 実装
+│   │   │   ├── PlayerConfig.hpp   # プレイヤー設定値
+│   │   │   ├── PlayerConfig.cpp
+│   │   │   ├── ScenarioData.hpp   # シナリオデータ（ロード済みステップ一覧）
+│   │   │   └── ScenarioData.cpp
 │   │   ├── Input/
 │   │   │   └── PlayerInputAction.hpp  # プレイヤー操作のキー割り当て
 │   │   ├── System/
 │   │   │   ├── DrawSystem.hpp  # 描画システム
-│   │   │   └── DrawSystem.cpp
+│   │   │   ├── DrawSystem.cpp
+│   │   │   └── NameLookup.hpp  # 名前→エンティティ参照コンテキスト
 │   │   └── Scene/
-│   │       ├── IPhase.hpp      # フェーズ基底クラス
-│   │       ├── PhaseStack.hpp  # フェーズスタック
+│   │       ├── IPhase.hpp          # フェーズ基底クラス
+│   │       ├── PhaseStack.hpp      # フェーズスタック
 │   │       ├── PhaseStack.cpp
-│   │       ├── DemoPhase.hpp   # プレイヤー操作デモシーン
-│   │       └── DemoPhase.cpp
+│   │       ├── DemoPhase.hpp       # プレイヤー操作デモシーン
+│   │       ├── DemoPhase.cpp
+│   │       ├── ScenarioPhase.hpp   # TOML シナリオ進行フェーズ
+│   │       └── ScenarioPhase.cpp
 │   ├── App/
 │   │   └── config/
-│   │       └── player.toml     # プレイヤー設定ファイル
+│   │       ├── player.toml     # プレイヤー設定ファイル
+│   │       └── scenario.toml   # シナリオ定義ファイル
 │   ├── tests/
 │   │   ├── TestWorldPos.cpp    # WorldPos ユニットテスト
 │   │   ├── TestPlayerConfig.cpp # PlayerConfig ユニットテスト
@@ -107,6 +114,7 @@ PhaseStack
 | `Velocity` | 速度（w/h/d、ピクセル/秒） |
 | `Player` | プレイヤーを示すタグ（空構造体） |
 | `Drawable` | 描画形状の variant（`RectDrawable` 等） |
+| `Name` | エンティティを識別する名前（`NameLookup` と連携） |
 
 ### 入力管理（Input）
 
@@ -117,24 +125,28 @@ PhaseStack
 - `Default()` ファクトリでデフォルト割り当てを生成し、`registry.ctx()` に格納
 - キーコンフィグ対応時は `PlayerInputAction` の中身を差し替えるだけでよい
 
-```cpp
-// デフォルト割り当て
-auto actions = PlayerInputAction::Default();
-// カスタム割り当て（将来）
-actions.moveLeft = KeyLeft | KeyA | GamepadButton(0);
-```
-
 ### 設定値管理（Config）
 
 ゲームの定数値を型付き構造体（`PlayerConfig` 等）として管理する。
 
-- `fromTOML()` 静的メソッドで TOML ファイルから生成
+- `FromToml()` 静的メソッドで TOML ファイルから生成
 - `registry.ctx()` に格納してフェーズ間で共有
 
-```cpp
-registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(toml[U"player"]));
-auto& cfg = registry.ctx().get<PlayerConfig>();
-```
+### シナリオシステム（ScenarioPhase）
+
+ゲームの進行を `scenario.toml` で管理する。再コンパイル不要でシナリオを編集できる。
+
+- `ScenarioData::FromToml()` でロード時に全セクションを `HashTable<String, Array<TOMLValue>>` へ変換し `registry.ctx()` に格納
+- `ScenarioPhase` は `IPhase` を継承し、1フレームに1ステップを処理する
+- エンティティを名前で参照するため `NameLookup`（`HashTable<String, entity>`）を `registry.ctx()` で共有
+- `ScenarioPhase::onBeforePop()` でこのフェーズが生成したエンティティと `NameLookup` エントリを削除
+
+対応アクション：
+
+| アクション | 処理 |
+|-----------|------|
+| `make` | エンティティを生成し `Name`・`WorldPos`・`Drawable` を付与 |
+| `reset` | `PhaseCommand::Reset` で指定セクションの `ScenarioPhase` に遷移 |
 
 ### 描画システム（DrawSystem）
 
@@ -145,20 +157,9 @@ auto& cfg = registry.ctx().get<PlayerConfig>();
 
 ### 座標系（WorldPos）
 
-疑似3Dの奥行き表現に使うワールド座標。
+疑似3Dの奥行き表現に使うワールド座標。`w`（横）・`h`（高さ、地面=0）・`d`（奥行き）の3軸。
 
-```
-struct WorldPos {
-  double w;  // 横位置（画面 x に対応）
-  double h;  // 高さ（地面 = 0、上方向が正）
-  double d;  // 奥行き（大きいほど奥 = 画面上方）
-};
-
-Vec2 toScreen() → { w, -(d + h) }
-bool isOnGround() → h <= 0.0
-```
-
-- 画面上の y 座標は `-(d + h)` で計算。奥にあるほど・高いほど画面上方に表示される。
+- 画面 y 座標は `-(d + h)`。奥にあるほど・高いほど画面上方に表示される。
 - `DrawOrderLess(a, b)` で奥 → 手前の描画順ソートができる。
 - `isOnGround()` で着地判定（重力・ジャンプ処理で使用）。
 
@@ -170,12 +171,16 @@ bool isOnGround() → h <= 0.0
 |---------|---------------|------|
 | `src/WorldPos.hpp` | `WorldPos` | ワールド座標（w, h, d）と画面座標変換 |
 | `src/Component/Drawable.hpp` | `RectDrawable`, `Drawable` | 描画コンポーネント（形状の variant） |
+| `src/Component/Name.hpp` | `Name` | エンティティ名コンポーネント |
 | `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
 | `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント（w, h, d、ピクセル/秒） |
 | `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤー設定値（速度・ジャンプ・重力） |
+| `src/Config/ScenarioData.hpp/.cpp` | `ScenarioData` | シナリオデータ（ロード済みステップ一覧） |
 | `src/Input/PlayerInputAction.hpp` | `PlayerInputAction` | プレイヤー操作のキー割り当て（InputGroup） |
 | `src/Scene/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Scene/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Scene/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
 | `src/Scene/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
+| `src/Scene/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
 | `src/System/DrawSystem.hpp/.cpp` | `DrawSystem` | depth ソート後に Drawable を描画 |
+| `src/System/NameLookup.hpp` | `NameLookup` | 名前→エンティティ参照コンテキスト（型エイリアス） |
