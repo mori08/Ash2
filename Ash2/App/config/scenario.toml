@@ -1,0 +1,10 @@
+[[init]]
+action = "reset"
+phase = "scenario"
+param = "GameStart"
+
+[[GameStart]]
+action = "make"
+name = "player"
+worldPos = {w = 100.0, h = 0.0, d = 200.0}
+drawable = {w = 50.0, h = 80.0, r = 1.0, g = 0.33, b = 0.2}

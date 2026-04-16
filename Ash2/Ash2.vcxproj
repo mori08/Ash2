@@ -118,7 +118,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
+    <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Scene\ScenarioPhase.cpp" />
     <ClCompile Include="src\Scene\DemoPhase.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\Scene\PhaseStack.cpp" />
@@ -333,11 +335,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Component\Drawable.hpp" />
+    <ClInclude Include="src\Component\Name.hpp" />
     <ClInclude Include="src\Input\PlayerInputAction.hpp" />
     <ClInclude Include="src\Component\Player.hpp" />
     <ClInclude Include="src\Component\Velocity.hpp" />
     <ClInclude Include="src\System\DrawSystem.hpp" />
+    <ClInclude Include="src\System\NameLookup.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
+    <ClInclude Include="src\Config\ScenarioData.hpp" />
+    <ClInclude Include="src\Scene\ScenarioPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\WorldPos.hpp" />
     <ClInclude Include="src\Scene\DemoPhase.hpp" />
