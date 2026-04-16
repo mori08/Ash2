@@ -6,8 +6,8 @@
 #include "System/NameLookup.hpp"
 #include "WorldPos.hpp"
 
-ScenarioPhase::ScenarioPhase(const s3d::String& sectionName)
-    : m_sectionName(sectionName) {}
+ScenarioPhase::ScenarioPhase(s3d::String sectionName)
+    : m_sectionName(std::move(sectionName)) {}
 
 void ScenarioPhase::onAfterPush(entt::registry&) { m_currentStep = 0; }
 

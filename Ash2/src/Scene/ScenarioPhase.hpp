@@ -8,7 +8,7 @@ class ScenarioPhase : public IPhase {
  public:
   /// @brief コンストラクタ
   /// @param sectionName 処理するシナリオセクション名
-  explicit ScenarioPhase(const s3d::String& sectionName);
+  explicit ScenarioPhase(s3d::String sectionName);
 
   /// @brief currentStep_ を初期化する
   /// @param registry ECS レジストリ
