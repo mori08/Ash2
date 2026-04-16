@@ -25,9 +25,9 @@ class ScenarioPhase : public IPhase {
 
  private:
   /// シナリオセクション名
-  s3d::String sectionName_;
+  s3d::String m_sectionName;
   /// 現在のステップインデックス
-  size_t currentStep_ = 0;
+  size_t m_currentStep = 0;
   /// このフェーズで生成したエンティティ一覧
-  s3d::Array<entt::entity> createdEntities_;
+  s3d::Array<entt::entity> m_createdEntities;
 };

@@ -7,19 +7,19 @@
 #include "WorldPos.hpp"
 
 ScenarioPhase::ScenarioPhase(const s3d::String& sectionName)
-    : sectionName_(sectionName) {}
+    : m_sectionName(sectionName) {}
 
-void ScenarioPhase::onAfterPush(entt::registry&) { currentStep_ = 0; }
+void ScenarioPhase::onAfterPush(entt::registry&) { m_currentStep = 0; }
 
 IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry) {
   const auto& steps =
-      registry.ctx().get<ScenarioData>().sections.at(sectionName_);
-  if (currentStep_ >= steps.size()) {
+      registry.ctx().get<ScenarioData>().sections.at(m_sectionName);
+  if (m_currentStep >= steps.size()) {
     return PhaseCommand::Pop();
   }
 
-  const auto& step = steps[currentStep_];
-  ++currentStep_;
+  const auto& step = steps[m_currentStep];
+  ++m_currentStep;
   const auto action = step[U"action"].get<String>();
 
   if (action == U"make") {
@@ -28,7 +28,7 @@ IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry) {
     const auto dr = step[U"drawable"];
 
     auto entity = registry.create();
-    createdEntities_.push_back(entity);
+    m_createdEntities.push_back(entity);
 
     registry.emplace<Name>(entity, name);
     registry.emplace<WorldPos>(entity, WorldPos{
@@ -60,11 +60,11 @@ IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry) {
 
 void ScenarioPhase::onBeforePop(entt::registry& registry) {
   auto& lookup = registry.ctx().get<NameLookup>();
-  for (auto entity : createdEntities_) {
+  for (auto entity : m_createdEntities) {
     if (registry.all_of<Name>(entity)) {
       lookup.erase(registry.get<Name>(entity).value);
     }
     registry.destroy(entity);
   }
-  createdEntities_.clear();
+  m_createdEntities.clear();
 }
