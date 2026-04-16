@@ -68,3 +68,7 @@ git -C ~/path/to/repo status
 - 通常マージ（Merge commit）を使用する
 - PRタイトルは英語・命令形
 - マージ後はブランチを削除する
+
+## issueタイトル
+
+- 日本語で書く
