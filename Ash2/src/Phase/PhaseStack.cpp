@@ -1,4 +1,4 @@
-#include "Scene/PhaseStack.hpp"
+#include "Phase/PhaseStack.hpp"
 
 PhaseStack::PhaseStack(std::unique_ptr<IPhase>&& initialPhase,
                        entt::registry& registry) {

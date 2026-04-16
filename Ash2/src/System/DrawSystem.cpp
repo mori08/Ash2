@@ -1,7 +1,7 @@
 #include "System/DrawSystem.hpp"
 
 #include "Component/Drawable.hpp"
-#include "WorldPos.hpp"
+#include "Component/WorldPos.hpp"
 
 namespace {
 template <class... Ts>

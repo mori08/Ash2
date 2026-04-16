@@ -15,12 +15,12 @@ Ash2/
 │   ├── src/                    # ゲームソースコード
 │   │   ├── Main.cpp            # エントリーポイント
 │   │   ├── stdafx.h            # プリコンパイルヘッダ（Siv3D 一括インクルード）
-│   │   ├── WorldPos.hpp        # ワールド座標
 │   │   ├── Component/
 │   │   │   ├── Drawable.hpp    # 描画コンポーネント（variant）
 │   │   │   ├── Name.hpp        # エンティティ名コンポーネント
 │   │   │   ├── Player.hpp      # プレイヤータグ
-│   │   │   └── Velocity.hpp    # 速度コンポーネント
+│   │   │   ├── Velocity.hpp    # 速度コンポーネント
+│   │   │   └── WorldPos.hpp    # ワールド座標
 │   │   ├── Config/
 │   │   │   ├── PlayerConfig.hpp   # プレイヤー設定値
 │   │   │   ├── PlayerConfig.cpp
@@ -32,7 +32,7 @@ Ash2/
 │   │   │   ├── DrawSystem.hpp  # 描画システム
 │   │   │   ├── DrawSystem.cpp
 │   │   │   └── NameLookup.hpp  # 名前→エンティティ参照コンテキスト
-│   │   └── Scene/
+│   │   └── Phase/
 │   │       ├── IPhase.hpp          # フェーズ基底クラス
 │   │       ├── PhaseStack.hpp      # フェーズスタック
 │   │       ├── PhaseStack.cpp
@@ -106,7 +106,7 @@ PhaseStack
 ### ECS（EnTT）
 
 エンティティ（キャラクター・弾・エフェクト等）のデータを `entt::registry` で管理する。  
-コンポーネントは `src/Component/` に配置する。位置は `WorldPos` を直接使用する。
+コンポーネントはすべて `src/Component/` に配置する。位置は `WorldPos` を直接使用する。
 
 | コンポーネント | 役割 |
 |--------------|------|
@@ -169,7 +169,7 @@ PhaseStack
 
 | ファイル | クラス / 構造体 | 説明 |
 |---------|---------------|------|
-| `src/WorldPos.hpp` | `WorldPos` | ワールド座標（w, h, d）と画面座標変換 |
+| `src/Component/WorldPos.hpp` | `WorldPos` | ワールド座標（w, h, d）と画面座標変換 |
 | `src/Component/Drawable.hpp` | `RectDrawable`, `Drawable` | 描画コンポーネント（形状の variant） |
 | `src/Component/Name.hpp` | `Name` | エンティティ名コンポーネント |
 | `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
@@ -177,10 +177,10 @@ PhaseStack
 | `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤー設定値（速度・ジャンプ・重力） |
 | `src/Config/ScenarioData.hpp/.cpp` | `ScenarioData` | シナリオデータ（ロード済みステップ一覧） |
 | `src/Input/PlayerInputAction.hpp` | `PlayerInputAction` | プレイヤー操作のキー割り当て（InputGroup） |
-| `src/Scene/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
-| `src/Scene/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
-| `src/Scene/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
-| `src/Scene/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
-| `src/Scene/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
+| `src/Phase/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
+| `src/Phase/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
+| `src/Phase/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
+| `src/Phase/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
+| `src/Phase/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
 | `src/System/DrawSystem.hpp/.cpp` | `DrawSystem` | depth ソート後に Drawable を描画 |
 | `src/System/NameLookup.hpp` | `NameLookup` | 名前→エンティティ参照コンテキスト（型エイリアス） |
