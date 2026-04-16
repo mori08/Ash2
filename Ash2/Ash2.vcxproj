@@ -120,10 +120,10 @@
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\Scene\ScenarioPhase.cpp" />
-    <ClCompile Include="src\Scene\DemoPhase.cpp" />
+    <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
+    <ClCompile Include="src\Phase\DemoPhase.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
-    <ClCompile Include="src\Scene\PhaseStack.cpp" />
+    <ClCompile Include="src\Phase\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -343,12 +343,12 @@
     <ClInclude Include="src\System\NameLookup.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
-    <ClInclude Include="src\Scene\ScenarioPhase.hpp" />
+    <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\WorldPos.hpp" />
-    <ClInclude Include="src\Scene\DemoPhase.hpp" />
-    <ClInclude Include="src\Scene\IPhase.hpp" />
-    <ClInclude Include="src\Scene\PhaseStack.hpp" />
+    <ClInclude Include="src\Component\WorldPos.hpp" />
+    <ClInclude Include="src\Phase\DemoPhase.hpp" />
+    <ClInclude Include="src\Phase\IPhase.hpp" />
+    <ClInclude Include="src\Phase\PhaseStack.hpp" />
     <ClInclude Include="ThirdParty\entt\entt.hpp" />
   </ItemGroup>
   <ItemGroup>

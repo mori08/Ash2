@@ -5,8 +5,8 @@
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Input/PlayerInputAction.hpp"
-#include "Scene/PhaseStack.hpp"
-#include "Scene/ScenarioPhase.hpp"
+#include "Phase/PhaseStack.hpp"
+#include "Phase/ScenarioPhase.hpp"
 #include "System/DrawSystem.hpp"
 #include "System/NameLookup.hpp"
 

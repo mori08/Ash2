@@ -1,7 +1,7 @@
 #if USE_TEST
 #include <ThirdParty/Catch2/catch.hpp>
 
-#include "WorldPos.hpp"
+#include "Component/WorldPos.hpp"
 
 TEST_CASE("WorldPos::ToScreen - far objects have smaller y") {
   // 奥にあるものほどy座標が小さい

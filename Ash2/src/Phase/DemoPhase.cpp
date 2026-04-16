@@ -1,11 +1,11 @@
-#include "Scene/DemoPhase.hpp"
+#include "Phase/DemoPhase.hpp"
 
 #include "Component/Drawable.hpp"
 #include "Component/Player.hpp"
 #include "Component/Velocity.hpp"
+#include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Input/PlayerInputAction.hpp"
-#include "WorldPos.hpp"
 
 void DemoPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();

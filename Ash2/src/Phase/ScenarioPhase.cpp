@@ -1,10 +1,10 @@
-#include "Scene/ScenarioPhase.hpp"
+#include "Phase/ScenarioPhase.hpp"
 
 #include "Component/Drawable.hpp"
 #include "Component/Name.hpp"
+#include "Component/WorldPos.hpp"
 #include "Config/ScenarioData.hpp"
 #include "System/NameLookup.hpp"
-#include "WorldPos.hpp"
 
 ScenarioPhase::ScenarioPhase(s3d::String sectionName)
     : m_sectionName(std::move(sectionName)) {}
