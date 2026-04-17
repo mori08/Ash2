@@ -7,6 +7,47 @@ paths:
 
 # コーディングスタイル
 
+## 静的解析（clang-tidy）
+
+clang-tidy はバージョン **19 系**を使用する。
+
+`.cpp` ファイルを編集したら、必ず以下のコマンドで静的解析をかける（`stdafx.cpp` は除く）：
+
+```bash
+REPO=$(git rev-parse --show-toplevel)
+PROJECT_WIN=$(cygpath -w "$REPO/Ash2")
+SIV3D_WIN=$(cygpath -w "$SIV3D_0_6_16")
+TIDY_WIN=$(cygpath -w "$REPO/Ash2/.tidy")
+CLANG_TIDY=$(find "/c/Program Files/Microsoft Visual Studio" -path "*/Llvm/x64/bin/clang-tidy.exe" 2>/dev/null | head -1)
+TARGET_WIN=$(cygpath -w <ファイルパス>)
+
+MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" \
+"$CLANG_TIDY" \
+  "--header-filter=.*Ash2[\\/](src|tests)[\\/].*" \
+  "$TARGET_WIN" \
+  -- \
+  --driver-mode=cl /std:c++latest /Zc:__cplusplus /utf-8 \
+  "/FI${PROJECT_WIN}\\src\\stdafx.h" \
+  -D_DEBUG -D_WINDOWS \
+  -D_ENABLE_EXTENDED_ALIGNED_STORAGE \
+  -D_SILENCE_CXX20_CISO646_REMOVED_WARNING \
+  -D_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS \
+  -D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS \
+  -DUSE_TEST \
+  "-I${TIDY_WIN}" "-I${PROJECT_WIN}\\src" "-I${PROJECT_WIN}" \
+  -imsvc "${SIV3D_WIN}\\include" \
+  -imsvc "${SIV3D_WIN}\\include\\ThirdParty"
+```
+
+警告が出た場合はすべて修正してから返答すること。
+修正後は必ず clang-format もかけること（下記参照）。
+
+**備考：**
+- `SIV3D_0_6_16` は Siv3D SDK インストール時に設定される環境変数
+- `-imsvc` で Siv3D をシステムヘッダー扱いにし、DirectXMath 由来のエラーを抑制
+- `Ash2/.tidy/cpuid.h` は DirectXMath 互換のスタブ（削除しないこと）
+- `.hpp` 単体の編集時はインクルードしている `.cpp` に対して実行すること
+
 ## フォーマット自動適用
 
 clang-format はバージョン **19 系**を使用する。
