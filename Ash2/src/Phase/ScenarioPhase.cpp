@@ -10,10 +10,6 @@
 ScenarioPhase::ScenarioPhase(s3d::String sectionName)
     : m_sectionName(std::move(sectionName)) {}
 
-std::unique_ptr<IPhase> ScenarioPhase::FromToml(const TOMLValue& step) {
-  return std::make_unique<ScenarioPhase>(step[U"param"].get<String>());
-}
-
 void ScenarioPhase::onAfterPush(entt::registry&) { m_currentStep = 0; }
 
 IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,

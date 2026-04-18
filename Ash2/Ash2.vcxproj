@@ -120,6 +120,7 @@
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Phase\PhaseRegistration.cpp" />
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
     <ClCompile Include="src\Phase\DemoPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />

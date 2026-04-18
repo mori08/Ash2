@@ -1,8 +1,12 @@
 #pragma once
 
-#include <Siv3D.hpp>
+#include <memory>
 
 #include "IPhase.hpp"
+
+namespace s3d {
+class TOMLValue;
+}
 
 /// @brief 指定秒数待機してから Pop するフェーズ
 class WaitPhase : public IPhase {

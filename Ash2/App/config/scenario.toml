@@ -13,3 +13,7 @@ drawable = {w = 50.0, h = 80.0, r = 1.0, g = 0.33, b = 0.2}
 action = "push"
 phase = "wait"
 duration = 2.0
+
+[[GameStart]]
+action = "push"
+phase = "demo"
