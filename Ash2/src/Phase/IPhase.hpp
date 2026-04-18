@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Siv3D.hpp>
+
 #include <ThirdParty/entt/entt.hpp>
 
 /// @brief フェーズの基底クラス
