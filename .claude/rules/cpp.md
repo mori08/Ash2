@@ -39,6 +39,10 @@ MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" \
   -imsvc "${SIV3D_WIN}\\include\\ThirdParty"
 ```
 
+clang-tidy は時間がかかるため `run_in_background: true` でバックグラウンド実行し、
+その間に clang-format・ドキュメント更新・vcxproj 編集など tidy 結果に依存しない作業を進める。
+コミット前に結果を確認して警告がないことを確認すること。
+
 警告が出た場合はすべて修正してから返答すること。
 修正後は必ず clang-format もかけること（下記参照）。
 
@@ -87,30 +91,6 @@ struct WorldPos {
 /// @return a が b より奥にある場合 true
 inline bool DrawOrderLess(const WorldPos& a, const WorldPos& b);
 ```
-
-## 命名規則
-
-静的メンバ関数・通常関数（free function）は PascalCase（大文字始まり）で書く。
-
-```cpp
-// OK
-static PlayerConfig FromToml(const TOMLValue& toml);
-bool DrawOrderLess(const WorldPos& a, const WorldPos& b);
-
-// NG
-static PlayerConfig fromToml(const TOMLValue& toml);
-```
-
-## マジックナンバー
-
-`readability-magic-numbers` により、以下の値のみリテラルとして直接使用できる。
-
-| 種別 | 許可値 |
-|------|--------|
-| 整数 | `0`, `1`, `-1`, `2` |
-| 浮動小数点 | `0.0`, `1.0`, `0.5` |
-
-それ以外はマジックナンバーとみなされエラーになる。`constexpr` 定数として定義すること。
 
 ## ファイルの追加
 
