@@ -38,6 +38,7 @@ Ash2/
 │   │       ├── PhaseStack.cpp
 │   │       ├── DemoPhase.hpp       # プレイヤー操作デモシーン
 │   │       ├── DemoPhase.cpp
+│   │       ├── PhaseRegistry.hpp   # フェーズ名→ファクトリ関数の対応表
 │   │       ├── ScenarioPhase.hpp   # TOML シナリオ進行フェーズ
 │   │       ├── ScenarioPhase.cpp
 │   │       ├── WaitPhase.hpp       # 指定秒数待機フェーズ
@@ -143,12 +144,17 @@ PhaseStack
 - エンティティを名前で参照するため `NameLookup`（`HashTable<String, entity>`）を `registry.ctx()` で共有
 - `ScenarioPhase::onBeforePop()` でこのフェーズが生成したエンティティと `NameLookup` エントリを削除
 
-対応アクション：
+フェーズ生成は `PhaseRegistry`（`HashTable<String, PhaseFactory>`）で管理する。
+各フェーズクラスが `fromToml()` で自身のインスタンス化を担い、`ScenarioPhase` は他フェーズを `#include` しない。
+`Main.cpp` で登録を行い、新しいフェーズの追加は `fromToml()` の実装と登録のみで完結する。
 
-| アクション | 処理 |
-|-----------|------|
-| `make` | エンティティを生成し `Name`・`WorldPos`・`Drawable` を付与 |
-| `reset` | `PhaseCommand::Reset` で指定セクションの `ScenarioPhase` に遷移 |
+TOML の `action` フィールドはスタック操作を表し、`phase` フィールドは `PhaseRegistry` のキーを指定する：
+
+| `action` | `phase` フィールド | 処理 |
+|---------|------------------|------|
+| `push` | フェーズ名（`wait` 等） | `PhaseRegistry` でフェーズを生成して Push |
+| `reset` | フェーズ名（`scenario` 等） | `PhaseRegistry` でフェーズを生成して Reset |
+| `make` | — | エンティティを生成し `Name`・`WorldPos`・`Drawable` を付与 |
 
 ### 描画システム（DrawSystem）
 
@@ -182,6 +188,7 @@ PhaseStack
 | `src/Phase/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Phase/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Phase/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
+| `src/Phase/PhaseRegistry.hpp` | `PhaseFactory`, `PhaseRegistry` | フェーズ名→ファクトリ関数の対応表（型エイリアス） |
 | `src/Phase/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
 | `src/Phase/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
 | `src/Phase/WaitPhase.hpp/.cpp` | `WaitPhase` | 指定秒数待機してから Pop するフェーズ |

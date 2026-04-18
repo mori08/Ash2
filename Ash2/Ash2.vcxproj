@@ -344,6 +344,7 @@
     <ClInclude Include="src\System\NameLookup.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
+    <ClInclude Include="src\Phase\PhaseRegistry.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />

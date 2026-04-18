@@ -893,6 +893,9 @@
     <ClInclude Include="Config\ScenarioData.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
+    <ClInclude Include="Phase\PhaseRegistry.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
     <ClInclude Include="Phase\ScenarioPhase.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>

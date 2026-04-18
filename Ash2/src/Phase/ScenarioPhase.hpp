@@ -10,6 +10,12 @@ class ScenarioPhase : public IPhase {
   /// @param sectionName 処理するシナリオセクション名
   explicit ScenarioPhase(s3d::String sectionName);
 
+  /// @brief TOML ステップからインスタンスを生成する
+  /// @param step TOML ステップ（`param` フィールドにセクション名を持つ）
+  /// @return ScenarioPhase インスタンス
+  [[nodiscard]] static std::unique_ptr<IPhase> FromToml(
+      const s3d::TOMLValue& step);
+
   /// @brief currentStep_ を初期化する
   /// @param registry ECS レジストリ
   void onAfterPush(entt::registry& registry) override;
