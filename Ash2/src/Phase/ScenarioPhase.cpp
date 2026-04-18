@@ -11,7 +11,8 @@ ScenarioPhase::ScenarioPhase(s3d::String sectionName)
 
 void ScenarioPhase::onAfterPush(entt::registry&) { m_currentStep = 0; }
 
-IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry) {
+IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,
+                                           double /*dt*/) {
   const auto& steps =
       registry.ctx().get<ScenarioData>().sections.at(m_sectionName);
   if (m_currentStep >= steps.size()) {

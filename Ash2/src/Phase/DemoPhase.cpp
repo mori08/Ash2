@@ -18,10 +18,9 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
       player, RectDrawable{.size = cfg.spriteSize, .color = cfg.spriteColor});
 }
 
-IPhase::PhaseCommand DemoPhase::update(entt::registry& registry) {
+IPhase::PhaseCommand DemoPhase::update(entt::registry& registry, double dt) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& actions = registry.ctx().get<PlayerInputAction>();
-  const double dt = Scene::DeltaTime();
 
   const double vw = actions.moveRight.pressed()  ? cfg.speed
                     : actions.moveLeft.pressed() ? -cfg.speed

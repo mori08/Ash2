@@ -39,7 +39,9 @@ Ash2/
 │   │       ├── DemoPhase.hpp       # プレイヤー操作デモシーン
 │   │       ├── DemoPhase.cpp
 │   │       ├── ScenarioPhase.hpp   # TOML シナリオ進行フェーズ
-│   │       └── ScenarioPhase.cpp
+│   │       ├── ScenarioPhase.cpp
+│   │       ├── WaitPhase.hpp       # 指定秒数待機フェーズ
+│   │       └── WaitPhase.cpp
 │   ├── App/
 │   │   └── config/
 │   │       ├── player.toml     # プレイヤー設定ファイル
@@ -76,9 +78,9 @@ Ash2/
 ```
 Main()
   └─ System::Update() ループ
-       ├─ PhaseStack::update(registry)
-       │    └─ IPhase::update(registry)  ← 現在の最前面フェーズ
-       └─ DrawSystem::draw(registry)     ← 描画（depth ソート後）
+       ├─ PhaseStack::update(registry)          ← Scene::DeltaTime() を取得
+       │    └─ IPhase::update(registry, dt)     ← 現在の最前面フェーズ
+       └─ DrawSystem::draw(registry)            ← 描画（depth ソート後）
 ```
 
 `entt::registry` をゲーム全体で共有し、フェーズ間でエンティティの状態を引き継ぐ。
@@ -91,9 +93,9 @@ Main()
 PhaseStack
   └─ Array<unique_ptr<IPhase>>  （末尾 = 最前面）
        ├─ IPhase（抽象）
-       │   ├─ onAfterPush()    プッシュ直後に呼ばれる
-       │   ├─ update()         毎フレーム更新（純粋仮想）→ PhaseCommand を返す
-       │   └─ onBeforePop()    ポップ直前に呼ばれる
+       │   ├─ onAfterPush()        プッシュ直後に呼ばれる
+       │   ├─ update(registry, dt) 毎フレーム更新（純粋仮想）→ PhaseCommand を返す
+       │   └─ onBeforePop()        ポップ直前に呼ばれる
        └─ PhaseCommand
            ├─ None   継続
            ├─ Pop    自身をポップ
@@ -182,5 +184,6 @@ PhaseStack
 | `src/Phase/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
 | `src/Phase/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
 | `src/Phase/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
+| `src/Phase/WaitPhase.hpp/.cpp` | `WaitPhase` | 指定秒数待機してから Pop するフェーズ |
 | `src/System/DrawSystem.hpp/.cpp` | `DrawSystem` | depth ソート後に Drawable を描画 |
 | `src/System/NameLookup.hpp` | `NameLookup` | 名前→エンティティ参照コンテキスト（型エイリアス） |
