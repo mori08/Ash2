@@ -46,6 +46,10 @@ jobs:
           $testFiles = Get-ChildItem -Path "$projectDir\tests" -Filter "*.cpp" |
             Select-Object -ExpandProperty FullName
 
+          $srcFiles = @(
+            "$projectDir\src\Phase\WaitPhase.cpp"
+          )
+
           cl.exe `
             /std:c++latest /Zc:__cplusplus /utf-8 /EHsc `
             /DUSE_TEST `
@@ -55,6 +59,7 @@ jobs:
             /I"$sdkRoot\include\ThirdParty" `
             "$outDir\main.cpp" `
             $testFiles `
+            $srcFiles `
             /Fe:"$outDir\tests.exe"
 
           if ($LASTEXITCODE -ne 0) { exit 1 }

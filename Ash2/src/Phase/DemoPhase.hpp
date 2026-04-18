@@ -11,6 +11,8 @@ class DemoPhase : public IPhase {
 
   /// @brief 毎フレームの更新処理
   /// @param registry ECS レジストリ
+  /// @param dt 経過時間（秒）
   /// @return フェーズスタックへの操作
-  [[nodiscard]] PhaseCommand update(entt::registry& registry) override;
+  [[nodiscard]] PhaseCommand update(entt::registry& registry,
+                                    double dt) override;
 };

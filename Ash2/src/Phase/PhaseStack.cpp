@@ -10,7 +10,8 @@ void PhaseStack::update(entt::registry& registry) {
     return;
   }
 
-  auto command = m_stack.back()->update(registry);
+  const double dt = Scene::DeltaTime();
+  auto command = m_stack.back()->update(registry, dt);
 
   switch (command.type) {
     case IPhase::PhaseCommand::Type::None:
