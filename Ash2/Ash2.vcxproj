@@ -122,6 +122,7 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
     <ClCompile Include="src\Phase\DemoPhase.cpp" />
+    <ClCompile Include="src\Phase\WaitPhase.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
@@ -344,6 +345,7 @@
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
+    <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
     <ClInclude Include="src\Phase\DemoPhase.hpp" />

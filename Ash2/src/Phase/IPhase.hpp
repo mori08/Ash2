@@ -47,8 +47,10 @@ class IPhase {
 
   /// @brief 毎フレームの更新処理
   /// @param registry ECS レジストリ
+  /// @param dt 経過時間（秒）
   /// @return フェーズスタックへの操作
-  [[nodiscard]] virtual PhaseCommand update(entt::registry& registry) = 0;
+  [[nodiscard]] virtual PhaseCommand update(entt::registry& registry,
+                                            double dt) = 0;
 
   /// @brief スタックから取り出される直前に呼ばれる
   /// @param registry ECS レジストリ

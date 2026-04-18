@@ -186,6 +186,9 @@
     <ClCompile Include="Phase\DemoPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
+    <ClCompile Include="Phase\WaitPhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
     <ClCompile Include="Phase\PhaseStack.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
@@ -894,6 +897,9 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="Phase\DemoPhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\WaitPhase.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Phase\IPhase.hpp">
