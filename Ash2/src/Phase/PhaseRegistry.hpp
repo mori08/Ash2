@@ -2,9 +2,6 @@
 
 #include <Siv3D.hpp>
 
-#include <functional>
-#include <memory>
-
 class IPhase;
 
 /// @brief フェーズ名とファクトリ関数の対応表
@@ -13,3 +10,7 @@ using PhaseFactory =
 
 /// @brief フェーズ名 → ファクトリ関数のマップ
 using PhaseRegistry = s3d::HashTable<s3d::String, PhaseFactory>;
+
+/// @brief ゲームで使用するフェーズの登録情報を生成する
+/// @return フェーズ名とファクトリ関数の対応表
+[[nodiscard]] PhaseRegistry MakeDefaultPhaseRegistry();

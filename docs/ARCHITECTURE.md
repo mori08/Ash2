@@ -38,7 +38,8 @@ Ash2/
 │   │       ├── PhaseStack.cpp
 │   │       ├── DemoPhase.hpp       # プレイヤー操作デモシーン
 │   │       ├── DemoPhase.cpp
-│   │       ├── PhaseRegistry.hpp   # フェーズ名→ファクトリ関数の対応表
+│   │       ├── PhaseRegistry.hpp      # フェーズ名→ファクトリ関数の対応表・生成関数宣言
+│   │       ├── PhaseRegistration.cpp  # MakeDefaultPhaseRegistry の実装（全フェーズ登録）
 │   │       ├── ScenarioPhase.hpp   # TOML シナリオ進行フェーズ
 │   │       ├── ScenarioPhase.cpp
 │   │       ├── WaitPhase.hpp       # 指定秒数待機フェーズ
@@ -145,8 +146,10 @@ PhaseStack
 - `ScenarioPhase::onBeforePop()` でこのフェーズが生成したエンティティと `NameLookup` エントリを削除
 
 フェーズ生成は `PhaseRegistry`（`HashTable<String, PhaseFactory>`）で管理する。
-各フェーズクラスが `fromToml()` で自身のインスタンス化を担い、`ScenarioPhase` は他フェーズを `#include` しない。
-`Main.cpp` で登録を行い、新しいフェーズの追加は `fromToml()` の実装と登録のみで完結する。
+`ScenarioPhase` は他フェーズを `#include` しない。
+ファクトリ関数（TOMLValue → IPhase）は `PhaseRegistration.cpp` にラムダとして集約し、
+`MakeDefaultPhaseRegistry()` で生成して `registry.ctx()` に格納する。
+新しいフェーズの追加は `PhaseRegistration.cpp` への1行追記のみで完結する。
 
 TOML の `action` フィールドはスタック操作を表し、`phase` フィールドは `PhaseRegistry` のキーを指定する：
 
@@ -188,7 +191,8 @@ TOML の `action` フィールドはスタック操作を表し、`phase` フィ
 | `src/Phase/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Phase/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Phase/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
-| `src/Phase/PhaseRegistry.hpp` | `PhaseFactory`, `PhaseRegistry` | フェーズ名→ファクトリ関数の対応表（型エイリアス） |
+| `src/Phase/PhaseRegistry.hpp` | `PhaseFactory`, `PhaseRegistry`, `MakeDefaultPhaseRegistry` | フェーズ名→ファクトリ関数の対応表と生成関数の宣言 |
+| `src/Phase/PhaseRegistration.cpp` | `MakeDefaultPhaseRegistry` | ゲーム用フェーズのファクトリ登録 |
 | `src/Phase/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
 | `src/Phase/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
 | `src/Phase/WaitPhase.hpp/.cpp` | `WaitPhase` | 指定秒数待機してから Pop するフェーズ |

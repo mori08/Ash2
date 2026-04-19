@@ -8,7 +8,6 @@
 #include "Phase/PhaseRegistry.hpp"
 #include "Phase/PhaseStack.hpp"
 #include "Phase/ScenarioPhase.hpp"
-#include "Phase/WaitPhase.hpp"
 #include "System/DrawSystem.hpp"
 #include "System/NameLookup.hpp"
 
@@ -39,10 +38,7 @@ void Main() {
   const TOMLReader scenarioToml(U"config/scenario.toml");
   registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
 
-  registry.ctx().emplace<PhaseRegistry>(PhaseRegistry{
-      {U"wait", WaitPhase::FromToml},
-      {U"scenario", ScenarioPhase::FromToml},
-  });
+  registry.ctx().emplace<PhaseRegistry>(MakeDefaultPhaseRegistry());
 
   PhaseStack phaseStack(std::make_unique<ScenarioPhase>(U"init"), registry);
 
