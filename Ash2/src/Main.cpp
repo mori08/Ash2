@@ -5,6 +5,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Input/PlayerInputAction.hpp"
+#include "Phase/PhaseRegistry.hpp"
 #include "Phase/PhaseStack.hpp"
 #include "Phase/ScenarioPhase.hpp"
 #include "System/DrawSystem.hpp"
@@ -36,6 +37,8 @@ void Main() {
 
   const TOMLReader scenarioToml(U"config/scenario.toml");
   registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
+
+  registry.ctx().emplace<PhaseRegistry>(MakeDefaultPhaseRegistry());
 
   PhaseStack phaseStack(std::make_unique<ScenarioPhase>(U"init"), registry);
 

@@ -8,3 +8,12 @@ action = "make"
 name = "player"
 worldPos = {w = 100.0, h = 0.0, d = 200.0}
 drawable = {w = 50.0, h = 80.0, r = 1.0, g = 0.33, b = 0.2}
+
+[[GameStart]]
+action = "push"
+phase = "wait"
+duration = 2.0
+
+[[GameStart]]
+action = "push"
+phase = "demo"

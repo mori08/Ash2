@@ -38,6 +38,8 @@ Ash2/
 │   │       ├── PhaseStack.cpp
 │   │       ├── DemoPhase.hpp       # プレイヤー操作デモシーン
 │   │       ├── DemoPhase.cpp
+│   │       ├── PhaseRegistry.hpp      # フェーズ名→ファクトリ関数の対応表・生成関数宣言
+│   │       ├── PhaseRegistration.cpp  # MakeDefaultPhaseRegistry の実装（全フェーズ登録）
 │   │       ├── ScenarioPhase.hpp   # TOML シナリオ進行フェーズ
 │   │       ├── ScenarioPhase.cpp
 │   │       ├── WaitPhase.hpp       # 指定秒数待機フェーズ
@@ -143,12 +145,19 @@ PhaseStack
 - エンティティを名前で参照するため `NameLookup`（`HashTable<String, entity>`）を `registry.ctx()` で共有
 - `ScenarioPhase::onBeforePop()` でこのフェーズが生成したエンティティと `NameLookup` エントリを削除
 
-対応アクション：
+フェーズ生成は `PhaseRegistry`（`HashTable<String, PhaseFactory>`）で管理する。
+`ScenarioPhase` は他フェーズを `#include` しない。
+ファクトリ関数（TOMLValue → IPhase）は `PhaseRegistration.cpp` にラムダとして集約し、
+`MakeDefaultPhaseRegistry()` で生成して `registry.ctx()` に格納する。
+新しいフェーズの追加は `PhaseRegistration.cpp` への1行追記のみで完結する。
 
-| アクション | 処理 |
-|-----------|------|
-| `make` | エンティティを生成し `Name`・`WorldPos`・`Drawable` を付与 |
-| `reset` | `PhaseCommand::Reset` で指定セクションの `ScenarioPhase` に遷移 |
+TOML の `action` フィールドはスタック操作を表し、`phase` フィールドは `PhaseRegistry` のキーを指定する：
+
+| `action` | `phase` フィールド | 処理 |
+|---------|------------------|------|
+| `push` | フェーズ名（`wait` 等） | `PhaseRegistry` でフェーズを生成して Push |
+| `reset` | フェーズ名（`scenario` 等） | `PhaseRegistry` でフェーズを生成して Reset |
+| `make` | — | エンティティを生成し `Name`・`WorldPos`・`Drawable` を付与 |
 
 ### 描画システム（DrawSystem）
 
@@ -182,6 +191,8 @@ PhaseStack
 | `src/Phase/IPhase.hpp` | `IPhase` | フェーズ基底クラス |
 | `src/Phase/IPhase.hpp` | `IPhase::PhaseCommand` | フェーズスタック操作コマンド |
 | `src/Phase/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
+| `src/Phase/PhaseRegistry.hpp` | `PhaseFactory`, `PhaseRegistry`, `MakeDefaultPhaseRegistry` | フェーズ名→ファクトリ関数の対応表と生成関数の宣言 |
+| `src/Phase/PhaseRegistration.cpp` | `MakeDefaultPhaseRegistry` | ゲーム用フェーズのファクトリ登録 |
 | `src/Phase/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
 | `src/Phase/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
 | `src/Phase/WaitPhase.hpp/.cpp` | `WaitPhase` | 指定秒数待機してから Pop するフェーズ |

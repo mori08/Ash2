@@ -4,6 +4,7 @@
 #include "Component/Name.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/ScenarioData.hpp"
+#include "Phase/PhaseRegistry.hpp"
 #include "System/NameLookup.hpp"
 
 ScenarioPhase::ScenarioPhase(s3d::String sectionName)
@@ -22,6 +23,16 @@ IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,
   const auto& step = steps[m_currentStep];
   ++m_currentStep;
   const auto action = step[U"action"].get<String>();
+  const auto& factories = registry.ctx().get<PhaseRegistry>();
+
+  if (action == U"push") {
+    return PhaseCommand::Push(factories.at(step[U"phase"].get<String>())(step));
+  }
+
+  if (action == U"reset") {
+    return PhaseCommand::Reset(
+        factories.at(step[U"phase"].get<String>())(step));
+  }
 
   if (action == U"make") {
     const auto name = step[U"name"].get<String>();
@@ -49,11 +60,6 @@ IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,
     lookup[name] = entity;
 
     return PhaseCommand::None();
-  }
-
-  if (action == U"reset") {
-    const auto param = step[U"param"].get<String>();
-    return PhaseCommand::Reset(std::make_unique<ScenarioPhase>(param));
   }
 
   return PhaseCommand::None();
