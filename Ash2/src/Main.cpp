@@ -9,7 +9,6 @@
 #include "Phase/PhaseRegistry.hpp"
 #include "Phase/PhaseStack.hpp"
 #include "Phase/ScenarioPhase.hpp"
-#include "System/AttachmentSystem.hpp"
 #include "System/DrawSystem.hpp"
 #include "System/NameLookup.hpp"
 
@@ -50,7 +49,6 @@ void Main() {
         .input = actions.toInputState(),
     };
     phaseStack.update(registry, frameData);
-    AttachmentSystem::UpdateTransform(registry);
     DrawSystem::Draw(registry);
   }
 }
