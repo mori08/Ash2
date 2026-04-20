@@ -124,6 +124,8 @@
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
     <ClCompile Include="src\Phase\DemoPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
+    <ClCompile Include="src\Component\Hierarchy.cpp" />
+    <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
@@ -337,12 +339,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Component\Drawable.hpp" />
+    <ClInclude Include="src\Component\Hierarchy.hpp" />
+    <ClInclude Include="src\Component\LocalOffset.hpp" />
     <ClInclude Include="src\Component\Name.hpp" />
     <ClInclude Include="src\Input\InputState.hpp" />
     <ClInclude Include="src\Input\PlayerInputAction.hpp" />
     <ClInclude Include="src\Phase\FrameData.hpp" />
     <ClInclude Include="src\Component\Player.hpp" />
     <ClInclude Include="src\Component\Velocity.hpp" />
+    <ClInclude Include="src\System\AttachmentSystem.hpp" />
     <ClInclude Include="src\System\DrawSystem.hpp" />
     <ClInclude Include="src\System\NameLookup.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
