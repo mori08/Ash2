@@ -3,6 +3,9 @@ name: commit-push
 description: Stage files, commit with proper message, and push to remote
 ---
 
+Before doing anything, check the current branch with git branch. If on main:
+- Read docs/GIT.md to confirm whether the work qualifies as `chore` (direct commit allowed) or `enhancement`/`bug` (must use a feature/fix branch and PR). If it is not `chore`, stop and tell the user to create a branch first.
+
 Run git status and git diff in parallel to understand what has changed.
 
 Then stage the relevant files, commit, and push using these rules:
