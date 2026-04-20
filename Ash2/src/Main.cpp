@@ -5,6 +5,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Input/PlayerInputAction.hpp"
+#include "Phase/FrameData.hpp"
 #include "Phase/PhaseRegistry.hpp"
 #include "Phase/PhaseStack.hpp"
 #include "Phase/ScenarioPhase.hpp"
@@ -33,17 +34,21 @@ void Main() {
 
   const TOMLReader playerToml(U"config/player.toml");
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
-  registry.ctx().emplace<PlayerInputAction>(PlayerInputAction::Default());
 
   const TOMLReader scenarioToml(U"config/scenario.toml");
   registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
 
   registry.ctx().emplace<PhaseRegistry>(MakeDefaultPhaseRegistry());
 
+  const PlayerInputAction actions = PlayerInputAction::Default();
   PhaseStack phaseStack(std::make_unique<ScenarioPhase>(U"init"), registry);
 
   while (System::Update()) {
-    phaseStack.update(registry);
+    const FrameData frameData{
+        .dt = Scene::DeltaTime(),
+        .input = actions.toInputState(),
+    };
+    phaseStack.update(registry, frameData);
     DrawSystem::Draw(registry);
   }
 }

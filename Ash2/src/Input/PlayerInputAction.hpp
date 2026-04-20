@@ -1,6 +1,8 @@
 #pragma once
 #include <Siv3D.hpp>
 
+#include "Input/InputState.hpp"
+
 /// @brief プレイヤー操作のキー割り当て
 struct PlayerInputAction {
   /// 左移動
@@ -17,6 +19,10 @@ struct PlayerInputAction {
   /// @brief デフォルトのキー割り当てを返す
   /// @return デフォルトの PlayerInputAction
   [[nodiscard]] static PlayerInputAction Default();
+
+  /// @brief 現在のキー入力状態を InputState に変換して返す
+  /// @return フレームの入力状態
+  [[nodiscard]] InputState toInputState() const;
 };
 
 inline PlayerInputAction PlayerInputAction::Default() {
@@ -26,5 +32,15 @@ inline PlayerInputAction PlayerInputAction::Default() {
       .moveForward = KeyUp | KeyW,
       .moveBackward = KeyDown | KeyS,
       .jump = KeySpace,
+  };
+}
+
+inline InputState PlayerInputAction::toInputState() const {
+  return {
+      .moveLeft = moveLeft.pressed(),
+      .moveRight = moveRight.pressed(),
+      .moveForward = moveForward.pressed(),
+      .moveBackward = moveBackward.pressed(),
+      .jumpDown = jump.down(),
   };
 }

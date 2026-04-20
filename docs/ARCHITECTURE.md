@@ -96,7 +96,7 @@ PhaseStack
   └─ Array<unique_ptr<IPhase>>  （末尾 = 最前面）
        ├─ IPhase（抽象）
        │   ├─ onAfterPush()        プッシュ直後に呼ばれる
-       │   ├─ update(registry, dt) 毎フレーム更新（純粋仮想）→ PhaseCommand を返す
+       │   ├─ update(registry, frameData) 毎フレーム更新（純粋仮想）→ PhaseCommand を返す
        │   └─ onBeforePop()        ポップ直前に呼ばれる
        └─ PhaseCommand
            ├─ None   継続
@@ -106,6 +106,7 @@ PhaseStack
 ```
 
 `IPhase` を継承してフェーズ（タイトル・ゲームプレイ等）を実装する。
+`update()` に渡される `FrameData` は `dt`（経過時間）と `InputState`（入力状態）をまとめた Siv3D 非依存の構造体で、テスト時に直接構築して渡せる。
 
 ### ECS（EnTT）
 
@@ -122,12 +123,12 @@ PhaseStack
 
 ### 入力管理（Input）
 
-プレイヤー操作のキー割り当てを `PlayerInputAction` 構造体で管理する。
+入力管理は Humble Object パターンで Siv3D ランタイム依存を `Main.cpp` に閉じ込める。
 
-- 各アクション（moveLeft / moveRight / moveForward / moveBackward / jump 等）を Siv3D の `InputGroup` で保持
-- `InputGroup` は複数のキーを OR でまとめられるため、「左矢印またはA」のような複合割り当てが可能
-- `Default()` ファクトリでデフォルト割り当てを生成し、`registry.ctx()` に格納
-- キーコンフィグ対応時は `PlayerInputAction` の中身を差し替えるだけでよい
+- `PlayerInputAction`（Siv3D 依存）: キー割り当てを `InputGroup` で保持。`Main()` のローカル変数として管理し、キーコンフィグ対応時は中身を差し替えるだけでよい
+- `InputState`（Siv3D 非依存）: フレームごとの入力を plain `bool` で保持
+- `PlayerInputAction::toInputState()` で毎フレーム `InputState` に変換し、`FrameData` に格納してフェーズに渡す
+- フェーズは `FrameData::input` を参照するだけでよく、Siv3D の `InputGroup` に依存しない
 
 ### 設定値管理（Config）
 

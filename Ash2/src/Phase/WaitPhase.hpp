@@ -11,10 +11,10 @@ class WaitPhase : public IPhase {
 
   /// @brief 経過時間を積算し、duration を超えたら Pop を返す
   /// @param registry ECS レジストリ
-  /// @param dt 経過時間（秒）
+  /// @param frameData フレームごとの更新データ
   /// @return duration 経過後に Pop、それまでは None
   [[nodiscard]] PhaseCommand update(entt::registry& registry,
-                                    double dt) override;
+                                    const FrameData& frameData) override;
 
  private:
   /// 待機時間（秒）

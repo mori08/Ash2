@@ -5,13 +5,12 @@ PhaseStack::PhaseStack(std::unique_ptr<IPhase>&& initialPhase,
   push(registry, std::move(initialPhase));
 }
 
-void PhaseStack::update(entt::registry& registry) {
+void PhaseStack::update(entt::registry& registry, const FrameData& frameData) {
   if (m_stack.empty()) {
     return;
   }
 
-  const double dt = Scene::DeltaTime();
-  auto command = m_stack.back()->update(registry, dt);
+  auto command = m_stack.back()->update(registry, frameData);
 
   switch (command.type) {
     case IPhase::PhaseCommand::Type::None:
