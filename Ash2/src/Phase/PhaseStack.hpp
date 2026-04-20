@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IPhase.hpp"
+#include "Phase/FrameData.hpp"
 
 /// @brief フェーズをスタックで管理するクラス
 class PhaseStack {
@@ -13,7 +14,8 @@ class PhaseStack {
 
   /// @brief 毎フレームの更新処理
   /// @param registry ECS レジストリ
-  void update(entt::registry& registry);
+  /// @param frameData フレームごとの更新データ
+  void update(entt::registry& registry, const FrameData& frameData);
 
  private:
   /// @brief スタックの先頭フェーズを取り出す

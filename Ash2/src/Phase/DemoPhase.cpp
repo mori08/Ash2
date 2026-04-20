@@ -5,7 +5,7 @@
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
-#include "Input/PlayerInputAction.hpp"
+#include "Phase/FrameData.hpp"
 
 void DemoPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -18,30 +18,31 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
       player, RectDrawable{.size = cfg.spriteSize, .color = cfg.spriteColor});
 }
 
-IPhase::PhaseCommand DemoPhase::update(entt::registry& registry, double dt) {
+IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
+                                       const FrameData& frameData) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& actions = registry.ctx().get<PlayerInputAction>();
+  const auto& input = frameData.input;
 
-  const double vw = actions.moveRight.pressed()  ? cfg.speed
-                    : actions.moveLeft.pressed() ? -cfg.speed
-                                                 : 0.0;
-  const double vd = actions.moveForward.pressed()    ? cfg.speed
-                    : actions.moveBackward.pressed() ? -cfg.speed
-                                                     : 0.0;
+  const double vw = input.moveRight  ? cfg.speed
+                    : input.moveLeft ? -cfg.speed
+                                     : 0.0;
+  const double vd = input.moveForward    ? cfg.speed
+                    : input.moveBackward ? -cfg.speed
+                                         : 0.0;
 
   auto view = registry.view<Player, WorldPos, Velocity>();
   for (auto [entity, pos, vel] : view.each()) {
     vel.w = vw;
     vel.d = vd;
-    pos.w += vel.w * dt;
-    pos.d += vel.d * dt;
+    pos.w += vel.w * frameData.dt;
+    pos.d += vel.d * frameData.dt;
 
-    if (actions.jump.down() && pos.isOnGround()) {
+    if (input.jumpDown && pos.isOnGround()) {
       vel.h = cfg.jumpSpeed;
     }
 
-    vel.h -= cfg.gravity * dt;
-    pos.h += vel.h * dt;
+    vel.h -= cfg.gravity * frameData.dt;
+    pos.h += vel.h * frameData.dt;
 
     if (pos.h < 0.0) {
       pos.h = 0.0;

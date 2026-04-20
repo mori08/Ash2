@@ -16,10 +16,10 @@ class ScenarioPhase : public IPhase {
 
   /// @brief 毎フレーム 1 ステップを処理する
   /// @param registry ECS レジストリ
-  /// @param dt 経過時間（秒）
+  /// @param frameData フレームごとの更新データ
   /// @return フェーズスタックへの操作
   [[nodiscard]] PhaseCommand update(entt::registry& registry,
-                                    double dt) override;
+                                    const FrameData& frameData) override;
 
   /// @brief 生成したエンティティと NameLookup エントリを削除する
   /// @param registry ECS レジストリ

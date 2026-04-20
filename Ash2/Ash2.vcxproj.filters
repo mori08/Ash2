@@ -869,8 +869,14 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Input\InputState.hpp">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
     <ClInclude Include="Input\PlayerInputAction.hpp">
       <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\FrameData.hpp">
+      <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Component\Drawable.hpp">
       <Filter>Header Files\Component</Filter>
