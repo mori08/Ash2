@@ -75,13 +75,20 @@ jobs:
             "-imsvc", "$sdkRoot\include\ThirdParty"
           )
 
-          $failed = $false
+          $failedFiles = [System.Collections.Concurrent.ConcurrentBag[string]]::new()
+
           Get-ChildItem -Path "$projectDir\src", "$projectDir\tests" -Filter "*.cpp" -Recurse |
             Where-Object { $_.Name -ne "stdafx.cpp" } |
-            ForEach-Object {
+            ForEach-Object -Parallel {
+              $opts  = $using:tidyOpts
+              $flags = $using:compileFlags
+              $bag   = $using:failedFiles
               Write-Host "Checking: $($_.Name)"
-              clang-tidy @tidyOpts $_.FullName '--' @compileFlags
-              if ($LASTEXITCODE -ne 0) { $failed = $true }
-            }
+              clang-tidy @opts $_.FullName '--' @flags 2>&1 | Write-Host
+              if ($LASTEXITCODE -ne 0) { $bag.Add($_.Name) }
+            } -ThrottleLimit 4
 
-          if ($failed) { exit 1 }
+          if ($failedFiles.Count -gt 0) {
+            Write-Host "##[error]clang-tidy failed on: $($failedFiles -join ', ')"
+            exit 1
+          }
