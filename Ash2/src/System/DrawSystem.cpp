@@ -33,8 +33,15 @@ void DrawSystem::Draw(const entt::registry& registry) {
     std::visit(
         Overloaded{
             [&screenPos](const RectDrawable& shape) {
-              RectF{Arg::bottomCenter(screenPos), shape.size.x, shape.size.y}
-                  .draw(shape.color);
+              RectF{Arg::center(screenPos), shape.size.x, shape.size.y}.draw(
+                  shape.color);
+            },
+            [&screenPos](const CircleDrawable& shape) {
+              Circle{screenPos, shape.radius}.draw(shape.color);
+            },
+            [&screenPos](const PieDrawable& shape) {
+              Circle{screenPos, shape.radius}.drawPie(shape.startAngle,
+                                                      shape.angle, shape.color);
             },
         },
         entry.drawable.get());
