@@ -1,22 +1,12 @@
 name: clang-tidy
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'Ash2/src/**'
-      - 'Ash2/tests/**'
-      - '.clang-tidy'
-      - '.github/workflows/clang-tidy.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'Ash2/src/**'
-      - 'Ash2/tests/**'
-      - '.clang-tidy'
-      - '.github/workflows/clang-tidy.yml'
+  schedule:
+    - cron: '0 15 * * *'  # 毎日 00:00 JST
+  workflow_dispatch:
+
+permissions:
+  issues: write
 
 env:
   SIV3D_VERSION: 0.6.16
@@ -34,29 +24,22 @@ jobs:
           Expand-Archive -Path "C:\OpenSiv3D_SDK.zip" -DestinationPath "C:"
 
       - name: Run clang-tidy
+        id: tidy
         shell: pwsh
         run: |
           $sdkRoot    = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
           $projectDir = "$env:GITHUB_WORKSPACE\Ash2"
 
-          # clang-tidy オプション
           $tidyOpts = @(
             "--header-filter=.*Ash2[\\/](src|tests)[\\/].*"
           )
 
-          # -- の後に渡すコンパイルフラグ
-          # --driver-mode=cl で clang-cl（MSVC 互換）モードにする。
-          # MSVC ヘッダーの正しい解析と / プレフィックスのフラグ使用に必要。
           $compileFlags = @(
             "--driver-mode=cl",
             "/std:c++latest",
             "/Zc:__cplusplus",
             "/utf-8",
-
-            # stdafx.h を強制インクルード（ForcedIncludeFiles の再現）
             "/FI$projectDir\src\stdafx.h",
-
-            # プリプロセッサ定義（Debug 構成）
             "-D_DEBUG",
             "-D_WINDOWS",
             "-D_ENABLE_EXTENDED_ALIGNED_STORAGE",
@@ -64,31 +47,78 @@ jobs:
             "-D_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS",
             "-D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
             "-DUSE_TEST",
-
-            # プロジェクトのインクルードパス
             "-I$projectDir\src",
             "-I$projectDir",
-
-            # Siv3D SDK をシステムヘッダー扱いにして警告を抑制する
-            # clang-cl モードでは -isystem の代わりに -imsvc を使う
             "-imsvc", "$sdkRoot\include",
             "-imsvc", "$sdkRoot\include\ThirdParty"
           )
 
-          $failedFiles = [System.Collections.Concurrent.ConcurrentBag[string]]::new()
+          $failedFiles = @()
 
           Get-ChildItem -Path "$projectDir\src", "$projectDir\tests" -Filter "*.cpp" -Recurse |
             Where-Object { $_.Name -ne "stdafx.cpp" } |
-            ForEach-Object -Parallel {
-              $opts  = $using:tidyOpts
-              $flags = $using:compileFlags
-              $bag   = $using:failedFiles
+            ForEach-Object {
               Write-Host "Checking: $($_.Name)"
-              clang-tidy @opts $_.FullName '--' @flags 2>&1 | Write-Host
-              if ($LASTEXITCODE -ne 0) { $bag.Add($_.Name) }
-            } -ThrottleLimit 4
+              clang-tidy @tidyOpts $_.FullName '--' @compileFlags 2>&1 | Write-Host
+              if ($LASTEXITCODE -ne 0) { $failedFiles += $_.Name }
+            }
 
           if ($failedFiles.Count -gt 0) {
-            Write-Host "##[error]clang-tidy failed on: $($failedFiles -join ', ')"
-            exit 1
+            $failed = ($failedFiles | Sort-Object) -join ','
+            "result=failure" >> $env:GITHUB_OUTPUT
+            "failed_files=$failed" >> $env:GITHUB_OUTPUT
+          } else {
+            "result=success" >> $env:GITHUB_OUTPUT
           }
+
+      - name: Ensure clang-tidy label exists
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create clang-tidy --color "e4e669" --description "clang-tidy 自動レポート" --force
+
+      - name: Update or create issue
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $result = "${{ steps.tidy.outputs.result }}"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $date   = (Get-Date -Format "yyyy-MM-dd")
+
+          $issueJson   = gh issue list --label clang-tidy --state open --json number | ConvertFrom-Json
+          $issueNumber = if ($issueJson.Count -gt 0) { $issueJson[0].number } else { $null }
+
+          if ($result -eq "success") {
+            if ($issueNumber) {
+              gh issue close $issueNumber --comment "✅ $date の実行で警告がなくなりました。[実行ログ]($runUrl)"
+              Write-Host "Closed issue #$issueNumber"
+            }
+          } else {
+            $failedList = "${{ steps.tidy.outputs.failed_files }}" -split ',' |
+              ForEach-Object { "- ``$_``" }
+
+            $body = "## clang-tidy 警告レポート ($date)`n`n" +
+                    "以下のファイルで警告が検出されました。`n`n" +
+                    ($failedList -join "`n") + "`n`n" +
+                    "詳細は[実行ログ]($runUrl)を参照してください。"
+
+            $bodyFile = "$env:RUNNER_TEMP\issue_body.md"
+            $body | Out-File -FilePath $bodyFile -Encoding utf8
+
+            if ($issueNumber) {
+              gh issue edit $issueNumber --body-file $bodyFile
+              Write-Host "Updated issue #$issueNumber"
+            } else {
+              gh issue create --title "clang-tidy 警告レポート" --label clang-tidy --body-file $bodyFile
+              Write-Host "Created new issue"
+            }
+          }
+
+      - name: Fail if warnings detected
+        if: steps.tidy.outputs.result == 'failure'
+        shell: pwsh
+        run: |
+          Write-Host "##[error]clang-tidy warnings detected. See the issue for details."
+          exit 1

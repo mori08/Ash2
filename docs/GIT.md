@@ -47,6 +47,7 @@ main への直接 amend は避け、feature ブランチ上でのみ使用する
 | `enhancement` | 新機能・改善 |
 | `bug` | 不具合修正 |
 | `chore` | リファクタリング・環境整備など |
+| `clang-tidy` | clang-tidy 自動レポート（CI が自動で付与） |
 
 ## git コマンドの実行形式
 
