@@ -150,7 +150,7 @@ Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
 | `src/Component/Name.hpp` | `Name` | エンティティ名コンポーネント |
 | `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
 | `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント |
-| `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤー設定値 |
+| `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig`, `PlayerPiePartConfig`, `PlayerCirclePartConfig` | プレイヤーとパーツの設定値 |
 | `src/Config/ScenarioData.hpp/.cpp` | `ScenarioData` | シナリオデータ |
 | `src/Input/PlayerInputAction.hpp` | `PlayerInputAction` | プレイヤー操作のキー割り当て |
 | `src/Phase/IPhase.hpp` | `IPhase`, `PhaseCommand` | フェーズ基底クラスとコマンド |
