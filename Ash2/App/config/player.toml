@@ -3,33 +3,33 @@ jump_speed = 400.0
 gravity = 980.0
 
 [body]
-offset = {w = 0.0, h = 35.0, d = 0.0}
-radius = 30.0
-start_angle = 149.0
-angle = 66.0
+offset = {w = 0.0, h = 40.0, d = 0.0}
+radius = 36.0
+start_angle = 155.0
+angle = 50.0
 color = {r = 0.941, g = 0.941, b = 0.941}
 
 [head]
-offset = {w = 0.0, h = 35.0, d = -0.1}
-radius = 15.0
+offset = {w = 0.0, h = 40.0, d = -0.1}
+radius = 18.0
 color = {r = 0.941, g = 0.941, b = 0.941}
 
 [hand_front]
-offset = {w = 25.0, h = 30.0, d = -0.3}
-radius = 5.0
+offset = {w = 9.0, h = 19.0, d = -0.3}
+radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
 
 [hand_back]
-offset = {w = -25.0, h = 30.0, d = 0.3}
-radius = 5.0
+offset = {w = -10.0, h = 21.0, d = 0.3}
+radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
 
 [foot_left]
-offset = {w = -12.0, h = 5.0, d = 0.2}
-radius = 5.0
+offset = {w = -8.0, h = 6.0, d = 0.2}
+radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
 
 [foot_right]
-offset = {w = 12.0, h = 5.0, d = 0.2}
-radius = 5.0
+offset = {w = +7.0, h = 5.0, d = 0.2}
+radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
