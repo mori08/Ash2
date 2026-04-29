@@ -14,8 +14,8 @@ s3d::ColorF ParseColor(const s3d::TOMLValue& v) {
 PlayerPiePartConfig ParsePiePart(const s3d::TOMLValue& v) {
   return {.offset = ParseOffset(v[U"offset"]),
           .radius = v[U"radius"].get<double>(),
-          .startAngle = v[U"start_angle"].get<double>(),
-          .angle = v[U"angle"].get<double>(),
+          .startAngle = Math::ToRadians(v[U"start_angle"].get<double>()),
+          .angle = Math::ToRadians(v[U"angle"].get<double>()),
           .color = ParseColor(v[U"color"])};
 }
 
