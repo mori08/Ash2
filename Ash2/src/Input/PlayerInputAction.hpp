@@ -15,6 +15,8 @@ struct PlayerInputAction {
   InputGroup moveBackward;
   /// ジャンプ
   InputGroup jump;
+  /// 設定再読み込み
+  InputGroup reloadConfig;
 
   /// @brief デフォルトのキー割り当てを返す
   /// @return デフォルトの PlayerInputAction
@@ -32,6 +34,7 @@ inline PlayerInputAction PlayerInputAction::Default() {
       .moveForward = KeyUp | KeyW,
       .moveBackward = KeyDown | KeyS,
       .jump = KeySpace,
+      .reloadConfig = KeyF5,
   };
 }
 
@@ -42,5 +45,6 @@ inline InputState PlayerInputAction::toInputState() const {
       .moveForward = moveForward.pressed(),
       .moveBackward = moveBackward.pressed(),
       .jumpDown = jump.down(),
+      .reloadConfig = reloadConfig.down(),
   };
 }

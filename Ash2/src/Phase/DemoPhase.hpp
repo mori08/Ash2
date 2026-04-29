@@ -21,6 +21,10 @@ class DemoPhase : public IPhase {
   void onBeforePop(entt::registry& registry) override;
 
  private:
+  /// @brief プレイヤーを破棄して最新の設定で再生成する
+  /// @param registry ECS レジストリ
+  void reloadPlayer(entt::registry& registry);
+
   /// プレイヤーのルートエンティティ
   entt::entity m_playerRoot = entt::null;
 };

@@ -49,6 +49,10 @@ void Main() {
         .dt = Scene::DeltaTime(),
         .input = actions.toInputState(),
     };
+    if (frameData.input.reloadConfig) {
+      const TOMLReader playerToml(U"config/player.toml");
+      registry.ctx().get<PlayerConfig>() = PlayerConfig::FromToml(playerToml);
+    }
     phaseStack.update(registry, frameData);
     AttachmentSystem::UpdateTransform(registry);
     DrawSystem::Draw(registry);

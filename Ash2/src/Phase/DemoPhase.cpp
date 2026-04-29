@@ -76,7 +76,16 @@ IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
     }
   }
 
+  if (frameData.input.reloadConfig) {
+    reloadPlayer(registry);
+  }
+
   return PhaseCommand::None();
+}
+
+void DemoPhase::reloadPlayer(entt::registry& registry) {
+  onBeforePop(registry);
+  onAfterPush(registry);
 }
 
 void DemoPhase::onBeforePop(entt::registry& registry) {
