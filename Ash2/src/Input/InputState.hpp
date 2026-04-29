@@ -12,4 +12,6 @@ struct InputState {
   bool moveBackward = false;
   /// ジャンプキーが押された（1フレーム限り）
   bool jumpDown = false;
+  /// 設定再読み込みキーが押された（1フレーム限り）
+  bool reloadConfig = false;
 };
