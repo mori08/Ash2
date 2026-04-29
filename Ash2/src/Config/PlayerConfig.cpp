@@ -11,18 +11,29 @@ s3d::ColorF ParseColor(const s3d::TOMLValue& v) {
   return {v[U"r"].get<double>(), v[U"g"].get<double>(), v[U"b"].get<double>()};
 }
 
+s3d::Optional<BorderStyle> ParseBorder(const s3d::TOMLValue& v) {
+  const auto& border = v[U"border"];
+  if (border.getType() != s3d::TOMLValueType::Table) {
+    return s3d::none;
+  }
+  return BorderStyle{.color = ParseColor(border[U"color"]),
+                     .thickness = border[U"thickness"].get<double>()};
+}
+
 PlayerPiePartConfig ParsePiePart(const s3d::TOMLValue& v) {
   return {.offset = ParseOffset(v[U"offset"]),
           .radius = v[U"radius"].get<double>(),
           .startAngle = Math::ToRadians(v[U"start_angle"].get<double>()),
           .angle = Math::ToRadians(v[U"angle"].get<double>()),
-          .color = ParseColor(v[U"color"])};
+          .color = ParseColor(v[U"color"]),
+          .border = ParseBorder(v)};
 }
 
 PlayerCirclePartConfig ParseCirclePart(const s3d::TOMLValue& v) {
   return {.offset = ParseOffset(v[U"offset"]),
           .radius = v[U"radius"].get<double>(),
-          .color = ParseColor(v[U"color"])};
+          .color = ParseColor(v[U"color"]),
+          .border = ParseBorder(v)};
 }
 }  // namespace
 

@@ -146,7 +146,7 @@ Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
 | `src/Component/WorldPos.hpp` | `WorldPos` | ワールド座標と画面座標変換 |
 | `src/Component/Hierarchy.hpp/.cpp` | `Hierarchy` | 親子関係（双方向連結リスト、操作は static メンバ関数経由のみ） |
 | `src/Component/LocalOffset.hpp` | `LocalOffset` | 親からの相対座標 |
-| `src/Component/Drawable.hpp` | `RectDrawable`, `CircleDrawable`, `PieDrawable`, `Drawable` | 描画コンポーネント（形状の variant） |
+| `src/Component/Drawable.hpp` | `BorderStyle`, `RectDrawable`, `CircleDrawable`, `PieDrawable`, `Drawable` | 描画コンポーネント（形状の variant）。各形状は `Optional<BorderStyle>` で枠線を持つ |
 | `src/Component/Name.hpp` | `Name` | エンティティ名コンポーネント |
 | `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
 | `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント |

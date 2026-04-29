@@ -23,8 +23,9 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
   const auto makeCircle = [&](const PlayerCirclePartConfig& part) {
     auto e = registry.create();
     registry.emplace<WorldPos>(e);
-    registry.emplace<Drawable>(
-        e, CircleDrawable{.radius = part.radius, .color = part.color});
+    registry.emplace<Drawable>(e, CircleDrawable{.radius = part.radius,
+                                                 .color = part.color,
+                                                 .border = part.border});
     Hierarchy::Attach(registry, m_playerRoot, e, part.offset);
   };
 
@@ -34,7 +35,8 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
                              PieDrawable{.radius = cfg.body.radius,
                                          .startAngle = cfg.body.startAngle,
                                          .angle = cfg.body.angle,
-                                         .color = cfg.body.color});
+                                         .color = cfg.body.color,
+                                         .border = cfg.body.border});
   Hierarchy::Attach(registry, m_playerRoot, body, cfg.body.offset);
 
   makeCircle(cfg.head);
