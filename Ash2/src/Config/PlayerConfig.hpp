@@ -1,6 +1,7 @@
 #pragma once
 #include <Siv3D.hpp>
 
+#include "Component/Drawable.hpp"
 #include "Component/WorldPos.hpp"
 
 /// @brief 扇形パーツの設定値
@@ -15,6 +16,8 @@ struct PlayerPiePartConfig {
   double angle;
   /// 描画色
   s3d::ColorF color;
+  /// 枠線（none = 枠線なし）
+  s3d::Optional<BorderStyle> border;
 };
 
 /// @brief 円形パーツの設定値
@@ -25,6 +28,8 @@ struct PlayerCirclePartConfig {
   double radius;
   /// 描画色
   s3d::ColorF color;
+  /// 枠線（none = 枠線なし）
+  s3d::Optional<BorderStyle> border;
 };
 
 /// @brief プレイヤーの設定値

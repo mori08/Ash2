@@ -3,12 +3,22 @@
 
 #include <variant>
 
+/// @brief 枠線スタイル
+struct BorderStyle {
+  /// 枠線の色
+  ColorF color;
+  /// 枠線の太さ
+  double thickness;
+};
+
 /// @brief 矩形描画データ
 struct RectDrawable {
   /// 描画サイズ（幅・高さ）
   SizeF size;
   /// 描画色
   ColorF color;
+  /// 枠線（none = 枠線なし）
+  Optional<BorderStyle> border;
 };
 
 /// @brief 円描画データ
@@ -17,6 +27,8 @@ struct CircleDrawable {
   double radius;
   /// 描画色
   ColorF color;
+  /// 枠線（none = 枠線なし）
+  Optional<BorderStyle> border;
 };
 
 /// @brief 扇形描画データ
@@ -29,6 +41,8 @@ struct PieDrawable {
   double angle;
   /// 描画色
   ColorF color;
+  /// 枠線（none = 枠線なし）
+  Optional<BorderStyle> border;
 };
 
 /// @brief 描画コンポーネント（描画形状の variant）

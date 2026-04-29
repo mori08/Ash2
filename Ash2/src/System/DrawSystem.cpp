@@ -33,15 +33,35 @@ void DrawSystem::Draw(const entt::registry& registry) {
     std::visit(
         Overloaded{
             [&screenPos](const RectDrawable& shape) {
-              RectF{Arg::center(screenPos), shape.size.x, shape.size.y}.draw(
-                  shape.color);
+              const RectF rect{Arg::center(screenPos), shape.size.x,
+                               shape.size.y};
+              rect.draw(shape.color);
+              if (shape.border) {
+                rect.drawFrame(shape.border->thickness, shape.border->color);
+              }
             },
             [&screenPos](const CircleDrawable& shape) {
-              Circle{screenPos, shape.radius}.draw(shape.color);
+              const Circle circle{screenPos, shape.radius};
+              circle.draw(shape.color);
+              if (shape.border) {
+                circle.drawFrame(shape.border->thickness, shape.border->color);
+              }
             },
             [&screenPos](const PieDrawable& shape) {
-              Circle{screenPos, shape.radius}.drawPie(shape.startAngle,
-                                                      shape.angle, shape.color);
+              const Circle circle{screenPos, shape.radius};
+              circle.drawPie(shape.startAngle, shape.angle, shape.color);
+              if (shape.border) {
+                const auto& b = *shape.border;
+                circle.drawArc(shape.startAngle, shape.angle, 0.0, b.thickness,
+                               b.color);
+                const Vec2 p1 =
+                    screenPos + Vec2{Circular{shape.radius, shape.startAngle}};
+                const Vec2 p2 =
+                    screenPos + Vec2{Circular{shape.radius,
+                                              shape.startAngle + shape.angle}};
+                Line{screenPos, p1}.draw(b.thickness, b.color);
+                Line{screenPos, p2}.draw(b.thickness, b.color);
+              }
             },
         },
         entry.drawable.get());
