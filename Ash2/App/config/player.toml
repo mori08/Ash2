@@ -8,52 +8,34 @@ radius = 36.0
 start_angle = 155.0
 angle = 50.0
 color = {r = 0.941, g = 0.941, b = 0.941}
-
-[body.border]
-thickness = 1.5
-color = {r = 0.2, g = 0.2, b = 0.2}
+border = {thickness = 1.5, color = {r = 0.2, g = 0.2, b = 0.2}}
 
 [head]
-offset = {w = 0.0, h = 40.0, d = -0.1}
+offset = {w = 0.0, h = 39.0, d = -0.1}
 radius = 18.0
 color = {r = 0.941, g = 0.941, b = 0.941}
-
-[head.border]
-thickness = 1.5
-color = {r = 0.2, g = 0.2, b = 0.2}
+border = {thickness = 1.5, color = {r = 0.2, g = 0.2, b = 0.2}}
 
 [hand_front]
-offset = {w = 9.0, h = 19.0, d = -0.3}
+offset = {w = 9.0, h = 17.0, d = -0.3}
 radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
-
-[hand_front.border]
-thickness = 1.0
-color = {r = 0.2, g = 0.2, b = 0.2}
+border = {thickness = 1.0, color = {r = 0.2, g = 0.2, b = 0.2}}
 
 [hand_back]
 offset = {w = -10.0, h = 21.0, d = 0.3}
 radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
-
-[hand_back.border]
-thickness = 1.0
-color = {r = 0.2, g = 0.2, b = 0.2}
+border = {thickness = 1.0, color = {r = 0.2, g = 0.2, b = 0.2}}
 
 [foot_left]
 offset = {w = -8.0, h = 6.0, d = 0.2}
 radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
-
-[foot_left.border]
-thickness = 1.0
-color = {r = 0.2, g = 0.2, b = 0.2}
+border = {thickness = 1.0, color = {r = 0.2, g = 0.2, b = 0.2}}
 
 [foot_right]
-offset = {w = +7.0, h = 5.0, d = 0.2}
+offset = {w = +8.0, h = 4.0, d = 0.2}
 radius = 6.0
 color = {r = 0.941, g = 0.941, b = 0.941}
-
-[foot_right.border]
-thickness = 1.0
-color = {r = 0.2, g = 0.2, b = 0.2}
+border = {thickness = 1.0, color = {r = 0.2, g = 0.2, b = 0.2}}
