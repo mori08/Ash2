@@ -5,7 +5,7 @@
 /// @brief プレイヤー操作デモシーン
 class DemoPhase : public IPhase {
  public:
-  /// @brief プレイヤーエンティティ（ルート＋パーツ6体）を生成する
+  /// @brief プレイヤーエンティティ（ルート）を生成する
   /// @param registry ECS レジストリ
   void onAfterPush(entt::registry& registry) override;
 
@@ -27,4 +27,6 @@ class DemoPhase : public IPhase {
 
   /// プレイヤーのルートエンティティ
   entt::entity m_playerRoot = entt::null;
+  /// プレイヤーテクスチャ（ライフタイムを DemoPhase が管理）
+  s3d::Texture m_playerTexture;
 };

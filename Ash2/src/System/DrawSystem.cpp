@@ -63,6 +63,9 @@ void DrawSystem::Draw(const entt::registry& registry) {
                 Line{screenPos, p2}.draw(b.thickness, b.color);
               }
             },
+            [&screenPos](const TextureDrawable& shape) {
+              shape.region.drawAt(screenPos + shape.drawOffset);
+            },
         },
         entry.drawable.get());
   }

@@ -45,5 +45,14 @@ struct PieDrawable {
   Optional<BorderStyle> border;
 };
 
+/// @brief テクスチャ描画データ
+struct TextureDrawable {
+  /// 描画テクスチャ領域
+  TextureRegion region;
+  /// 描画オフセット（中心座標からのずれ、アンカー調整用）
+  Vec2 drawOffset{0, 0};
+};
+
 /// @brief 描画コンポーネント（描画形状の variant）
-using Drawable = std::variant<RectDrawable, CircleDrawable, PieDrawable>;
+using Drawable =
+    std::variant<RectDrawable, CircleDrawable, PieDrawable, TextureDrawable>;

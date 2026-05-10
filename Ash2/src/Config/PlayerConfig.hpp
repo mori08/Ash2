@@ -1,35 +1,16 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include "Component/Drawable.hpp"
-#include "Component/WorldPos.hpp"
-
-/// @brief 扇形パーツの設定値
-struct PlayerPiePartConfig {
-  /// 親からの相対座標
-  WorldPos offset;
-  /// 半径
-  double radius;
-  /// 開始角度（ラジアン、12時方向から時計回り）
-  double startAngle;
-  /// 角度（ラジアン）
-  double angle;
-  /// 描画色
-  s3d::ColorF color;
-  /// 枠線（none = 枠線なし）
-  s3d::Optional<BorderStyle> border;
-};
-
-/// @brief 円形パーツの設定値
-struct PlayerCirclePartConfig {
-  /// 親からの相対座標
-  WorldPos offset;
-  /// 半径
-  double radius;
-  /// 描画色
-  s3d::ColorF color;
-  /// 枠線（none = 枠線なし）
-  s3d::Optional<BorderStyle> border;
+/// @brief プレイヤーテクスチャのフレーム設定
+struct PlayerTextureConfig {
+  /// スプライトシート上のフレーム幅（ピクセル）
+  int frameWidth;
+  /// スプライトシート上のフレーム高さ（ピクセル）
+  int frameHeight;
+  /// 使用するフレームインデックス（0 始まり、左上から横方向）
+  int frameIndex;
+  /// 描画オフセット（中心座標からのずれ、アンカー調整用）
+  s3d::Vec2 drawOffset;
 };
 
 /// @brief プレイヤーの設定値
@@ -40,18 +21,8 @@ struct PlayerConfig {
   double jumpSpeed;
   /// 重力加速度（ピクセル/秒^2）
   double gravity;
-  /// 体パーツ設定
-  PlayerPiePartConfig body;
-  /// 頭パーツ設定
-  PlayerCirclePartConfig head;
-  /// 手（前）パーツ設定
-  PlayerCirclePartConfig handFront;
-  /// 手（後）パーツ設定
-  PlayerCirclePartConfig handBack;
-  /// 足（左）パーツ設定
-  PlayerCirclePartConfig footLeft;
-  /// 足（右）パーツ設定
-  PlayerCirclePartConfig footRight;
+  /// テクスチャフレーム設定
+  PlayerTextureConfig texture;
 
   /// @brief TOML からプレイヤー設定を生成する
   /// @param toml TOML 値
