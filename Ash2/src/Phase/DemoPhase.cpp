@@ -12,38 +12,24 @@
 
 void DemoPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& tc = cfg.texture;
+
+  m_playerTexture = s3d::Texture{U"image/player.png"};
+  const int cols = m_playerTexture.width() / tc.frameWidth;
+  const int col = tc.frameIndex % cols;
+  const int row = tc.frameIndex / cols;
+  const s3d::TextureRegion region = m_playerTexture(
+      col * tc.frameWidth, row * tc.frameHeight, tc.frameWidth, tc.frameHeight);
 
   m_playerRoot = registry.create();
   registry.emplace<Player>(m_playerRoot);
   registry.emplace<WorldPos>(m_playerRoot);
   registry.emplace<Velocity>(m_playerRoot);
   registry.emplace<Name>(m_playerRoot, Name{U"player"});
+  registry.emplace<Drawable>(
+      m_playerRoot,
+      TextureDrawable{.region = region, .drawOffset = tc.drawOffset});
   registry.ctx().get<NameLookup>()[U"player"] = m_playerRoot;
-
-  const auto makeCircle = [&](const PlayerCirclePartConfig& part) {
-    auto e = registry.create();
-    registry.emplace<WorldPos>(e);
-    registry.emplace<Drawable>(e, CircleDrawable{.radius = part.radius,
-                                                 .color = part.color,
-                                                 .border = part.border});
-    Hierarchy::Attach(registry, m_playerRoot, e, part.offset);
-  };
-
-  auto body = registry.create();
-  registry.emplace<WorldPos>(body);
-  registry.emplace<Drawable>(body,
-                             PieDrawable{.radius = cfg.body.radius,
-                                         .startAngle = cfg.body.startAngle,
-                                         .angle = cfg.body.angle,
-                                         .color = cfg.body.color,
-                                         .border = cfg.body.border});
-  Hierarchy::Attach(registry, m_playerRoot, body, cfg.body.offset);
-
-  makeCircle(cfg.head);
-  makeCircle(cfg.handFront);
-  makeCircle(cfg.handBack);
-  makeCircle(cfg.footLeft);
-  makeCircle(cfg.footRight);
 }
 
 IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
