@@ -7,47 +7,6 @@
 
 ---
 
-## ディレクトリ構成
-
-```
-Ash2/
-├── Ash2/
-│   ├── src/
-│   │   ├── Main.cpp
-│   │   ├── stdafx.h
-│   │   ├── Component/
-│   │   │   ├── Drawable.hpp    # 描画コンポーネント（variant）
-│   │   │   ├── Hierarchy.hpp/.cpp  # 親子関係（双方向連結リスト）
-│   │   │   ├── LocalOffset.hpp # 親からの相対座標
-│   │   │   ├── Name.hpp        # エンティティ名
-│   │   │   ├── Player.hpp      # プレイヤータグ
-│   │   │   ├── Velocity.hpp    # 速度
-│   │   │   └── WorldPos.hpp    # ワールド座標（常に絶対座標）
-│   │   ├── Config/
-│   │   │   ├── PlayerConfig.hpp/.cpp
-│   │   │   └── ScenarioData.hpp/.cpp
-│   │   ├── Input/
-│   │   │   └── PlayerInputAction.hpp
-│   │   ├── System/
-│   │   │   ├── AttachmentSystem.hpp/.cpp  # 親子座標伝播
-│   │   │   ├── DrawSystem.hpp/.cpp
-│   │   │   └── NameLookup.hpp
-│   │   └── Phase/
-│   │       ├── IPhase.hpp / PhaseStack.hpp/.cpp
-│   │       ├── DemoPhase.hpp/.cpp
-│   │       ├── PhaseRegistry.hpp / PhaseRegistration.cpp
-│   │       ├── ScenarioPhase.hpp/.cpp
-│   │       └── WaitPhase.hpp/.cpp
-│   ├── App/config/
-│   │   ├── player.toml
-│   │   └── scenario.toml
-│   ├── tests/
-│   └── ThirdParty/entt/entt.hpp
-└── docs/
-```
-
----
-
 ## 主要な技術
 
 | 技術 | バージョン | 役割 |
@@ -66,8 +25,10 @@ Ash2/
 ```
 Main()
   └─ System::Update() ループ
-       ├─ PhaseStack::update(registry)
-       │    └─ IPhase::update(registry, dt)
+       ├─ FrameData 生成（dt + InputState）
+       ├─ reloadConfig 入力時: PlayerConfig を TOML から再読み込み
+       ├─ PhaseStack::update(registry, frameData)
+       │    └─ IPhase::update(registry, frameData)
        ├─ AttachmentSystem::UpdateTransform(registry)  ← 親子座標伝播
        └─ DrawSystem::Draw(registry)                   ← depth ソート後に描画
 ```
@@ -152,7 +113,9 @@ Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
 | `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント |
 | `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig`, `PlayerTextureConfig` | プレイヤーの設定値（物理定数＋テクスチャフレーム設定） |
 | `src/Config/ScenarioData.hpp/.cpp` | `ScenarioData` | シナリオデータ |
+| `src/Input/InputState.hpp` | `InputState` | フレームごとのプレイヤー入力状態（Siv3D 非依存） |
 | `src/Input/PlayerInputAction.hpp` | `PlayerInputAction` | プレイヤー操作のキー割り当て |
+| `src/Phase/FrameData.hpp` | `FrameData` | dt と InputState をまとめたフレームデータ |
 | `src/Phase/IPhase.hpp` | `IPhase`, `PhaseCommand` | フェーズ基底クラスとコマンド |
 | `src/Phase/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
 | `src/Phase/PhaseRegistry.hpp` | `PhaseFactory`, `PhaseRegistry` | フェーズ名→ファクトリ関数の対応表 |
