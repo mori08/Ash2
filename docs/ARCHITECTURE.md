@@ -26,9 +26,10 @@
 Main()
   └─ System::Update() ループ
        ├─ FrameData 生成（dt + InputState）
-       ├─ reloadConfig 入力時: PlayerConfig を TOML から再読み込み
+       ├─ reloadConfig 入力時: PlayerConfig・AnimationDataRegistry を TOML から再読み込み
        ├─ PhaseStack::update(registry, frameData)
        │    └─ IPhase::update(registry, frameData)
+       │         └─ AnimationSystem::Update(registry, dt)  ← クリップ更新・フレーム計算
        ├─ AttachmentSystem::UpdateTransform(registry)  ← 親子座標伝播
        └─ DrawSystem::Draw(registry)                   ← depth ソート後に描画
 ```
@@ -61,6 +62,7 @@ PhaseStack
 | `Velocity` | 速度（w/h/d、ピクセル/秒） |
 | `Player` | プレイヤーを示すタグ（空構造体） |
 | `Drawable` | 描画形状の variant（`RectDrawable` / `CircleDrawable` / `PieDrawable` / `TextureDrawable`） |
+| `SpriteAnimation` | アニメーション状態（dataKey・currentClip・elapsed・facingRight）。軽量な per-entity コンポーネント |
 | `Name` | エンティティを識別する名前（`NameLookup` と連携） |
 | `Hierarchy` | 親子関係（双方向連結リスト構造で管理） |
 | `LocalOffset` | 親からの相対座標（`Hierarchy` を持つエンティティに付ける） |
@@ -90,6 +92,14 @@ Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
 
 ゲームの進行を `scenario.toml` で管理。`NameLookup`（名前→エンティティ対応表）を `registry.ctx()` で共有。フェーズ生成は `PhaseRegistry`（ファクトリ関数テーブル）で管理し、`PhaseRegistration.cpp` への1行追記で新フェーズを追加できる。
 
+### アニメーションシステム（AnimationSystem）
+
+`SpriteAnimation` コンポーネントを持つエンティティのフレームを毎フレーム更新し、`TextureDrawable.region` に書き込む。
+
+- `AnimationData`（共有リソース）: テクスチャ・1コマサイズ・クリップ定義を保持。`registry.ctx()` の `AnimationDataRegistry`（`HashTable<String, AnimationData>`）に格納
+- クリップはスプライトシートの行単位で定義。`config/animation/` 以下の TOML をファイル名をキーとして自動ロードするため、ファイル追加のみで新キャラクターを拡張できる
+- 状態遷移（`currentClip`・`facingRight` の更新）は各フェーズの責務
+
 ### 描画システム（DrawSystem）
 
 毎フレーム `DrawOrderLess`（奥 → 手前）でソートしてから描画。`Drawable` は `std::variant` で形状を表現。
@@ -111,7 +121,9 @@ Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
 | `src/Component/Name.hpp` | `Name` | エンティティ名コンポーネント |
 | `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
 | `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント |
-| `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig`, `PlayerTextureConfig` | プレイヤーの設定値（物理定数＋テクスチャフレーム設定） |
+| `src/Component/AnimationData.hpp/.cpp` | `AnimationClip`, `AnimationData`, `AnimationDataRegistry` | アニメーション共有データ（テクスチャ・クリップ定義）。`registry.ctx()` に格納 |
+| `src/Component/SpriteAnimation.hpp` | `SpriteAnimation` | per-entity アニメーション状態コンポーネント |
+| `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤーの設定値（物理定数） |
 | `src/Config/ScenarioData.hpp/.cpp` | `ScenarioData` | シナリオデータ |
 | `src/Input/InputState.hpp` | `InputState` | フレームごとのプレイヤー入力状態（Siv3D 非依存） |
 | `src/Input/PlayerInputAction.hpp` | `PlayerInputAction` | プレイヤー操作のキー割り当て |
@@ -123,6 +135,7 @@ Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
 | `src/Phase/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
 | `src/Phase/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
 | `src/Phase/WaitPhase.hpp/.cpp` | `WaitPhase` | 指定秒数待機してから Pop するフェーズ |
+| `src/System/AnimationSystem.hpp/.cpp` | `AnimationSystem` | スプライトアニメーション更新システム |
 | `src/System/AttachmentSystem.hpp/.cpp` | `AttachmentSystem` | 親子座標伝播システム |
 | `src/System/DrawSystem.hpp/.cpp` | `DrawSystem` | depth ソート後に Drawable を描画 |
 | `src/System/NameLookup.hpp` | `NameLookup` | 名前→エンティティ参照コンテキスト |

@@ -4,32 +4,26 @@
 #include "Component/Hierarchy.hpp"
 #include "Component/Name.hpp"
 #include "Component/Player.hpp"
+#include "Component/SpriteAnimation.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
+#include "System/AnimationSystem.hpp"
 #include "System/NameLookup.hpp"
 
 void DemoPhase::onAfterPush(entt::registry& registry) {
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& tc = cfg.texture;
-
-  m_playerTexture = s3d::Texture{U"image/player.png"};
-  const int cols = m_playerTexture.width() / tc.frameWidth;
-  const int col = tc.frameIndex % cols;
-  const int row = tc.frameIndex / cols;
-  const s3d::TextureRegion region = m_playerTexture(
-      col * tc.frameWidth, row * tc.frameHeight, tc.frameWidth, tc.frameHeight);
-
   m_playerRoot = registry.create();
   registry.emplace<Player>(m_playerRoot);
   registry.emplace<WorldPos>(m_playerRoot);
   registry.emplace<Velocity>(m_playerRoot);
   registry.emplace<Name>(m_playerRoot, Name{U"player"});
-  registry.emplace<Drawable>(
+  registry.emplace<Drawable>(m_playerRoot, TextureDrawable{});
+  registry.emplace<SpriteAnimation>(
       m_playerRoot,
-      TextureDrawable{.region = region, .drawOffset = tc.drawOffset});
+      SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"});
   registry.ctx().get<NameLookup>()[U"player"] = m_playerRoot;
+  AnimationSystem::Update(registry, 0.0);
 }
 
 IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
@@ -44,8 +38,8 @@ IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
                     : input.moveBackward ? -cfg.speed
                                          : 0.0;
 
-  auto view = registry.view<Player, WorldPos, Velocity>();
-  for (auto [entity, pos, vel] : view.each()) {
+  auto view = registry.view<Player, WorldPos, Velocity, SpriteAnimation>();
+  for (auto [entity, pos, vel, anim] : view.each()) {
     vel.w = vw;
     vel.d = vd;
     pos.w += vel.w * frameData.dt;
@@ -62,7 +56,22 @@ IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
       pos.h = 0.0;
       vel.h = 0.0;
     }
+
+    const s3d::String newClip = (pos.h > 0.0)                    ? U"jump"
+                                : (vel.w != 0.0 || vel.d != 0.0) ? U"move"
+                                                                 : U"idle";
+    if (newClip != anim.currentClip) {
+      anim.currentClip = newClip;
+      anim.elapsed = 0.0;
+    }
+    if (vel.w > 0.0) {
+      anim.facingRight = true;
+    } else if (vel.w < 0.0) {
+      anim.facingRight = false;
+    }
   }
+
+  AnimationSystem::Update(registry, frameData.dt);
 
   if (frameData.input.reloadConfig) {
     reloadPlayer(registry);

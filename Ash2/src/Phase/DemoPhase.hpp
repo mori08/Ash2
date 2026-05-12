@@ -27,6 +27,4 @@ class DemoPhase : public IPhase {
 
   /// プレイヤーのルートエンティティ
   entt::entity m_playerRoot = entt::null;
-  /// プレイヤーテクスチャ（ライフタイムを DemoPhase が管理）
-  s3d::Texture m_playerTexture;
 };
