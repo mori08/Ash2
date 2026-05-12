@@ -2,6 +2,7 @@
 
 #include <ThirdParty/entt/entt.hpp>
 
+#include "Component/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Input/PlayerInputAction.hpp"
@@ -36,6 +37,13 @@ void Main() {
   const TOMLReader playerToml(U"config/player.toml");
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
 
+  auto& animRegistry = registry.ctx().emplace<AnimationDataRegistry>();
+  for (const auto& path :
+       FileSystem::DirectoryContents(U"config/animation/")) {
+    animRegistry[FileSystem::BaseName(path)] =
+        AnimationData::FromToml(TOMLReader{path});
+  }
+
   const TOMLReader scenarioToml(U"config/scenario.toml");
   registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
 
@@ -50,8 +58,16 @@ void Main() {
         .input = actions.toInputState(),
     };
     if (frameData.input.reloadConfig) {
-      const TOMLReader playerToml(U"config/player.toml");
-      registry.ctx().get<PlayerConfig>() = PlayerConfig::FromToml(playerToml);
+      const TOMLReader reloadedPlayerToml(U"config/player.toml");
+      registry.ctx().get<PlayerConfig>() =
+          PlayerConfig::FromToml(reloadedPlayerToml);
+
+      auto& animReg = registry.ctx().get<AnimationDataRegistry>();
+      for (const auto& path :
+           FileSystem::DirectoryContents(U"config/animation/")) {
+        animReg[FileSystem::BaseName(path)] =
+            AnimationData::FromToml(TOMLReader{path});
+      }
     }
     phaseStack.update(registry, frameData);
     AttachmentSystem::UpdateTransform(registry);

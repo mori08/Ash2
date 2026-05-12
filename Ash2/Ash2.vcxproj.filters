@@ -183,8 +183,14 @@
     <ClCompile Include="Phase\ScenarioPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
+    <ClCompile Include="Component\AnimationData.cpp">
+      <Filter>Source Files\Component</Filter>
+    </ClCompile>
     <ClCompile Include="Component\Hierarchy.cpp">
       <Filter>Source Files\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="System\AnimationSystem.cpp">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="System\AttachmentSystem.cpp">
       <Filter>Source Files\System</Filter>
@@ -890,7 +896,13 @@
     <ClInclude Include="Phase\FrameData.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
+    <ClInclude Include="Component\AnimationData.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Drawable.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\SpriteAnimation.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="Component\Hierarchy.hpp">
@@ -904,6 +916,9 @@
     </ClInclude>
     <ClInclude Include="Component\Player.hpp">
       <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\AnimationSystem.hpp">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\AttachmentSystem.hpp">
       <Filter>Header Files\System</Filter>
