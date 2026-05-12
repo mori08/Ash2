@@ -57,9 +57,9 @@ IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
       vel.h = 0.0;
     }
 
-    const s3d::String newClip = (pos.h > 0.0)                       ? U"jump"
-                                : (vel.w != 0.0 || vel.d != 0.0)    ? U"move"
-                                                                     : U"idle";
+    const s3d::String newClip = (pos.h > 0.0)                    ? U"jump"
+                                : (vel.w != 0.0 || vel.d != 0.0) ? U"move"
+                                                                 : U"idle";
     if (newClip != anim.currentClip) {
       anim.currentClip = newClip;
       anim.elapsed = 0.0;

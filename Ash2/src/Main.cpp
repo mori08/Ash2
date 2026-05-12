@@ -38,8 +38,7 @@ void Main() {
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
 
   auto& animRegistry = registry.ctx().emplace<AnimationDataRegistry>();
-  for (const auto& path :
-       FileSystem::DirectoryContents(U"config/animation/")) {
+  for (const auto& path : FileSystem::DirectoryContents(U"config/animation/")) {
     animRegistry[FileSystem::BaseName(path)] =
         AnimationData::FromToml(TOMLReader{path});
   }
