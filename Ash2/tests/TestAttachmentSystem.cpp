@@ -125,4 +125,27 @@ TEST_CASE("AttachmentSystem - Detach removes child from linked list") {
   REQUIRE_FALSE(registry.all_of<LocalOffset>(child));
 }
 
+TEST_CASE("AttachmentSystem - re-attaching child to different parent") {
+  entt::registry registry;
+
+  auto parent1 = registry.create();
+  registry.emplace<WorldPos>(parent1);
+  auto parent2 = registry.create();
+  registry.emplace<WorldPos>(parent2);
+  auto child = registry.create();
+  registry.emplace<WorldPos>(child);
+
+  Hierarchy::Attach(registry, parent1, child);
+  Hierarchy::Attach(registry, parent2, child);
+
+  REQUIRE(registry.get<const Hierarchy>(parent1).firstChild() ==
+          entt::entity{entt::null});
+  REQUIRE(registry.get<const Hierarchy>(parent2).firstChild() == child);
+  REQUIRE(registry.get<const Hierarchy>(child).parent() == parent2);
+  REQUIRE(registry.get<const Hierarchy>(child).prevSibling() ==
+          entt::entity{entt::null});
+  REQUIRE(registry.get<const Hierarchy>(child).nextSibling() ==
+          entt::entity{entt::null});
+}
+
 #endif
