@@ -10,9 +10,9 @@ $ARGUMENTS format: `<label> <title>` or just `<title>` (label optional)
 Rules:
 - Available labels: `bug`, `enhancement`, `chore`
 - If the user provides a label as the first word (bug/enhancement/chore), use it. Otherwise infer the most appropriate label from the title/context.
-- Title: use as-is if provided, otherwise ask the user
+- Title: use as-is if provided, otherwise ask the user. **Write in Japanese.**
 - No assignee
-- Body: leave empty unless the user provides additional context
+- Body: leave empty unless the user provides additional context. **If writing a body, write it in Japanese.**
 
 Command to run:
 ```

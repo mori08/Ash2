@@ -58,6 +58,8 @@ Do not report issues on lines not modified by this PR.
 
 ### 4. Post GitHub comment
 
+Write the comment in Japanese.
+
 ```bash
 gh pr comment <number> --body "<comment>"
 ```
@@ -65,9 +67,9 @@ gh pr comment <number> --body "<comment>"
 Format when issues are found:
 
 ```
-### Code review
+### コードレビュー
 
-Found N issues:
+N 件の指摘があります:
 
 1. **<brief title>** (Critical / Important)
 
@@ -83,9 +85,9 @@ Found N issues:
 Format when no issues are found:
 
 ```
-### Code review
+### コードレビュー
 
-No issues found.
+指摘事項はありません。
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 ```

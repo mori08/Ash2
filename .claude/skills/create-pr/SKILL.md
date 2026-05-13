@@ -21,9 +21,9 @@ main ブランチの場合は作業を中止し、feature/fix ブランチに切
 
 `$ARGUMENTS` が指定されていればタイトルとして使う。
 指定がない場合は `git log main..HEAD --oneline` と `git diff main...HEAD --stat` を参照して、
-適切なタイトルを英語・命令形で提案しユーザーに確認する。
+適切なタイトルを日本語で提案しユーザーに確認する。
 
-本文（body）は `git log main..HEAD --oneline` を元に変更概要を簡潔にまとめる。
+本文（body）は `git log main..HEAD --oneline` を元に変更概要を日本語で簡潔にまとめる。
 
 ### 3. PRの作成
 
