@@ -11,6 +11,8 @@ void Hierarchy::Attach(entt::registry& registry, entt::entity parent,
     registry.emplace<Hierarchy>(child);
   }
 
+  Detach(registry, child);
+
   auto& parentNode = registry.get<Hierarchy>(parent);
   auto& childNode = registry.get<Hierarchy>(child);
 

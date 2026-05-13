@@ -17,6 +17,7 @@ class Hierarchy {
   [[nodiscard]] entt::entity prevSibling() const { return m_prevSibling; }
 
   /// @brief 子を親にアタッチする（先頭に O(1) 挿入）
+  /// @details 子がすでに別の親を持つ場合は先に Detach してから挿入する
   /// @param registry ECS レジストリ
   /// @param parent   親エンティティ（Hierarchy がなければ自動追加）
   /// @param child    子エンティティ（Hierarchy がなければ自動追加）
