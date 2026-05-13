@@ -1,6 +1,7 @@
 #include "Phase/ScenarioPhase.hpp"
 
 #include "Component/Drawable.hpp"
+#include "Component/Hierarchy.hpp"
 #include "Component/Name.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/ScenarioData.hpp"
@@ -71,7 +72,7 @@ void ScenarioPhase::onBeforePop(entt::registry& registry) {
     if (registry.all_of<Name>(entity)) {
       lookup.erase(registry.get<Name>(entity).value);
     }
-    registry.destroy(entity);
+    Hierarchy::DestroyWithChildren(registry, entity);
   }
   m_createdEntities.clear();
 }
