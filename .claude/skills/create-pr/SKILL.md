@@ -35,7 +35,8 @@ gh pr create --title "<title>" --body "<body>" --base main
 
 ### 4. コードレビューの実行
 
-PR 作成直後に、`code-review` プラグインのスキルを使って自動レビューを実行する。
-Skill ツールで `code-review:code-review` を呼び出す（引数は PR 番号）。
+PR 作成直後に、Agent ツールで `pr-reviewer` エージェントを起動する。
+エージェントへの入力に PR 番号を含めること。
 
-レビュー完了後、GitHub の PR ページにコメントが投稿されたことをユーザーに伝える。
+エージェントが完了すると GitHub の PR ページにレビューコメントが投稿される。
+投稿完了後、PR の URL をユーザーに伝える。
