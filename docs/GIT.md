@@ -64,6 +64,18 @@ git -C ~/path/to/repo status
 `~/.claude/settings.json` の allow パターンが `git -C *` 形式で定義されているため、
 `cd && git` 形式だとルールが適用されない。
 
+## PRの作成
+
+PR を作成する際は必ず `/create-pr` スキルを使うこと。
+
+```
+/create-pr               # タイトルを自動生成
+/create-pr Add player movement #3  # タイトルを指定
+```
+
+このスキルは PR 作成後に自動でコードレビュー（`/code-review`）を実行し、
+GitHub の PR ページにレビューコメントを投稿する。
+
 ## PRのマージ方針
 
 - 通常マージ（Merge commit）を使用する
