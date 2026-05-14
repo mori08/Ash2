@@ -21,10 +21,12 @@ void PhaseStack::update(entt::registry& registry, const FrameData& frameData) {
       break;
 
     case IPhase::PhaseCommand::Type::Push:
+      assert(command.nextPhase != nullptr);
       push(registry, std::move(command.nextPhase));
       break;
 
     case IPhase::PhaseCommand::Type::Reset:
+      assert(command.nextPhase != nullptr);
       while (not m_stack.empty()) {
         pop(registry);
       }
