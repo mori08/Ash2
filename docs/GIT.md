@@ -73,7 +73,7 @@ PR を作成する際は必ず `/create-pr` スキルを使うこと。
 /create-pr Add player movement #3  # タイトルを指定
 ```
 
-このスキルは PR 作成後に自動でコードレビュー（`/code-review`）を実行し、
+このスキルは PR 作成後に自動で `pr-reviewer` エージェントを起動し、
 GitHub の PR ページにレビューコメントを投稿する。
 
 ## PRのマージ方針
