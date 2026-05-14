@@ -21,10 +21,12 @@ void PhaseStack::update(entt::registry& registry, const FrameData& frameData) {
       break;
 
     case IPhase::PhaseCommand::Type::Push:
+      assert(command.nextPhase != nullptr);
       push(registry, std::move(command.nextPhase));
       break;
 
     case IPhase::PhaseCommand::Type::Reset:
+      assert(command.nextPhase != nullptr);
       while (not m_stack.empty()) {
         pop(registry);
       }
@@ -40,6 +42,7 @@ void PhaseStack::pop(entt::registry& registry) {
 
 void PhaseStack::push(entt::registry& registry,
                       std::unique_ptr<IPhase>&& phase) {
+  assert(phase != nullptr);
   m_stack.push_back(std::move(phase));
   m_stack.back()->onAfterPush(registry);
 }

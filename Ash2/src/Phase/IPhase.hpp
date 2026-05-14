@@ -33,12 +33,12 @@ class IPhase {
     [[nodiscard]] static PhaseCommand Pop();
 
     /// @brief スタックにフェーズを積むコマンドを返す
-    /// @param phase 次のフェーズ
+    /// @param phase 次のフェーズ（nullptr 不可）
     /// @return Push コマンド
     [[nodiscard]] static PhaseCommand Push(std::unique_ptr<IPhase>&& phase);
 
     /// @brief スタックをクリアしてフェーズを積むコマンドを返す
-    /// @param phase 次のフェーズ
+    /// @param phase 次のフェーズ（nullptr 不可）
     /// @return Reset コマンド
     [[nodiscard]] static PhaseCommand Reset(std::unique_ptr<IPhase>&& phase);
   };
@@ -71,10 +71,12 @@ inline IPhase::PhaseCommand IPhase::PhaseCommand::Pop() {
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::Push(
     std::unique_ptr<IPhase>&& phase) {
+  assert(phase != nullptr);
   return {.type = Type::Push, .nextPhase = std::move(phase)};
 }
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::Reset(
     std::unique_ptr<IPhase>&& phase) {
+  assert(phase != nullptr);
   return {.type = Type::Reset, .nextPhase = std::move(phase)};
 }
