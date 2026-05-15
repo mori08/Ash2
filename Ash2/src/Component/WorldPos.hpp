@@ -18,11 +18,3 @@ struct WorldPos {
   /// @return 高さが 0 以下なら true
   [[nodiscard]] bool isOnGround() const { return h <= 0.0; }
 };
-
-/// @brief 描画順の比較関数（奥から手前の順）
-/// @param a 比較対象A
-/// @param b 比較対象B
-/// @return a が b より奥にある場合 true
-inline bool DrawOrderLess(const WorldPos& a, const WorldPos& b) {
-  return a.d > b.d;
-}

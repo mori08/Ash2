@@ -2,6 +2,7 @@
 #include <ThirdParty/Catch2/catch.hpp>
 
 #include "Component/WorldPos.hpp"
+#include "System/DrawSystem.hpp"
 
 TEST_CASE("WorldPos::ToScreen - far objects have smaller y") {
   // 奥にあるものほどy座標が小さい

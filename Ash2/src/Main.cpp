@@ -37,11 +37,16 @@ void Main() {
   const TOMLReader playerToml(U"config/player.toml");
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
 
-  auto& animRegistry = registry.ctx().emplace<AnimationDataRegistry>();
-  for (const auto& path : FileSystem::DirectoryContents(U"config/animation/")) {
-    animRegistry[FileSystem::BaseName(path)] =
-        AnimationData::FromToml(TOMLReader{path});
-  }
+  registry.ctx().emplace<AnimationDataRegistry>();
+  const auto loadAnimations = [&registry]() {
+    auto& animReg = registry.ctx().get<AnimationDataRegistry>();
+    for (const auto& path :
+         FileSystem::DirectoryContents(U"config/animation/")) {
+      animReg[FileSystem::BaseName(path)] =
+          AnimationData::FromToml(TOMLReader{path});
+    }
+  };
+  loadAnimations();
 
   const TOMLReader scenarioToml(U"config/scenario.toml");
   registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
@@ -61,12 +66,7 @@ void Main() {
       registry.ctx().get<PlayerConfig>() =
           PlayerConfig::FromToml(reloadedPlayerToml);
 
-      auto& animReg = registry.ctx().get<AnimationDataRegistry>();
-      for (const auto& path :
-           FileSystem::DirectoryContents(U"config/animation/")) {
-        animReg[FileSystem::BaseName(path)] =
-            AnimationData::FromToml(TOMLReader{path});
-      }
+      loadAnimations();
     }
     phaseStack.update(registry, frameData);
     AttachmentSystem::UpdateTransform(registry);
