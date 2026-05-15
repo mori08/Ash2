@@ -27,17 +27,23 @@ Fix collision detection, close #5   # mainマージ時にissueが自動クロー
 
 `close` の代わりに `fixes` / `resolves` も使用可。
 
-## コミットの修正
+## コミットの整理
 
-GitHub Actions の失敗など、直前のコミットへの軽微な追加・修正は `git commit --amend` を使う。
+PRのマージ前に `git rebase -i` で意味のある単位に整理すること。
+
+- 機能追加・バグ修正・リファクタなど論理的に異なる変更は別コミットに分ける
+- typo修正・lint警告・ビルドエラーなど軽微な修正は直前の関連コミットにまとめる
 
 ```bash
-git commit --amend --no-edit   # メッセージを変えない場合
-git commit --amend             # メッセージも修正する場合
+git rebase -i origin/main   # mainからの全コミットを対象に整理
 ```
 
-ただし **push 済みのコミットを amend した場合は force push が必要**になるため、
-main への直接 amend は避け、feature ブランチ上でのみ使用する。
+整理後のforce-pushは `--force-with-lease` を使うこと。
+**mainブランチへのforce-pushは理由を問わず禁止。**
+
+```bash
+git push --force-with-lease   # featureブランチへのforce-push
+```
 
 ## issueラベル
 
