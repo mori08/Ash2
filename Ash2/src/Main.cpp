@@ -33,6 +33,7 @@ void Main() {
 
   entt::registry registry;
   registry.ctx().emplace<NameLookup>();
+  NameLookupSystem::Connect(registry);
 
   const TOMLReader playerToml(U"config/player.toml");
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));

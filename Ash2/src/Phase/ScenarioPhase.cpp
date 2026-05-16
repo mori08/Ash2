@@ -67,11 +67,7 @@ IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,
 }
 
 void ScenarioPhase::onBeforePop(entt::registry& registry) {
-  auto& lookup = registry.ctx().get<NameLookup>();
   for (auto entity : m_createdEntities) {
-    if (registry.all_of<Name>(entity)) {
-      lookup.erase(registry.get<Name>(entity).value);
-    }
     Hierarchy::DestroyWithChildren(registry, entity);
   }
   m_createdEntities.clear();
