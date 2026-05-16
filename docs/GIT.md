@@ -4,7 +4,7 @@
 
 | 作業種別 | 方針 |
 |----------|------|
-| `enhancement` / `bug` | ブランチを切ってPRを作成 → mainにマージ |
+| `enhancement` / `bug` / `refactor` | ブランチを切ってPRを作成 → mainにマージ |
 | `chore` | mainに直接コミット |
 
 ## ブランチ命名規則
@@ -52,7 +52,8 @@ git push --force-with-lease   # featureブランチへのforce-push
 | `epic` | 複数のsub-issueをまとめる親チケット |
 | `enhancement` | 新機能・改善 |
 | `bug` | 不具合修正 |
-| `chore` | リファクタリング・環境整備など |
+| `refactor` | リファクタリング（PR経由） |
+| `chore` | Claude設定・依存更新・環境整備など（直接コミット） |
 | `clang-tidy` | clang-tidy 自動レポート（CI が自動で付与） |
 
 ## git コマンドの実行形式
