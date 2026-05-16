@@ -34,10 +34,11 @@ void Hierarchy::Detach(entt::registry& registry, entt::entity child) {
   auto& childNode = registry.get<Hierarchy>(child);
 
   if (childNode.m_parent != entt::null && registry.valid(childNode.m_parent)) {
-    if (childNode.m_prevSibling != entt::null &&
-        registry.valid(childNode.m_prevSibling)) {
-      registry.get<Hierarchy>(childNode.m_prevSibling).m_nextSibling =
-          childNode.m_nextSibling;
+    if (childNode.m_prevSibling != entt::null) {
+      if (registry.valid(childNode.m_prevSibling)) {
+        registry.get<Hierarchy>(childNode.m_prevSibling).m_nextSibling =
+            childNode.m_nextSibling;
+      }
     } else {
       registry.get<Hierarchy>(childNode.m_parent).m_firstChild =
           childNode.m_nextSibling;
