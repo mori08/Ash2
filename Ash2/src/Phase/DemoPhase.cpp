@@ -89,7 +89,6 @@ void DemoPhase::onBeforePop(entt::registry& registry) {
   if (m_playerRoot == entt::null) {
     return;
   }
-  registry.ctx().get<NameLookup>().erase(U"player");
   Hierarchy::DestroyWithChildren(registry, m_playerRoot);
   m_playerRoot = entt::null;
 }
