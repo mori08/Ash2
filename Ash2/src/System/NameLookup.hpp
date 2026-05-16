@@ -2,6 +2,7 @@
 #include <Siv3D.hpp>
 
 #include <ThirdParty/entt/entt.hpp>
+#include <cassert>
 
 #include "Component/Name.hpp"
 
@@ -13,6 +14,7 @@ namespace NameLookupSystem {
 /// @brief Name コンポーネント削除時に NameLookup
 /// のエントリを削除するシグナルハンドラ
 inline void OnNameDestroyed(entt::registry& registry, entt::entity entity) {
+  assert(registry.ctx().find<NameLookup>() != nullptr);
   registry.ctx().get<NameLookup>().erase(registry.get<Name>(entity).value);
 }
 
