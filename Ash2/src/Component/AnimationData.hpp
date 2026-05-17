@@ -13,8 +13,8 @@ struct AnimationClip {
 
 /// @brief アニメーション共有データ（エンティティ種別ごとに1つ）
 struct AnimationData {
-  /// スプライトシートテクスチャ
-  s3d::Texture texture;
+  /// TextureAsset キー（例: `asset/image/player.png`）
+  s3d::String textureKey;
   /// 1コマのサイズ（幅・高さ）
   s3d::Size size;
   /// 描画オフセット（中心座標からのずれ）
