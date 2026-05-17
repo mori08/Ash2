@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Create a GitHub PR and automatically run code review
+description: Create a GitHub PR
 ---
 
 Create a GitHub pull request and run a code review on it.
@@ -33,10 +33,6 @@ gh pr create --title "<title>" --body "<body>" --base main
 
 作成後、PR の URL を表示する。
 
-### 4. コードレビューの実行
+### 4. PR URL の表示
 
-PR 作成直後に、Agent ツールで `pr-reviewer` エージェントを起動する。
-エージェントへの入力に PR 番号を含めること。
-
-エージェントが完了すると GitHub の PR ページにレビューコメントが投稿される。
-投稿完了後、PR の URL をユーザーに伝える。
+作成した PR の URL をユーザーに伝える。
