@@ -417,5 +417,3 @@ gmon.out
 # Claude Code local settings
 .claude/settings.local.json
 
-# Auto-generated asset list (created by GetAssetList() on debug run)
-Ash2/App/asset/asset_list

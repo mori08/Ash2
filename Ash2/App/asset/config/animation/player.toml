@@ -1,4 +1,4 @@
-texture = "image/player.png"
+texture = "asset/image/player.png"
 width = 64
 height = 64
 draw_offset = {x = 0.0, y = 0.0}

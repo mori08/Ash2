@@ -1,9 +1,11 @@
 #include "Component/AnimationData.hpp"
 
+#include "Asset.hpp"
+
 AnimationData AnimationData::FromToml(const s3d::TOMLValue& toml) {
   const auto& off = toml[U"draw_offset"];
   AnimationData data{
-      .texture = s3d::Texture{toml[U"texture"].getString()},
+      .texture = s3d::Texture{AssetPath(toml[U"texture"].getString())},
       .size = {toml[U"width"].get<int>(), toml[U"height"].get<int>()},
       .drawOffset = {off[U"x"].get<double>(), off[U"y"].get<double>()},
   };

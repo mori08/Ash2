@@ -14,3 +14,7 @@
 *.sf2 binary
 *.zstdcmp binary
 *.zip binary
+
+# シェルスクリプトは常に LF
+*.sh text eol=lf
+tools/hooks/pre-commit text eol=lf
