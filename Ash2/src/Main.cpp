@@ -44,6 +44,7 @@ void Main() {
   registry.ctx().emplace<AnimationDataRegistry>();
   const auto loadAnimations = [&registry]() {
     auto& animReg = registry.ctx().get<AnimationDataRegistry>();
+    animReg.clear();
     for (const auto& path : GetAssetList()) {
       if (FileSystem::Extension(path) != U"toml") continue;
       if (!path.starts_with(U"asset/config/animation/")) continue;
