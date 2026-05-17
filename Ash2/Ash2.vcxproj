@@ -361,6 +361,7 @@
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\Asset.hpp" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
     <ClInclude Include="src\Phase\DemoPhase.hpp" />
     <ClInclude Include="src\Phase\IPhase.hpp" />

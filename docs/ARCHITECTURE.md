@@ -139,3 +139,4 @@ Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
 | `src/System/AttachmentSystem.hpp/.cpp` | `AttachmentSystem` | 親子座標伝播システム |
 | `src/System/DrawSystem.hpp/.cpp` | `DrawSystem` | depth ソート後に Drawable を描画 |
 | `src/System/NameLookup.hpp` | `NameLookup`, `NameLookupSystem` | 名前→エンティティ参照コンテキスト。`on_destroy<Name>` シグナルで自動クリーンアップ |
+| `src/Asset.hpp` | `GetAssetList`, `AssetPath`, `RegisterAssets` | デバッグ/リリース切替のアセット列挙・登録ユーティリティ |

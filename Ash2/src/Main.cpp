@@ -2,6 +2,7 @@
 
 #include <ThirdParty/entt/entt.hpp>
 
+#include "Asset.hpp"
 #include "Component/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
@@ -27,6 +28,8 @@ static void RunTests() {
 #endif
 
 void Main() {
+  RegisterAssets();
+
 #if USE_TEST
   RunTests();
 #endif
