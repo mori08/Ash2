@@ -1,13 +1,8 @@
 # ARCHITECTURE.md
 
-## 概要
+## プロジェクト概要
 
-「沼に焚べ」の技術構成とコード設計をまとめたドキュメント。  
-実装の進捗に合わせて随時更新する。
-
----
-
-## 主要な技術
+「沼に焚べ」— 疑似3D視点のベルトアクションゲーム。
 
 | 技術 | バージョン | 役割 |
 |------|-----------|------|
@@ -18,125 +13,137 @@
 
 ---
 
-## アーキテクチャ
-
-### ゲームループ
+## ディレクトリ構成
 
 ```
-Main()
-  └─ System::Update() ループ
-       ├─ FrameData 生成（dt + InputState）
-       ├─ reloadConfig 入力時: PlayerConfig・AnimationDataRegistry を TOML から再読み込み
-       ├─ PhaseStack::update(registry, frameData)
-       │    └─ IPhase::update(registry, frameData)
-       │         └─ AnimationSystem::Update(registry, dt)  ← クリップ更新・フレーム計算
-       ├─ AttachmentSystem::UpdateTransform(registry)  ← 親子座標伝播
-       └─ DrawSystem::Draw(registry)                   ← depth ソート後に描画
+Ash2/src/
+├── Main.cpp             # エントリポイント・ゲームループ
+├── Asset.hpp            # アセット登録・パス解決ユーティリティ
+├── Component/           # ECS コンポーネント（データのみ）
+├── Config/              # TOML 設定データ（FromToml 付き構造体）
+├── Input/               # 入力抽象化
+├── Phase/               # フェーズ管理（ゲーム状態機械）
+└── System/              # ECS システム（ロジックのみ）
 ```
-
-`entt::registry` をゲーム全体で共有し、フェーズ間でエンティティの状態を引き継ぐ。
-
-### フェーズ管理（PhaseStack / IPhase）
-
-シーン・状態をスタック構造で管理する。
-
-```
-PhaseStack
-  └─ Array<unique_ptr<IPhase>>  （末尾 = 最前面）
-       ├─ IPhase（抽象）
-       │   ├─ onAfterPush()
-       │   ├─ update(registry, frameData) → PhaseCommand
-       │   └─ onBeforePop()
-       └─ PhaseCommand: None / Pop / Push / Reset
-```
-
-`update()` に渡される `FrameData` は `dt` と `InputState` をまとめた Siv3D 非依存の構造体。
-
-### ECS（EnTT）
-
-エンティティのデータを `entt::registry` で管理する。コンポーネントは `src/Component/` に配置。
-
-| コンポーネント | 役割 |
-|--------------|------|
-| `WorldPos` | 絶対座標（w/h/d）。常に絶対値を保持 |
-| `Velocity` | 速度（w/h/d、ピクセル/秒） |
-| `Player` | プレイヤーを示すタグ（空構造体） |
-| `Drawable` | 描画形状の variant（`RectDrawable` / `CircleDrawable` / `PieDrawable` / `TextureDrawable`） |
-| `SpriteAnimation` | アニメーション状態（dataKey・currentClip・elapsed・facingRight）。軽量な per-entity コンポーネント |
-| `Name` | エンティティを識別する名前（`NameLookup` と連携） |
-| `Hierarchy` | 親子関係（双方向連結リスト構造で管理） |
-| `LocalOffset` | 親からの相対座標（`Hierarchy` を持つエンティティに付ける） |
-
-### 親子追従システム（Hierarchy / AttachmentSystem）
-
-武器・エフェクトなどを親エンティティに追従させる仕組み。
-
-- `Hierarchy` クラスにメンバを private で保持し、連結リストの操作を static メンバ関数に集約することで不整合を防ぐ
-- `Hierarchy::Attach(registry, parent, child, offset)` : 子を親に O(1) で追加し `LocalOffset` も設定する
-- `Hierarchy::Detach(registry, child)` : O(1) で切り離し
-- `Hierarchy::DestroyWithChildren(registry, entity)` : 子孫ごと再帰破棄する（`registry.destroy()` の代わりに使う）
-- `AttachmentSystem::UpdateTransform(registry)` : ルートから再帰 DFS で `WorldPos` を伝播する（毎フレーム呼び出す）
-
-### 入力管理（Input）
-
-Humble Object パターンで Siv3D 依存を `Main.cpp` に閉じ込める。
-
-- `PlayerInputAction`（Siv3D 依存）: キー割り当てを保持。`toInputState()` で毎フレーム変換
-- `InputState`（Siv3D 非依存）: plain `bool` の入力状態。`FrameData` に格納してフェーズへ渡す
-
-### 設定値管理（Config）
-
-ゲームの定数値を型付き構造体で管理。`FromToml()` で生成し `registry.ctx()` に格納してフェーズ間で共有。
-
-### シナリオシステム（ScenarioPhase）
-
-ゲームの進行を `scenario.toml` で管理。`NameLookup`（名前→エンティティ対応表）を `registry.ctx()` で共有。フェーズ生成は `PhaseRegistry`（ファクトリ関数テーブル）で管理し、`PhaseRegistration.cpp` への1行追記で新フェーズを追加できる。
-
-### アニメーションシステム（AnimationSystem）
-
-`SpriteAnimation` コンポーネントを持つエンティティのフレームを毎フレーム更新し、`TextureDrawable.region` に書き込む。
-
-- `AnimationData`（共有リソース）: テクスチャ・1コマサイズ・クリップ定義を保持。`registry.ctx()` の `AnimationDataRegistry`（`HashTable<String, AnimationData>`）に格納
-- クリップはスプライトシートの行単位で定義。`config/animation/` 以下の TOML をファイル名をキーとして自動ロードするため、ファイル追加のみで新キャラクターを拡張できる
-- 状態遷移（`currentClip`・`facingRight` の更新）は各フェーズの責務
-
-### 描画システム（DrawSystem）
-
-毎フレーム `DrawOrderLess`（奥 → 手前）でソートしてから描画。`Drawable` は `std::variant` で形状を表現。
-
-### 座標系（WorldPos）
-
-疑似3Dのワールド座標。`w`（横）・`h`（高さ、地面=0）・`d`（奥行き）の3軸。画面 y 座標は `-(d + h)`。
 
 ---
 
-## ファイル別クラス一覧
+## レイヤー構成
 
-| ファイル | クラス / 構造体 | 説明 |
-|---------|---------------|------|
-| `src/Component/WorldPos.hpp` | `WorldPos` | ワールド座標と画面座標変換 |
-| `src/Component/Hierarchy.hpp/.cpp` | `Hierarchy` | 親子関係（双方向連結リスト、操作は static メンバ関数経由のみ） |
-| `src/Component/LocalOffset.hpp` | `LocalOffset` | 親からの相対座標 |
-| `src/Component/Drawable.hpp` | `BorderStyle`, `RectDrawable`, `CircleDrawable`, `PieDrawable`, `TextureDrawable`, `Drawable` | 描画コンポーネント（形状の variant）。各形状は `Optional<BorderStyle>` で枠線を持つ |
-| `src/Component/Name.hpp` | `Name` | エンティティ名コンポーネント |
-| `src/Component/Player.hpp` | `Player` | プレイヤータグ（空構造体） |
-| `src/Component/Velocity.hpp` | `Velocity` | 速度コンポーネント |
-| `src/Component/AnimationData.hpp/.cpp` | `AnimationClip`, `AnimationData`, `AnimationDataRegistry` | アニメーション共有データ（テクスチャ・クリップ定義）。`registry.ctx()` に格納 |
-| `src/Component/SpriteAnimation.hpp` | `SpriteAnimation` | per-entity アニメーション状態コンポーネント |
-| `src/Config/PlayerConfig.hpp/.cpp` | `PlayerConfig` | プレイヤーの設定値（物理定数） |
-| `src/Config/ScenarioData.hpp/.cpp` | `ScenarioData` | シナリオデータ |
-| `src/Input/InputState.hpp` | `InputState` | フレームごとのプレイヤー入力状態（Siv3D 非依存） |
-| `src/Input/PlayerInputAction.hpp` | `PlayerInputAction` | プレイヤー操作のキー割り当て |
-| `src/Phase/FrameData.hpp` | `FrameData` | dt と InputState をまとめたフレームデータ |
-| `src/Phase/IPhase.hpp` | `IPhase`, `PhaseCommand` | フェーズ基底クラスとコマンド |
-| `src/Phase/PhaseStack.hpp/.cpp` | `PhaseStack` | フェーズをスタックで管理 |
-| `src/Phase/PhaseRegistry.hpp` | `PhaseFactory`, `PhaseRegistry` | フェーズ名→ファクトリ関数の対応表 |
-| `src/Phase/PhaseRegistration.cpp` | `MakeDefaultPhaseRegistry` | ゲーム用フェーズのファクトリ登録 |
-| `src/Phase/DemoPhase.hpp/.cpp` | `DemoPhase` | プレイヤー操作デモシーン |
-| `src/Phase/ScenarioPhase.hpp/.cpp` | `ScenarioPhase` | TOML シナリオ進行フェーズ |
-| `src/Phase/WaitPhase.hpp/.cpp` | `WaitPhase` | 指定秒数待機してから Pop するフェーズ |
-| `src/System/AnimationSystem.hpp/.cpp` | `AnimationSystem` | スプライトアニメーション更新システム |
-| `src/System/AttachmentSystem.hpp/.cpp` | `AttachmentSystem` | 親子座標伝播システム |
-| `src/System/DrawSystem.hpp/.cpp` | `DrawSystem` | depth ソート後に Drawable を描画 |
-| `src/System/NameLookup.hpp` | `NameLookup`, `NameLookupSystem` | 名前→エンティティ参照コンテキスト。`on_destroy<Name>` シグナルで自動クリーンアップ |
-| `src/Asset.hpp` | `GetAssetList`, `AssetPath`, `RegisterAssets` | デバッグ/リリース切替のアセット列挙・登録ユーティリティ |
+```
+Main.cpp
+  ├── PhaseStack          ← ゲーム状態をスタックで管理
+  │     └── IPhase        ← 各フェーズが ECS を操作
+  ├── AttachmentSystem    ← 毎フレーム: 親子座標伝播
+  └── DrawSystem          ← 毎フレーム: 描画
+```
+
+**設計方針：**
+- ECS（EnTT）でデータとロジックを分離。Component はデータのみ、System はロジックのみ。
+- フェーズがゲームロジックを持ち、System は描画・座標伝播などの横断的処理を担う。
+- Config / Input はフレームワーク非依存の構造体として分離し、テスト・リロードを容易にする。
+
+---
+
+## ゲームループ（[Main.cpp](../Ash2/src/Main.cpp)）
+
+```
+while (System::Update()) {
+    FrameData 生成（dt + InputState）
+    設定リロード（F5）
+    PhaseStack::update(registry, frameData)
+    AttachmentSystem::UpdateTransform(registry)
+    DrawSystem::Draw(registry)
+}
+```
+
+起動時に `registry.ctx()` へ以下をセット：
+- `NameLookup` — 名前→エンティティの逆引きテーブル
+- `PlayerConfig` — プレイヤー設定（F5 でホットリロード）
+- `AnimationDataRegistry` — アニメーション設定（F5 でホットリロード）
+- `ScenarioData` — シナリオデータ
+- `PhaseRegistry` — フェーズ名→ファクトリのマップ
+
+---
+
+## 座標系
+
+```
+WorldPos { w, h, d }
+  w : 横位置（右が正）
+  h : 高さ（地面=0、上が正）
+  d : 奥行き（大きいほど奥 = 画面上方）
+
+画面座標: Vec2{ w, -(d + h) }   // toScreen()
+描画順:   d が大きい（奥）→ 先に描画（DrawOrderLess: a.d > b.d）
+```
+
+**制約：** `WorldPos` は常に絶対座標。子エンティティも `WorldPos` を持ち、`AttachmentSystem` が毎フレーム親の絶対座標 + `LocalOffset` で上書きする。
+
+---
+
+## コンポーネント一覧
+
+| コンポーネント | 役割 |
+|---|---|
+| [`WorldPos`](../Ash2/src/Component/WorldPos.hpp) | ワールド絶対座標（w/h/d） |
+| [`Velocity`](../Ash2/src/Component/Velocity.hpp) | 速度ベクトル（w/h/d、ピクセル/秒） |
+| [`LocalOffset`](../Ash2/src/Component/LocalOffset.hpp) | 親からの相対座標（Hierarchy 付きエンティティのみ） |
+| [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作） |
+| [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画形状（`variant<Rect/Circle/Pie/TextureDrawable>`） |
+| [`SpriteAnimation`](../Ash2/src/Component/SpriteAnimation.hpp) | アニメーション再生状態（per-entity） |
+| [`Name`](../Ash2/src/Component/Name.hpp) | エンティティ名（不変、NameLookup と対応） |
+| [`Player`](../Ash2/src/Component/Player.hpp) | プレイヤータグ（データなし） |
+
+---
+
+## フェーズシステム
+
+`PhaseStack` がスタックで `IPhase` を管理。各フレームで先頭フェーズの `update()` を呼び、返り値の `PhaseCommand` でスタックを操作する。
+
+| PhaseCommand | 動作 |
+|---|---|
+| `None` | 何もしない |
+| `Pop` | 先頭フェーズを取り出す |
+| `Push(phase)` | 新フェーズを積む |
+| `Reset(phase)` | スタックを全クリアして新フェーズを積む |
+
+### 実装済みフェーズ
+
+| フェーズ | 役割 |
+|---|---|
+| [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | TOML シナリオを 1 ステップずつ実行（make/push/reset） |
+| [`DemoPhase`](../Ash2/src/Phase/DemoPhase.hpp) | プレイヤー操作・物理・アニメーションを処理するゲームプレイ本体 |
+| [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | 指定秒数待機して Pop |
+
+`PhaseRegistry`（registry.ctx に格納）がフェーズ名→ファクトリを管理し、シナリオ TOML から動的にフェーズを生成できる。
+
+---
+
+## システム一覧
+
+| システム | タイミング | 処理 |
+|---|---|---|
+| [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後） | Hierarchy ルートから子孫へ WorldPos 伝播 |
+| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（最後） | WorldPos+Drawable を奥行き順にソートして描画 |
+| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（DemoPhase） | SpriteAnimation の elapsed を進め Drawable を更新 |
+| [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 削除時に NameLookup を自動同期するシグナル登録 |
+
+---
+
+## アセット管理（[Asset.hpp](../Ash2/src/Asset.hpp)）
+
+- デバッグ: `assets/asset_list` をファイルから読む
+- リリース: `assets/asset_list` を埋め込みリソースから読む
+- `.png` → `TextureAsset`、`.mp3` → `AudioAsset` としてキー（相対パス）で登録
+- アニメーション設定: `assets/config/animation/*.toml`（起動時に全ファイルをスキャン）
+
+---
+
+## 主要な制約
+
+- **ビルドは Visual Studio 2022 でのみ行う。** Claude はビルドコマンドを実行しない。
+- `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren）経由で操作する（不整合防止）。
+- `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
+- 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
+- このドキュメントは 200 行上限。超過する場合はコード例→実装詳細→未使用の設計説明の順で削る。

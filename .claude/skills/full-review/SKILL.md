@@ -63,6 +63,12 @@ description: Read all source files and report 3-5 findings, then optionally crea
 以下の形式でチャットに出力する。
 
 ```
+## ARCHITECTURE.md 更新内容
+
+- 追加: <追加した内容の要約>
+- 削除: <削除した内容の要約>
+- 変更なし（変更がなかった場合）
+
 ## コードレビュー結果
 
 **1. <タイトル>**
