@@ -127,8 +127,8 @@ Resource(engine/soundfont/GMGSx.sf2.zstdcmp)
 //
 //////////////////////////////////////////////////////
 
-Resource(asset/asset_list)
-Resource(asset/config/animation/player.toml)
-Resource(asset/config/player.toml)
-Resource(asset/config/scenario.toml)
-Resource(asset/image/player.png)
+Resource(assets/asset_list)
+Resource(assets/config/animation/player.toml)
+Resource(assets/config/player.toml)
+Resource(assets/config/scenario.toml)
+Resource(assets/image/player.png)

@@ -2,14 +2,14 @@
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-ASSET_DIR="$REPO_ROOT/Ash2/App/asset"
+ASSET_DIR="$REPO_ROOT/Ash2/App/assets"
 ASSET_LIST="$ASSET_DIR/asset_list"
 RESOURCE_RC="$REPO_ROOT/Ash2/App/Resource.rc"
 
 # asset_list を再生成
 find "$ASSET_DIR" -type f | sort | while read -r file; do
   rel="${file#$REPO_ROOT/Ash2/App/}"
-  [[ "$rel" == "asset/asset_list" ]] && continue
+  [[ "$rel" == "assets/asset_list" ]] && continue
   echo "$rel"
 done > "$ASSET_LIST"
 
@@ -30,7 +30,7 @@ section = (
     "//\tSiv3D App Resources (Your application resources here)\n"
     "//\n"
     "//////////////////////////////////////////////////////\n\n"
-    f"Resource(asset/asset_list)\n"
+    f"Resource(assets/asset_list)\n"
     f"{entries}\n"
 )
 new_content = re.sub(
