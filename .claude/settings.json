@@ -40,9 +40,7 @@
       "Bash(find *)",
       "Bash(echo *)",
       "Bash(pwd)",
-      "Bash(curl -s *)",
-      "Bash(*clang-format*)",
-      "Bash(*clang-tidy*)"
+      "Bash(curl -s *)"
     ]
   },
   "hooks": {
@@ -53,6 +51,15 @@
           {
             "type": "command",
             "command": "echo 'PowerShell ツールは使用禁止。bash 等価コマンド（ls/cat/grep 等）で代替してください。' >&2; exit 2"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "grep -qE 'clang-(format|tidy)' && printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\"}}' || true"
           }
         ]
       }
