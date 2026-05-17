@@ -13,7 +13,7 @@ struct AnimationClip {
 
 /// @brief アニメーション共有データ（エンティティ種別ごとに1つ）
 struct AnimationData {
-  /// TextureAsset キー（例: `assets/image/player.png`）
+  /// TextureAsset キー（例: `assets/images/player.png`）
   s3d::String textureKey;
   /// 1コマのサイズ（幅・高さ）
   s3d::Size size;
