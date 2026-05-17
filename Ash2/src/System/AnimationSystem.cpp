@@ -15,8 +15,8 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
     anim.elapsed += dt;
 
     const int col = static_cast<int>(anim.elapsed * clip.speed) % clip.count;
-    auto region = data.texture(col * data.size.x, clip.row * data.size.y,
-                               data.size.x, data.size.y);
+    auto region = TextureAsset{data.textureKey}(
+        col * data.size.x, clip.row * data.size.y, data.size.x, data.size.y);
 
     if (anim.facingRight) {
       region = region.mirrored();
