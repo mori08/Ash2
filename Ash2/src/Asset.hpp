@@ -2,46 +2,27 @@
 #include <Siv3D.hpp>
 
 /// @brief デバッグ・リリース共通のアセットリストを返す
-/// @details デバッグ時は `asset/` を再帰スキャンし `asset/asset_list`
-/// に書き出す。
-///          リリース時は埋め込みリソースの `asset/asset_list`
-///          を読み、相対パスとして返す。
+/// @details `tools/sync-assets.sh` で生成した `asset/asset_list` を読む。
+///          デバッグ時はファイルから、リリース時は埋め込みリソースから読む。
 /// @return アセットパスの配列
 [[nodiscard]] inline Array<FilePath> GetAssetList() {
 #ifdef _DEBUG
-  Array<FilePath> list;
-  for (const auto& content :
-       FileSystem::DirectoryContents(U"asset", Recursive::Yes)) {
-    if (FileSystem::IsDirectory(content)) {
-      continue;
-    }
-    const auto relativePath = FileSystem::RelativePath(content);
-    if (relativePath == U"asset/asset_list") {
-      continue;
-    }
-    list << relativePath;
+  TextReader reader(U"asset/asset_list");
+  if (not reader) {
+    Logger << U"[Asset] asset/asset_list not found. Run tools/sync-assets.sh.";
+    return {};
   }
-  TextWriter writer(U"asset/asset_list");
-  if (not writer) {
-    Logger << U"[Asset] Failed to write asset/asset_list. Create the asset/ "
-              U"directory.";
-    return list;
-  }
-  for (const auto& path : list) {
-    writer.writeln(path);
-  }
-  return list;
 #else
   TextReader reader(Resource(U"asset/asset_list"));
   if (not reader) {
     throw Error{U"asset/asset_list not embedded. Add it to Resource.rc."};
   }
+#endif
   Array<FilePath> list;
   while (const auto line = reader.readLine()) {
     list << line.value();
   }
   return list;
-#endif
 }
 
 /// @brief デバッグ・リリース共通のアセットパスを返す

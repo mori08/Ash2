@@ -38,21 +38,22 @@ void Main() {
   registry.ctx().emplace<NameLookup>();
   NameLookupSystem::Connect(registry);
 
-  const TOMLReader playerToml(U"config/player.toml");
+  const TOMLReader playerToml(AssetPath(U"asset/config/player.toml"));
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
 
   registry.ctx().emplace<AnimationDataRegistry>();
   const auto loadAnimations = [&registry]() {
     auto& animReg = registry.ctx().get<AnimationDataRegistry>();
-    for (const auto& path :
-         FileSystem::DirectoryContents(U"config/animation/")) {
+    for (const auto& path : GetAssetList()) {
+      if (FileSystem::Extension(path) != U"toml") continue;
+      if (!path.starts_with(U"asset/config/animation/")) continue;
       animReg[FileSystem::BaseName(path)] =
-          AnimationData::FromToml(TOMLReader{path});
+          AnimationData::FromToml(TOMLReader{AssetPath(path)});
     }
   };
   loadAnimations();
 
-  const TOMLReader scenarioToml(U"config/scenario.toml");
+  const TOMLReader scenarioToml(AssetPath(U"asset/config/scenario.toml"));
   registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
 
   registry.ctx().emplace<PhaseRegistry>(MakeDefaultPhaseRegistry());
@@ -66,7 +67,8 @@ void Main() {
         .input = actions.toInputState(),
     };
     if (frameData.input.reloadConfig) {
-      const TOMLReader reloadedPlayerToml(U"config/player.toml");
+      const TOMLReader reloadedPlayerToml(
+          AssetPath(U"asset/config/player.toml"));
       registry.ctx().get<PlayerConfig>() =
           PlayerConfig::FromToml(reloadedPlayerToml);
 
