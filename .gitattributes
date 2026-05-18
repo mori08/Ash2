@@ -18,3 +18,6 @@
 # シェルスクリプトは常に LF
 *.sh text eol=lf
 tools/hooks/pre-commit text eol=lf
+
+# 自動生成ファイルは改行変換しない
+Ash2/App/assets/asset_list -text
