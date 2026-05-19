@@ -417,3 +417,6 @@ gmon.out
 # Claude Code local settings
 .claude/settings.local.json
 
+# Private game design documents (not for public repo)
+docs/game_design/private_*
+
