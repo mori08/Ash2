@@ -2,7 +2,7 @@ name: clang-tidy
 
 on:
   schedule:
-    - cron: '0 15 * * *'  # 毎日 00:00 JST
+    - cron: '0 3 * * 3'  # 毎週水曜 12:00 JST
   workflow_dispatch:
 
 permissions:
