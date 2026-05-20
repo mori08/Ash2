@@ -213,19 +213,22 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestAttachmentSystem.cpp">
+    <ClCompile Include="tests\TestAttachmentSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestWorldPos.cpp">
+    <ClCompile Include="tests\TestWorldPos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestPlayerConfig.cpp">
+    <ClCompile Include="tests\TestPlayerConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestWaitPhase.cpp">
+    <ClCompile Include="tests\TestWaitPhase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestNameLookup.cpp">
+    <ClCompile Include="tests\TestNameLookup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestPhaseStack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
