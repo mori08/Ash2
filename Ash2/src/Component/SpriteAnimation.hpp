@@ -9,6 +9,7 @@ struct SpriteAnimation {
   s3d::String currentClip;
   /// 現クリップの再生経過時間（秒）
   double elapsed = 0.0;
-  /// 右向きかどうか（true のとき左右反転して描画）
+  /// スプライトは左向きがデフォルト。右向きのとき true にし、AnimationSystem
+  /// が反転描画する
   bool facingRight = false;
 };
