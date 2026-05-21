@@ -1,6 +1,6 @@
 #if USE_TEST
 #include <ThirdParty/Catch2/catch.hpp>
-#include <ThirdParty/entt/entt.hpp>
+#include <entt/entt.hpp>
 
 #include "Phase/FrameData.hpp"
 #include "Phase/PhaseStack.hpp"

@@ -2,7 +2,7 @@
 
 #include <Siv3D.hpp>
 
-#include <ThirdParty/entt/entt.hpp>
+#include <entt/entt.hpp>
 
 #include "Phase/FrameData.hpp"
 

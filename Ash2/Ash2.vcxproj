@@ -43,6 +43,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Intermediate\$(ProjectName)\Debug\</OutDir>
@@ -377,7 +380,6 @@
     <ClInclude Include="src\Phase\DemoPhase.hpp" />
     <ClInclude Include="src\Phase\IPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseStack.hpp" />
-    <ClInclude Include="ThirdParty\entt\entt.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

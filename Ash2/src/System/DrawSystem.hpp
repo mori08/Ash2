@@ -1,5 +1,5 @@
 #pragma once
-#include <ThirdParty/entt/entt.hpp>
+#include <entt/entt.hpp>
 
 #include "Component/WorldPos.hpp"
 

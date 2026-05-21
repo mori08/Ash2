@@ -1,8 +1,8 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <ThirdParty/entt/entt.hpp>
 #include <cassert>
+#include <entt/entt.hpp>
 
 #include "Component/Name.hpp"
 
