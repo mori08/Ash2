@@ -1,6 +1,6 @@
 #if USE_TEST
 #include <ThirdParty/Catch2/catch.hpp>
-#include <ThirdParty/entt/entt.hpp>
+#include <entt/entt.hpp>
 
 #include "Component/Name.hpp"
 #include "System/NameLookup.hpp"

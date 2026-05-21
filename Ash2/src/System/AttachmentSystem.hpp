@@ -1,5 +1,5 @@
 #pragma once
-#include <ThirdParty/entt/entt.hpp>
+#include <entt/entt.hpp>
 
 /// @brief 親子座標伝播システム
 class AttachmentSystem {
