@@ -24,7 +24,9 @@
       "Bash(grep *)",
       "Bash(find *)",
       "Bash(echo *)",
-      "Bash(pwd)"
+      "Bash(pwd)",
+      "Bash(*clang-format*)",
+      "Bash(*clang-tidy*)"
     ]
   }
 }
