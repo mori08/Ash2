@@ -1,39 +1,22 @@
 {
   "permissions": {
+    "deny": [
+      "Bash(gh api*)"
+    ],
     "allow": [
-      "Bash(git -C * status *)",
-      "Bash(git -C * status)",
-      "Bash(git -C * diff *)",
-      "Bash(git -C * diff)",
-      "Bash(git -C * log *)",
-      "Bash(git -C * log)",
-      "Bash(git -C * add *)",
-      "Bash(git -C * commit *)",
-      "Bash(git -C * push)",
-      "Bash(git -C * push *)",
-      "Bash(git -C * pull)",
-      "Bash(git -C * pull *)",
-      "Bash(git -C * branch)",
-      "Bash(git -C * branch *)",
-      "Bash(git -C * checkout *)",
-      "Bash(git -C * merge *)",
-      "Bash(git -C * rev-parse *)",
-      "Bash(git -C * show *)",
-      "Bash(gh issue list *)",
-      "Bash(gh issue view *)",
-      "Bash(gh issue create *)",
-      "Bash(gh issue edit *)",
-      "Bash(gh pr list *)",
-      "Bash(gh pr view *)",
-      "Bash(gh pr checks *)",
-      "Bash(gh pr create *)",
-      "Bash(gh pr edit *)",
-      "Bash(gh pr diff *)",
-      "Bash(gh pr comment *)",
-      "Bash(gh pr merge *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch*)",
+      "Bash(git checkout *)",
+      "Bash(git rev-parse *)",
+      "Bash(git show *)",
+      "Bash(gh issue *)",
+      "Bash(gh pr *)",
       "Bash(gh label *)",
-      "Bash(ls *)",
-      "Bash(ls)",
+      "Bash(ls*)",
       "Bash(cat *)",
       "Bash(head *)",
       "Bash(tail *)",
@@ -41,30 +24,7 @@
       "Bash(grep *)",
       "Bash(find *)",
       "Bash(echo *)",
-      "Bash(pwd)",
-      "Bash(curl -s *)"
-    ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo 'PowerShell ツールは使用禁止。bash 等価コマンド（ls/cat/grep 等）で代替してください。' >&2; exit 2"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "grep -qE 'clang-(format|tidy)' && printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\"}}' || true"
-          }
-        ]
-      }
+      "Bash(pwd)"
     ]
   }
 }
