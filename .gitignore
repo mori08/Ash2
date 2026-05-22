@@ -414,6 +414,9 @@ gmon.out
 #**/App/engine
 #**/App/dll
 
+# vcpkg installed packages (regenerated from vcpkg.json)
+vcpkg_installed/
+
 # Claude Code local settings
 .claude/settings.local.json
 
