@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-bash "$(git rev-parse --show-toplevel)/tools/sync-assets.sh"
-git add Ash2/App/assets/asset_list Ash2/App/Resource.rc

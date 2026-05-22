@@ -7,61 +7,29 @@ paths:
 
 # コーディングスタイル
 
-## 静的解析（clang-tidy）
+## 静的解析・フォーマット
 
-clang-tidy はバージョン **19 系**を使用する。
+clang-format / clang-tidy はバージョン **19 系**を使用する。
 
-`.cpp` ファイルを編集したら、必ず以下のコマンドで静的解析をかける（`stdafx.cpp` は除く）：
+`.cpp` / `.hpp` ファイルを編集したら、必ず以下のコマンドを実行する（`stdafx.cpp` は除く）：
 
 ```bash
-REPO=$(git rev-parse --show-toplevel)
-PROJECT_WIN=$(cygpath -w "$REPO/Ash2")
-SIV3D_WIN=$(cygpath -w "$SIV3D_0_6_16")
-TIDY_WIN=$(cygpath -w "$REPO/Ash2/.tidy")
-CLANG_TIDY=$(find "/c/Program Files/Microsoft Visual Studio" -path "*/Llvm/x64/bin/clang-tidy.exe" 2>/dev/null | head -1)
-TARGET_WIN=$(cygpath -w <ファイルパス>)
-
-MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" \
-"$CLANG_TIDY" \
-  "--header-filter=.*Ash2[\\/](src|tests)[\\/].*" \
-  "$TARGET_WIN" \
-  -- \
-  --driver-mode=cl /std:c++latest /Zc:__cplusplus /utf-8 \
-  "/FI${PROJECT_WIN}\\src\\stdafx.h" \
-  -D_DEBUG -D_WINDOWS \
-  -D_ENABLE_EXTENDED_ALIGNED_STORAGE \
-  -D_SILENCE_CXX20_CISO646_REMOVED_WARNING \
-  -D_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS \
-  -D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS \
-  -DUSE_TEST \
-  "-I${TIDY_WIN}" "-I${PROJECT_WIN}\\src" "-I${PROJECT_WIN}" \
-  -imsvc "${SIV3D_WIN}\\include" \
-  -imsvc "${SIV3D_WIN}\\include\\ThirdParty"
+./tools/run-lint.sh <ファイルパス>
 ```
 
 clang-tidy は時間がかかるため `run_in_background: true` でバックグラウンド実行し、
-その間に clang-format・ドキュメント更新・vcxproj 編集など tidy 結果に依存しない作業を進める。
-コミット前に結果を確認して警告がないことを確認すること。
+その間にドキュメント更新・vcxproj 編集など tidy 結果に依存しない作業を進める。
 
-警告が出た場合はすべて修正してから返答すること。
-修正後は必ず clang-format もかけること（下記参照）。
-
-**備考：**
-- `SIV3D_0_6_16` は Siv3D SDK インストール時に設定される環境変数
-- `-imsvc` で Siv3D をシステムヘッダー扱いにし、DirectXMath 由来のエラーを抑制
-- `Ash2/.tidy/cpuid.h` は DirectXMath 互換のスタブ（削除しないこと）
-- `.hpp` 単体の編集時はインクルードしている `.cpp` に対して実行すること
-
-## フォーマット自動適用
-
-clang-format はバージョン **19 系**を使用する。
-
-`.cpp` / `.hpp` ファイルを編集したら、必ず以下のコマンドでフォーマットをかける：
+警告が出た場合はすべて修正し、修正後に再チェックしてからコミットすること：
 
 ```bash
-clang-format -i <ファイルパス>
-# PATH に無い場合: find "/c/Program Files/Microsoft Visual Studio" -name "clang-format.exe"
+./tools/run-lint.sh --tidy-only <ファイルパス>  # 修正後はフォーマット不要なので tidy のみ
 ```
+
+**備考：**
+- `.hpp` のみ渡した場合は clang-format のみ実行され、clang-tidy はスキップされる。`.hpp` の変更を tidy で検証したい場合はインクルードしている `.cpp` を指定すること
+- `Ash2/.tidy/cpuid.h` は DirectXMath 互換のスタブ（削除しないこと）
+- clang-format / clang-tidy が PATH にない場合は追加する
 
 ## コメント（.hpp）
 
