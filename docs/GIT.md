@@ -12,9 +12,10 @@
 ```
 feature/<short-description>   # 新機能
 fix/<short-description>        # バグ修正
+refactor/<short-description>   # リファクタリング
 ```
 
-例: `feature/player-movement`, `fix/collision-bug`
+例: `feature/player-movement`, `fix/collision-bug`, `refactor/vcpkg-entt`
 
 ## コミットメッセージとissueの紐付け
 

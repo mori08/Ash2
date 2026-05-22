@@ -17,14 +17,14 @@ description: Read all source files and report 3-5 findings, then optionally crea
 
 ### 2. ソースファイルの走査
 
-`src/` 以下の `.hpp` / `.cpp` ファイルを Glob で列挙し、すべて読む。
+`Ash2/src/` 以下の `.hpp` / `.cpp` ファイルを Glob で列挙し、すべて読む。
 ファイル数が多い場合はサブエージェントを並列起動して効率よく走査する。
 
 ### 3. ARCHITECTURE.md の更新
 
 サブエージェントを1つ起動し、以下を指示する。
 
-- `src/` 以下のソースファイルをすべて読む
+- `Ash2/src/` 以下のソースファイルをすべて読む
 - `docs/ARCHITECTURE.md` は読まない
 - `.claude/rules/cpp.md` の内容に従い `docs/ARCHITECTURE.md` を一から生成する
 
@@ -39,10 +39,10 @@ description: Read all source files and report 3-5 findings, then optionally crea
 
 ### 4. テストの確認
 
-`tests/` 以下のファイルを Glob で列挙し、すべて読む。
+`Ash2/tests/` 以下のファイルを Glob で列挙し、すべて読む。
 
 - 既存テストが実装と乖離していないか確認する（テスト対象クラスの変更、古い API の使用等）
-- `src/` の中で描画・入力・リソース読み込みに依存しないロジックを持つクラスのうち、
+- `Ash2/src/` の中で描画・入力・リソース読み込みに依存しないロジックを持つクラスのうち、
   対応するテストがないものをテスト追加候補として指摘する
 
 見つかった問題・候補はステップ6のレポートにコードレビューとは別セクションで出力する。
@@ -98,6 +98,6 @@ Issue 化したい項目があれば番号で教えてください（例: 1 3）
 ```
 
 ユーザーが番号を指定した場合、各項目について `create-issue` スキルを使って GitHub Issue を作成する。
-- ラベルは内容に応じて `bug` / `enhancement` / `chore` から選ぶ
+- ラベルは内容に応じて `bug` / `enhancement` / `chore` / `refactor` から選ぶ
 - タイトルは日本語で（GIT.md の規則に従う）
 - 本文にはレポートの「内容」と「提案」を含める
