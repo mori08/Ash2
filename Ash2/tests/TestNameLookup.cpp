@@ -1,4 +1,4 @@
-#if USE_TEST
+#ifdef _DEBUG
 #include <ThirdParty/Catch2/catch.hpp>
 #include <entt/entt.hpp>
 

@@ -15,21 +15,33 @@ Ash2/
 
 ## テストの実行
 
-Debug ビルドで `tools/run.sh` を実行すると自動的にテストが走る。
+### テストのみ実行（bash からキャプチャ可能）
 
-- **成功時**: コンソールがすぐ閉じ、そのままゲームが起動する
-- **失敗時**: コンソールが残り、失敗内容を確認できるまで待機する
+```bash
+./tools/run-tests.sh
+```
+
+テスト完了後にゲームは起動しない。
+Catch2 の出力はターミナルに直接表示される。
+
+### ゲームを起動する（通常の開発フロー）
+
+```bash
+./tools/run.sh
+```
+
+テストは実行されない。ゲームのみ起動する。
 
 ## テストの書き方
 
-`tests/` に `.cpp` ファイルを追加し、`USE_TEST` ガードで囲む。
+`tests/` に `.cpp` ファイルを追加し、`_DEBUG` ガードで囲む。
 
 テスト名は英語で書き、日本語はコメントで補足する（コンソール出力の文字化け対策）。
 
 ```cpp
-# if USE_TEST
-# include <ThirdParty/Catch2/catch.hpp>
-# include "WorldPos.hpp"
+#ifdef _DEBUG
+#include <ThirdParty/Catch2/catch.hpp>
+#include "WorldPos.hpp"
 
 TEST_CASE("WorldPos::ToScreen - far objects have smaller y")
 {
@@ -37,15 +49,9 @@ TEST_CASE("WorldPos::ToScreen - far objects have smaller y")
     REQUIRE(...);
 }
 
-# endif
+#endif
 ```
 
+## _DEBUG ガード
 
-## USE_TEST プリプロセッサ
-
-Debug 構成のみに定義されている。Release ビルドにはテストコードが含まれない。
-
-## ビジュアルテスト
-
-描画・座標感覚の確認はシーン管理が整備されてから行う。
-シーン管理の基盤ができたら、デバッグ用シーンを追加してビジュアルテストを組み込む。
+`#ifdef _DEBUG` で囲むことで、Release ビルドにはテストコードが含まれない。

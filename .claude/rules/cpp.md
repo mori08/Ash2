@@ -70,6 +70,14 @@ lint が通ったら `tools/build.sh` でビルドする。リポジトリルー
 完了通知の status が `completed`（exit code 0）なら出力ファイルは読まない。
 `failed`（exit code 1）のときだけ出力ファイルを Read して原因を確認する。
 
+### 自動テスト
+
+ビルド成功後、必ず `tools/run-tests.sh` を実行してテストが通ることを確認する。
+
+```bash
+./tools/run-tests.sh
+```
+
 ## コメント（.hpp）
 
 `.hpp` の関数・構造体・メンバ変数には `///` で Doxygen コメントを書く。言語は日本語。
