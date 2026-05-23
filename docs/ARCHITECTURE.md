@@ -18,6 +18,7 @@
 ```
 Ash2/src/
 ├── Main.cpp             # エントリポイント・ゲームループ
+├── GameSetup.hpp/.cpp   # registry 初期化・設定リロード
 ├── Asset.hpp            # アセット登録・パス解決ユーティリティ
 ├── Component/           # ECS コンポーネント（データのみ）
 ├── Config/              # TOML 設定データ（FromToml 付き構造体）
@@ -50,19 +51,21 @@ Main.cpp
 ```
 while (System::Update()) {
     FrameData 生成（dt + InputState）
-    設定リロード（F5）
+    設定リロード（F5、Debug ビルドのみ）
     PhaseStack::update(registry, frameData)
     AttachmentSystem::UpdateTransform(registry)
     DrawSystem::Draw(registry)
 }
 ```
 
-起動時に `registry.ctx()` へ以下をセット：
+起動時に `InitializeRegistry()` が `registry.ctx()` へ以下をセット：
 - `NameLookup` — 名前→エンティティの逆引きテーブル
-- `PlayerConfig` — プレイヤー設定（F5 でホットリロード）
-- `AnimationDataRegistry` — アニメーション設定（F5 でホットリロード）
+- `PlayerConfig` — プレイヤー設定
+- `AnimationDataRegistry` — アニメーション設定
 - `ScenarioData` — シナリオデータ
 - `PhaseRegistry` — フェーズ名→ファクトリのマップ
+
+Debug ビルドでは `Console.open()` で起動し、未捕捉例外をコンソールに出力して待機する。
 
 ---
 

@@ -93,7 +93,7 @@ if [[ $RUN_TIDY -eq 1 ]]; then
             "--header-filter=.*Ash2[\\/](src|tests)[\\/].*" \
             "$target_win" \
             -- \
-            --driver-mode=cl /std:c++latest /Zc:__cplusplus /utf-8 \
+            --driver-mode=cl /std:c++latest /Zc:__cplusplus /utf-8 /EHsc \
             "/FI${PROJECT_WIN}\\src\\stdafx.h" \
             -D_DEBUG -D_WINDOWS \
             -D_ENABLE_EXTENDED_ALIGNED_STORAGE \
