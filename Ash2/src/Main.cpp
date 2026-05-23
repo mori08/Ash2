@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "Asset.hpp"
+#include "Debug.hpp"
 #include "GameSetup.hpp"
 #include "Input/PlayerInputAction.hpp"
 #include "Phase/FrameData.hpp"
@@ -26,8 +27,8 @@ static void RunTests() {
 void Main() {
 #ifdef _DEBUG
   Console.open();
-  Console << U"=== Debug Build ===";
 #endif
+  APP_LOG(U"=== Debug Build ===");
 
   try {
     RegisterAssets();
@@ -58,9 +59,11 @@ void Main() {
     }
 
   } catch (const std::exception& e) {
+    const String message = U"[例外] " + Unicode::Widen(e.what());
+    TextWriter{U"crash.log", OpenMode::Append}.writeln(message);
+    APP_LOG(message);
+    APP_LOG(U"Enterキーで終了...");
 #ifdef _DEBUG
-    Console << U"[例外] " << Unicode::Widen(e.what());
-    Console << U"Enterキーで終了...";
     static_cast<void>(std::getchar());
 #endif
     throw;

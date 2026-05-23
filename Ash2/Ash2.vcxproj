@@ -371,6 +371,7 @@
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Asset.hpp" />
+    <ClInclude Include="src\Debug.hpp" />
     <ClInclude Include="src\GameSetup.hpp" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
     <ClInclude Include="src\Phase\DemoPhase.hpp" />
