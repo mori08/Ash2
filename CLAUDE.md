@@ -19,7 +19,7 @@ C++ / Siv3D v0.6.16 / Visual Studio 2022
 
 ## ビルド
 
-ビルド・動作確認・デバッグはすべてユーザーが Visual Studio 2022 で行う。Claude はビルドコマンドを実行しない。
+ビルドは `tools/build.sh` を実行して行う。デバッガを使った実行・調査はユーザーが Visual Studio 2022 で行う。
 
 ## テスト
 

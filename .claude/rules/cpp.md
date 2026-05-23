@@ -7,6 +7,10 @@ paths:
 
 # コーディングスタイル
 
+## ファイルの追加
+
+新しい `.cpp` / `.hpp` ファイルを追加するときは、**ビルド前に** `Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
+
 ## 静的解析・フォーマット
 
 clang-format / clang-tidy はバージョン **19 系**を使用する。
@@ -30,6 +34,30 @@ clang-tidy は時間がかかるため `run_in_background: true` でバックグ
 - `.hpp` のみ渡した場合は clang-format のみ実行され、clang-tidy はスキップされる。`.hpp` の変更を tidy で検証したい場合はインクルードしている `.cpp` を指定すること
 - `Ash2/.tidy/cpuid.h` は DirectXMath 互換のスタブ（削除しないこと）
 - clang-format / clang-tidy が PATH にない場合は追加する
+
+## ビルド
+
+lint が通ったら `tools/build.sh` でビルドする。リポジトリルートから実行すること。
+
+```bash
+./tools/build.sh                    # 通常ビルド（sync-assets → MSBuild）
+./tools/build.sh --no-sync-assets   # アセット未変更時の高速リビルド
+```
+
+### 主要オプション（MSBuild）
+
+| オプション | 値 | 説明 |
+|---|---|---|
+| `-p:Configuration` | `Debug` / `Release` | ビルド構成（デフォルト: Debug） |
+| `-p:Platform` | `x64` | ターゲットプラットフォーム |
+| `-m` | — | 並列ビルド（CPU数に合わせる） |
+| `-v` | `minimal` / `normal` / `detailed` / `diag` | ターミナル出力の詳細度 |
+| `-t` | `Build` / `Clean` / `Rebuild` | ターゲット指定 |
+
+### ビルドログ
+
+- **ターミナル**（`-v:minimal`）：エラーと警告のみ。Claude Code が直接読み取る
+- **`logs/build.log`**（`-v:detailed`）：詳細ログ。コンパイルエラーの調査に使用（`.gitignore` 済み）
 
 ## コメント（.hpp）
 
@@ -59,10 +87,6 @@ struct WorldPos {
 /// @return a が b より奥にある場合 true
 inline bool DrawOrderLess(const WorldPos& a, const WorldPos& b);
 ```
-
-## ファイルの追加
-
-新しい `.cpp` / `.hpp` ファイルを追加するときは、`Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
 
 ## ARCHITECTURE.md の更新
 
