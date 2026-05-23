@@ -25,7 +25,8 @@
       "Bash(find *)",
       "Bash(echo *)",
       "Bash(pwd)",
-      "Bash(./tools/run-lint.sh *)"
+      "Bash(./tools/run-lint.sh *)",
+      "Bash(./tools/build.sh*)"
     ]
   }
 }
