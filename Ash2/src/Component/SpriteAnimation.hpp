@@ -7,7 +7,7 @@ struct SpriteAnimation {
   s3d::String dataKey;
   /// 現在再生中のクリップ名
   s3d::String currentClip;
-  /// 現クリップの再生経過時間（秒）
+  /// 現クリップ内の位相（秒）。[0, count/speed) の範囲にラップされる
   double elapsed = 0.0;
   /// スプライトは左向きがデフォルト。右向きのとき true にし、AnimationSystem
   /// が反転描画する
