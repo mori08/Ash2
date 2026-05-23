@@ -26,7 +26,8 @@
       "Bash(echo *)",
       "Bash(pwd)",
       "Bash(./tools/run-lint.sh *)",
-      "Bash(./tools/build.sh*)"
+      "Bash(./tools/build.sh*)",
+      "Bash(./tools/run.sh*)"
     ]
   }
 }
