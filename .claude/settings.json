@@ -6,8 +6,12 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 .claude/hooks/no-compound-git.py"
+          },
+          {
+            "type": "command",
             "if": "Bash(git push*)",
-            "command": "count=$(cd \"$(git rev-parse --show-toplevel 2>/dev/null)\" 2>/dev/null && git log main..HEAD --oneline 2>/dev/null | wc -l | tr -d ' '); if [ \"${count:-0}\" -gt 1 ]; then printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"警告: main..HEAD に %s 件のコミットがあります。GIT.md のルール: 軽微な修正は直前のコミットに squash してから push すること。\"}}' \"$count\"; fi",
+            "command": "python3 .claude/hooks/check-commit-count.py",
             "statusMessage": "コミット数を確認中..."
           }
         ]
