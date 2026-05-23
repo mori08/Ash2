@@ -43,7 +43,8 @@
       "Bash(./tools/run-format.sh *)",
       "Bash(./tools/run-tidy.sh *)",
       "Bash(./tools/build.sh*)",
-      "Bash(./tools/run.sh*)"
+      "Bash(./tools/run.sh*)",
+      "Bash(./tools/run-tests.sh*)"
     ]
   }
 }
