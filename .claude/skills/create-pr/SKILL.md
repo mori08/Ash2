@@ -5,17 +5,23 @@ description: Create a GitHub PR
 
 Create a GitHub pull request and run a code review on it.
 
+Before doing anything, read `docs/GIT.md`.
+
 ## 手順
 
 ### 1. 事前確認
 
-現在のブランチを確認する。
+以下を並行して実行する。
 
 ```bash
 git branch --show-current
+git log main..HEAD --oneline
 ```
 
 main ブランチの場合は作業を中止し、feature/fix ブランチに切り替えるよう伝える。
+
+コミットログから対応する Issue 番号を特定し、`gh issue view <number>` で Issue の内容を確認する。
+Issue のスコープと実装内容にズレがあれば、ユーザーに報告し、必要に応じて Issue にコメントを追加してから次のステップへ進む。
 
 ### 2. PR情報の決定
 

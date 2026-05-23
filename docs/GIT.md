@@ -19,7 +19,7 @@ refactor/<short-description>   # リファクタリング
 
 ## コミットメッセージとissueの紐付け
 
-関連するissueは常にコミットメッセージに含める。
+関連するissueがある場合は、コミットメッセージに含める。
 
 ```
 Add player movement #3              # 参照のみ（issueは開いたまま）
@@ -27,6 +27,8 @@ Fix collision detection, close #5   # mainマージ時にissueが自動クロー
 ```
 
 `close` の代わりに `fixes` / `resolves` も使用可。
+
+小さなルール変更・設定調整など、issueを立てずに行う `chore` コミットは、issue番号の記載を省略してよい。
 
 ## コミットの整理
 
@@ -57,21 +59,6 @@ git push --force-with-lease   # featureブランチへのforce-push
 | `chore` | Claude設定・依存更新・環境整備など（直接コミット） |
 | `clang-tidy` | clang-tidy 自動レポート（CI が自動で付与） |
 
-## git コマンドの実行形式
-
-ディレクトリを指定して git を実行する場合は、`cd` を使わず `git -C <path>` を使うこと。
-
-```bash
-# NG
-cd ~/path/to/repo && git status
-
-# OK
-git -C ~/path/to/repo status
-```
-
-`~/.claude/settings.json` の allow パターンが `git -C *` 形式で定義されているため、
-`cd && git` 形式だとルールが適用されない。
-
 ## PRの作成
 
 PR を作成する際は必ず `/create-pr` スキルを使うこと。
@@ -93,3 +80,21 @@ GitHub の PR ページにレビューコメントを投稿する。
 ## issueタイトル
 
 - 日本語で書く
+
+## Issueとの同期ルール
+
+Issue・実装・PRの内容が一致していることを保つため、以下のルールに従う。
+
+| 役割 | 記録する内容 |
+|------|-------------|
+| Issue 本文 | 何を・なぜ作るか（スコープ・意図） |
+| Issue コメント | 実装中に発覚した仕様変更・スコープ変更 |
+| PR 本文 | 実装判断・技術選択の理由 |
+
+### アクションのタイミング
+
+- **実装中に仕様が変わった場合**: 対応する Issue にコメントを1行追記する
+- **非自明な技術選択をした場合**: PR 本文にその理由を書く
+- **PR 作成前**: 対応 Issue のスコープと実装内容が一致しているか確認する。ズレがあればコメントで補足してから PR を作成する
+
+Issue を立てずに行う小さなルール変更・設定調整（`chore`）は、Issue との同期を行わなくてよい。
