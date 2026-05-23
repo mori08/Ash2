@@ -15,10 +15,15 @@ paths:
 
 clang-format / clang-tidy はバージョン **19 系**を使用する。
 
-`.cpp` / `.hpp` ファイルを編集したら、必ず以下のコマンドを実行する（`stdafx.cpp` は除く）：
+ファイルを編集したら、必ず以下のコマンドを実行する（`stdafx.cpp` は除く）：
 
 ```bash
-./tools/run-lint.sh <ファイルパス>
+# .cpp を編集した場合（format → tidy の順に実行）
+./tools/run-format.sh <ファイルパス>
+./tools/run-tidy.sh <ファイルパス>
+
+# .hpp のみ編集した場合（format のみ）
+./tools/run-format.sh <ファイルパス>
 ```
 
 clang-tidy は時間がかかるため `run_in_background: true` でバックグラウンド実行し、
@@ -30,11 +35,11 @@ clang-tidy は時間がかかるため `run_in_background: true` でバックグ
 警告が出た場合はすべて修正し、修正後に再チェックしてからコミットすること：
 
 ```bash
-./tools/run-lint.sh --tidy-only <ファイルパス>  # 修正後はフォーマット不要なので tidy のみ
+./tools/run-tidy.sh <ファイルパス>
 ```
 
 **備考：**
-- `.hpp` のみ渡した場合は clang-format のみ実行され、clang-tidy はスキップされる。`.hpp` の変更を tidy で検証したい場合はインクルードしている `.cpp` を指定すること
+- `.hpp` の変更を tidy で検証したい場合はインクルードしている `.cpp` を指定すること
 - `Ash2/.tidy/cpuid.h` は DirectXMath 互換のスタブ（削除しないこと）
 - clang-format / clang-tidy が PATH にない場合は追加する
 

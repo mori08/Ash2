@@ -40,7 +40,8 @@
       "Bash(find *)",
       "Bash(echo *)",
       "Bash(pwd)",
-      "Bash(./tools/run-lint.sh *)",
+      "Bash(./tools/run-format.sh *)",
+      "Bash(./tools/run-tidy.sh *)",
       "Bash(./tools/build.sh*)",
       "Bash(./tools/run.sh*)"
     ]
