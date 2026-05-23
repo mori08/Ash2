@@ -19,7 +19,11 @@ C++ / Siv3D v0.6.16 / Visual Studio 2022
 
 ## ビルド
 
-ビルドは `tools/build.sh` を実行して行う。デバッガを使った実行・調査はユーザーが Visual Studio 2022 で行う。
+ビルドは `tools/build.sh` を実行して行う。デバッガを使った調査はユーザーが Visual Studio 2022 で行う。
+
+## 実行
+
+アプリを起動するには `/run` スキルを使う。
 
 ## テスト
 

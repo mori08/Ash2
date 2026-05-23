@@ -57,7 +57,7 @@ lint が通ったら `tools/build.sh` でビルドする。リポジトリルー
 ### ビルドログ
 
 - **ターミナル**（`-v:minimal`）：エラーと警告のみ。Claude Code が直接読み取る
-- **`logs/build.log`**（`-v:detailed`）：詳細ログ。コンパイルエラーの調査に使用（`.gitignore` 済み）
+- **`logs/build.log`**（`-v:detailed`）：詳細ログ。コンパイルエラーの調査に使用
 
 ## コメント（.hpp）
 
