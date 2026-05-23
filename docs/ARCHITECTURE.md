@@ -142,7 +142,7 @@ WorldPos { w, h, d }
 
 ## 主要な制約
 
-- **ビルドは Visual Studio 2022 でのみ行う。** Claude はビルドコマンドを実行しない。
+- **ビルドは `tools/build.sh`、実行は `tools/run.sh` で行う。** デバッガを使った調査はユーザーが Visual Studio 2022 で行う。
 - `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren）経由で操作する（不整合防止）。
 - `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
