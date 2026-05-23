@@ -24,6 +24,9 @@ clang-format / clang-tidy はバージョン **19 系**を使用する。
 clang-tidy は時間がかかるため `run_in_background: true` でバックグラウンド実行し、
 その間にドキュメント更新・vcxproj 編集など tidy 結果に依存しない作業を進める。
 
+完了通知の status が `completed`（exit code 0）なら出力ファイルは読まない。
+`failed`（exit code 1）のときだけ出力ファイルを Read して原因を確認する。
+
 警告が出た場合はすべて修正し、修正後に再チェックしてからコミットすること：
 
 ```bash
@@ -58,6 +61,9 @@ lint が通ったら `tools/build.sh` でビルドする。リポジトリルー
 
 - **ターミナル**（`-v:minimal`）：エラーと警告のみ。Claude Code が直接読み取る
 - **`logs/build.log`**（`-v:detailed`）：詳細ログ。コンパイルエラーの調査に使用
+
+完了通知の status が `completed`（exit code 0）なら出力ファイルは読まない。
+`failed`（exit code 1）のときだけ出力ファイルを Read して原因を確認する。
 
 ## コメント（.hpp）
 
