@@ -122,6 +122,7 @@
   <ItemGroup>
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
+    <ClCompile Include="src\GameSetup.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Phase\PhaseRegistration.cpp" />
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
@@ -370,6 +371,7 @@
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Asset.hpp" />
+    <ClInclude Include="src\GameSetup.hpp" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
     <ClInclude Include="src\Phase\DemoPhase.hpp" />
     <ClInclude Include="src\Phase\IPhase.hpp" />

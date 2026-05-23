@@ -3,17 +3,13 @@
 #include <entt/entt.hpp>
 
 #include "Asset.hpp"
-#include "Component/AnimationData.hpp"
-#include "Config/PlayerConfig.hpp"
-#include "Config/ScenarioData.hpp"
+#include "GameSetup.hpp"
 #include "Input/PlayerInputAction.hpp"
 #include "Phase/FrameData.hpp"
-#include "Phase/PhaseRegistry.hpp"
 #include "Phase/PhaseStack.hpp"
 #include "Phase/ScenarioPhase.hpp"
 #include "System/AttachmentSystem.hpp"
 #include "System/DrawSystem.hpp"
-#include "System/NameLookup.hpp"
 
 #if USE_TEST
 #define CATCH_CONFIG_RUNNER
@@ -28,55 +24,45 @@ static void RunTests() {
 #endif
 
 void Main() {
-  RegisterAssets();
-
-#if USE_TEST
-  RunTests();
+#ifdef _DEBUG
+  Console.open();
+  Console << U"=== Debug Build ===";
 #endif
 
-  entt::registry registry;
-  registry.ctx().emplace<NameLookup>();
-  NameLookupSystem::Connect(registry);
+  try {
+    RegisterAssets();
 
-  const TOMLReader playerToml(AssetPath(U"assets/config/player.toml"));
-  registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
+#if USE_TEST
+    RunTests();
+#endif
 
-  registry.ctx().emplace<AnimationDataRegistry>();
-  const auto loadAnimations = [&registry]() {
-    auto& animReg = registry.ctx().get<AnimationDataRegistry>();
-    animReg.clear();
-    for (const auto& path : GetAssetList()) {
-      if (FileSystem::Extension(path) != U"toml") continue;
-      if (!path.starts_with(U"assets/config/animation/")) continue;
-      animReg[FileSystem::BaseName(path)] =
-          AnimationData::FromToml(TOMLReader{AssetPath(path)});
+    entt::registry registry;
+    InitializeRegistry(registry);
+
+    const PlayerInputAction actions = PlayerInputAction::Default();
+    PhaseStack phaseStack(std::make_unique<ScenarioPhase>(U"init"), registry);
+
+    while (System::Update()) {
+      const FrameData frameData{
+          .dt = Scene::DeltaTime(),
+          .input = actions.toInputState(),
+      };
+#ifdef _DEBUG
+      if (frameData.input.reloadConfig) {
+        ReloadConfig(registry);
+      }
+#endif
+      phaseStack.update(registry, frameData);
+      AttachmentSystem::UpdateTransform(registry);
+      DrawSystem::Draw(registry);
     }
-  };
-  loadAnimations();
 
-  const TOMLReader scenarioToml(AssetPath(U"assets/config/scenario.toml"));
-  registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
-
-  registry.ctx().emplace<PhaseRegistry>(MakeDefaultPhaseRegistry());
-
-  const PlayerInputAction actions = PlayerInputAction::Default();
-  PhaseStack phaseStack(std::make_unique<ScenarioPhase>(U"init"), registry);
-
-  while (System::Update()) {
-    const FrameData frameData{
-        .dt = Scene::DeltaTime(),
-        .input = actions.toInputState(),
-    };
-    if (frameData.input.reloadConfig) {
-      const TOMLReader reloadedPlayerToml(
-          AssetPath(U"assets/config/player.toml"));
-      registry.ctx().get<PlayerConfig>() =
-          PlayerConfig::FromToml(reloadedPlayerToml);
-
-      loadAnimations();
-    }
-    phaseStack.update(registry, frameData);
-    AttachmentSystem::UpdateTransform(registry);
-    DrawSystem::Draw(registry);
+  } catch (const std::exception& e) {
+#ifdef _DEBUG
+    Console << U"[例外] " << Unicode::Widen(e.what());
+    Console << U"Enterキーで終了...";
+    static_cast<void>(std::getchar());
+#endif
+    throw;
   }
 }
