@@ -422,4 +422,5 @@ vcpkg_installed/
 
 # Private game design documents (not for public repo)
 docs/game_design/private_*
+docs/sketches/private_*
 
