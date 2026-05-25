@@ -419,6 +419,7 @@ vcpkg_installed/
 
 # Claude Code local settings
 .claude/settings.local.json
+.claude/tmp/
 
 # Private game design documents (not for public repo)
 docs/game_design/private_*

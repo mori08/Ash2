@@ -3,7 +3,7 @@ name: create-pr
 description: Create a GitHub PR
 ---
 
-Create a GitHub pull request and run a code review on it.
+Create a GitHub pull request.
 
 Before doing anything, read `docs/GIT.md`.
 
@@ -37,16 +37,4 @@ Issue のスコープと実装内容にズレがあれば、ユーザーに報�
 gh pr create --title "<title>" --body "<body>" --base main
 ```
 
-作成後、PR の URL を表示する。
-
-### 4. コードレビューの実行
-
-PR 作成直後に、Agent ツールで `pr-reviewer` エージェントを起動する。
-エージェントへの入力に以下を含めること。
-
-- PR 番号
-- ローカルリポジトリのパス
-- ファイルを読む際は `gh api` を使わず `Read` ツールでローカルファイルを直接参照すること
-
-エージェントが完了すると GitHub の PR ページにレビューコメントが投稿される。
-投稿完了後、PR の URL をユーザーに伝える。
+作成後、PR の URL をユーザーに伝える。
