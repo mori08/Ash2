@@ -11,4 +11,4 @@ if [[ ! -f "$EXE" ]]; then
 fi
 
 echo "Running tests: $EXE"
-ASH2_RUN_TESTS=1 "$EXE"
+ASH2_RUN_TESTS=1 "$EXE" || true

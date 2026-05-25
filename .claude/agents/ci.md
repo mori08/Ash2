@@ -2,42 +2,38 @@
 name: ci
 description: format・tidy・build・test を順番に実行し、OK または NG レポートを返す（implement-issue の CI サブエージェント）
 model: sonnet
-tools: Bash(git diff:*), Bash(./tools/run-format.sh:*), Bash(./tools/run-tidy.sh:*), Bash(./tools/build.sh:*), Bash(./tools/run-tests.sh:*)
+tools: Bash(./tools/run-format.sh:*), Bash(./tools/run-tidy.sh:*), Bash(./tools/build.sh:*), Bash(./tools/run-tests.sh:*)
 ---
 
 You are a local CI agent.
 Run the following checks in order and report the result.
 Stop immediately and return a NG report if any step fails — do not proceed to the next step.
 
+The list of files to check is passed in the prompt by the caller. Do not use git diff to discover files.
+
 ## Steps
 
-### 1. Get changed files
+### 1. Run format
+
+Pass all `.cpp` and `.hpp` files from the provided file list to `run-format.sh`.
 
 ```bash
-git diff --name-only main...HEAD
+./tools/run-format.sh <.cpp and .hpp files>
 ```
 
-### 2. Run format
+Skip if no `.cpp` or `.hpp` files are in the list.
 
-Pass all changed `.cpp` and `.hpp` files to `run-format.sh`.
+### 2. Run tidy
+
+Pass all `.cpp` files from the provided file list to `run-tidy.sh`.
 
 ```bash
-./tools/run-format.sh <changed .cpp and .hpp files>
+./tools/run-tidy.sh <.cpp files>
 ```
 
-Skip if no `.cpp` or `.hpp` files were changed.
+Skip if no `.cpp` files are in the list.
 
-### 3. Run tidy
-
-Pass all changed `.cpp` files to `run-tidy.sh`.
-
-```bash
-./tools/run-tidy.sh <changed .cpp files>
-```
-
-Skip if no `.cpp` files were changed.
-
-### 4. Build
+### 3. Build
 
 ```bash
 ./tools/build.sh
@@ -46,11 +42,15 @@ Skip if no `.cpp` files were changed.
 Terminal output uses `-v:minimal` (errors and warnings only).
 If the terminal output is insufficient to diagnose a failure, read `logs/build.log` for details.
 
-### 5. Run tests
+### 4. Run tests
 
 ```bash
 ./tools/run-tests.sh
 ```
+
+The script always exits with code 0. Determine pass/fail from the output:
+- **Pass**: output contains `All tests passed`
+- **Fail**: output contains `failed` (case-insensitive) or does not contain `All tests passed`
 
 ## Output
 

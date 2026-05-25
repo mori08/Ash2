@@ -16,14 +16,16 @@
 #define CATCH_CONFIG_RUNNER
 #include <ThirdParty/Catch2/catch.hpp>
 
-static void RunTests() { std::exit(Catch::Session().run()); }
+static int RunTests() { return Catch::Session().run(); }
 #endif
 
 void Main() {
 #ifdef _DEBUG
   size_t envLen = 0;
   if (getenv_s(&envLen, nullptr, 0, "ASH2_RUN_TESTS") == 0 && envLen > 0) {
-    RunTests();
+    const int result = RunTests();
+    System::Exit();
+    return;
   }
   Console.open();
   APP_LOG(U"=== Debug Build ===");
