@@ -21,8 +21,8 @@ TaskList で未完了タスクを確認する（未完了タスクがある場�
 TaskCreate で以下の全タスクを登録する。
 
 ```
-[ ] Phase 1: plan-issue      - 調査・実装計画の策定・ブランチ作成
-[ ] Phase 2: implement-issue - 実装ループ・確認・ビジュアルチェック
+[ ] Phase 1: plan-issue      - 調査・実装計画の策定
+[ ] Phase 2: implement-issue - ブランチ作成・実装ループ・確認・ビジュアルチェック
 [ ] Phase 3: commit-push     - コミットとpush
 [ ] Phase 4: create-pr       - PRの作成とレビュー
 [ ] Phase 5: cleanup         - マージ後の片付け（マージ報告待ち）
