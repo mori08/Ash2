@@ -68,7 +68,9 @@ IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,
 
 void ScenarioPhase::onBeforePop(entt::registry& registry) {
   for (auto entity : m_createdEntities) {
-    Hierarchy::DestroyWithChildren(registry, entity);
+    if (registry.valid(entity)) {
+      Hierarchy::DestroyWithChildren(registry, entity);
+    }
   }
   m_createdEntities.clear();
 }

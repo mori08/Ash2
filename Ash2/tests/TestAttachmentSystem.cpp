@@ -148,4 +148,20 @@ TEST_CASE("AttachmentSystem - re-attaching child to different parent") {
           entt::entity{entt::null});
 }
 
+TEST_CASE(
+    "Hierarchy - DestroyWithChildren on already-destroyed entity is safe") {
+  entt::registry registry;
+  auto parent = registry.create();
+  auto child = registry.create();
+  Hierarchy::Attach(registry, parent, child);
+
+  // 親を破棄（子も巻き込まれる）
+  Hierarchy::DestroyWithChildren(registry, parent);
+  // 破棄済みエンティティを再度呼んでもクラッシュしない
+  Hierarchy::DestroyWithChildren(registry, parent);
+  Hierarchy::DestroyWithChildren(registry, child);
+  REQUIRE_FALSE(registry.valid(parent));
+  REQUIRE_FALSE(registry.valid(child));
+}
+
 #endif
