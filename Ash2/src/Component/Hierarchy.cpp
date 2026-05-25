@@ -60,6 +60,7 @@ void Hierarchy::Detach(entt::registry& registry, entt::entity child) {
 
 void Hierarchy::DestroyWithChildren(entt::registry& registry,
                                     entt::entity entity) {
+  if (!registry.valid(entity)) return;
   if (registry.all_of<Hierarchy>(entity)) {
     auto child = registry.get<const Hierarchy>(entity).m_firstChild;
     while (child != entt::null) {
@@ -68,5 +69,6 @@ void Hierarchy::DestroyWithChildren(entt::registry& registry,
       child = next;
     }
   }
+  Detach(registry, entity);
   registry.destroy(entity);
 }
