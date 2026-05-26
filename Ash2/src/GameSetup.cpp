@@ -7,6 +7,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Phase/PhaseRegistry.hpp"
+#include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
 
 namespace {
@@ -28,6 +29,7 @@ void LoadAnimations(entt::registry& registry) {
 void InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<NameLookup>();
   NameLookupSystem::Connect(registry);
+  HierarchySystem::Connect(registry);
 
   const TOMLReader playerToml(AssetPath(U"assets/config/player.toml"));
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));

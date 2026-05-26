@@ -69,6 +69,5 @@ void Hierarchy::DestroyWithChildren(entt::registry& registry,
       child = next;
     }
   }
-  Detach(registry, entity);
   registry.destroy(entity);
 }
