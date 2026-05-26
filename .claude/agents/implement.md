@@ -34,7 +34,7 @@ Adhere to all constraints described in `ARCHITECTURE.md`.
 
 Prefer Glob / Grep / Read / Edit / Write over Bash for all file operations.
 
-### 4. Report
+### 3. Report
 
 When done, output a brief summary:
 - Files changed (path + one-line description of the change)

@@ -30,7 +30,7 @@ Agent ツール（`subagent_type: implement`）を起動し、プランファイ
 
 #### b. CI サブエージェント
 
-Agent ツール（`subagent_type: ci`）を起動する。
+Implement エージェントの出力から変更ファイル一覧を取り出し、それをプロンプトに含めて Agent ツール（`subagent_type: ci`）を起動する。
 問題なければ OK を返す。問題があれば即座に NG レポートを返し、c〜d はスキップして e へ進む。
 
 #### c. Review サブエージェント

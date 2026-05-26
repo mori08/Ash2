@@ -1,24 +1,30 @@
 ---
 name: commit-push
-description: Stage files, commit with proper message, and push to remote
+description: ファイルをステージし、適切なメッセージでコミットしてリモートにプッシュする
 ---
 
-Before doing anything, read docs/GIT.md and check the current branch with git branch. Run these in parallel.
+最初に `docs/GIT.md` を読み、`git branch` で現在のブランチを確認する（並列実行）。
 
-If on main:
-- Confirm whether the work qualifies as `chore` (direct commit allowed) or `enhancement`/`bug` (must use a feature/fix branch and PR). If it is not `chore`, stop and tell the user to create a branch first.
+## main ブランチの場合
 
-If on a feature/fix branch:
-- Run `git log main..HEAD --oneline` to check the number of commits ahead of main.
-- Apply the commit organization rules from GIT.md: if there are multiple commits, determine whether they should be squashed or kept separate, and tell the user your assessment before proceeding.
+作業が `chore`（直接コミット可）か `enhancement`/`bug`（feature/fix ブランチ＋PR が必要）かを確認する。
+`chore` でない場合は作業を中止し、先にブランチを作成するよう伝える。
 
-Run git status and git diff in parallel to understand what has changed.
+## feature/fix ブランチの場合
 
-Then stage the relevant files, commit, and push using these rules:
-- Commit message: English, imperative mood, no prefix (e.g. "Add X", "Fix Y", "Update Z")
-- Always include a related issue reference in the commit message (e.g. `#3` to reference, `close #3` to auto-close on merge)
-- Always push immediately after committing
-- Stage specific files by name, not `git add -A`
-- Append to commit message: Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+`git log main..HEAD --oneline` で main からのコミット数を確認する。
+複数コミットがある場合は GIT.md のコミット整理ルールを適用し、まとめるか分けるかの判断をユーザーに伝えてから進む。
 
-If the user provided a message with $ARGUMENTS, use it as-is. Otherwise draft a message from the diff.
+---
+
+`git status` と `git diff` を並列実行して変更内容を把握する。
+
+以下のルールに従ってステージ・コミット・プッシュを行う。
+
+- コミットメッセージ: 英語・命令形・プレフィックスなし（例: "Add X"、"Fix Y"、"Update Z"）
+- issue 参照: 関連 issue がある場合は必ず含める（例: `#3` で参照、`close #3` でマージ時に自動クローズ）。issue を立てずに行う `chore` コミットは省略可
+- コミット直後に必ずプッシュする
+- ステージは `git add -A` でなくファイル名を指定する
+- コミットメッセージ末尾に付記する: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
+
+`$ARGUMENTS` でメッセージが指定された場合はそのまま使う。指定がない場合は diff からメッセージを作成する。
