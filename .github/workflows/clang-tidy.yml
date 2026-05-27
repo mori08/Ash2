@@ -23,6 +23,17 @@ jobs:
           bitsadmin /transfer s3d-download "https://siv3d.jp/downloads/Siv3D/manual/${{ env.SIV3D_VERSION }}/OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}.zip" "C:\OpenSiv3D_SDK.zip"
           Expand-Archive -Path "C:\OpenSiv3D_SDK.zip" -DestinationPath "C:"
 
+      - name: Cache vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: Ash2/vcpkg_installed
+          key: vcpkg-x64-windows-${{ hashFiles('Ash2/vcpkg.json', 'Ash2/vcpkg-configuration.json') }}
+
+      - name: Install vcpkg dependencies
+        shell: pwsh
+        working-directory: Ash2
+        run: vcpkg install --triplet x64-windows
+
       - name: Run clang-tidy
         id: tidy
         shell: pwsh
@@ -50,7 +61,8 @@ jobs:
             "-I$projectDir\src",
             "-I$projectDir",
             "-imsvc", "$sdkRoot\include",
-            "-imsvc", "$sdkRoot\include\ThirdParty"
+            "-imsvc", "$sdkRoot\include\ThirdParty",
+            "-imsvc", "$projectDir\vcpkg_installed\x64-windows\x64-windows\include"
           )
 
           $failedFiles = @()
