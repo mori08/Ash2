@@ -120,6 +120,7 @@ WorldPos { w, h, d }
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | 指定秒数待機して Pop |
 
 `PhaseRegistry`（registry.ctx に格納）がフェーズ名→`PhaseEntry`（parseParam + createPhase）を管理し、シナリオロード時にパラメータを型安全な `ScenarioStep` に変換する。
+登録内容は [`Phase/PhaseRegistration.cpp`](../Ash2/src/Phase/PhaseRegistration.cpp) の `MakeDefaultPhaseRegistry()` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
 
 ---
 
@@ -150,4 +151,6 @@ WorldPos { w, h, d }
 - `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren）経由で操作する（不整合防止）。
 - `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
+- 新フェーズ追加時は `Phase/PhaseRegistration.cpp` の `MakeDefaultPhaseRegistry()` にもエントリを追加する必要がある。
+- `NameLookup` への挿入は**手動**（`Name` コンポーネント追加後に `NameLookup[key] = entity` を自分で書く）。削除は `NameLookupSystem::Connect` で自動化されている。
 - このドキュメントは 200 行上限。超過する場合はコード例→実装詳細→未使用の設計説明の順で削る。
