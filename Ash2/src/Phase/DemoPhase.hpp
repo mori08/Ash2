@@ -5,6 +5,16 @@
 /// @brief プレイヤー操作デモシーン
 class DemoPhase : public IPhase {
  public:
+  /// @brief DemoPhase の生成パラメータ（引数なし）
+  struct Param {};
+
+  /// @brief デフォルトコンストラクタ
+  DemoPhase() = default;
+
+  /// @brief コンストラクタ（Param 受け取り版）
+  /// @param param 生成パラメータ（未使用）
+  explicit DemoPhase(const Param& /*param*/) : DemoPhase() {}
+
   /// @brief プレイヤーエンティティ（ルート）を生成する
   /// @param registry ECS レジストリ
   void onAfterPush(entt::registry& registry) override;

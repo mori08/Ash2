@@ -38,7 +38,9 @@ void Main() {
     InitializeRegistry(registry);
 
     const PlayerInputAction actions = PlayerInputAction::Default();
-    PhaseStack phaseStack(std::make_unique<ScenarioPhase>(U"init"), registry);
+    PhaseStack phaseStack(std::make_unique<ScenarioPhase>(
+                              ScenarioPhase::Param{.sectionName = U"init"}),
+                          registry);
 
     while (System::Update()) {
       const FrameData frameData{

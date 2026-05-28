@@ -1,6 +1,6 @@
 #include "Phase/WaitPhase.hpp"
 
-WaitPhase::WaitPhase(double duration) : m_duration(duration) {}
+WaitPhase::WaitPhase(const Param& param) : m_duration(param.duration) {}
 
 IPhase::PhaseCommand WaitPhase::update(entt::registry&,
                                        const FrameData& frameData) {

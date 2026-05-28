@@ -37,10 +37,11 @@ void InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<AnimationDataRegistry>();
   LoadAnimations(registry);
 
-  const TOMLReader scenarioToml(AssetPath(U"assets/config/scenario.toml"));
-  registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
-
   registry.ctx().emplace<PhaseRegistry>(MakeDefaultPhaseRegistry());
+
+  const TOMLReader scenarioToml(AssetPath(U"assets/config/scenario.toml"));
+  registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(
+      scenarioToml, registry.ctx().get<PhaseRegistry>()));
 }
 
 void ReloadConfig(entt::registry& registry) {

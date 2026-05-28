@@ -5,9 +5,15 @@
 /// @brief 指定秒数待機してから Pop するフェーズ
 class WaitPhase : public IPhase {
  public:
+  /// @brief WaitPhase の生成パラメータ
+  struct Param {
+    /// 待機時間（秒）
+    double duration;
+  };
+
   /// @brief コンストラクタ
-  /// @param duration 待機時間（秒）
-  explicit WaitPhase(double duration);
+  /// @param param 生成パラメータ
+  explicit WaitPhase(const Param& param);
 
   /// @brief 経過時間を積算し、duration を超えたら Pop を返す
   /// @param registry ECS レジストリ
