@@ -115,11 +115,11 @@ WorldPos { w, h, d }
 
 | フェーズ | 役割 |
 |---|---|
-| [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | TOML シナリオを 1 ステップずつ実行（make/push/reset） |
+| [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | TOML シナリオを 1 ステップずつ実行（push/reset） |
 | [`DemoPhase`](../Ash2/src/Phase/DemoPhase.hpp) | プレイヤー操作・物理・アニメーションを処理するゲームプレイ本体 |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | 指定秒数待機して Pop |
 
-`PhaseRegistry`（registry.ctx に格納）がフェーズ名→ファクトリを管理し、シナリオ TOML から動的にフェーズを生成できる。
+`PhaseRegistry`（registry.ctx に格納）がフェーズ名→`PhaseEntry`（parseParam + createPhase）を管理し、シナリオロード時にパラメータを型安全な `ScenarioStep` に変換する。
 
 ---
 
