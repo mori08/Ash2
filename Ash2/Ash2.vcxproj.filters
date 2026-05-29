@@ -213,6 +213,9 @@
     <ClCompile Include="tests\TestAttachmentSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestAnimationData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestWorldPos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -226,6 +229,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestPhaseStack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestScenarioData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
