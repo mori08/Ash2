@@ -50,6 +50,8 @@ ScenarioStep ParseStep(const s3d::TOMLValue& step,
 ScenarioData ScenarioData::FromToml(const s3d::TOMLValue& toml,
                                     const PhaseRegistry& registry) {
   ScenarioData data;
+
+  // パス1: 全セクションをパースして data.sections に格納
   for (const auto& member : toml.tableView()) {
     s3d::Array<ScenarioStep> steps;
     for (const auto& step : member.value.tableArrayView()) {
@@ -57,5 +59,20 @@ ScenarioData ScenarioData::FromToml(const s3d::TOMLValue& toml,
     }
     data.sections[member.name] = std::move(steps);
   }
+
+  // パス2: 全セクション確定後、ScenarioPhase の sectionName が実在するか検証
+  for (const auto& [_, steps] : data.sections) {
+    for (const auto& step : steps) {
+      const PhaseParam* param = std::visit(
+          [](const auto& s) -> const PhaseParam* { return &s.param; }, step);
+      if (const auto* p = std::get_if<ScenarioPhase::Param>(param)) {
+        if (!data.sections.contains(p->sectionName)) {
+          throw s3d::Error{U"ScenarioData::FromToml: 未定義のセクション名 \"" +
+                           p->sectionName + U"\""};
+        }
+      }
+    }
+  }
+
   return data;
 }

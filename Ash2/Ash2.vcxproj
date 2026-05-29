@@ -382,6 +382,7 @@
     <ClInclude Include="src\Phase\DemoPhase.hpp" />
     <ClInclude Include="src\Phase\IPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseStack.hpp" />
+    <ClInclude Include="src\Util\Overloaded.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

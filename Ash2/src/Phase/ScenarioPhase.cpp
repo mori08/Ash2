@@ -4,20 +4,12 @@
 #include "Phase/PhaseParam.hpp"
 #include "Phase/PhaseRegistry.hpp"
 #include "Phase/ScenarioStep.hpp"
+#include "Util/Overloaded.hpp"
 
 ScenarioPhase::ScenarioPhase(const Param& param)
     : m_sectionName(param.sectionName) {}
 
 void ScenarioPhase::onAfterPush(entt::registry&) { m_currentStep = 0; }
-
-namespace {
-
-template <class... Ts>
-struct Overloaded : Ts... {
-  using Ts::operator()...;
-};
-
-}  // namespace
 
 IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,
                                            const FrameData& /*frameData*/) {
