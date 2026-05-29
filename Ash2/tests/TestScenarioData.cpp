@@ -16,7 +16,8 @@ TEST_CASE("ScenarioData::FromToml - push action creates StepPush") {
   REQUIRE(data.sections.contains(U"intro"));
   REQUIRE(data.sections.at(U"intro").size() == 1);
   REQUIRE(std::holds_alternative<StepPush>(data.sections.at(U"intro")[0]));
-  REQUIRE(std::get<StepPush>(data.sections.at(U"intro")[0]).phaseName == U"wait");
+  REQUIRE(std::get<StepPush>(data.sections.at(U"intro")[0]).phaseName ==
+          U"wait");
 }
 
 TEST_CASE("ScenarioData::FromToml - reset action creates StepReset") {
@@ -31,7 +32,8 @@ TEST_CASE("ScenarioData::FromToml - reset action creates StepReset") {
   REQUIRE(data.sections.contains(U"intro"));
   REQUIRE(data.sections.at(U"intro").size() == 1);
   REQUIRE(std::holds_alternative<StepReset>(data.sections.at(U"intro")[0]));
-  REQUIRE(std::get<StepReset>(data.sections.at(U"intro")[0]).phaseName == U"wait");
+  REQUIRE(std::get<StepReset>(data.sections.at(U"intro")[0]).phaseName ==
+          U"wait");
 }
 
 TEST_CASE("ScenarioData::FromToml - unknown phase name throws Error") {
