@@ -34,10 +34,10 @@ git push origin --delete <branch-name>
 
 ### 3. 一時ファイルの削除
 
-`.claude/tmp/plan-<number>.md` を削除する。
+`tmp/plan-<number>.md` を削除する。
 
 ```bash
-rm .claude/tmp/plan-<number>.md
+rm tmp/plan-<number>.md
 ```
 
 ### 4. 完了報告

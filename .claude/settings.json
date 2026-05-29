@@ -48,7 +48,10 @@
       "Bash(./tools/run-tidy.sh *)",
       "Bash(./tools/build.sh*)",
       "Bash(./tools/run.sh*)",
-      "Bash(./tools/run-tests.sh*)"
+      "Bash(./tools/run-tests.sh*)",
+      "Write(tmp/*)",
+      "Bash(rm tmp/*)",
+      "Bash(mkdir -p tmp*)"
     ]
   }
 }

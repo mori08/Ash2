@@ -45,12 +45,12 @@ Issue #<number> の実装計画を立ててください。
 
 ### 2. プランファイルの書き出し
 
-Plan エージェントのレポートをもとに、親が `.claude/tmp/plan-<number>.md` を作成する。
+Plan エージェントのレポートをもとに、親が `tmp/plan-<number>.md` を作成する。
 
 作成後、クリッカブルなリンクでユーザーに提示する。
 
 ```
-計画を記録しました → [plan-<number>.md](.claude/tmp/plan-<number>.md)
+計画を記録しました → [plan-<number>.md](tmp/plan-<number>.md)
 ```
 
 計画の概要（変更ファイル・実装順序・懸念点）をその場でも要約して伝える。
