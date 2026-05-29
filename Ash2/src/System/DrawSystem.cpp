@@ -2,13 +2,7 @@
 
 #include "Component/Drawable.hpp"
 #include "Component/WorldPos.hpp"
-
-namespace {
-template <class... Ts>
-struct Overloaded : Ts... {
-  using Ts::operator()...;
-};
-}  // namespace
+#include "Util/Overloaded.hpp"
 
 void DrawSystem::Draw(const entt::registry& registry) {
   const Vec2 cameraOffset = Scene::Center();
