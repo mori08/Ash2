@@ -3,6 +3,18 @@
 
 #include "Config/PlayerConfig.hpp"
 
+TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
+  constexpr std::string_view Toml =
+      "speed = 150.0\n"
+      "jump_speed = 400.0\n"
+      "gravity = 900.0\n";
+  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const PlayerConfig cfg = PlayerConfig::FromToml(reader);
+  REQUIRE(cfg.speed == 150.0);
+  REQUIRE(cfg.jumpSpeed == 400.0);
+  REQUIRE(cfg.gravity == 900.0);
+}
+
 TEST_CASE("PlayerConfig - can set speed directly") {
   // 直接値をセットできる（TOML なしでテスト可能）
   const PlayerConfig cfg{.speed = 100.0, .jumpSpeed = 300.0, .gravity = 800.0};
