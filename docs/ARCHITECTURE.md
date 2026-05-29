@@ -131,7 +131,7 @@ WorldPos { w, h, d }
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後） | Hierarchy ルートから子孫へ WorldPos 伝播 |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（最後） | WorldPos+Drawable を奥行き順にソートして描画 |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（DemoPhase） | SpriteAnimation の elapsed を進め Drawable を更新 |
-| [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 削除時に NameLookup を自動同期するシグナル登録 |
+| [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 
 ---
@@ -152,5 +152,5 @@ WorldPos { w, h, d }
 - `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - 新フェーズ追加時は `Phase/PhaseRegistration.cpp` の `MakeDefaultPhaseRegistry()` にもエントリを追加する必要がある。
-- `NameLookup` への挿入は**手動**（`Name` コンポーネント追加後に `NameLookup[key] = entity` を自分で書く）。削除は `NameLookupSystem::Connect` で自動化されている。
+- `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
 - このドキュメントは 200 行上限。超過する場合はコード例→実装詳細→未使用の設計説明の順で削る。

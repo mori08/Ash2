@@ -10,7 +10,6 @@
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
-#include "System/NameLookup.hpp"
 
 void DemoPhase::onAfterPush(entt::registry& registry) {
   m_playerRoot = registry.create();
@@ -22,7 +21,6 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<SpriteAnimation>(
       m_playerRoot,
       SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"});
-  registry.ctx().get<NameLookup>()[U"player"] = m_playerRoot;
   AnimationSystem::Update(registry, 0.0);
 }
 
