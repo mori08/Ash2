@@ -8,5 +8,7 @@ struct Name {
 
   /// @brief コンストラクタ
   /// @param v エンティティ名
-  explicit Name(s3d::String v) noexcept : value(std::move(v)) {}
+  explicit Name(s3d::String v) : value(std::move(v)) {}
+
+  Name(const Name&) = default;
 };
