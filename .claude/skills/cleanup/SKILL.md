@@ -21,16 +21,13 @@ gh pr list --state merged --search "<number>" --json number,title,mergedAt
 
 ### 2. ブランチの整理
 
-以下を順番に実行する。
-
 ```bash
 git checkout main
 git pull origin main
-git branch -d <branch-name>
-git push origin --delete <branch-name>
+git remote prune origin
 ```
 
-`git branch -d` が失敗する場合（未マージ判定）は、PRのマージ状態を再確認してからユーザーに相談する。
+`git branch -r | grep <branch-name>` でリモートブランチが残っていれば、GitHub上での削除を依頼して中断する。削除済みであれば `git branch -d <branch-name>` でローカルブランチを削除する。
 
 ### 3. 一時ファイルの削除
 
