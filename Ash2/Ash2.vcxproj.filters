@@ -201,7 +201,13 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Phase\DemoPhase.cpp">
+    <ClCompile Include="Phase\PlayerTestPhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\TestMenuPhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\AnimationViewerPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
     <ClCompile Include="Phase\WaitPhase.cpp">
@@ -980,7 +986,13 @@
     <ClInclude Include="Component\WorldPos.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="Phase\DemoPhase.hpp">
+    <ClInclude Include="Phase\PlayerTestPhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\TestMenuPhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\AnimationViewerPhase.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Phase\WaitPhase.hpp">

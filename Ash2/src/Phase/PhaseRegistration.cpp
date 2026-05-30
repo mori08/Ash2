@@ -1,9 +1,11 @@
 #include <Siv3D.hpp>
 
-#include "Phase/DemoPhase.hpp"
+#include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/PhaseParam.hpp"
 #include "Phase/PhaseRegistry.hpp"
+#include "Phase/PlayerTestPhase.hpp"
 #include "Phase/ScenarioPhase.hpp"
+#include "Phase/TestMenuPhase.hpp"
 #include "Phase/WaitPhase.hpp"
 
 namespace {
@@ -32,8 +34,19 @@ PhaseEntry MakeEntry(F&& parse) {
 
 PhaseRegistry MakeDefaultPhaseRegistry() {
   return {
-      {U"demo", MakeEntry<DemoPhase>(
-                    [](const s3d::TOMLValue&) { return DemoPhase::Param{}; })},
+      {U"player_test", MakeEntry<PlayerTestPhase>([](const s3d::TOMLValue&) {
+         return PlayerTestPhase::Param{};
+       })},
+      {U"test_menu", MakeEntry<TestMenuPhase>([](const s3d::TOMLValue&) {
+         return TestMenuPhase::Param{};
+       })},
+      {U"animation_viewer",
+       MakeEntry<AnimationViewerPhase>([](const s3d::TOMLValue& step) {
+         return AnimationViewerPhase::Param{
+             .dataKey = step[U"param"].get<s3d::String>(),
+             .initialClip = U"",
+         };
+       })},
       {U"scenario", MakeEntry<ScenarioPhase>([](const s3d::TOMLValue& step) {
          return ScenarioPhase::Param{
              .sectionName = step[U"param"].get<s3d::String>(),
