@@ -37,6 +37,10 @@ git remote prune origin
 rm tmp/plan-<number>.md
 ```
 
-### 4. 完了報告
+### 4. 作業漏れの確認
+
+`CLAUDE.md` と `CLAUDE.local.md` を読み、このスキルで行うべき作業に漏れがないか確認する。
+
+### 5. 完了報告
 
 クローズされた Issue 番号と PR URL をユーザーに伝える。
