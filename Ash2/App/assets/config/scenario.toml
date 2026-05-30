@@ -5,4 +5,4 @@ param = "GameStart"
 
 [[GameStart]]
 action = "push"
-phase = "demo"
+phase = "test_menu"

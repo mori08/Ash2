@@ -126,7 +126,9 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Phase\PhaseRegistration.cpp" />
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
-    <ClCompile Include="src\Phase\DemoPhase.cpp" />
+    <ClCompile Include="src\Phase\PlayerTestPhase.cpp" />
+    <ClCompile Include="src\Phase\TestMenuPhase.cpp" />
+    <ClCompile Include="src\Phase\AnimationViewerPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
     <ClCompile Include="src\Component\AnimationData.cpp" />
     <ClCompile Include="src\Component\Hierarchy.cpp" />
@@ -379,7 +381,9 @@
     <ClInclude Include="src\Debug.hpp" />
     <ClInclude Include="src\GameSetup.hpp" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
-    <ClInclude Include="src\Phase\DemoPhase.hpp" />
+    <ClInclude Include="src\Phase\PlayerTestPhase.hpp" />
+    <ClInclude Include="src\Phase\TestMenuPhase.hpp" />
+    <ClInclude Include="src\Phase\AnimationViewerPhase.hpp" />
     <ClInclude Include="src\Phase\IPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseStack.hpp" />
     <ClInclude Include="src\Util\Overloaded.hpp" />
