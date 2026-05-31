@@ -17,3 +17,13 @@ speed = 8.0
 row = 2
 count = 1
 speed = 6.0
+
+[attack]
+row = 3
+count = 2
+speed = 8.0
+
+[ranged_attack]
+row = 4
+count = 1
+speed = 6.0

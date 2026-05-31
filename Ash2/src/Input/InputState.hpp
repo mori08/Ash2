@@ -14,4 +14,8 @@ struct InputState {
   bool jumpDown = false;
   /// 設定再読み込みキーが押された（1フレーム限り）
   bool reloadConfig = false;
+  /// 近距離攻撃キーが押された（1フレーム限り）
+  bool attackDown = false;
+  /// 遠距離攻撃キーが押された（1フレーム限り）
+  bool rangedAttackDown = false;
 };
