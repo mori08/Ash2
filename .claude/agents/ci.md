@@ -11,6 +11,8 @@ Stop immediately and return a NG report if any step fails — do not proceed to 
 
 The list of files to check is passed in the prompt by the caller. Do not use git diff to discover files.
 
+Always call scripts with relative paths (`./tools/...`). Never use absolute paths for the script itself.
+
 ## Steps
 
 ### 1. Run format
