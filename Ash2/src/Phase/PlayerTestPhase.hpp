@@ -37,4 +37,12 @@ class PlayerTestPhase : public IPhase {
 
   /// プレイヤーのルートエンティティ
   entt::entity m_playerRoot = entt::null;
+  /// 現在の攻撃クリップ名（空文字=攻撃中でない）
+  s3d::String m_attackClip;
+  /// 攻撃モーション残り時間（秒）
+  double m_attackTimer = 0.0;
+  /// ダミーターゲットエンティティ
+  entt::entity m_dummyTarget = entt::null;
+  /// 攻撃判定の子エンティティ（攻撃中のみ生成、終了時に destroy）
+  entt::entity m_attackEntity = entt::null;
 };

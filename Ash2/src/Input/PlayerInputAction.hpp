@@ -17,6 +17,10 @@ struct PlayerInputAction {
   InputGroup jump;
   /// 設定再読み込み
   InputGroup reloadConfig;
+  /// 近距離攻撃
+  InputGroup attack;
+  /// 遠距離攻撃
+  InputGroup rangedAttack;
 
   /// @brief デフォルトのキー割り当てを返す
   /// @return デフォルトの PlayerInputAction
@@ -35,6 +39,8 @@ inline PlayerInputAction PlayerInputAction::Default() {
       .moveBackward = KeyDown | KeyS,
       .jump = KeySpace,
       .reloadConfig = KeyF5,
+      .attack = MouseL,
+      .rangedAttack = MouseR,
   };
 }
 
@@ -46,5 +52,7 @@ inline InputState PlayerInputAction::toInputState() const {
       .moveBackward = moveBackward.pressed(),
       .jumpDown = jump.down(),
       .reloadConfig = reloadConfig.down(),
+      .attackDown = attack.down(),
+      .rangedAttackDown = rangedAttack.down(),
   };
 }

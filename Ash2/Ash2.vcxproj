@@ -387,6 +387,10 @@
     <ClInclude Include="src\Phase\IPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseStack.hpp" />
     <ClInclude Include="src\Util\Overloaded.hpp" />
+    <ClInclude Include="src\Component\Collider.hpp" />
+    <ClInclude Include="src\Component\Attack.hpp" />
+    <ClInclude Include="src\Component\Hp.hpp" />
+    <ClInclude Include="src\System\HitSystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">
