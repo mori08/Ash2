@@ -16,6 +16,7 @@
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 #include "System/HitSystem.hpp"
+#include "System/PlayerMovementSystem.hpp"
 
 constexpr double KDummyPosW = 150.0;
 constexpr s3d::SizeF KDummySize = {60.0, 80.0};
@@ -78,37 +79,13 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
     }
   }
 
+  PlayerMovementSystem::Update(registry, frameData, m_attackClip);
+
   const bool isAttacking = !m_attackClip.empty();
 
   auto view = registry.view<Player, WorldPos, Velocity, SpriteAnimation>();
-  for (auto [entity, pos, vel, anim] : view.each()) {
-    // 移動・ジャンプ・重力（攻撃中は水平移動ロック）
-    if (isAttacking) {
-      vel.w = 0.0;
-      vel.d = 0.0;
-    } else {
-      vel.w = input.moveRight ? cfg.speed : input.moveLeft ? -cfg.speed : 0.0;
-      vel.d = input.moveForward    ? cfg.speed
-              : input.moveBackward ? -cfg.speed
-                                   : 0.0;
-    }
-
-    pos.w += vel.w * dt;
-    pos.d += vel.d * dt;
-
+  for (const auto& [entity, pos, vel, anim] : view.each()) {
     const bool onGround = pos.isOnGround();
-
-    if (input.jumpDown && onGround) {
-      vel.h = cfg.jumpSpeed;
-    }
-
-    vel.h -= cfg.gravity * dt;
-    pos.h += vel.h * dt;
-
-    if (pos.h < 0.0) {
-      pos.h = 0.0;
-      vel.h = 0.0;
-    }
 
     // 攻撃入力チェック（攻撃中でない、かつ地上にいるときのみ）
     if (!isAttacking && onGround) {
@@ -154,26 +131,6 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
         registry.emplace<Attack>(m_attackEntity,
                                  Attack{.damage = cfg.ranged.damage});
         HitSystem::Update(registry);
-      }
-    }
-
-    // クリップ決定（attack/ranged_attack > jump > move > idle）
-    const bool isAttackingNow = !m_attackClip.empty();
-    const s3d::String newClip = isAttackingNow                   ? m_attackClip
-                                : (pos.h > 0.0)                  ? U"jump"
-                                : (vel.w != 0.0 || vel.d != 0.0) ? U"move"
-                                                                 : U"idle";
-    if (newClip != anim.currentClip) {
-      anim.currentClip = newClip;
-      anim.elapsed = 0.0;
-    }
-
-    // 向き更新（攻撃中は変更しない）
-    if (!isAttackingNow) {
-      if (vel.w > 0.0) {
-        anim.facingRight = true;
-      } else if (vel.w < 0.0) {
-        anim.facingRight = false;
       }
     }
   }

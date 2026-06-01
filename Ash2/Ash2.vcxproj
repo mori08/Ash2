@@ -133,6 +133,7 @@
     <ClCompile Include="src\Component\AnimationData.cpp" />
     <ClCompile Include="src\Component\Hierarchy.cpp" />
     <ClCompile Include="src\System\AnimationSystem.cpp" />
+    <ClCompile Include="src\System\PlayerMovementSystem.cpp" />
     <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
@@ -365,6 +366,7 @@
     <ClInclude Include="src\Component\Player.hpp" />
     <ClInclude Include="src\Component\Velocity.hpp" />
     <ClInclude Include="src\System\AnimationSystem.hpp" />
+    <ClInclude Include="src\System\PlayerMovementSystem.hpp" />
     <ClInclude Include="src\System\AttachmentSystem.hpp" />
     <ClInclude Include="src\System\DrawSystem.hpp" />
     <ClInclude Include="src\System\HierarchySystem.hpp" />

@@ -189,6 +189,9 @@
     <ClCompile Include="System\AnimationSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\PlayerMovementSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\AttachmentSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -936,6 +939,9 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="System\AnimationSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\PlayerMovementSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\AttachmentSystem.hpp">

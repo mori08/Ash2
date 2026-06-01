@@ -139,6 +139,7 @@ WorldPos { w, h, d }
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算 |
+| [`PlayerMovementSystem::Update`](../Ash2/src/System/PlayerMovementSystem.hpp) | フェーズ内（PlayerTestPhase / DemoPhase） | Player の移動・ジャンプ・重力・クリップ選択・向き更新 |
 
 ---
 

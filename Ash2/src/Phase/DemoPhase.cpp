@@ -10,6 +10,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
+#include "System/PlayerMovementSystem.hpp"
 
 void DemoPhase::onAfterPush(entt::registry& registry) {
   m_playerRoot = registry.create();
@@ -26,48 +27,7 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
 
 IPhase::PhaseCommand DemoPhase::update(entt::registry& registry,
                                        const FrameData& frameData) {
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& input = frameData.input;
-
-  const double vw = input.moveRight  ? cfg.speed
-                    : input.moveLeft ? -cfg.speed
-                                     : 0.0;
-  const double vd = input.moveForward    ? cfg.speed
-                    : input.moveBackward ? -cfg.speed
-                                         : 0.0;
-
-  auto view = registry.view<Player, WorldPos, Velocity, SpriteAnimation>();
-  for (auto [entity, pos, vel, anim] : view.each()) {
-    vel.w = vw;
-    vel.d = vd;
-    pos.w += vel.w * frameData.dt;
-    pos.d += vel.d * frameData.dt;
-
-    if (input.jumpDown && pos.isOnGround()) {
-      vel.h = cfg.jumpSpeed;
-    }
-
-    vel.h -= cfg.gravity * frameData.dt;
-    pos.h += vel.h * frameData.dt;
-
-    if (pos.h < 0.0) {
-      pos.h = 0.0;
-      vel.h = 0.0;
-    }
-
-    const s3d::String newClip = (pos.h > 0.0)                    ? U"jump"
-                                : (vel.w != 0.0 || vel.d != 0.0) ? U"move"
-                                                                 : U"idle";
-    if (newClip != anim.currentClip) {
-      anim.currentClip = newClip;
-      anim.elapsed = 0.0;
-    }
-    if (vel.w > 0.0) {
-      anim.facingRight = true;
-    } else if (vel.w < 0.0) {
-      anim.facingRight = false;
-    }
-  }
+  PlayerMovementSystem::Update(registry, frameData);
 
   AnimationSystem::Update(registry, frameData.dt);
 
