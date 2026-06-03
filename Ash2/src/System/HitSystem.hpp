@@ -27,28 +27,12 @@ class HitSystem {
     s3d::Vec3 end;
   };
 
-  /// @brief エンティティID のシフト量（上位32bit に attacker を格納するため）
-  static constexpr int KEntityIdShift = 32;
-
   /// @brief 2線分間の距離の二乗を返す
   /// @param segA 線分1
   /// @param segB 線分2
   /// @return 最近接距離の二乗
   [[nodiscard]] static double SegmentDistSq(Segment segA, Segment segB);
-
-  /// @brief attacker と target のペアを uint64_t キーに変換する
-  /// @param attacker 攻撃側エンティティ
-  /// @param target 被弾側エンティティ
-  /// @return 上位32bit=attacker、下位32bit=target の uint64_t
-  [[nodiscard]] static uint64_t PairKey(entt::entity attacker,
-                                        entt::entity target);
 };
-
-inline uint64_t HitSystem::PairKey(entt::entity attacker, entt::entity target) {
-  return (static_cast<uint64_t>(entt::to_integral(attacker))
-          << KEntityIdShift) |
-         static_cast<uint64_t>(entt::to_integral(target));
-}
 
 inline double HitSystem::SegmentDistSq(Segment segA, Segment segB) {
   // 線分の長さの二乗がこの値以下のとき点とみなす
@@ -94,20 +78,22 @@ inline double HitSystem::SegmentDistSq(Segment segA, Segment segB) {
 }
 
 inline void HitSystem::Update(entt::registry& registry) {
-  // attacker と target のペアを uint64_t キーで管理（重複ヒット防止）
-  s3d::HashSet<uint64_t> processed;
-
   auto attackers = registry.view<WorldPos, Collider, Attack>();
   auto targets = registry.view<WorldPos, Collider, Hp>();
 
   for (auto&& [attacker, aPos, aCol, atk] : attackers.each()) {
+    // root が設定されている場合はルートの Attack を参照してヒット管理する
+    const auto rootEntity = (atk.root != entt::null) ? atk.root : attacker;
+    auto& rootAtk = registry.get<Attack>(rootEntity);
+
     const s3d::Vec3 worldA{aPos.w, aPos.h, aPos.d};
     const s3d::Vec3 ap1 = worldA + aCol.segmentStart;
     const s3d::Vec3 ap2 = worldA + aCol.segmentEnd;
 
     for (auto&& [target, tPos, tCol, hp] : targets.each()) {
       if (attacker == target) continue;
-      if (processed.contains(PairKey(attacker, target))) continue;
+      if (rootEntity == target) continue;
+      if (rootAtk.hitTargets.contains(target)) continue;
 
       const s3d::Vec3 worldT{tPos.w, tPos.h, tPos.d};
       const s3d::Vec3 tp1 = worldT + tCol.segmentStart;
@@ -118,9 +104,8 @@ inline void HitSystem::Update(entt::registry& registry) {
                         Segment{.start = tp1, .end = tp2}) >= sumR * sumR)
         continue;
 
-      hp.current = std::max(0, hp.current - atk.damage);
-      processed.emplace(PairKey(attacker, target));
-      APP_LOG(U"Hit! HP: " + Format(hp.current) + U"/" + Format(hp.max));
+      rootAtk.hitTargets.emplace(target);
+      hp.current = std::max(0, hp.current - rootAtk.damage);
     }
   }
 }
