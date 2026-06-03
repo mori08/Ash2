@@ -10,6 +10,7 @@
 #include "Component/Name.hpp"
 #include "Component/Player.hpp"
 #include "Component/SpriteAnimation.hpp"
+#include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
@@ -24,6 +25,8 @@ constexpr s3d::ColorF KDummyColor = {0.8, 0.2, 0.2};
 constexpr double KDummyCapRadius = 30.0;
 constexpr double KDummyCapHeight = 80.0;
 constexpr int KDummyMaxHp = 100;
+constexpr int KPlayerMaxHp = 100;
+constexpr int KPlayerMaxStamina = 100;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   m_playerRoot = registry.create();
@@ -35,6 +38,11 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<SpriteAnimation>(
       m_playerRoot,
       SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"});
+  registry.emplace<Hp>(m_playerRoot,
+                       Hp{.max = KPlayerMaxHp, .current = KPlayerMaxHp});
+  registry.emplace<Stamina>(
+      m_playerRoot,
+      Stamina{.max = KPlayerMaxStamina, .current = KPlayerMaxStamina});
   AnimationSystem::Update(registry, 0.0);
 
   // ダミーターゲット（縦カプセル: 足元〜高さ80、半径30）
