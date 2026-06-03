@@ -392,7 +392,9 @@
     <ClInclude Include="src\Component\Collider.hpp" />
     <ClInclude Include="src\Component\Attack.hpp" />
     <ClInclude Include="src\Component\Hp.hpp" />
+    <ClInclude Include="src\Component\Stamina.hpp" />
     <ClInclude Include="src\System\HitSystem.hpp" />
+    <ClInclude Include="src\System\HudSystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

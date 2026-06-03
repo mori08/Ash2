@@ -11,6 +11,7 @@
 #include "Phase/ScenarioPhase.hpp"
 #include "System/AttachmentSystem.hpp"
 #include "System/DrawSystem.hpp"
+#include "System/HudSystem.hpp"
 
 #ifdef _DEBUG
 #define CATCH_CONFIG_RUNNER
@@ -55,6 +56,7 @@ void Main() {
       phaseStack.update(registry, frameData);
       AttachmentSystem::UpdateTransform(registry);
       DrawSystem::Draw(registry);
+      HudSystem::Draw(registry);
     }
 
   } catch (const std::exception& e) {
