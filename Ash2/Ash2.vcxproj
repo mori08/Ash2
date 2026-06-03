@@ -143,6 +143,7 @@
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
+    <ClCompile Include="tests\TestHitSystem.cpp" />
     <ClCompile Include="tests\TestNameLookup.cpp" />
     <ClCompile Include="tests\TestPhaseStack.cpp" />
     <ClCompile Include="tests\TestPlayerConfig.cpp" />
