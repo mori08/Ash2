@@ -55,3 +55,11 @@ TEST_CASE("WorldPos::ToScreen - far objects have smaller y")
 ## _DEBUG ガード
 
 `#ifdef _DEBUG` で囲むことで、Release ビルドにはテストコードが含まれない。
+
+## ログ出力の禁止
+
+テストから呼ばれるコードに `APP_LOG`（`Console <<`）が含まれていると、Siv3D が
+コンソールウィンドウを自動で開き、Catch2 の出力がそのウィンドウに吸われて
+`run-tests.sh` 側に届かなくなる。
+
+テストコードおよびテストから呼ばれる実装コードでは `APP_LOG` を使わないこと。
