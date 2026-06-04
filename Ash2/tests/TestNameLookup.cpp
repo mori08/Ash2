@@ -12,7 +12,6 @@ TEST_CASE("NameLookup - auto-cleanup on entity destroy") {
 
   const auto entity = registry.create();
   registry.emplace<Name>(entity, Name{U"test"});
-  registry.ctx().get<NameLookup>()[U"test"] = entity;
 
   REQUIRE(registry.ctx().get<NameLookup>().contains(U"test"));
 
@@ -28,7 +27,6 @@ TEST_CASE("NameLookup - auto-cleanup when Name component is removed") {
 
   const auto entity = registry.create();
   registry.emplace<Name>(entity, Name{U"test"});
-  registry.ctx().get<NameLookup>()[U"test"] = entity;
 
   registry.remove<Name>(entity);
 

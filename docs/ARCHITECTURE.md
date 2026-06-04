@@ -125,6 +125,7 @@ WorldPos { w, h, d }
 | [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | プレイヤー操作・物理・アニメーションのビジュアルテスト |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | アニメーションクリップ単体確認（←→切替、F反転） |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | 指定秒数待機して Pop |
+| [`DemoPhase`](../Ash2/src/Phase/DemoPhase.hpp) | プレイヤー操作デモ（攻撃判定なし・PhaseRegistry 未登録） |
 
 `PhaseRegistry`（registry.ctx に格納）がフェーズ名→`PhaseEntry`（parseParam + createPhase）を管理し、シナリオロード時にパラメータを型安全な `ScenarioStep` に変換する。
 登録内容は [`Phase/PhaseRegistration.cpp`](../Ash2/src/Phase/PhaseRegistration.cpp) の `MakeDefaultPhaseRegistry()` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
@@ -137,7 +138,7 @@ WorldPos { w, h, d }
 |---|---|---|
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後） | Hierarchy ルートから子孫へ WorldPos 伝播 |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（最後） | WorldPos+Drawable を奥行き順にソートして描画 |
-| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（DemoPhase） | SpriteAnimation の elapsed を進め Drawable を更新 |
+| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | SpriteAnimation の elapsed を進め Drawable を更新 |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算 |
