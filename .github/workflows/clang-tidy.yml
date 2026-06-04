@@ -32,7 +32,7 @@ jobs:
       - name: Install vcpkg dependencies
         shell: pwsh
         working-directory: Ash2
-        run: vcpkg install --triplet x64-windows
+        run: vcpkg install --triplet x64-windows "--x-install-root=$env:GITHUB_WORKSPACE\Ash2\vcpkg_installed\x64-windows"
 
       - name: Run clang-tidy
         id: tidy
