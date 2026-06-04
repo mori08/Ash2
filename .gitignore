@@ -126,3 +126,10 @@ tmp/
 
 docs/game_design/private_*
 docs/sketches/private_*
+
+# ============================================================
+# Private skills (not for public repo)
+# _ prefix = personal / not tracked by git
+# ============================================================
+
+.claude/skills/_*/
