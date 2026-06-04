@@ -63,3 +63,13 @@ TEST_CASE("WorldPos::ToScreen - far objects have smaller y")
 `run-tests.sh` 側に届かなくなる。
 
 テストコードおよびテストから呼ばれる実装コードでは `APP_LOG` を使わないこと。
+
+### `AppDebug::testMode` による自動無効化
+
+`Debug.hpp` は `AppDebug::testMode` フラグを持ち、テスト実行時に `APP_LOG` を
+自動的に無効化する。`Main.cpp` が `ASH2_RUN_TESTS` 環境変数を検出すると
+`AppDebug::testMode = true` をセットするため、**ゲームコード側に `APP_LOG` が
+残っていてもテスト時にコンソールウィンドウは開かない。**
+
+ただし、新たにシステムクラス（`System/` 配下）を実装するとき、テストから直接
+呼ばれる実装に `APP_LOG` を追加する際は、このフラグの存在を念頭に置くこと。

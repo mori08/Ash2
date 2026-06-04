@@ -8,7 +8,6 @@
 #include "Component/Collider.hpp"
 #include "Component/Hp.hpp"
 #include "Component/WorldPos.hpp"
-#include "Debug.hpp"
 
 /// @brief ヒット判定システム
 class HitSystem {

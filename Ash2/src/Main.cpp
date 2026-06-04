@@ -24,6 +24,7 @@ void Main() {
 #ifdef _DEBUG
   size_t envLen = 0;
   if (getenv_s(&envLen, nullptr, 0, "ASH2_RUN_TESTS") == 0 && envLen > 0) {
+    AppDebug::testMode = true;
     const int result = RunTests();
     System::Exit();
     return;
