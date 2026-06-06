@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/no-compound-git.py"
+            "command": "python3 .claude/hooks/no-compound-commands.py"
           },
           {
             "type": "command",
