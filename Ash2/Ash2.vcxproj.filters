@@ -914,7 +914,13 @@
     <ClInclude Include="Input\InputState.hpp">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Input\PlayerInputAction.hpp">
+    <ClInclude Include="Input\InputDeviceSelector.hpp">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\KeyboardInputAction.hpp">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\XInputAction.hpp">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
     <ClInclude Include="Phase\FrameData.hpp">

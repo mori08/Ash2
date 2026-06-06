@@ -50,6 +50,7 @@ Main.cpp
 
 ```
 while (System::Update()) {
+    入力デバイス切り替え（キーボード/コントローラー自動検出）
     FrameData 生成（dt + InputState）
     設定リロード（F5、Debug ビルドのみ）
     PhaseStack::update(registry, frameData)
@@ -83,6 +84,18 @@ WorldPos { w, h, d }
 ```
 
 **制約：** `WorldPos` は常に絶対座標。子エンティティも `WorldPos` を持ち、`AttachmentSystem` が毎フレーム親の絶対座標 + `LocalOffset` で上書きする。
+
+---
+
+## 入力抽象化
+
+| クラス | 役割 |
+|---|---|
+| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（Siv3D 非依存） |
+| [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換 |
+| [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー → InputState 変換（十字ボタンで移動、A/B/Y でジャンプ/近距離/遠距離） |
+
+`Main.cpp` が毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える。切断時はキーボードへ自動フォールバック。
 
 ---
 

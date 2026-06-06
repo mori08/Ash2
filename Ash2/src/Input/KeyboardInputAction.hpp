@@ -3,8 +3,8 @@
 
 #include "Input/InputState.hpp"
 
-/// @brief プレイヤー操作のキー割り当て
-struct PlayerInputAction {
+/// @brief キーボード・マウス操作のキー割り当て
+struct KeyboardInputAction {
   /// 左移動
   InputGroup moveLeft;
   /// 右移動
@@ -23,15 +23,15 @@ struct PlayerInputAction {
   InputGroup rangedAttack;
 
   /// @brief デフォルトのキー割り当てを返す
-  /// @return デフォルトの PlayerInputAction
-  [[nodiscard]] static PlayerInputAction Default();
+  /// @return デフォルトの KeyboardInputAction
+  [[nodiscard]] static KeyboardInputAction Default();
 
   /// @brief 現在のキー入力状態を InputState に変換して返す
   /// @return フレームの入力状態
   [[nodiscard]] InputState toInputState() const;
 };
 
-inline PlayerInputAction PlayerInputAction::Default() {
+inline KeyboardInputAction KeyboardInputAction::Default() {
   return {
       .moveLeft = KeyLeft | KeyA,
       .moveRight = KeyRight | KeyD,
@@ -44,7 +44,7 @@ inline PlayerInputAction PlayerInputAction::Default() {
   };
 }
 
-inline InputState PlayerInputAction::toInputState() const {
+inline InputState KeyboardInputAction::toInputState() const {
   return {
       .moveLeft = moveLeft.pressed(),
       .moveRight = moveRight.pressed(),
