@@ -29,6 +29,7 @@ gh issue create --title "<タイトル>" --label "<ラベル>" --body ""
 
 Issue 作成後、マイルストーンへの登録を行う。
 
-1. `gh api repos/mori08/Ash2/milestones --jq '.[] | "\(.number) \(.title)"'` で一覧を取得してユーザーに提示する
-2. ユーザーが選択したマイルストーンを `gh issue edit <number> --milestone "<タイトル>"` で登録する
-3. 「登録しない」と言われた場合はスキップする
+1. `docs/ROADMAP.md` を読み、Issue の内容（タイトル・ラベル・文脈）からどのバージョンのスコープに該当するかを判断して、マイルストーンを1つ提案する
+2. `gh api repos/mori08/Ash2/milestones --jq '.[] | "\(.number) \(.title)"'` で一覧を取得し、提案と一緒にユーザーに提示する
+3. ユーザーが選択したマイルストーンを `gh issue edit <number> --milestone "<タイトル>"` で登録する
+4. 「登録しない」と言われた場合はスキップする
