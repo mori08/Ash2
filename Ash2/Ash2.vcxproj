@@ -362,7 +362,9 @@
     <ClInclude Include="src\Component\LocalOffset.hpp" />
     <ClInclude Include="src\Component\Name.hpp" />
     <ClInclude Include="src\Input\InputState.hpp" />
-    <ClInclude Include="src\Input\PlayerInputAction.hpp" />
+    <ClInclude Include="src\Input\InputDeviceSelector.hpp" />
+    <ClInclude Include="src\Input\KeyboardInputAction.hpp" />
+    <ClInclude Include="src\Input\XInputAction.hpp" />
     <ClInclude Include="src\Phase\FrameData.hpp" />
     <ClInclude Include="src\Component\Player.hpp" />
     <ClInclude Include="src\Component\Velocity.hpp" />

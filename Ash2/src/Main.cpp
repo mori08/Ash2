@@ -5,7 +5,7 @@
 #include "Asset.hpp"
 #include "Debug.hpp"
 #include "GameSetup.hpp"
-#include "Input/PlayerInputAction.hpp"
+#include "Input/InputDeviceSelector.hpp"
 #include "Phase/FrameData.hpp"
 #include "Phase/PhaseStack.hpp"
 #include "Phase/ScenarioPhase.hpp"
@@ -39,7 +39,8 @@ void Main() {
     entt::registry registry;
     InitializeRegistry(registry);
 
-    const PlayerInputAction actions = PlayerInputAction::Default();
+    InputDeviceSelector inputSelector;
+
     PhaseStack phaseStack(std::make_unique<ScenarioPhase>(
                               ScenarioPhase::Param{.sectionName = U"init"}),
                           registry);
@@ -47,7 +48,7 @@ void Main() {
     while (System::Update()) {
       const FrameData frameData{
           .dt = Scene::DeltaTime(),
-          .input = actions.toInputState(),
+          .input = inputSelector.update(),
       };
 #ifdef _DEBUG
       if (frameData.input.reloadConfig) {
