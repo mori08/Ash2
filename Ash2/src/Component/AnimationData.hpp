@@ -17,7 +17,7 @@ struct AnimationData {
   s3d::String textureKey;
   /// 1コマのサイズ（幅・高さ）
   s3d::Size size;
-  /// 描画オフセット（中心座標からのずれ）
+  /// 描画オフセット（下端中央からのずれ）
   s3d::Vec2 drawOffset;
   /// クリップ名 → AnimationClip の対応表
   s3d::HashTable<s3d::String, AnimationClip> clips;

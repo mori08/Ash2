@@ -49,7 +49,7 @@ struct PieDrawable {
 struct TextureDrawable {
   /// 描画テクスチャ領域
   TextureRegion region;
-  /// 描画オフセット（中心座標からのずれ、アンカー調整用）
+  /// 描画オフセット（下端中央からのずれ、アンカー調整用）
   Vec2 drawOffset{0, 0};
 };
 

@@ -85,6 +85,8 @@ WorldPos { w, h, d }
 
 **制約：** `WorldPos` は常に絶対座標。子エンティティも `WorldPos` を持ち、`AttachmentSystem` が毎フレーム親の絶対座標 + `LocalOffset` で上書きする。
 
+`WorldPos` は描画・判定共通の基準点（接地点・足元）であり、`DrawSystem` は矩形・テクスチャを下端中央基準で描画し、`Collider` はこの点からの上方向オフセットとして判定形状を定義する。
+
 ---
 
 ## 入力抽象化

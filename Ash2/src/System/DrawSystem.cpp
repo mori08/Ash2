@@ -27,7 +27,8 @@ void DrawSystem::Draw(const entt::registry& registry) {
     std::visit(
         Overloaded{
             [&screenPos](const RectDrawable& shape) {
-              const RectF rect{Arg::center(screenPos), shape.size.x,
+              // WorldPos = 接地点（足元）のため、下端中央を基準に描画する
+              const RectF rect{Arg::bottomCenter(screenPos), shape.size.x,
                                shape.size.y};
               rect.draw(shape.color);
               if (shape.border) {
@@ -35,6 +36,8 @@ void DrawSystem::Draw(const entt::registry& registry) {
               }
             },
             [&screenPos](const CircleDrawable& shape) {
+              // 弾の Collider は WorldPos と一致する点として定義され、
+              // 円は中心対称なので中心描画のままで判定と一致する
               const Circle circle{screenPos, shape.radius};
               circle.draw(shape.color);
               if (shape.border) {
@@ -42,6 +45,7 @@ void DrawSystem::Draw(const entt::registry& registry) {
               }
             },
             [&screenPos](const PieDrawable& shape) {
+              // 現状未使用。将来 WorldPos に合わせる場合は描画方法を再検討する
               const Circle circle{screenPos, shape.radius};
               circle.drawPie(shape.startAngle, shape.angle, shape.color);
               if (shape.border) {
@@ -58,7 +62,9 @@ void DrawSystem::Draw(const entt::registry& registry) {
               }
             },
             [&screenPos](const TextureDrawable& shape) {
-              shape.region.drawAt(screenPos + shape.drawOffset);
+              // WorldPos = 接地点（足元）のため、下端中央を基準に描画する
+              shape.region.draw(
+                  Arg::bottomCenter(screenPos + shape.drawOffset));
             },
         },
         entry.drawable.get());
