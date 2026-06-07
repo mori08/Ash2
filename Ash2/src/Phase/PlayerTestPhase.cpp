@@ -9,6 +9,7 @@
 #include "Component/LocalOffset.hpp"
 #include "Component/Name.hpp"
 #include "Component/Player.hpp"
+#include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
@@ -18,6 +19,7 @@
 #include "System/AnimationSystem.hpp"
 #include "System/HitSystem.hpp"
 #include "System/PlayerMovementSystem.hpp"
+#include "System/ProjectileSystem.hpp"
 
 constexpr double KDummyPosW = 150.0;
 constexpr s3d::SizeF KDummySize = {60.0, 80.0};
@@ -27,6 +29,7 @@ constexpr double KDummyCapHeight = 80.0;
 constexpr int KDummyMaxHp = 100;
 constexpr int KPlayerMaxHp = 100;
 constexpr int KPlayerMaxStamina = 100;
+constexpr s3d::ColorF KBulletColor = {0.9, 0.9, 0.3};
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   m_playerRoot = registry.create();
@@ -117,31 +120,37 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
             });
         registry.emplace<Attack>(m_attackEntity,
                                  Attack{.damage = cfg.melee.damage});
-        HitSystem::Update(registry);
       } else if (input.rangedAttackDown) {
         m_attackClip = U"ranged_attack";
         m_attackTimer = getClipDuration(U"ranged_attack");
 
         const double sign = anim.facingRight ? 1.0 : -1.0;
-        m_attackEntity = registry.create();
-        registry.emplace<WorldPos>(m_attackEntity,
-                                   registry.get<WorldPos>(m_playerRoot));
-        registry.emplace<LocalOffset>(m_attackEntity, LocalOffset{});
-        Hierarchy::Attach(registry, m_playerRoot, m_attackEntity);
-        registry.emplace<Collider>(
-            m_attackEntity,
-            Collider{
-                .segmentStart = Vec3{0.0, cfg.melee.capMidH, 0.0},
-                .segmentEnd =
-                    Vec3{sign * cfg.ranged.reach, cfg.melee.capMidH, 0.0},
-                .radius = cfg.ranged.radius,
-            });
-        registry.emplace<Attack>(m_attackEntity,
-                                 Attack{.damage = cfg.ranged.damage});
-        HitSystem::Update(registry);
+        const WorldPos playerPos = registry.get<WorldPos>(m_playerRoot);
+
+        const auto bullet = registry.create();
+        registry.emplace<WorldPos>(
+            bullet, WorldPos{.w = playerPos.w,
+                             .h = playerPos.h + cfg.ranged.spawnHeight,
+                             .d = playerPos.d});
+        registry.emplace<Velocity>(
+            bullet, Velocity{.w = sign * cfg.ranged.bulletSpeed});
+        registry.emplace<Collider>(bullet,
+                                   Collider{
+                                       .segmentStart = Vec3{0.0, 0.0, 0.0},
+                                       .segmentEnd = Vec3{0.0, 0.0, 0.0},
+                                       .radius = cfg.ranged.radius,
+                                   });
+        registry.emplace<Attack>(bullet, Attack{.damage = cfg.ranged.damage});
+        registry.emplace<Drawable>(
+            bullet,
+            CircleDrawable{.radius = cfg.ranged.radius, .color = KBulletColor});
+        registry.emplace<Projectile>(bullet);
       }
     }
   }
+
+  HitSystem::Update(registry);
+  ProjectileSystem::Update(registry, dt);
 
   AnimationSystem::Update(registry, dt);
 
@@ -174,5 +183,11 @@ void PlayerTestPhase::onBeforePop(entt::registry& registry) {
   if (m_dummyTarget != entt::null && registry.valid(m_dummyTarget)) {
     registry.destroy(m_dummyTarget);
     m_dummyTarget = entt::null;
+  }
+
+  // 弾は独立エンティティ（m_playerRoot の子孫ではない）なので、
+  // Projectile タグで検索して個別に破棄する
+  for (const auto entity : registry.view<Projectile>()) {
+    registry.destroy(entity);
   }
 }

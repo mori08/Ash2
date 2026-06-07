@@ -9,6 +9,8 @@ radius    = 25.0
 damage    = 20
 
 [ranged]
-reach  = 200.0
-radius = 15.0
-damage = 15
+reach        = 200.0
+radius       = 15.0
+damage       = 15
+bullet_speed = 300.0
+spawn_height = 0.0

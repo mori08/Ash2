@@ -17,10 +17,14 @@ struct MeleeConfig {
 struct RangedConfig {
   /// 攻撃リーチ（w 軸方向の距離）
   double reach;
-  /// 攻撃カプセルの半径
+  /// 攻撃カプセルの半径（弾コライダーの半径・CircleDrawable の表示半径と兼用）
   double radius;
   /// 与えるダメージ量
   int damage;
+  /// 弾の移動速度（横方向、ピクセル/秒）
+  double bulletSpeed;
+  /// 弾の発射高さ（プレイヤーの WorldPos.h からのオフセット）
+  double spawnHeight;
 };
 
 /// @brief プレイヤーの設定値
