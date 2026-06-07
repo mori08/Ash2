@@ -91,11 +91,13 @@ WorldPos { w, h, d }
 
 | クラス | 役割 |
 |---|---|
-| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（Siv3D 非依存） |
+| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（`Key`/`TOMLValue` 等のテストしづらい型は持ち込まないが、`Vec2` 等の単純な数学型は許容） |
 | [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換 |
-| [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー → InputState 変換（十字ボタンで移動、A/B/Y でジャンプ/近距離/遠距離） |
+| [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー → InputState 変換（左スティック+十字ボタンで移動、A/B/Y でジャンプ/近距離/遠距離） |
 
 `Main.cpp` が毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える。切断時はキーボードへ自動フォールバック。
+
+**移動入力の正規化方針：** `InputState::moveAxis`（`Vec2`、x=横方向/y=奥行き方向）は「常に長さ 1.0 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側にあり、`PlayerMovementSystem` は無条件にこの値を信頼してそのまま速度計算に使う（System 側で正規化やクランプを行わない）。`XInputAction` は左スティックにデッドゾーン処理（`DeadZone`）を適用し、十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
 
 ---
 

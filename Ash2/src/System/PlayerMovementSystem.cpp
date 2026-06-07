@@ -21,10 +21,8 @@ void PlayerMovementSystem::Update(entt::registry& registry,
       vel.w = 0.0;
       vel.d = 0.0;
     } else {
-      vel.w = input.moveRight ? cfg.speed : input.moveLeft ? -cfg.speed : 0.0;
-      vel.d = input.moveForward    ? cfg.speed
-              : input.moveBackward ? -cfg.speed
-                                   : 0.0;
+      vel.w = input.moveAxis.x * cfg.speed;
+      vel.d = input.moveAxis.y * cfg.speed;
     }
 
     pos.w += vel.w * dt;
