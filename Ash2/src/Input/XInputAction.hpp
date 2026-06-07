@@ -14,11 +14,28 @@ struct XInputAction {
 
 inline InputState XInputAction::ToInputState() {
   const auto& pad = XInput(0);
+
+  // 左スティックの軸入力にデッドゾーン処理を適用する
+  // （`XInput(0)` は const 参照のため `setLeftThumbDeadZone()` を直接呼べず、
+  // ここで明示的にデッドゾーンを適用する）
+  constexpr DeadZone LeftThumbDeadZone{
+      .size = 0.24, .maxValue = 1.0, .type = DeadZoneType::Circular};
+  const Vec2 stickAxis =
+      LeftThumbDeadZone(Vec2{pad.leftThumbX, pad.leftThumbY});
+
+  // 十字ボタンの入力を軸ベクトルに変換する
+  const Vec2 dpadAxis{
+      (pad.buttonRight.pressed() ? 1.0 : 0.0) -
+          (pad.buttonLeft.pressed() ? 1.0 : 0.0),
+      (pad.buttonUp.pressed() ? 1.0 : 0.0) -
+          (pad.buttonDown.pressed() ? 1.0 : 0.0),
+  };
+
+  // スティックと十字ボタンの両方を同時に有効として扱い、合成してから正規化する
+  const Vec2 moveAxis = (stickAxis + dpadAxis).limitLength(1.0);
+
   return {
-      .moveLeft = pad.buttonLeft.pressed(),
-      .moveRight = pad.buttonRight.pressed(),
-      .moveForward = pad.buttonUp.pressed(),
-      .moveBackward = pad.buttonDown.pressed(),
+      .moveAxis = moveAxis,
       .jumpDown = pad.buttonA.down(),
       .reloadConfig = false,
       .attackDown = pad.buttonB.down(),

@@ -45,11 +45,15 @@ inline KeyboardInputAction KeyboardInputAction::Default() {
 }
 
 inline InputState KeyboardInputAction::toInputState() const {
+  const Vec2 rawAxis{
+      (moveRight.pressed() ? 1.0 : 0.0) - (moveLeft.pressed() ? 1.0 : 0.0),
+      (moveForward.pressed() ? 1.0 : 0.0) -
+          (moveBackward.pressed() ? 1.0 : 0.0),
+  };
+  const Vec2 moveAxis = rawAxis.limitLength(1.0);
+
   return {
-      .moveLeft = moveLeft.pressed(),
-      .moveRight = moveRight.pressed(),
-      .moveForward = moveForward.pressed(),
-      .moveBackward = moveBackward.pressed(),
+      .moveAxis = moveAxis,
       .jumpDown = jump.down(),
       .reloadConfig = reloadConfig.down(),
       .attackDown = attack.down(),
