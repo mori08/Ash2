@@ -134,6 +134,7 @@
     <ClCompile Include="src\Component\Hierarchy.cpp" />
     <ClCompile Include="src\System\AnimationSystem.cpp" />
     <ClCompile Include="src\System\PlayerMovementSystem.cpp" />
+    <ClCompile Include="src\System\ProjectileSystem.cpp" />
     <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
@@ -144,6 +145,7 @@
     <ClCompile Include="tests\TestAnimationData.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
     <ClCompile Include="tests\TestHitSystem.cpp" />
+    <ClCompile Include="tests\TestProjectileSystem.cpp" />
     <ClCompile Include="tests\TestNameLookup.cpp" />
     <ClCompile Include="tests\TestPhaseStack.cpp" />
     <ClCompile Include="tests\TestPlayerConfig.cpp" />
@@ -396,8 +398,10 @@
     <ClInclude Include="src\Component\Attack.hpp" />
     <ClInclude Include="src\Component\Hp.hpp" />
     <ClInclude Include="src\Component\Stamina.hpp" />
+    <ClInclude Include="src\Component\Projectile.hpp" />
     <ClInclude Include="src\System\HitSystem.hpp" />
     <ClInclude Include="src\System\HudSystem.hpp" />
+    <ClInclude Include="src\System\ProjectileSystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

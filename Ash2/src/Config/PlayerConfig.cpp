@@ -19,6 +19,8 @@ PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
               .reach = r[U"reach"].get<double>(),
               .radius = r[U"radius"].get<double>(),
               .damage = r[U"damage"].get<int>(),
+              .bulletSpeed = r[U"bullet_speed"].get<double>(),
+              .spawnHeight = r[U"spawn_height"].get<double>(),
           },
   };
 }

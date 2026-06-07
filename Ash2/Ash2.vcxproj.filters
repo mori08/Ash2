@@ -192,6 +192,9 @@
     <ClCompile Include="System\PlayerMovementSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\ProjectileSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\AttachmentSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -226,6 +229,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestHitSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestProjectileSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp">
@@ -1034,10 +1040,16 @@
     <ClInclude Include="Component\Stamina.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Projectile.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="System\HitSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\HudSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\ProjectileSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
