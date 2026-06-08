@@ -6,12 +6,12 @@
 #include "Component/Stamina.hpp"
 
 /// @brief 画面固定 HUD 描画システム
-/// ワールド座標と無関係に画面左上にゲージを描画する
+///
+/// ワールド座標と無関係に画面左上にゲージを描画する。
 class HudSystem {
  public:
   /// @brief Player + Hp + Stamina を持つエンティティの HP /
   /// スタミナゲージを画面左上に描画する
-  /// @param registry ECS レジストリ
   static void Draw(const entt::registry& registry) {
     constexpr double KBarX = 16.0;
     constexpr double KHpBarY = 16.0;
@@ -24,7 +24,6 @@ class HudSystem {
 
     auto view = registry.view<const Player, const Hp, const Stamina>();
     for (const auto& [entity, hp, stamina] : view.each()) {
-      // HP ゲージ
       s3d::RectF{KBarX, KHpBarY, KBarWidth, KBarHeight}.draw(KBgColor);
       if (hp.max > 0) {
         const double hpRatio =
@@ -33,7 +32,6 @@ class HudSystem {
             KHpColor);
       }
 
-      // スタミナゲージ
       s3d::RectF{KBarX, KStaminaBarY, KBarWidth, KBarHeight}.draw(KBgColor);
       if (stamina.max > 0) {
         const double staminaRatio = s3d::Clamp(
