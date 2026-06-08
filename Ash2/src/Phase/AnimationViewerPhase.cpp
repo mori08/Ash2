@@ -38,7 +38,8 @@ void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
 
   m_entity = registry.create();
   registry.emplace<WorldPos>(m_entity);
-  registry.emplace<Drawable>(m_entity, TextureDrawable{});
+  registry.emplace<Drawable>(
+      m_entity, TextureDrawable{.anchor = DrawAnchor::BottomCenter});
   registry.emplace<SpriteAnimation>(
       m_entity,
       SpriteAnimation{.dataKey = m_dataKey,

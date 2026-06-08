@@ -27,8 +27,17 @@ void DrawSystem::Draw(const entt::registry& registry) {
     std::visit(
         Overloaded{
             [&screenPos](const RectDrawable& shape) {
-              const RectF rect{Arg::center(screenPos), shape.size.x,
-                               shape.size.y};
+              const RectF rect = [&] {
+                switch (shape.anchor) {
+                  case DrawAnchor::BottomCenter:
+                    return RectF{Arg::bottomCenter(screenPos), shape.size.x,
+                                 shape.size.y};
+                  case DrawAnchor::Center:
+                  default:
+                    return RectF{Arg::center(screenPos), shape.size.x,
+                                 shape.size.y};
+                }
+              }();
               rect.draw(shape.color);
               if (shape.border) {
                 rect.drawFrame(shape.border->thickness, shape.border->color);
@@ -58,7 +67,16 @@ void DrawSystem::Draw(const entt::registry& registry) {
               }
             },
             [&screenPos](const TextureDrawable& shape) {
-              shape.region.drawAt(screenPos + shape.drawOffset);
+              const Vec2 anchorPos = screenPos + shape.drawOffset;
+              switch (shape.anchor) {
+                case DrawAnchor::BottomCenter:
+                  shape.region.draw(Arg::bottomCenter(anchorPos));
+                  break;
+                case DrawAnchor::Center:
+                default:
+                  shape.region.draw(Arg::center(anchorPos));
+                  break;
+              }
             },
         },
         entry.drawable.get());

@@ -15,7 +15,7 @@ struct AnimationData {
   /// TextureAsset キー（例: `assets/images/player.png`）
   s3d::String textureKey;
   s3d::Size size;
-  /// 中心座標からのずれ
+  /// TextureDrawable::anchor が示す位置からのずれ
   s3d::Vec2 drawOffset;
   /// クリップ名 → AnimationClip の対応表
   s3d::HashTable<s3d::String, AnimationClip> clips;

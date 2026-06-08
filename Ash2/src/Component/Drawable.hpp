@@ -9,6 +9,14 @@ struct BorderStyle {
   double thickness;
 };
 
+/// @brief WorldPos を描画形状内のどの点に合わせるか
+enum class DrawAnchor : std::uint8_t {
+  /// 形状の中心
+  Center,
+  /// 形状の下端中央
+  BottomCenter,
+};
+
 /// @brief 矩形描画データ
 struct RectDrawable {
   /// 描画サイズ（幅・高さ）
@@ -16,6 +24,7 @@ struct RectDrawable {
   ColorF color;
   /// none = 枠線なし
   Optional<BorderStyle> border;
+  DrawAnchor anchor = DrawAnchor::Center;
 };
 
 /// @brief 円描画データ
@@ -41,8 +50,9 @@ struct PieDrawable {
 /// @brief テクスチャ描画データ
 struct TextureDrawable {
   TextureRegion region;
-  /// 中心座標からのずれ（アンカー調整用）
+  /// anchor が示す位置からのずれ
   Vec2 drawOffset{0, 0};
+  DrawAnchor anchor = DrawAnchor::Center;
 };
 
 /// @brief 描画コンポーネント（描画形状の variant）

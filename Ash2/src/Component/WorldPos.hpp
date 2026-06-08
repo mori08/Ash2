@@ -2,6 +2,9 @@
 #include <Siv3D.hpp>
 
 /// @brief ワールド座標
+/// @note 描画（Drawable の DrawAnchor）・当たり判定（Collider のオフセット）の
+///       共通基準点。基準点が「中心」か「接地点」かはエンティティごとに異なり、
+///       Drawable/Collider 側をその意味づけに合わせて設定する。
 struct WorldPos {
   /// 横位置
   double w = 0.0;

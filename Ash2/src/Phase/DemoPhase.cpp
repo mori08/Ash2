@@ -18,7 +18,8 @@ void DemoPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<WorldPos>(m_playerRoot);
   registry.emplace<Velocity>(m_playerRoot);
   registry.emplace<Name>(m_playerRoot, Name{U"player"});
-  registry.emplace<Drawable>(m_playerRoot, TextureDrawable{});
+  registry.emplace<Drawable>(
+      m_playerRoot, TextureDrawable{.anchor = DrawAnchor::BottomCenter});
   registry.emplace<SpriteAnimation>(
       m_playerRoot,
       SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"});
