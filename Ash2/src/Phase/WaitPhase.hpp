@@ -11,13 +11,9 @@ class WaitPhase : public IPhase {
     double duration;
   };
 
-  /// @brief コンストラクタ
-  /// @param param 生成パラメータ
   explicit WaitPhase(const Param& param);
 
   /// @brief 経過時間を積算し、duration を超えたら Pop を返す
-  /// @param registry ECS レジストリ
-  /// @param frameData フレームごとの更新データ
   /// @return duration 経過後に Pop、それまでは None
   [[nodiscard]] PhaseCommand update(entt::registry& registry,
                                     const FrameData& frameData) override;
