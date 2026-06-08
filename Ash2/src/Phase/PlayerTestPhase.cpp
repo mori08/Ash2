@@ -37,7 +37,8 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<WorldPos>(m_playerRoot);
   registry.emplace<Velocity>(m_playerRoot);
   registry.emplace<Name>(m_playerRoot, Name{U"player"});
-  registry.emplace<Drawable>(m_playerRoot, TextureDrawable{});
+  registry.emplace<Drawable>(
+      m_playerRoot, TextureDrawable{.anchor = DrawAnchor::BottomCenter});
   registry.emplace<SpriteAnimation>(
       m_playerRoot,
       SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"});
@@ -51,8 +52,10 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   // ダミーターゲット（縦カプセル: 足元〜高さ80、半径30）
   m_dummyTarget = registry.create();
   registry.emplace<WorldPos>(m_dummyTarget, WorldPos{.w = KDummyPosW});
-  registry.emplace<Drawable>(
-      m_dummyTarget, RectDrawable{.size = KDummySize, .color = KDummyColor});
+  registry.emplace<Drawable>(m_dummyTarget,
+                             RectDrawable{.size = KDummySize,
+                                          .color = KDummyColor,
+                                          .anchor = DrawAnchor::BottomCenter});
   registry.emplace<Collider>(m_dummyTarget,
                              Collider{
                                  .segmentStart = Vec3{0.0, 0.0, 0.0},
