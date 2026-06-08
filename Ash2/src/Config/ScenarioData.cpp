@@ -7,9 +7,6 @@
 namespace {
 
 /// @brief TOML の 1 ステップ値を ScenarioStep に変換する
-/// @param step TOML ステップ値
-/// @param registry フェーズ名 → PhaseEntry の対応表
-/// @return ScenarioStep（StepPush または StepReset）
 /// @note "make" アクションは別 Issue で対応予定のためエラーとする
 ScenarioStep ParseStep(const s3d::TOMLValue& step,
                        const PhaseRegistry& registry) {
