@@ -10,9 +10,6 @@ struct ScenarioData {
   s3d::HashTable<s3d::String, s3d::Array<ScenarioStep>> sections;
 
   /// @brief TOML からシナリオデータを生成する
-  /// @param toml シナリオ TOML のルート値
-  /// @param registry フェーズ名 → PhaseEntry の対応表
-  /// @return ScenarioData
   [[nodiscard]] static ScenarioData FromToml(const s3d::TOMLValue& toml,
                                              const PhaseRegistry& registry);
 };

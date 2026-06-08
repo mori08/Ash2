@@ -19,45 +19,34 @@ class IPhase {
       Reset,
     };
 
-    /// 操作の種類
     Type type;
     /// 次のフェーズ（Push / Reset 時のみ有効）
     std::unique_ptr<IPhase> nextPhase;
 
     /// @brief 何もしないコマンドを返す
-    /// @return None コマンド
     [[nodiscard]] static PhaseCommand None();
 
     /// @brief スタックから取り出すコマンドを返す
-    /// @return Pop コマンド
     [[nodiscard]] static PhaseCommand Pop();
 
     /// @brief スタックにフェーズを積むコマンドを返す
     /// @param phase 次のフェーズ（nullptr 不可）
-    /// @return Push コマンド
     [[nodiscard]] static PhaseCommand Push(std::unique_ptr<IPhase>&& phase);
 
     /// @brief スタックをクリアしてフェーズを積むコマンドを返す
     /// @param phase 次のフェーズ（nullptr 不可）
-    /// @return Reset コマンド
     [[nodiscard]] static PhaseCommand Reset(std::unique_ptr<IPhase>&& phase);
   };
 
   virtual ~IPhase() = default;
 
   /// @brief スタックに積まれた直後に呼ばれる
-  /// @param registry ECS レジストリ
   virtual void onAfterPush(entt::registry&) {}
 
-  /// @brief 毎フレームの更新処理
-  /// @param registry ECS レジストリ
-  /// @param frameData フレームごとの更新データ
-  /// @return フェーズスタックへの操作
   [[nodiscard]] virtual PhaseCommand update(entt::registry& registry,
                                             const FrameData& frameData) = 0;
 
   /// @brief スタックから取り出される直前に呼ばれる
-  /// @param registry ECS レジストリ
   virtual void onBeforePop(entt::registry&) {}
 };
 

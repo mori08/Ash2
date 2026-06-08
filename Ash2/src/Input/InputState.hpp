@@ -8,12 +8,8 @@ struct InputState {
   /// 移動軸入力（x: 横方向 w 軸・右が正、y: 奥行き方向 d 軸・奥が正）。
   /// 常に長さ 1.0 以下に正規化されていることが保証される
   Vec2 moveAxis = Vec2::Zero();
-  /// ジャンプキーが押された（1フレーム限り）
   bool jumpDown = false;
-  /// 設定再読み込みキーが押された（1フレーム限り）
   bool reloadConfig = false;
-  /// 近距離攻撃キーが押された（1フレーム限り）
   bool attackDown = false;
-  /// 遠距離攻撃キーが押された（1フレーム限り）
   bool rangedAttackDown = false;
 };

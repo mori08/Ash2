@@ -12,14 +12,18 @@ paths:
 新しい `.cpp` / `.hpp` ファイルを追加するときは、**ビルド前に** `Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
 
 
-## コメント（.hpp）
+## コメント
 
-`.hpp` の関数・構造体・メンバ変数には `///` で Doxygen コメントを書く。言語は日本語。
+`.cpp` / `.hpp` 共通のルール。
 
-- 関数: `@brief`（必須）、`@param` / `@return`（引数・戻り値がある場合は必須）
+### Doxygen コメント
+
+関数・構造体・メンバ変数には `///` で Doxygen コメントを書く。言語は日本語。
+**名前・型・シグネチャから読み取れない情報**のみ記述する。設計の経緯・実装の動機は書かない。
+
+- 関数: `@brief` / `@param` / `@return`（いずれも非自明な場合のみ）
 - 構造体: `@brief` で一行説明
 - メンバ変数: `///` で一行説明（前置）
-- 自明なもの（getter 等）は省略可
 
 ```cpp
 /// @brief ワールド座標
@@ -34,12 +38,14 @@ struct WorldPos {
   [[nodiscard]] Vec2 toScreen() const;
 };
 
-/// @brief 描画順の比較関数（奥から手前の順）
-/// @param a 比較対象A
-/// @param b 比較対象B
-/// @return a が b より奥にある場合 true
+/// @brief 描画順の比較（奥→手前、std::sort 用）
+/// @return a が b より描画順で前にある場合 true
 inline bool DrawOrderLess(const WorldPos& a, const WorldPos& b);
 ```
+
+### Why not コメント
+
+自然に書いたら別の実装になる箇所で、その理由がコードから読み取れない場合のみ `//` で記述する。
 
 ## ARCHITECTURE.md の更新
 

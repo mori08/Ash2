@@ -18,8 +18,5 @@ class ProjectileSystem {
   /// - 画面外: `WorldPos` を画面座標に変換した結果が `Scene::Rect()` の範囲外
   ///
   /// 着弾判定が正しく行われるよう、`HitSystem::Update` の後に呼び出すこと。
-  ///
-  /// @param registry ECS レジストリ
-  /// @param dt 1フレームあたりの経過時間（秒）
   static void Update(entt::registry& registry, double dt);
 };

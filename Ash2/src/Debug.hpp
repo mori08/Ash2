@@ -2,8 +2,7 @@
 
 #ifdef _DEBUG
 namespace AppDebug {
-/// テスト実行中は true にセットされる。APP_LOG
-/// はこのフラグが立っている間は無効化される
+/// テスト実行中は true にセットされる。立っている間は APP_LOG が無効化される。
 inline bool testMode = false;
 }  // namespace AppDebug
 // 複数値の結合には << でなく + か Format() を使う: APP_LOG(U"n=" + Format(n))

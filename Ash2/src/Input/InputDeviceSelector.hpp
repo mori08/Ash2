@@ -8,7 +8,6 @@
 /// @brief アクティブな入力デバイスを自動検出し InputState を返す
 struct InputDeviceSelector {
   /// @brief 毎フレーム呼び出す。最後に入力があったデバイスの状態を返す
-  /// @return フレームの入力状態
   [[nodiscard]] InputState update();
 
  private:
@@ -16,7 +15,6 @@ struct InputDeviceSelector {
 
   /// キーボード/マウス入力アクション
   KeyboardInputAction m_keyboardAction = KeyboardInputAction::Default();
-  /// 現在アクティブなデバイス
   Device m_activeDevice = Device::Keyboard;
 };
 

@@ -2,9 +2,9 @@
 #include <Siv3D.hpp>
 
 /// @brief デバッグ・リリース共通のアセットリストを返す
-/// @details `tools/sync-assets.sh` で生成した `assets/asset_list` を読む。
-///          デバッグ時はファイルから、リリース時は埋め込みリソースから読む。
-/// @return アセットパスの配列
+///
+/// `tools/sync-assets.sh` で生成した `assets/asset_list` を読む。
+/// デバッグ時はファイルから、リリース時は埋め込みリソースから読む。
 [[nodiscard]] inline Array<FilePath> GetAssetList() {
 #ifdef _DEBUG
   TextReader reader(U"assets/asset_list");
@@ -26,7 +26,6 @@
 }
 
 /// @brief デバッグ・リリース共通のアセットパスを返す
-/// @param path アセットの相対パス（例: `assets/images/player.png`）
 /// @return デバッグ時は FilePath、リリース時は Resource パス
 [[nodiscard]] inline FilePath AssetPath(StringView path) {
 #ifdef _DEBUG
@@ -37,8 +36,9 @@
 }
 
 /// @brief アセットをアセットシステムに登録する
-/// @details `.png` を TextureAsset、`.mp3` を AudioAsset として登録する。
-///          キーはファイルの相対パス（例: `assets/images/player.png`）。
+///
+/// `.png` を TextureAsset、`.mp3` を AudioAsset として登録する。
+/// キーはファイルの相対パス（例: `assets/images/player.png`）。
 inline void RegisterAssets() {
   for (const auto& path : GetAssetList()) {
     const auto ext = FileSystem::Extension(path);

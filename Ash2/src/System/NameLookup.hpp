@@ -26,7 +26,6 @@ inline void OnNameDestroyed(entt::registry& registry, entt::entity entity) {
 }
 
 /// @brief registry に Name 追加・削除シグナルを登録する
-/// @param registry 対象レジストリ
 inline void Connect(entt::registry& registry) {
   registry.on_construct<Name>().connect<&OnNameConstructed>();
   registry.on_destroy<Name>().connect<&OnNameDestroyed>();

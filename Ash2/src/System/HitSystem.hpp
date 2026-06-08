@@ -14,22 +14,16 @@ class HitSystem {
  public:
   /// @brief 攻撃側コライダーと被弾側コライダーの重なりを検出し、Hp
   /// にダメージを適用する
-  /// @param registry ECS レジストリ
   static void Update(entt::registry& registry);
 
  private:
   /// @brief 線分を表す内部構造体
   struct Segment {
-    /// 始点
     s3d::Vec3 start;
-    /// 終点
     s3d::Vec3 end;
   };
 
-  /// @brief 2線分間の距離の二乗を返す
-  /// @param segA 線分1
-  /// @param segB 線分2
-  /// @return 最近接距離の二乗
+  /// @brief 2線分間の最近接距離の二乗を返す
   [[nodiscard]] static double SegmentDistSq(Segment segA, Segment segB);
 };
 

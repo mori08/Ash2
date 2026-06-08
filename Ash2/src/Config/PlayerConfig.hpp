@@ -35,13 +35,9 @@ struct PlayerConfig {
   double jumpSpeed;
   /// 重力加速度（ピクセル/秒^2）
   double gravity;
-  /// 近距離攻撃設定
   MeleeConfig melee;
-  /// 遠距離攻撃設定
   RangedConfig ranged;
 
   /// @brief TOML からプレイヤー設定を生成する
-  /// @param toml TOML 値
-  /// @return PlayerConfig
   [[nodiscard]] static PlayerConfig FromToml(const s3d::TOMLValue& toml);
 };

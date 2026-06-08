@@ -5,9 +5,8 @@
 struct AnimationClip {
   /// スプライトシート上の行番号（0始まり）
   int row;
-  /// コマ数
   int count;
-  /// 再生速度（コマ/秒）
+  /// コマ/秒
   double speed;
 };
 
@@ -15,16 +14,13 @@ struct AnimationClip {
 struct AnimationData {
   /// TextureAsset キー（例: `assets/images/player.png`）
   s3d::String textureKey;
-  /// 1コマのサイズ（幅・高さ）
   s3d::Size size;
-  /// 描画オフセット（中心座標からのずれ）
+  /// 中心座標からのずれ
   s3d::Vec2 drawOffset;
   /// クリップ名 → AnimationClip の対応表
   s3d::HashTable<s3d::String, AnimationClip> clips;
 
   /// @brief TOML からアニメーションデータを生成する
-  /// @param toml TOML 値
-  /// @return AnimationData
   [[nodiscard]] static AnimationData FromToml(const s3d::TOMLValue& toml);
 };
 

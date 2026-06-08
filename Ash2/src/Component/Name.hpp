@@ -3,11 +3,10 @@
 
 /// @brief エンティティ名コンポーネント
 struct Name {
-  /// エンティティを識別する名前（不変）
+  // NameLookup は構築・破棄シグナルでのみ同期されるため、構築後に value を
+  // 変更すると対応がずれる
   const s3d::String value;
 
-  /// @brief コンストラクタ
-  /// @param v エンティティ名
   explicit Name(s3d::String v) : value(std::move(v)) {}
 
   Name(const Name&) = default;

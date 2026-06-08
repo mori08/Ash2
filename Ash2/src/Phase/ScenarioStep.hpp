@@ -8,17 +8,15 @@
 
 /// @brief シナリオのステップ：フェーズをスタックに積む
 struct StepPush {
-  /// フェーズ名（PhaseRegistry のキー）
+  /// PhaseRegistry のキー
   s3d::String phaseName;
-  /// フェーズの生成パラメータ
   PhaseParam param;
 };
 
 /// @brief シナリオのステップ：スタックをリセットして新フェーズを積む
 struct StepReset {
-  /// フェーズ名（PhaseRegistry のキー）
+  /// PhaseRegistry のキー
   s3d::String phaseName;
-  /// フェーズの生成パラメータ
   PhaseParam param;
 };
 
