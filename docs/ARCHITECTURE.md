@@ -143,7 +143,6 @@ WorldPos { w, h, d }
 | [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | プレイヤー操作・物理・アニメーションのビジュアルテスト |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | アニメーションクリップ単体確認（←→切替、F反転） |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | 指定秒数待機して Pop |
-| [`DemoPhase`](../Ash2/src/Phase/DemoPhase.hpp) | プレイヤー操作デモ（攻撃判定なし・PhaseRegistry 未登録） |
 
 `PhaseRegistry`（registry.ctx に格納）がフェーズ名→`PhaseEntry`（parseParam + createPhase）を管理し、シナリオロード時にパラメータを型安全な `ScenarioStep` に変換する。
 登録内容は [`Phase/PhaseRegistration.cpp`](../Ash2/src/Phase/PhaseRegistration.cpp) の `MakeDefaultPhaseRegistry()` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
@@ -160,7 +159,7 @@ WorldPos { w, h, d }
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算 |
-| [`PlayerMovementSystem::Update`](../Ash2/src/System/PlayerMovementSystem.hpp) | フェーズ内（PlayerTestPhase / DemoPhase） | Player の移動・ジャンプ・重力・クリップ選択・向き更新 |
+| [`PlayerMovementSystem::Update`](../Ash2/src/System/PlayerMovementSystem.hpp) | フェーズ内（PlayerTestPhase） | Player の移動・ジャンプ・重力・クリップ選択・向き更新 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の移動、着弾（hitTargets 非空）/ 画面外での破棄 |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画 |
 
