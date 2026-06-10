@@ -1,9 +1,6 @@
 #include "Phase/ScenarioPhase.hpp"
 
 #include "Config/ScenarioData.hpp"
-#include "Phase/PhaseParam.hpp"
-#include "Phase/PhaseRegistry.hpp"
-#include "Phase/ScenarioStep.hpp"
 #include "Util/Overloaded.hpp"
 
 ScenarioPhase::ScenarioPhase(const Param& param)
@@ -22,16 +19,12 @@ IPhase::PhaseCommand ScenarioPhase::update(entt::registry& registry,
   const auto& step = steps[m_currentStep];
   ++m_currentStep;
 
-  const auto& factories = registry.ctx().get<PhaseRegistry>();
-
   return std::visit(Overloaded{
                         [&](const StepPush& s) {
-                          return PhaseCommand::Push(
-                              factories.at(s.phaseName).createPhase(s.param));
+                          return PhaseCommand::Push(s.maker->make());
                         },
                         [&](const StepReset& s) {
-                          return PhaseCommand::Reset(
-                              factories.at(s.phaseName).createPhase(s.param));
+                          return PhaseCommand::Reset(s.maker->make());
                         },
                     },
                     step);

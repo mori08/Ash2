@@ -2,7 +2,7 @@
 #include <ThirdParty/Catch2/catch.hpp>
 
 #include "Config/ScenarioData.hpp"
-#include "Phase/PhaseRegistry.hpp"
+#include "Phase/WaitPhase.hpp"
 
 TEST_CASE("ScenarioData::FromToml - push action creates StepPush") {
   constexpr std::string_view Toml =
@@ -11,13 +11,15 @@ TEST_CASE("ScenarioData::FromToml - push action creates StepPush") {
       "phase = \"wait\"\n"
       "duration = 1.5\n";
   const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
-  const PhaseRegistry registry = MakeDefaultPhaseRegistry();
-  const ScenarioData data = ScenarioData::FromToml(reader, registry);
+  const ScenarioData data = ScenarioData::FromToml(reader);
   REQUIRE(data.sections.contains(U"intro"));
   REQUIRE(data.sections.at(U"intro").size() == 1);
-  REQUIRE(std::holds_alternative<StepPush>(data.sections.at(U"intro")[0]));
-  REQUIRE(std::get<StepPush>(data.sections.at(U"intro")[0]).phaseName ==
-          U"wait");
+  const auto& step = data.sections.at(U"intro")[0];
+  REQUIRE(std::holds_alternative<StepPush>(step));
+  const auto& maker = std::get<StepPush>(step).maker;
+  REQUIRE(maker != nullptr);
+  const auto phase = maker->make();
+  REQUIRE(dynamic_cast<WaitPhase*>(phase.get()) != nullptr);
 }
 
 TEST_CASE("ScenarioData::FromToml - reset action creates StepReset") {
@@ -27,13 +29,15 @@ TEST_CASE("ScenarioData::FromToml - reset action creates StepReset") {
       "phase = \"wait\"\n"
       "duration = 2.0\n";
   const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
-  const PhaseRegistry registry = MakeDefaultPhaseRegistry();
-  const ScenarioData data = ScenarioData::FromToml(reader, registry);
+  const ScenarioData data = ScenarioData::FromToml(reader);
   REQUIRE(data.sections.contains(U"intro"));
   REQUIRE(data.sections.at(U"intro").size() == 1);
-  REQUIRE(std::holds_alternative<StepReset>(data.sections.at(U"intro")[0]));
-  REQUIRE(std::get<StepReset>(data.sections.at(U"intro")[0]).phaseName ==
-          U"wait");
+  const auto& step = data.sections.at(U"intro")[0];
+  REQUIRE(std::holds_alternative<StepReset>(step));
+  const auto& maker = std::get<StepReset>(step).maker;
+  REQUIRE(maker != nullptr);
+  const auto phase = maker->make();
+  REQUIRE(dynamic_cast<WaitPhase*>(phase.get()) != nullptr);
 }
 
 TEST_CASE("ScenarioData::FromToml - unknown phase name throws Error") {
@@ -42,8 +46,7 @@ TEST_CASE("ScenarioData::FromToml - unknown phase name throws Error") {
       "action = \"push\"\n"
       "phase = \"nonexistent\"\n";
   const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
-  const PhaseRegistry registry = MakeDefaultPhaseRegistry();
-  REQUIRE_THROWS_AS(ScenarioData::FromToml(reader, registry), Error);
+  REQUIRE_THROWS_AS(ScenarioData::FromToml(reader), Error);
 }
 
 TEST_CASE("ScenarioData::FromToml - unknown action throws Error") {
@@ -52,8 +55,7 @@ TEST_CASE("ScenarioData::FromToml - unknown action throws Error") {
       "action = \"fly\"\n"
       "phase = \"wait\"\n";
   const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
-  const PhaseRegistry registry = MakeDefaultPhaseRegistry();
-  REQUIRE_THROWS_AS(ScenarioData::FromToml(reader, registry), Error);
+  REQUIRE_THROWS_AS(ScenarioData::FromToml(reader), Error);
 }
 
 #endif

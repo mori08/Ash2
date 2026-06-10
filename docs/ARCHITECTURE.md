@@ -65,7 +65,6 @@ while (System::Update()) {
 - `PlayerConfig` — プレイヤー設定
 - `AnimationDataRegistry` — アニメーション設定
 - `ScenarioData` — シナリオデータ
-- `PhaseRegistry` — フェーズ名→ファクトリのマップ
 
 Debug ビルドでは `Console.open()` で起動し、未捕捉例外をコンソールに出力して待機する。
 
@@ -144,8 +143,8 @@ WorldPos { w, h, d }
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | アニメーションクリップ単体確認（←→切替、F反転） |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | 指定秒数待機して Pop |
 
-`PhaseRegistry`（registry.ctx に格納）がフェーズ名→`PhaseEntry`（parseParam + createPhase）を管理し、シナリオロード時にパラメータを型安全な `ScenarioStep` に変換する。
-登録内容は [`Phase/PhaseRegistration.cpp`](../Ash2/src/Phase/PhaseRegistration.cpp) の `MakeDefaultPhaseRegistry()` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
+[`Config/ScenarioData`](../Ash2/src/Config/ScenarioData.hpp) がシナリオロード時に各ステップを `IPhaseMaker`（型消去された `make() -> unique_ptr<IPhase>`）を持つ `ScenarioStep`（`StepPush`/`StepReset`）に変換する。
+変換テーブルは [`Config/ScenarioData.cpp`](../Ash2/src/Config/ScenarioData.cpp) の `kPhaseLoaders` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
 
 ---
 
@@ -180,6 +179,6 @@ WorldPos { w, h, d }
 - `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren）経由で操作する（不整合防止）。
 - `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
-- 新フェーズ追加時は `Phase/PhaseRegistration.cpp` の `MakeDefaultPhaseRegistry()` にもエントリを追加する必要がある。
+- 新フェーズ追加時は `Config/ScenarioData.cpp` の `kPhaseLoaders` にもエントリを追加する必要がある。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
 - このドキュメントは 200 行上限。超過する場合はコード例→実装詳細→未使用の設計説明の順で削る。
