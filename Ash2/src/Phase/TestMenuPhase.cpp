@@ -1,5 +1,7 @@
 #include "Phase/TestMenuPhase.hpp"
 
+#include <utility>
+
 #include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/PlayerTestPhase.hpp"
 
@@ -50,7 +52,7 @@ IPhase::PhaseCommand TestMenuPhase::update(entt::registry& registry,
   s3d::Scene::SetBackground(s3d::ColorF{KBgBrightness});
   m_font(U"Test Menu").draw(KTitleX, KTitleY);
 
-  for (int i = 0; i < static_cast<int>(m_items.size()); ++i) {
+  for (int i = 0; std::cmp_less(i, m_items.size()); ++i) {
     const s3d::ColorF color =
         (i == m_selectedIndex) ? s3d::Palette::Yellow : s3d::Palette::White;
     m_font(m_items[i].label).draw(KItemX, KItemBaseY + i * KItemSpacing, color);

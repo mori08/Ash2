@@ -47,6 +47,7 @@ jobs:
 
           $compileFlags = @(
             "--driver-mode=cl",
+            "/EHsc",
             "/std:c++latest",
             "/Zc:__cplusplus",
             "/utf-8",
