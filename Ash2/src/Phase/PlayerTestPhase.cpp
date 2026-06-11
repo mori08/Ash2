@@ -1,23 +1,22 @@
 #include "Phase/PlayerTestPhase.hpp"
 
-#include "Component/AnimationData.hpp"
-#include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
-#include "Component/LocalOffset.hpp"
 #include "Component/Name.hpp"
+#include "Component/NeutralState.hpp"
 #include "Component/Player.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
-#include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
+#include "System/AttackStateSystem.hpp"
 #include "System/HitSystem.hpp"
+#include "System/NeutralStateSystem.hpp"
 #include "System/PlayerMovementSystem.hpp"
 #include "System/ProjectileSystem.hpp"
 
@@ -29,7 +28,6 @@ constexpr double KDummyCapHeight = 80.0;
 constexpr int KDummyMaxHp = 100;
 constexpr int KPlayerMaxHp = 100;
 constexpr int KPlayerMaxStamina = 100;
-constexpr s3d::ColorF KBulletColor = {0.9, 0.9, 0.3};
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   m_playerRoot = registry.create();
@@ -47,6 +45,7 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<Stamina>(
       m_playerRoot,
       Stamina{.max = KPlayerMaxStamina, .current = KPlayerMaxStamina});
+  registry.emplace<NeutralState>(m_playerRoot);
   AnimationSystem::Update(registry, 0.0);
 
   // ダミーターゲット（縦カプセル: 足元〜高さ80、半径30）
@@ -68,89 +67,11 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
 
 IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
                                              const FrameData& frameData) {
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& input = frameData.input;
   const double dt = frameData.dt;
 
-  // AnimationDataRegistry からクリップ期間を取得
-  const auto& animReg = registry.ctx().get<AnimationDataRegistry>();
-  const auto& playerData = animReg.at(U"player");
-  const auto getClipDuration = [&](const s3d::String& clipName) -> double {
-    const auto it = playerData.clips.find(clipName);
-    if (it == playerData.clips.end()) return 0.0;
-    return static_cast<double>(it->second.count) / it->second.speed;
-  };
-
-  // 攻撃タイマー更新（0以下で攻撃終了）
-  if (!m_attackClip.empty()) {
-    m_attackTimer -= dt;
-    if (m_attackTimer <= 0.0) {
-      m_attackClip = U"";
-      if (m_attackEntity != entt::null) {
-        Hierarchy::DestroyWithChildren(registry, m_attackEntity);
-        m_attackEntity = entt::null;
-      }
-    }
-  }
-
-  PlayerMovementSystem::Update(registry, frameData, m_attackClip);
-
-  const bool isAttacking = !m_attackClip.empty();
-
-  auto view = registry.view<Player, WorldPos, Velocity, SpriteAnimation>();
-  for (const auto& [entity, pos, vel, anim] : view.each()) {
-    const bool onGround = pos.isOnGround();
-
-    // 攻撃入力チェック（攻撃中でない、かつ地上にいるときのみ）
-    if (!isAttacking && onGround) {
-      if (input.attackDown) {
-        m_attackClip = U"attack";
-        m_attackTimer = getClipDuration(U"attack");
-
-        const double sign = anim.facingRight ? 1.0 : -1.0;
-        m_attackEntity = registry.create();
-        registry.emplace<WorldPos>(m_attackEntity,
-                                   registry.get<WorldPos>(m_playerRoot));
-        registry.emplace<LocalOffset>(m_attackEntity, LocalOffset{});
-        Hierarchy::Attach(registry, m_playerRoot, m_attackEntity);
-        registry.emplace<Collider>(
-            m_attackEntity,
-            Collider{
-                .segmentStart = Vec3{0.0, cfg.melee.capMidH, 0.0},
-                .segmentEnd =
-                    Vec3{sign * cfg.melee.reach, cfg.melee.capMidH, 0.0},
-                .radius = cfg.melee.radius,
-            });
-        registry.emplace<Attack>(m_attackEntity,
-                                 Attack{.damage = cfg.melee.damage});
-      } else if (input.rangedAttackDown) {
-        m_attackClip = U"ranged_attack";
-        m_attackTimer = getClipDuration(U"ranged_attack");
-
-        const double sign = anim.facingRight ? 1.0 : -1.0;
-        const WorldPos playerPos = registry.get<WorldPos>(m_playerRoot);
-
-        const auto bullet = registry.create();
-        registry.emplace<WorldPos>(
-            bullet, WorldPos{.w = playerPos.w,
-                             .h = playerPos.h + cfg.ranged.spawnHeight,
-                             .d = playerPos.d});
-        registry.emplace<Velocity>(
-            bullet, Velocity{.w = sign * cfg.ranged.bulletSpeed});
-        registry.emplace<Collider>(bullet,
-                                   Collider{
-                                       .segmentStart = Vec3{0.0, 0.0, 0.0},
-                                       .segmentEnd = Vec3{0.0, 0.0, 0.0},
-                                       .radius = cfg.ranged.radius,
-                                   });
-        registry.emplace<Attack>(bullet, Attack{.damage = cfg.ranged.damage});
-        registry.emplace<Drawable>(
-            bullet,
-            CircleDrawable{.radius = cfg.ranged.radius, .color = KBulletColor});
-        registry.emplace<Projectile>(bullet);
-      }
-    }
-  }
+  AttackStateSystem::Update(registry, frameData);
+  PlayerMovementSystem::Update(registry, frameData);
+  NeutralStateSystem::Update(registry, frameData);
 
   HitSystem::Update(registry);
   ProjectileSystem::Update(registry, dt);
@@ -170,19 +91,16 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
 
 void PlayerTestPhase::reloadPlayer(entt::registry& registry) {
   onBeforePop(registry);
-  m_attackClip = U"";
-  m_attackTimer = 0.0;
   onAfterPush(registry);
 }
 
 void PlayerTestPhase::onBeforePop(entt::registry& registry) {
-  // m_attackEntity は m_playerRoot の子孫なので DestroyWithChildren
-  // で連動して破棄される
+  // 攻撃判定エンティティ（AttackState.entity）は m_playerRoot
+  // の子孫なので DestroyWithChildren で連動して破棄される
   if (m_playerRoot != entt::null) {
     Hierarchy::DestroyWithChildren(registry, m_playerRoot);
     m_playerRoot = entt::null;
   }
-  m_attackEntity = entt::null;
   if (m_dummyTarget != entt::null && registry.valid(m_dummyTarget)) {
     registry.destroy(m_dummyTarget);
     m_dummyTarget = entt::null;
