@@ -189,6 +189,12 @@
     <ClCompile Include="System\PlayerMovementSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\NeutralStateSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\AttackStateSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\ProjectileSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -229,6 +235,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestProjectileSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestNeutralStateSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestAttackStateSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp">
@@ -956,6 +968,12 @@
     <ClInclude Include="System\PlayerMovementSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="System\NeutralStateSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\AttackStateSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
     <ClInclude Include="System\AttachmentSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
@@ -1026,6 +1044,12 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="Component\Stamina.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\NeutralState.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\AttackState.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="Component\Projectile.hpp">
