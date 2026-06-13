@@ -13,7 +13,6 @@ void PlayerMovementSystem::Update(entt::registry& registry,
                                   const FrameData& frameData) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& input = frameData.input;
-  const double dt = frameData.dt;
 
   auto view = registry.view<Player, WorldPos, Velocity, SpriteAnimation>();
   for (auto&& [entity, pos, vel, anim] : view.each()) {
@@ -25,17 +24,6 @@ void PlayerMovementSystem::Update(entt::registry& registry,
     } else {
       vel.w = input.moveAxis.x * cfg.speed;
       vel.d = input.moveAxis.y * cfg.speed;
-    }
-
-    pos.w += vel.w * dt;
-    pos.d += vel.d * dt;
-
-    vel.h -= cfg.gravity * dt;
-    pos.h += vel.h * dt;
-
-    if (pos.h < 0.0) {
-      pos.h = 0.0;
-      vel.h = 0.0;
     }
 
     const bool onGround = pos.isOnGround();
