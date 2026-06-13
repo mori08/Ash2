@@ -136,6 +136,8 @@
     <ClCompile Include="src\System\NeutralStateSystem.cpp" />
     <ClCompile Include="src\System\AttackStateSystem.cpp" />
     <ClCompile Include="src\System\ProjectileSystem.cpp" />
+    <ClCompile Include="src\System\MovementSystem.cpp" />
+    <ClCompile Include="src\System\GravitySystem.cpp" />
     <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
@@ -149,6 +151,7 @@
     <ClCompile Include="tests\TestHitSystem.cpp" />
     <ClCompile Include="tests\TestNeutralStateSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
+    <ClCompile Include="tests\TestMovementSystem.cpp" />
     <ClCompile Include="tests\TestNameLookup.cpp" />
     <ClCompile Include="tests\TestPhaseStack.cpp" />
     <ClCompile Include="tests\TestPlayerConfig.cpp" />
@@ -406,6 +409,9 @@
     <ClInclude Include="src\System\HitSystem.hpp" />
     <ClInclude Include="src\System\HudSystem.hpp" />
     <ClInclude Include="src\System\ProjectileSystem.hpp" />
+    <ClInclude Include="src\Component\Gravity.hpp" />
+    <ClInclude Include="src\System\MovementSystem.hpp" />
+    <ClInclude Include="src\System\GravitySystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

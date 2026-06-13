@@ -198,6 +198,12 @@
     <ClCompile Include="System\ProjectileSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\MovementSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\GravitySystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\AttachmentSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -235,6 +241,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestProjectileSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestMovementSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestNeutralStateSystem.cpp">
@@ -1062,6 +1071,15 @@
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\ProjectileSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Gravity.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\MovementSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\GravitySystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>

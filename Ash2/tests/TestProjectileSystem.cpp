@@ -31,25 +31,6 @@ entt::entity MakeBullet(entt::registry& registry, const WorldPos& pos,
 
 }  // namespace
 
-TEST_CASE("ProjectileSystem - moves bullet by velocity each frame") {
-  // Velocity に従って WorldPos が更新される
-  entt::registry registry;
-
-  const auto bullet =
-      MakeBullet(registry, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0},
-                 Velocity{.w = 100.0, .h = 0.0, .d = 0.0});
-
-  ProjectileSystem::Update(registry, 0.5);
-
-  REQUIRE(registry.valid(bullet));
-  REQUIRE(registry.get<WorldPos>(bullet).w == Approx(50.0));
-
-  ProjectileSystem::Update(registry, 0.5);
-
-  REQUIRE(registry.valid(bullet));
-  REQUIRE(registry.get<WorldPos>(bullet).w == Approx(100.0));
-}
-
 TEST_CASE(
     "ProjectileSystem - destroys bullet on impact (hitTargets non-empty)") {
   // Attack.hitTargets が空でなくなった（HitSystem
@@ -64,7 +45,7 @@ TEST_CASE(
   const auto dummyTarget = registry.create();
   registry.get<Attack>(bullet).hitTargets.emplace(dummyTarget);
 
-  ProjectileSystem::Update(registry, 1.0 / 60.0);
+  ProjectileSystem::Update(registry);
 
   REQUIRE_FALSE(registry.valid(bullet));
 }
@@ -80,7 +61,7 @@ TEST_CASE("ProjectileSystem - destroys bullet when off-screen") {
       MakeBullet(registry, WorldPos{.w = KFarAway, .h = 0.0, .d = 0.0},
                  Velocity{.w = 0.0, .h = 0.0, .d = 0.0});
 
-  ProjectileSystem::Update(registry, 1.0 / 60.0);
+  ProjectileSystem::Update(registry);
 
   REQUIRE_FALSE(registry.valid(bullet));
 }

@@ -2,6 +2,7 @@
 
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
+#include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
 #include "Component/Name.hpp"
@@ -12,10 +13,13 @@
 #include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
+#include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 #include "System/AttackStateSystem.hpp"
+#include "System/GravitySystem.hpp"
 #include "System/HitSystem.hpp"
+#include "System/MovementSystem.hpp"
 #include "System/NeutralStateSystem.hpp"
 #include "System/PlayerMovementSystem.hpp"
 #include "System/ProjectileSystem.hpp"
@@ -30,10 +34,13 @@ constexpr int KPlayerMaxHp = 100;
 constexpr int KPlayerMaxStamina = 100;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+
   m_playerRoot = registry.create();
   registry.emplace<Player>(m_playerRoot);
   registry.emplace<WorldPos>(m_playerRoot);
   registry.emplace<Velocity>(m_playerRoot);
+  registry.emplace<Gravity>(m_playerRoot, Gravity{.accel = cfg.gravity});
   registry.emplace<Name>(m_playerRoot, Name{U"player"});
   registry.emplace<Drawable>(
       m_playerRoot, TextureDrawable{.anchor = DrawAnchor::BottomCenter});
@@ -71,10 +78,12 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
 
   AttackStateSystem::Update(registry, frameData);
   PlayerMovementSystem::Update(registry, frameData);
+  MovementSystem::Update(registry, dt);
+  GravitySystem::Update(registry, dt);
   NeutralStateSystem::Update(registry, frameData);
 
   HitSystem::Update(registry);
-  ProjectileSystem::Update(registry, dt);
+  ProjectileSystem::Update(registry);
 
   AnimationSystem::Update(registry, dt);
 

@@ -2,21 +2,16 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Projectile.hpp"
-#include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 
-void ProjectileSystem::Update(entt::registry& registry, double dt) {
+void ProjectileSystem::Update(entt::registry& registry) {
   const Vec2 cameraOffset = Scene::Center();
   const RectF screenRect = Scene::Rect();
 
   s3d::Array<entt::entity> toDestroy;
 
-  auto view = registry.view<Projectile, WorldPos, Velocity, Attack>();
-  for (auto&& [entity, pos, vel, atk] : view.each()) {
-    pos.w += vel.w * dt;
-    pos.h += vel.h * dt;
-    pos.d += vel.d * dt;
-
+  auto view = registry.view<Projectile, WorldPos, Attack>();
+  for (auto&& [entity, pos, atk] : view.each()) {
     // 着弾: HitSystem がヒットを記録した
     if (!atk.hitTargets.empty()) {
       toDestroy.push_back(entity);
