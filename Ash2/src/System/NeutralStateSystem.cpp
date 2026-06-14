@@ -2,7 +2,6 @@
 
 #include "System/NeutralStateSystem.hpp"
 
-#include "Component/AnimationData.hpp"
 #include "Component/Attack.hpp"
 #include "Component/AttackState.hpp"
 #include "Component/Collider.hpp"
@@ -15,6 +14,7 @@
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
+#include "Config/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 

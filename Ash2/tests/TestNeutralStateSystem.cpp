@@ -2,13 +2,13 @@
 #include <ThirdParty/Catch2/catch.hpp>
 #include <entt/entt.hpp>
 
-#include "Component/AnimationData.hpp"
 #include "Component/AttackState.hpp"
 #include "Component/NeutralState.hpp"
 #include "Component/Player.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
+#include "Config/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/NeutralStateSystem.hpp"

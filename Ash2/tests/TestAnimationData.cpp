@@ -1,7 +1,7 @@
 #ifdef _DEBUG
 #include <ThirdParty/Catch2/catch.hpp>
 
-#include "Component/AnimationData.hpp"
+#include "Config/AnimationData.hpp"
 
 TEST_CASE("AnimationData::FromToml - parses top-level fields correctly") {
   constexpr std::string_view Toml =
