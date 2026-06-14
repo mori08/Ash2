@@ -98,7 +98,7 @@ WorldPos { w, h, d }
 
 `Main.cpp` が毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える。切断時はキーボードへ自動フォールバック。
 
-**移動入力の正規化方針：** `InputState::moveAxis`（`Vec2`、x=横方向/y=奥行き方向）は「常に長さ 1.0 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側にあり、`PlayerMovementSystem` は無条件にこの値を信頼してそのまま速度計算に使う（System 側で正規化やクランプを行わない）。`XInputAction` は左スティックにデッドゾーン処理（`DeadZone`）を適用し、十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
+**移動入力の正規化方針：** `InputState::moveAxis`（`Vec2`、x=横方向/y=奥行き方向）は「常に長さ 1.0 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側にあり、`PlayerMotion::Tick(Neutral&, ...)` は無条件にこの値を信頼してそのまま速度計算に使う（System 側で正規化やクランプを行わない）。`XInputAction` は左スティックにデッドゾーン処理（`DeadZone`）を適用し、十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
 
 ---
 
@@ -119,8 +119,7 @@ WorldPos { w, h, d }
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int フィールド） |
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
-| [`NeutralState`](../Ash2/src/Component/NeutralState.hpp) | プレイヤーが通常状態（移動・ジャンプ可能）であることを示すタグ |
-| [`AttackState`](../Ash2/src/Component/AttackState.hpp) | プレイヤーが攻撃状態であることを示す（再生中クリップ・残り時間・攻撃判定の子エンティティ） |
+| [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee, PlayerMotion::Ranged>`）。`Melee`/`Ranged` は再生中クリップの残り時間、`Melee` は攻撃判定の子エンティティを持つ |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
 
 ---
@@ -161,11 +160,9 @@ WorldPos { w, h, d }
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算 |
-| [`AttackStateSystem::Update`](../Ash2/src/System/AttackStateSystem.hpp) | フェーズ内（PlayerTestPhase、最初） | `AttackState` のタイマー減算、終了時に `NeutralState` へ遷移し攻撃判定エンティティを破棄 |
-| [`PlayerMovementSystem::Update`](../Ash2/src/System/PlayerMovementSystem.hpp) | フェーズ内（PlayerTestPhase） | Player の水平移動量決定・ジャンプ判定・クリップ選択・向き更新（`NeutralState` の有無で移動可否を判定） |
-| [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、PlayerMovementSystem の後） | `WorldPos`+`Velocity` を持つ全エンティティ（Player・弾）の位置を `vel * dt` で更新 |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、最初） | `Motion`（Neutral/Melee/Ranged）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了）を行う |
+| [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `WorldPos`+`Velocity` を持つ全エンティティ（Player・弾）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `WorldPos`+`Velocity`+`Gravity` を持つエンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
-| [`NeutralStateSystem::Update`](../Ash2/src/System/NeutralStateSystem.hpp) | フェーズ内（PlayerTestPhase、最後） | `NeutralState` 中の攻撃入力を検出し `AttackState` へ遷移、攻撃判定/弾エンティティを生成 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画 |
 

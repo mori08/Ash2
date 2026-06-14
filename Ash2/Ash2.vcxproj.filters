@@ -186,13 +186,10 @@
     <ClCompile Include="System\AnimationSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="System\PlayerMovementSystem.cpp">
+    <ClCompile Include="System\PlayerMotionSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="System\NeutralStateSystem.cpp">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="System\AttackStateSystem.cpp">
+    <ClCompile Include="System\MotionSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="System\ProjectileSystem.cpp">
@@ -246,10 +243,7 @@
     <ClCompile Include="tests\TestMovementSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TestNeutralStateSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TestAttackStateSystem.cpp">
+    <ClCompile Include="tests\TestPlayerMotionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp">
@@ -971,13 +965,10 @@
     <ClInclude Include="System\AnimationSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="System\PlayerMovementSystem.hpp">
+    <ClInclude Include="System\PlayerMotionSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="System\NeutralStateSystem.hpp">
-      <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="System\AttackStateSystem.hpp">
+    <ClInclude Include="System\MotionSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\AttachmentSystem.hpp">
@@ -1055,10 +1046,10 @@
     <ClInclude Include="Component\Stamina.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="Component\NeutralState.hpp">
+    <ClInclude Include="Component\PlayerMotion.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="Component\AttackState.hpp">
+    <ClInclude Include="Component\Motion.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="Component\Projectile.hpp">

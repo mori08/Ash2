@@ -132,9 +132,8 @@
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
     <ClCompile Include="src\Component\Hierarchy.cpp" />
     <ClCompile Include="src\System\AnimationSystem.cpp" />
-    <ClCompile Include="src\System\PlayerMovementSystem.cpp" />
-    <ClCompile Include="src\System\NeutralStateSystem.cpp" />
-    <ClCompile Include="src\System\AttackStateSystem.cpp" />
+    <ClCompile Include="src\System\PlayerMotionSystem.cpp" />
+    <ClCompile Include="src\System\MotionSystem.cpp" />
     <ClCompile Include="src\System\ProjectileSystem.cpp" />
     <ClCompile Include="src\System\MovementSystem.cpp" />
     <ClCompile Include="src\System\GravitySystem.cpp" />
@@ -147,9 +146,8 @@
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
-    <ClCompile Include="tests\TestAttackStateSystem.cpp" />
     <ClCompile Include="tests\TestHitSystem.cpp" />
-    <ClCompile Include="tests\TestNeutralStateSystem.cpp" />
+    <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
     <ClCompile Include="tests\TestMovementSystem.cpp" />
     <ClCompile Include="tests\TestNameLookup.cpp" />
@@ -376,9 +374,8 @@
     <ClInclude Include="src\Component\Player.hpp" />
     <ClInclude Include="src\Component\Velocity.hpp" />
     <ClInclude Include="src\System\AnimationSystem.hpp" />
-    <ClInclude Include="src\System\PlayerMovementSystem.hpp" />
-    <ClInclude Include="src\System\NeutralStateSystem.hpp" />
-    <ClInclude Include="src\System\AttackStateSystem.hpp" />
+    <ClInclude Include="src\System\PlayerMotionSystem.hpp" />
+    <ClInclude Include="src\System\MotionSystem.hpp" />
     <ClInclude Include="src\System\AttachmentSystem.hpp" />
     <ClInclude Include="src\System\DrawSystem.hpp" />
     <ClInclude Include="src\System\HierarchySystem.hpp" />
@@ -403,8 +400,8 @@
     <ClInclude Include="src\Component\Attack.hpp" />
     <ClInclude Include="src\Component\Hp.hpp" />
     <ClInclude Include="src\Component\Stamina.hpp" />
-    <ClInclude Include="src\Component\NeutralState.hpp" />
-    <ClInclude Include="src\Component\AttackState.hpp" />
+    <ClInclude Include="src\Component\PlayerMotion.hpp" />
+    <ClInclude Include="src\Component\Motion.hpp" />
     <ClInclude Include="src\Component\Projectile.hpp" />
     <ClInclude Include="src\System\HitSystem.hpp" />
     <ClInclude Include="src\System\HudSystem.hpp" />
