@@ -65,10 +65,6 @@ void Main() {
     const String message = U"[例外] " + Unicode::Widen(e.what());
     TextWriter{U"crash.log", OpenMode::Append}.writeln(message);
     APP_LOG(message);
-    APP_LOG(U"Enterキーで終了...");
-#ifdef _DEBUG
-    static_cast<void>(std::getchar());
-#endif
     throw;
   }
 }
