@@ -3,7 +3,7 @@
 #include "GameSetup.hpp"
 
 #include "Asset.hpp"
-#include "Component/AnimationData.hpp"
+#include "Config/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "System/HierarchySystem.hpp"

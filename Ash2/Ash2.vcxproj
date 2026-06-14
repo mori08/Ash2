@@ -120,6 +120,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Config\AnimationData.cpp" />
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
@@ -129,7 +130,6 @@
     <ClCompile Include="src\Phase\TestMenuPhase.cpp" />
     <ClCompile Include="src\Phase\AnimationViewerPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
-    <ClCompile Include="src\Component\AnimationData.cpp" />
     <ClCompile Include="src\Component\Hierarchy.cpp" />
     <ClCompile Include="src\System\AnimationSystem.cpp" />
     <ClCompile Include="src\System\PlayerMovementSystem.cpp" />
@@ -363,7 +363,6 @@
     <Xml Include="App\example\xml\test.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Component\AnimationData.hpp" />
     <ClInclude Include="src\Component\Drawable.hpp" />
     <ClInclude Include="src\Component\SpriteAnimation.hpp" />
     <ClInclude Include="src\Component\Hierarchy.hpp" />
@@ -384,6 +383,7 @@
     <ClInclude Include="src\System\DrawSystem.hpp" />
     <ClInclude Include="src\System\HierarchySystem.hpp" />
     <ClInclude Include="src\System\NameLookup.hpp" />
+    <ClInclude Include="src\Config\AnimationData.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />

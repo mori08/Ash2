@@ -1,10 +1,10 @@
 #include "Phase/AnimationViewerPhase.hpp"
 
-#include "Component/AnimationData.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
+#include "Config/AnimationData.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 

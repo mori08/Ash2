@@ -3,9 +3,9 @@
 #include <cassert>
 #include <cmath>
 
-#include "Component/AnimationData.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/SpriteAnimation.hpp"
+#include "Config/AnimationData.hpp"
 
 void AnimationSystem::Update(entt::registry& registry, double dt) {
   const auto& dataRegistry = registry.ctx().get<AnimationDataRegistry>();

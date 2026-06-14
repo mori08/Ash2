@@ -1,4 +1,4 @@
-#include "Component/AnimationData.hpp"
+#include "Config/AnimationData.hpp"
 
 AnimationData AnimationData::FromToml(const s3d::TOMLValue& toml) {
   const auto& off = toml[U"draw_offset"];

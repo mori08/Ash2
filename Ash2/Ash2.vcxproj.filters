@@ -168,6 +168,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Config\AnimationData.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
     <ClCompile Include="Config\PlayerConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
@@ -176,9 +179,6 @@
     </ClCompile>
     <ClCompile Include="Phase\ScenarioPhase.cpp">
       <Filter>Source Files\Phase</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\AnimationData.cpp">
-      <Filter>Source Files\Component</Filter>
     </ClCompile>
     <ClCompile Include="Component\Hierarchy.cpp">
       <Filter>Source Files\Component</Filter>
@@ -950,9 +950,6 @@
     <ClInclude Include="Phase\FrameData.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
-    <ClInclude Include="Component\AnimationData.hpp">
-      <Filter>Header Files\Component</Filter>
-    </ClInclude>
     <ClInclude Include="Component\Drawable.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
@@ -997,6 +994,9 @@
     </ClInclude>
     <ClInclude Include="Component\Velocity.hpp">
       <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\AnimationData.hpp">
+      <Filter>Header Files\Config</Filter>
     </ClInclude>
     <ClInclude Include="Config\PlayerConfig.hpp">
       <Filter>Header Files\Config</Filter>
