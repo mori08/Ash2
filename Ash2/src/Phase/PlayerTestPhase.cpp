@@ -5,9 +5,10 @@
 #include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
+#include "Component/Motion.hpp"
 #include "Component/Name.hpp"
-#include "Component/NeutralState.hpp"
 #include "Component/Player.hpp"
+#include "Component/PlayerMotion.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Stamina.hpp"
@@ -16,12 +17,10 @@
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
-#include "System/AttackStateSystem.hpp"
 #include "System/GravitySystem.hpp"
 #include "System/HitSystem.hpp"
+#include "System/MotionSystem.hpp"
 #include "System/MovementSystem.hpp"
-#include "System/NeutralStateSystem.hpp"
-#include "System/PlayerMovementSystem.hpp"
 #include "System/ProjectileSystem.hpp"
 
 constexpr double KDummyPosW = 150.0;
@@ -52,7 +51,7 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<Stamina>(
       m_playerRoot,
       Stamina{.max = KPlayerMaxStamina, .current = KPlayerMaxStamina});
-  registry.emplace<NeutralState>(m_playerRoot);
+  registry.emplace<Motion>(m_playerRoot, PlayerMotion::Neutral{});
   AnimationSystem::Update(registry, 0.0);
 
   // ダミーターゲット（縦カプセル: 足元〜高さ80、半径30）
@@ -76,11 +75,9 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
                                              const FrameData& frameData) {
   const double dt = frameData.dt;
 
-  AttackStateSystem::Update(registry, frameData);
-  PlayerMovementSystem::Update(registry, frameData);
+  MotionSystem::Update(registry, frameData);
   MovementSystem::Update(registry, dt);
   GravitySystem::Update(registry, dt);
-  NeutralStateSystem::Update(registry, frameData);
 
   HitSystem::Update(registry);
   ProjectileSystem::Update(registry);
@@ -104,7 +101,7 @@ void PlayerTestPhase::reloadPlayer(entt::registry& registry) {
 }
 
 void PlayerTestPhase::onBeforePop(entt::registry& registry) {
-  // 攻撃判定エンティティ（AttackState.entity）は m_playerRoot
+  // 攻撃判定エンティティ（PlayerMotion::Melee.hitboxEntity）は m_playerRoot
   // の子孫なので DestroyWithChildren で連動して破棄される
   if (m_playerRoot != entt::null) {
     Hierarchy::DestroyWithChildren(registry, m_playerRoot);
