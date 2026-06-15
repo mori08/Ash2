@@ -26,8 +26,7 @@ void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
           .label = U"AnimationViewer (player)",
           .create = [](entt::registry&) -> std::unique_ptr<IPhase> {
             return std::make_unique<AnimationViewerPhase>(
-                AnimationViewerPhase::Param{.dataKey = U"player",
-                                            .initialClip = U""});
+                AnimationViewerPhase::Param{.dataKey = U"player"});
           },
       },
   };

@@ -50,7 +50,6 @@ const s3d::HashTable<s3d::String, PhaseLoader> kPhaseLoaders{
      MakeLoader<AnimationViewerPhase>([](const s3d::TOMLValue& step) {
        return AnimationViewerPhase::Param{
            .dataKey = step[U"param"].get<s3d::String>(),
-           .initialClip = U"",
        };
      })},
     {U"scenario", MakeLoader<ScenarioPhase>([](const s3d::TOMLValue& step) {

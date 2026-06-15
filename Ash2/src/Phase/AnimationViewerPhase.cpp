@@ -17,9 +17,7 @@ constexpr int KHintY = 80;
 }  // namespace
 
 AnimationViewerPhase::AnimationViewerPhase(const Param& param)
-    : m_dataKey(param.dataKey) {
-  (void)param.initialClip;
-}
+    : m_dataKey(param.dataKey) {}
 
 void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
   const auto& animRegistry = registry.ctx().get<AnimationDataRegistry>();
