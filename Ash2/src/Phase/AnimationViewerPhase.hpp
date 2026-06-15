@@ -11,8 +11,6 @@ class AnimationViewerPhase : public IPhase {
   struct Param {
     /// AnimationDataRegistry のキー（エンティティ種別名）
     s3d::String dataKey;
-    /// 初期クリップ名（空文字の場合は最初のクリップを使用）
-    s3d::String initialClip;
   };
 
   explicit AnimationViewerPhase(const Param& param);
