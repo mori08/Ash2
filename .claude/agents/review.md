@@ -1,7 +1,7 @@
 ---
 name: review
 description: ローカルの変更差分をレビューし、OK または NG レポートを返す（implement-issue の Review サブエージェント）
-model: sonnet
+model: opus
 tools: Bash(git diff:*), Read
 ---
 
