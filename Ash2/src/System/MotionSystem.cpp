@@ -1,11 +1,12 @@
 #include "System/MotionSystem.hpp"
 
+#include "Component/Hitstop.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/PlayerMotionSystem.hpp"
 
 void MotionSystem::Update(entt::registry& registry,
                           const FrameData& frameData) {
-  auto view = registry.view<Motion>();
+  auto view = registry.view<Motion>(entt::exclude<Hitstop>);
   for (const auto entity : view) {
     auto& motion = view.get<Motion>(entity);
     auto next = std::visit(

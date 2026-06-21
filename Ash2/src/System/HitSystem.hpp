@@ -9,12 +9,19 @@
 #include "Component/Hp.hpp"
 #include "Component/WorldPos.hpp"
 
+/// @brief 攻撃側・被弾側のエンティティの組
+struct HitPair {
+  entt::entity attacker;
+  entt::entity target;
+};
+
 /// @brief ヒット判定システム
 class HitSystem {
  public:
   /// @brief 攻撃側コライダーと被弾側コライダーの重なりを検出し、Hp
   /// にダメージを適用する
-  static void Update(entt::registry& registry);
+  /// @return このフレームで新たに成立したヒットの一覧
+  [[nodiscard]] static s3d::Array<HitPair> Update(entt::registry& registry);
 
  private:
   /// @brief 線分を表す内部構造体
@@ -70,7 +77,9 @@ inline double HitSystem::SegmentDistSq(Segment segA, Segment segB) {
   return (closest1 - closest2).dot(closest1 - closest2);
 }
 
-inline void HitSystem::Update(entt::registry& registry) {
+inline s3d::Array<HitPair> HitSystem::Update(entt::registry& registry) {
+  s3d::Array<HitPair> hits;
+
   auto attackers = registry.view<WorldPos, Collider, Attack>();
   auto targets = registry.view<WorldPos, Collider, Hp>();
 
@@ -99,6 +108,9 @@ inline void HitSystem::Update(entt::registry& registry) {
 
       rootAtk.hitTargets.emplace(target);
       hp.current = std::max(0, hp.current - rootAtk.damage);
+      hits.push_back(HitPair{.attacker = rootEntity, .target = target});
     }
   }
+
+  return hits;
 }

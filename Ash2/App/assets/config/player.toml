@@ -3,10 +3,13 @@ jump_speed = 400.0
 gravity = 980.0
 
 [melee]
-cap_mid_h = 30.0
-reach     = 60.0
-radius    = 25.0
-damage    = 20
+cap_mid_h    = 30.0
+reach        = 60.0
+radius       = 25.0
+damage       = 20
+windup_sec   = 0.05
+active_sec   = 0.10
+recovery_sec = 0.20
 
 [ranged]
 reach        = 200.0

@@ -207,6 +207,12 @@
     <ClCompile Include="System\DrawSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\HitstopSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\StaggerSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="GameSetup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1071,6 +1077,18 @@
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\GravitySystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Hitstop.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Stagger.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\HitstopSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\StaggerSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>

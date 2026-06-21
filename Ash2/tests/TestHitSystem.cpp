@@ -28,18 +28,23 @@ TEST_CASE("HitSystem - no repeated damage from multi-frame attack") {
                                               .radius = 10.0});
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
 
-  // 1フレーム目：ヒットしてダメージが入る
-  HitSystem::Update(registry);
+  // 1フレーム目：ヒットしてダメージが入り、HitPair が1件返る
+  auto hits = HitSystem::Update(registry);
   REQUIRE(registry.get<Hp>(target).current == 95);
+  REQUIRE(hits.size() == 1);
+  REQUIRE(hits[0].attacker == attacker);
+  REQUIRE(hits[0].target == target);
 
   // 2フレーム目：同じ攻撃が持続しているが hitTargets
-  // に登録済みなのでダメージなし
-  HitSystem::Update(registry);
+  // に登録済みなのでダメージなし、HitPair も返らない
+  hits = HitSystem::Update(registry);
   REQUIRE(registry.get<Hp>(target).current == 95);
+  REQUIRE(hits.isEmpty());
 
   // 3フレーム目：同上
-  HitSystem::Update(registry);
+  hits = HitSystem::Update(registry);
   REQUIRE(registry.get<Hp>(target).current == 95);
+  REQUIRE(hits.isEmpty());
 }
 
 TEST_CASE("HitSystem - multi-collider attack hits target only once") {
@@ -76,8 +81,9 @@ TEST_CASE("HitSystem - multi-collider attack hits target only once") {
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
 
   // 1回の Update で child1 と child2 が両方ヒットしても、ダメージは1回分のみ
-  HitSystem::Update(registry);
+  const auto hits = HitSystem::Update(registry);
   REQUIRE(registry.get<Hp>(target).current == 90);
+  REQUIRE(hits.size() == 1);
 }
 
 #endif

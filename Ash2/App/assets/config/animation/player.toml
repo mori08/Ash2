@@ -18,10 +18,10 @@ row = 2
 count = 1
 speed = 6.0
 
-[attack]
+[melee_1]
 row = 3
 count = 2
-speed = 8.0
+speed = 5.714285714285714
 
 [ranged_attack]
 row = 4
