@@ -4,13 +4,14 @@
 #include <cmath>
 
 #include "Component/Drawable.hpp"
+#include "Component/Hitstop.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Config/AnimationData.hpp"
 
 void AnimationSystem::Update(entt::registry& registry, double dt) {
   const auto& dataRegistry = registry.ctx().get<AnimationDataRegistry>();
 
-  auto view = registry.view<SpriteAnimation, Drawable>();
+  auto view = registry.view<SpriteAnimation, Drawable>(entt::exclude<Hitstop>);
   for (auto [entity, anim, drawable] : view.each()) {
     assert(dataRegistry.contains(anim.dataKey) &&
            "AnimationDataRegistry にキーが存在しない");
