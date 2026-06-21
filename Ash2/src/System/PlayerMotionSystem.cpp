@@ -49,12 +49,18 @@ void SetClip(SpriteAnimation& anim, const s3d::String& clip) {
   }
 }
 
+/// @brief クリップ名が同じでも再生位置を先頭へ強制的に戻す
+void RestartClip(SpriteAnimation& anim, const s3d::String& clip) {
+  anim.currentClip = clip;
+  anim.elapsed = 0.0;
+}
+
 /// @brief 近接1段目の攻撃判定エンティティ（光の珠）を生成する
 ///
 /// Component/Attack.hpp の Attack（ダメージ用）を付与する。
 /// 生成時点では構え中につき珠は体の近くに静止した位置に置く。
 /// Collider は珠エンティティ自身の原点からのオフセット 0 で固定し、
-/// 珠の現在位置は Melee::Tick が更新する LocalOffset のみが担う。
+/// 珠の現在位置は UpdateMeleeHitbox が更新する LocalOffset のみが担う。
 entt::entity SpawnMeleeHitbox(entt::registry& registry, entt::entity owner,
                               const WorldPos& pos, const PlayerConfig& cfg) {
   const auto hitbox = registry.create();
@@ -80,10 +86,59 @@ s3d::Vec3 MeleeOrbOffset(double progress, bool facingRight,
   return Vec3{sign * cfg.reach * eased, cfg.capMidH, 0.0};
 }
 
-/// @brief Melee へ移行する（攻撃クリップの設定、stage は呼び出し元が設定する）
-Melee MakeMelee(SpriteAnimation& anim, entt::entity hitboxEntity) {
+/// @brief 2段目の攻撃フレーム内の珠オフセット（斬り上げ軌道）を返す
+/// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
+s3d::Vec3 MeleeSlashOffset(double progress, bool facingRight,
+                           const MeleeConfig& cfg) {
+  const double sign = facingRight ? 1.0 : -1.0;
+  const double eased = s3d::EaseOutQuad(std::clamp(progress, 0.0, 1.0));
+  const double horizontal = sign * cfg.reach * eased;
+  const double vertical = cfg.capMidH + (eased - 0.5) * cfg.slashRiseHeight;
+  return Vec3{horizontal, vertical, 0.0};
+}
+
+/// @brief Melee1 へ移行する（攻撃クリップの設定）
+Melee1 MakeMelee(SpriteAnimation& anim, entt::entity hitboxEntity) {
   SetClip(anim, U"melee_1");
-  return Melee{.stage = 1, .elapsed = 0.0, .hitboxEntity = hitboxEntity};
+  return Melee1{.elapsed = 0.0, .hitboxEntity = hitboxEntity};
+}
+
+/// @brief Melee1 から Melee2 へ移行する（攻撃クリップを先頭から再生）
+Melee2 MakeMelee2(SpriteAnimation& anim) {
+  RestartClip(anim, U"melee_1");
+  return Melee2{};
+}
+
+/// @brief 攻撃判定の発生区間に応じてヒットボックスを生成・更新・破棄する
+/// @param offsetFn 攻撃フレーム内の進行度から珠のオフセットを算出する関数
+void UpdateMeleeHitbox(entt::registry& registry, entt::entity owner,
+                       double elapsed, double activeStart, double activeEnd,
+                       bool facingRight, const PlayerConfig& cfg,
+                       entt::entity& hitboxEntity,
+                       s3d::Vec3 (*offsetFn)(double, bool,
+                                             const MeleeConfig&)) {
+  const auto& melee = cfg.melee;
+
+  // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
+  // 補間で移動させる
+  if (elapsed >= activeStart && elapsed < activeEnd) {
+    if (hitboxEntity == entt::null) {
+      const auto& pos = registry.get<WorldPos>(owner);
+      hitboxEntity = SpawnMeleeHitbox(registry, owner, pos, cfg);
+    }
+
+    const double progress = (elapsed - activeStart) / (activeEnd - activeStart);
+    const auto offset = offsetFn(progress, facingRight, melee);
+
+    auto& localOffset = registry.get<LocalOffset>(hitboxEntity);
+    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+  }
+
+  // 後隙以降：ヒットボックスが残っていれば破棄する
+  if (elapsed >= activeEnd && hitboxEntity != entt::null) {
+    Hierarchy::DestroyWithChildren(registry, hitboxEntity);
+    hitboxEntity = entt::null;
+  }
 }
 
 /// @brief 遠距離攻撃の弾エンティティを生成する
@@ -145,7 +200,7 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
       // 直前で設定した横方向速度を打ち消す（持ち越すと1フレーム分滑る）
       vel.w = 0.0;
       vel.d = 0.0;
-      // ヒットボックス（光の珠）は攻撃フレーム開始時に Melee::Tick が生成する
+      // ヒットボックス（光の珠）は攻撃フレーム開始時に Melee1::Tick が生成する
       return MakeMelee(anim, entt::null);
     }
     if (input.rangedAttackDown) {
@@ -173,14 +228,14 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
   return std::nullopt;
 }
 
-std::optional<Motion> Tick(Melee& state, entt::registry& registry,
+std::optional<Motion> Tick(Melee1& state, entt::registry& registry,
                            entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& melee = cfg.melee;
-  const auto& pos = registry.get<WorldPos>(entity);
-  const auto& anim = registry.get<SpriteAnimation>(entity);
+  const auto& input = frameData.input;
+  auto& anim = registry.get<SpriteAnimation>(entity);
 
   const double activeStart = melee.windupSec;
   const double activeEnd = melee.windupSec + melee.activeSec;
@@ -188,25 +243,43 @@ std::optional<Motion> Tick(Melee& state, entt::registry& registry,
 
   state.elapsed += frameData.dt;
 
-  // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
-  // 補間で移動させる
-  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
-    if (state.hitboxEntity == entt::null) {
-      state.hitboxEntity = SpawnMeleeHitbox(registry, entity, pos, cfg);
-    }
+  UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
+                    anim.facingRight, cfg, state.hitboxEntity, MeleeOrbOffset);
 
-    const double progress = (state.elapsed - activeStart) / melee.activeSec;
-    const auto offset = MeleeOrbOffset(progress, anim.facingRight, melee);
-
-    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
-    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+  // windup・active中の攻撃入力は次段への遷移を予約するのみ
+  if (state.elapsed < activeEnd && input.attackDown) {
+    state.comboQueued = true;
   }
 
-  // 後隙以降：ヒットボックスが残っていれば破棄する
-  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
-    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
-    state.hitboxEntity = entt::null;
+  // 後隙に入った時点で予約済み、または後隙中の新規入力があれば即座に次段へ
+  if (state.elapsed >= activeEnd && (state.comboQueued || input.attackDown)) {
+    return MakeMelee2(anim);
   }
+
+  if (state.elapsed >= recoveryEnd) {
+    return Neutral{};
+  }
+
+  return std::nullopt;
+}
+
+std::optional<Motion> Tick(Melee2& state, entt::registry& registry,
+                           entt::entity entity, const FrameData& frameData) {
+  StopHorizontalMovement(registry, entity);
+
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& melee = cfg.melee;
+  const auto& anim = registry.get<SpriteAnimation>(entity);
+
+  const double activeStart = melee.windupSec;
+  const double activeEnd = melee.windupSec + melee.active2Sec;
+  const double recoveryEnd = activeEnd + melee.recoverySec;
+
+  state.elapsed += frameData.dt;
+
+  UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
+                    anim.facingRight, cfg, state.hitboxEntity,
+                    MeleeSlashOffset);
 
   if (state.elapsed >= recoveryEnd) {
     return Neutral{};
