@@ -115,12 +115,14 @@ WorldPos { w, h, d }
 | [`Name`](../Ash2/src/Component/Name.hpp) | エンティティ名（不変、NameLookup と対応） |
 | [`Player`](../Ash2/src/Component/Player.hpp) | プレイヤータグ（データなし） |
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
-| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。`root` で複数コライダー構成のルートを指定し、`hitTargets` で攻撃生存期間中の重複ヒットを防ぐ |
+| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。`root` で複数コライダー構成のルートを指定し、`hitTargets` で攻撃生存期間中の重複ヒットを防ぐ。`hitstopSec` はヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間 |
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int フィールド） |
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
-| [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee, PlayerMotion::Ranged>`）。`Melee`/`Ranged` は再生中クリップの残り時間、`Melee` は攻撃判定の子エンティティを持つ |
+| [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee, PlayerMotion::Ranged>`）。`Ranged` は再生中クリップの残り時間。`Melee` は段数（`stage`）・モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
+| [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MotionSystem`/`MovementSystem`/`GravitySystem` の対象から除外される（暫定実装、本格化は #132/#134） |
+| [`Stagger`](../Ash2/src/Component/Stagger.hpp) | ひるみリアクション中であることを示すタイマー。`StaggerSystem` が `RectDrawable::size` を縮小させ、残り時間が尽きたら `originalSize` に戻す（暫定実装、本格化は #134） |
 
 ---
 
@@ -141,7 +143,7 @@ WorldPos { w, h, d }
 |---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | TOML シナリオを 1 ステップずつ実行（push/reset） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | プレイヤー操作・物理・アニメーションのビジュアルテスト |
+| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | プレイヤー操作・物理・アニメーションのビジュアルテスト。`HitSystem::Update` が返す `HitPair` を見て攻撃側・被弾側へ `Hitstop`/`Stagger` を付与する（暫定実装） |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | アニメーションクリップ単体確認（←→切替、F反転） |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | 指定秒数待機して Pop |
 
@@ -154,16 +156,18 @@ WorldPos { w, h, d }
 
 | システム | タイミング | 処理 |
 |---|---|---|
-| [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後） | Hierarchy ルートから子孫へ WorldPos 伝播 |
+| [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋フェーズ内（PlayerTestPhase、GravitySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。PlayerTestPhase では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（最後） | WorldPos+Drawable を奥行き順にソートして描画 |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | SpriteAnimation の elapsed を進め Drawable を更新 |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
-| [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算 |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、最初） | `Motion`（Neutral/Melee/Ranged）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了）を行う |
-| [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `WorldPos`+`Velocity` を持つ全エンティティ（Player・弾）の位置を `vel * dt` で更新 |
-| [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `WorldPos`+`Velocity`+`Gravity` を持つエンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
+| [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算。新たに成立したヒットの `HitPair`（attacker/target）配列を返す |
+| [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する（暫定実装） |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion`（Neutral/Melee/Ranged）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了）を行う |
+| [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾）の位置を `vel * dt` で更新 |
+| [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
+| [`StaggerSystem::Update`](../Ash2/src/System/StaggerSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `Stagger` を持つエンティティの残り時間を減算し `RectDrawable::size` を縮小、0 以下で `originalSize` に戻して除去する（暫定実装） |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画 |
 
 ---

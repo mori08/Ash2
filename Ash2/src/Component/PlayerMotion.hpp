@@ -11,8 +11,10 @@ struct Neutral {};
 
 /// @brief 近距離攻撃中
 struct Melee {
-  /// 攻撃モーション残り時間（秒）
-  double timer = 0.0;
+  /// コンボ段数（1始まり）
+  int stage = 1;
+  /// モーション開始からの経過時間（秒）
+  double elapsed = 0.0;
   /// 攻撃判定の子エンティティ
   entt::entity hitboxEntity = entt::null;
 };

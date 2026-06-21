@@ -11,6 +11,12 @@ struct MeleeConfig {
   double radius;
   /// 与えるダメージ量
   int damage;
+  /// 構え時間（秒）
+  double windupSec;
+  /// 攻撃判定が有効な時間（秒）
+  double activeSec;
+  /// 後隙時間（秒）
+  double recoverySec;
 };
 
 /// @brief 遠距離攻撃の設定値

@@ -1,9 +1,11 @@
 #include "Phase/PlayerTestPhase.hpp"
 
+#include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
+#include "Component/Hitstop.hpp"
 #include "Component/Hp.hpp"
 #include "Component/Motion.hpp"
 #include "Component/Name.hpp"
@@ -11,17 +13,21 @@
 #include "Component/PlayerMotion.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
+#include "Component/Stagger.hpp"
 #include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
+#include "System/AttachmentSystem.hpp"
 #include "System/GravitySystem.hpp"
 #include "System/HitSystem.hpp"
+#include "System/HitstopSystem.hpp"
 #include "System/MotionSystem.hpp"
 #include "System/MovementSystem.hpp"
 #include "System/ProjectileSystem.hpp"
+#include "System/StaggerSystem.hpp"
 
 constexpr double KDummyPosW = 150.0;
 constexpr s3d::SizeF KDummySize = {60.0, 80.0};
@@ -31,6 +37,8 @@ constexpr double KDummyCapHeight = 80.0;
 constexpr int KDummyMaxHp = 100;
 constexpr int KPlayerMaxHp = 100;
 constexpr int KPlayerMaxStamina = 100;
+/// 暫定のひるみ時間（秒）。本格的な数値調整は #132/#134 で行う
+constexpr double KStaggerSec = 0.15;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -75,13 +83,17 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
                                              const FrameData& frameData) {
   const double dt = frameData.dt;
 
+  HitstopSystem::Update(registry, dt);
   MotionSystem::Update(registry, frameData);
   MovementSystem::Update(registry, dt);
   GravitySystem::Update(registry, dt);
+  AttachmentSystem::UpdateTransform(registry);
 
-  HitSystem::Update(registry);
+  const auto hits = HitSystem::Update(registry);
+  applyHitReactions(registry, hits);
   ProjectileSystem::Update(registry);
 
+  StaggerSystem::Update(registry, dt);
   AnimationSystem::Update(registry, dt);
 
   if (frameData.input.reloadConfig) {
@@ -93,6 +105,44 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
   }
 
   return PhaseCommand::None();
+}
+
+void PlayerTestPhase::applyHitReactions(entt::registry& registry,
+                                        const s3d::Array<HitPair>& hits) {
+  for (const auto& hit : hits) {
+    const auto& attack = registry.get<Attack>(hit.attacker);
+    if (attack.hitstopSec <= 0.0) continue;
+
+    // ヒットボックスの親（プレイヤー本体）にヒットストップを付与する
+    auto attackerOwner = hit.attacker;
+    if (const auto* hierarchy = registry.try_get<Hierarchy>(hit.attacker);
+        hierarchy != nullptr && hierarchy->parent() != entt::null) {
+      attackerOwner = hierarchy->parent();
+    }
+    registry.emplace_or_replace<Hitstop>(
+        attackerOwner, Hitstop{.remaining = attack.hitstopSec});
+    registry.emplace_or_replace<Hitstop>(
+        hit.target, Hitstop{.remaining = attack.hitstopSec});
+
+    // ひるみリアクション（最小実装：本格的な状態機械は #134 のスコープ）
+    if (auto* drawable = registry.try_get<Drawable>(hit.target);
+        drawable != nullptr) {
+      if (auto* rect = std::get_if<RectDrawable>(drawable); rect != nullptr) {
+        // 既にひるみ中なら originalSize を引き継ぎ、縮小済みサイズを
+        // originalSize として上書きしてしまうのを防ぐ
+        s3d::SizeF originalSize = rect->size;
+        if (const auto* existing = registry.try_get<Stagger>(hit.target);
+            existing != nullptr) {
+          originalSize = existing->originalSize;
+          rect->size = originalSize;
+        }
+        registry.emplace_or_replace<Stagger>(
+            hit.target, Stagger{.remaining = KStaggerSec,
+                                .duration = KStaggerSec,
+                                .originalSize = originalSize});
+      }
+    }
+  }
 }
 
 void PlayerTestPhase::reloadPlayer(entt::registry& registry) {

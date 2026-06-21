@@ -1,6 +1,10 @@
 #pragma once
+#include <Siv3D.hpp>
+
+#include <entt/entt.hpp>
 
 #include "IPhase.hpp"
+#include "System/HitSystem.hpp"
 
 /// @brief プレイヤー操作テストフェーズ
 class PlayerTestPhase : public IPhase {
@@ -24,6 +28,13 @@ class PlayerTestPhase : public IPhase {
  private:
   /// @brief プレイヤーを破棄して最新の設定で再生成する
   void reloadPlayer(entt::registry& registry);
+
+  /// @brief ヒット成立した攻撃側・被弾側へヒットストップ・ひるみを付与する
+  ///
+  /// 本格的なリアクション設計は #132/#134 のスコープであり、ここでは
+  /// 近接1段目の操作感確認に必要な最小限の暫定実装を行う。
+  void applyHitReactions(entt::registry& registry,
+                         const s3d::Array<HitPair>& hits);
 
   entt::entity m_playerRoot = entt::null;
   entt::entity m_dummyTarget = entt::null;

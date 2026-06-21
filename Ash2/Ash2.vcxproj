@@ -139,6 +139,8 @@
     <ClCompile Include="src\System\GravitySystem.cpp" />
     <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
+    <ClCompile Include="src\System\HitstopSystem.cpp" />
+    <ClCompile Include="src\System\StaggerSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -409,6 +411,10 @@
     <ClInclude Include="src\Component\Gravity.hpp" />
     <ClInclude Include="src\System\MovementSystem.hpp" />
     <ClInclude Include="src\System\GravitySystem.hpp" />
+    <ClInclude Include="src\Component\Hitstop.hpp" />
+    <ClInclude Include="src\Component\Stagger.hpp" />
+    <ClInclude Include="src\System\HitstopSystem.hpp" />
+    <ClInclude Include="src\System\StaggerSystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

@@ -13,6 +13,9 @@ PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
               .reach = m[U"reach"].get<double>(),
               .radius = m[U"radius"].get<double>(),
               .damage = m[U"damage"].get<int>(),
+              .windupSec = m[U"windup_sec"].get<double>(),
+              .activeSec = m[U"active_sec"].get<double>(),
+              .recoverySec = m[U"recovery_sec"].get<double>(),
           },
       .ranged =
           {

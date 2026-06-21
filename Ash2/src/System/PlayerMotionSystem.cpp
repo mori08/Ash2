@@ -2,6 +2,8 @@
 
 #include "System/PlayerMotionSystem.hpp"
 
+#include <algorithm>
+
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
@@ -20,6 +22,9 @@ namespace PlayerMotion {
 namespace {
 
 constexpr s3d::ColorF KBulletColor = {0.9, 0.9, 0.3};
+constexpr s3d::ColorF KMeleeOrbColor = {1.0, 0.9, 0.5};
+/// 暫定のヒットストップ時間（秒）。本格的な数値調整は #132/#134 で行う
+constexpr double KMeleeHitstopSec = 0.05;
 
 /// @brief 指定クリップの再生時間（秒）を返す
 /// @return クリップが見つからない場合は 0.0
@@ -44,33 +49,41 @@ void SetClip(SpriteAnimation& anim, const s3d::String& clip) {
   }
 }
 
-/// @brief 近距離攻撃のヒットボックスエンティティを生成する
+/// @brief 近接1段目の攻撃判定エンティティ（光の珠）を生成する
 ///
 /// Component/Attack.hpp の Attack（ダメージ用）を付与する。
-/// PlayerMotion::Melee の "attack" とは別概念。
+/// 生成時点では構え中につき珠は体の近くに静止した位置に置く。
+/// Collider は珠エンティティ自身の原点からのオフセット 0 で固定し、
+/// 珠の現在位置は Melee::Tick が更新する LocalOffset のみが担う。
 entt::entity SpawnMeleeHitbox(entt::registry& registry, entt::entity owner,
-                              const WorldPos& pos, bool facingRight,
-                              const PlayerConfig& cfg) {
-  const double sign = facingRight ? 1.0 : -1.0;
+                              const WorldPos& pos, const PlayerConfig& cfg) {
   const auto hitbox = registry.create();
   registry.emplace<WorldPos>(hitbox, pos);
   registry.emplace<LocalOffset>(hitbox, LocalOffset{});
   Hierarchy::Attach(registry, owner, hitbox);
-  registry.emplace<Collider>(
-      hitbox, Collider{.segmentStart = Vec3{0.0, cfg.melee.capMidH, 0.0},
-                       .segmentEnd =
-                           Vec3{sign * cfg.melee.reach, cfg.melee.capMidH, 0.0},
-                       .radius = cfg.melee.radius});
-  registry.emplace<Attack>(hitbox, Attack{.damage = cfg.melee.damage});
+  registry.emplace<Collider>(hitbox, Collider{.segmentStart = Vec3::Zero(),
+                                              .segmentEnd = Vec3::Zero(),
+                                              .radius = cfg.melee.radius});
+  registry.emplace<Attack>(hitbox, Attack{.damage = cfg.melee.damage,
+                                          .hitstopSec = KMeleeHitstopSec});
+  registry.emplace<Drawable>(hitbox, CircleDrawable{.radius = cfg.melee.radius,
+                                                    .color = KMeleeOrbColor});
   return hitbox;
 }
 
-/// @brief Melee へ移行する（攻撃クリップの設定と timer の算出）
-Melee MakeMelee(const AnimationData& playerData, SpriteAnimation& anim,
-                entt::entity hitboxEntity) {
-  SetClip(anim, U"attack");
-  return Melee{.timer = GetClipDuration(playerData, U"attack"),
-               .hitboxEntity = hitboxEntity};
+/// @brief 攻撃フレーム内の珠の前方オフセット（プレイヤー相対）を返す
+/// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
+s3d::Vec3 MeleeOrbOffset(double progress, bool facingRight,
+                         const MeleeConfig& cfg) {
+  const double sign = facingRight ? 1.0 : -1.0;
+  const double eased = s3d::EaseOutQuad(std::clamp(progress, 0.0, 1.0));
+  return Vec3{sign * cfg.reach * eased, cfg.capMidH, 0.0};
+}
+
+/// @brief Melee へ移行する（攻撃クリップの設定、stage は呼び出し元が設定する）
+Melee MakeMelee(SpriteAnimation& anim, entt::entity hitboxEntity) {
+  SetClip(anim, U"melee_1");
+  return Melee{.stage = 1, .elapsed = 0.0, .hitboxEntity = hitboxEntity};
 }
 
 /// @brief 遠距離攻撃の弾エンティティを生成する
@@ -132,9 +145,8 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
       // 直前で設定した横方向速度を打ち消す（持ち越すと1フレーム分滑る）
       vel.w = 0.0;
       vel.d = 0.0;
-      const auto hitbox =
-          SpawnMeleeHitbox(registry, entity, pos, anim.facingRight, cfg);
-      return MakeMelee(playerData, anim, hitbox);
+      // ヒットボックス（光の珠）は攻撃フレーム開始時に Melee::Tick が生成する
+      return MakeMelee(anim, entt::null);
     }
     if (input.rangedAttackDown) {
       vel.w = 0.0;
@@ -165,11 +177,38 @@ std::optional<Motion> Tick(Melee& state, entt::registry& registry,
                            entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
-  state.timer -= frameData.dt;
-  if (state.timer <= 0.0) {
-    if (state.hitboxEntity != entt::null) {
-      Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& melee = cfg.melee;
+  const auto& pos = registry.get<WorldPos>(entity);
+  const auto& anim = registry.get<SpriteAnimation>(entity);
+
+  const double activeStart = melee.windupSec;
+  const double activeEnd = melee.windupSec + melee.activeSec;
+  const double recoveryEnd = activeEnd + melee.recoverySec;
+
+  state.elapsed += frameData.dt;
+
+  // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
+  // 補間で移動させる
+  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
+    if (state.hitboxEntity == entt::null) {
+      state.hitboxEntity = SpawnMeleeHitbox(registry, entity, pos, cfg);
     }
+
+    const double progress = (state.elapsed - activeStart) / melee.activeSec;
+    const auto offset = MeleeOrbOffset(progress, anim.facingRight, melee);
+
+    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
+    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+  }
+
+  // 後隙以降：ヒットボックスが残っていれば破棄する
+  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
+    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+    state.hitboxEntity = entt::null;
+  }
+
+  if (state.elapsed >= recoveryEnd) {
     return Neutral{};
   }
 

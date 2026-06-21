@@ -1,11 +1,13 @@
 #include "System/GravitySystem.hpp"
 
 #include "Component/Gravity.hpp"
+#include "Component/Hitstop.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 
 void GravitySystem::Update(entt::registry& registry, double dt) {
-  auto view = registry.view<WorldPos, Velocity, Gravity>();
+  auto view =
+      registry.view<WorldPos, Velocity, Gravity>(entt::exclude<Hitstop>);
   for (auto&& [entity, pos, vel, gravity] : view.each()) {
     // 次フレーム用の重力加速
     vel.h -= gravity.accel * dt;
