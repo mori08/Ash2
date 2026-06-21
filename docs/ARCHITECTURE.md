@@ -20,11 +20,13 @@ Ash2/src/
 ├── Main.cpp             # エントリポイント・ゲームループ
 ├── GameSetup.hpp/.cpp   # registry 初期化・設定リロード
 ├── Asset.hpp            # アセット登録・パス解決ユーティリティ
+├── Debug.hpp            # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── Component/           # ECS コンポーネント（データのみ）
 ├── Config/              # TOML 設定データ（FromToml 付き構造体）
 ├── Input/               # 入力抽象化
 ├── Phase/               # フェーズ管理（ゲーム状態機械）
-└── System/              # ECS システム（ロジックのみ）
+├── System/              # ECS システム（ロジックのみ）
+└── Util/                # フレームワーク非依存の汎用ヘルパー
 ```
 
 ---
@@ -43,6 +45,7 @@ Main.cpp
 - ECS（EnTT）でデータとロジックを分離。Component はデータのみ、System はロジックのみ。
 - フェーズがゲームロジックを持ち、System は描画・座標伝播などの横断的処理を担う。
 - Config / Input はフレームワーク非依存の構造体として分離し、テスト・リロードを容易にする。
+- 依存方向は一方向（`Phase → System → Component/Config`）。`Component` は他レイヤーに依存しない（`Hierarchy` のみ、自身の整合性を保つため `entt::registry` を直接操作する例外）。
 
 ---
 
@@ -66,7 +69,7 @@ while (System::Update()) {
 - `AnimationDataRegistry` — アニメーション設定
 - `ScenarioData` — シナリオデータ
 
-Debug ビルドでは `Console.open()` で起動し、未捕捉例外をコンソールに出力して待機する。
+Debug ビルドでは `Console.open()` で起動する。環境変数 `ASH2_RUN_TESTS` が設定されている場合はゲームループに入らず Catch2 のテストランナーを実行して終了する（`tools/run-tests.sh` 経由）。未捕捉の `std::exception` は `crash.log` に追記してから再 throw する。
 
 ---
 
@@ -163,7 +166,7 @@ WorldPos { w, h, d }
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算。新たに成立したヒットの `HitPair`（attacker/target）配列を返す |
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する（暫定実装） |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion`（Neutral/Melee1/Melee2/Ranged）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了）を行う |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion`（Neutral/Melee1/Melee2/Ranged）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了）を行う。各状態の `Tick()` 実体は [`PlayerMotionSystem.cpp`](../Ash2/src/System/PlayerMotionSystem.cpp) にある |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
