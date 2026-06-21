@@ -9,10 +9,18 @@ namespace PlayerMotion {
 /// @brief 通常状態（待機・移動・ジャンプ可能）
 struct Neutral {};
 
-/// @brief 近距離攻撃中
-struct Melee {
-  /// コンボ段数（1始まり）
-  int stage = 1;
+/// @brief 近距離攻撃1段目
+struct Melee1 {
+  /// モーション開始からの経過時間（秒）
+  double elapsed = 0.0;
+  /// 攻撃判定の子エンティティ
+  entt::entity hitboxEntity = entt::null;
+  /// 後隙中の次段への遷移予約（windup/active中の入力で立つ）
+  bool comboQueued = false;
+};
+
+/// @brief 近距離攻撃2段目
+struct Melee2 {
   /// モーション開始からの経過時間（秒）
   double elapsed = 0.0;
   /// 攻撃判定の子エンティティ

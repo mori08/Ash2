@@ -119,7 +119,7 @@ WorldPos { w, h, d }
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int フィールド） |
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
-| [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee, PlayerMotion::Ranged>`）。`Ranged` は再生中クリップの残り時間。`Melee` は段数（`stage`）・モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ |
+| [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee1, PlayerMotion::Melee2, PlayerMotion::Ranged>`）。`Ranged` は再生中クリップの残り時間。`Melee1`/`Melee2` はコンボの段ごとに分けた型で、モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。`Melee1` のみ次段への遷移予約フラグ（`comboQueued`）を持つ |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
 | [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MotionSystem`/`MovementSystem`/`GravitySystem` の対象から除外される（暫定実装、本格化は #132/#134） |
 | [`Stagger`](../Ash2/src/Component/Stagger.hpp) | ひるみリアクション中であることを示すタイマー。`StaggerSystem` が `RectDrawable::size` を縮小させ、残り時間が尽きたら `originalSize` に戻す（暫定実装、本格化は #134） |
@@ -163,7 +163,7 @@ WorldPos { w, h, d }
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp` の間でカプセル重なり検出 → Hp 減算。新たに成立したヒットの `HitPair`（attacker/target）配列を返す |
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する（暫定実装） |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion`（Neutral/Melee/Ranged）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了）を行う |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion`（Neutral/Melee1/Melee2/Ranged）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了）を行う |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |

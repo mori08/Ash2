@@ -16,6 +16,8 @@ PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
               .windupSec = m[U"windup_sec"].get<double>(),
               .activeSec = m[U"active_sec"].get<double>(),
               .recoverySec = m[U"recovery_sec"].get<double>(),
+              .active2Sec = m[U"active2_sec"].get<double>(),
+              .slashRiseHeight = m[U"slash_rise_height"].get<double>(),
           },
       .ranged =
           {
