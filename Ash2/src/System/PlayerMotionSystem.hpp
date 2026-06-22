@@ -25,9 +25,18 @@ namespace PlayerMotion {
                                          entt::entity entity,
                                          const FrameData& frameData);
 
-/// @brief Melee2 状態の更新（横移動停止・タイマー減算・ヒットボックス管理）
+/// @brief Melee2 状態の更新（横移動停止・タイマー減算・ヒットボックス管理・
+/// コンボ予約判定）
 /// @return 遷移先がある場合はその Motion、なければ std::nullopt
 [[nodiscard]] std::optional<Motion> Tick(Melee2& state,
+                                         entt::registry& registry,
+                                         entt::entity entity,
+                                         const FrameData& frameData);
+
+/// @brief Melee3 状態の更新（横移動停止・タイマー減算・ヒットボックス管理、
+/// 締め技のためコンボ継続なし）
+/// @return 遷移先がある場合はその Motion、なければ std::nullopt
+[[nodiscard]] std::optional<Motion> Tick(Melee3& state,
                                          entt::registry& registry,
                                          entt::entity entity,
                                          const FrameData& frameData);

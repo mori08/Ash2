@@ -122,7 +122,7 @@ WorldPos { w, h, d }
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int フィールド） |
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
-| [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee1, PlayerMotion::Melee2, PlayerMotion::Ranged>`）。`Ranged` は再生中クリップの残り時間。`Melee1`/`Melee2` はコンボの段ごとに分けた型で、モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。`Melee1` のみ次段への遷移予約フラグ（`comboQueued`）を持つ |
+| [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee1, PlayerMotion::Melee2, PlayerMotion::Melee3, PlayerMotion::Ranged>`）。`Ranged` は再生中クリップの残り時間。`Melee1`/`Melee2`/`Melee3` はコンボの段ごとに分けた型で、モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。`Melee1`/`Melee2` は次段への遷移予約フラグ（`comboQueued`）を持つが、締め技の `Melee3` はコンボ継続を持たずタイマー満了で `Neutral` へ戻るのみ |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
 | [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MotionSystem`/`MovementSystem`/`GravitySystem`/`AnimationSystem` の対象から除外される（暫定実装、本格化は #132/#134） |
 | [`Stagger`](../Ash2/src/Component/Stagger.hpp) | ひるみリアクション中であることを示すタイマー。`StaggerSystem` が `RectDrawable::size` を縮小させ、残り時間が尽きたら `originalSize` に戻す（暫定実装、本格化は #134） |

@@ -25,6 +25,16 @@ struct Melee2 {
   double elapsed = 0.0;
   /// 攻撃判定の子エンティティ
   entt::entity hitboxEntity = entt::null;
+  /// 後隙中の次段への遷移予約（windup/active中の入力で立つ）
+  bool comboQueued = false;
+};
+
+/// @brief 近距離攻撃3段目（締め技、キャンセル不可）
+struct Melee3 {
+  /// モーション開始からの経過時間（秒）
+  double elapsed = 0.0;
+  /// 攻撃判定の子エンティティ
+  entt::entity hitboxEntity = entt::null;
 };
 
 /// @brief 遠距離攻撃中

@@ -55,25 +55,27 @@ void RestartClip(SpriteAnimation& anim, const s3d::String& clip) {
   anim.elapsed = 0.0;
 }
 
-/// @brief 近接1段目の攻撃判定エンティティ（光の珠）を生成する
+/// @brief 近接攻撃判定エンティティ（光の珠）を生成する
 ///
 /// Component/Attack.hpp の Attack（ダメージ用）を付与する。
 /// 生成時点では構え中につき珠は体の近くに静止した位置に置く。
 /// Collider は珠エンティティ自身の原点からのオフセット 0 で固定し、
 /// 珠の現在位置は UpdateMeleeHitbox が更新する LocalOffset のみが担う。
+/// @param radius 攻撃カプセルの半径（兼 CircleDrawable の表示半径）
 entt::entity SpawnMeleeHitbox(entt::registry& registry, entt::entity owner,
-                              const WorldPos& pos, const PlayerConfig& cfg) {
+                              const WorldPos& pos, const PlayerConfig& cfg,
+                              double radius) {
   const auto hitbox = registry.create();
   registry.emplace<WorldPos>(hitbox, pos);
   registry.emplace<LocalOffset>(hitbox, LocalOffset{});
   Hierarchy::Attach(registry, owner, hitbox);
   registry.emplace<Collider>(hitbox, Collider{.segmentStart = Vec3::Zero(),
                                               .segmentEnd = Vec3::Zero(),
-                                              .radius = cfg.melee.radius});
+                                              .radius = radius});
   registry.emplace<Attack>(hitbox, Attack{.damage = cfg.melee.damage,
                                           .hitstopSec = KMeleeHitstopSec});
-  registry.emplace<Drawable>(hitbox, CircleDrawable{.radius = cfg.melee.radius,
-                                                    .color = KMeleeOrbColor});
+  registry.emplace<Drawable>(
+      hitbox, CircleDrawable{.radius = radius, .color = KMeleeOrbColor});
   return hitbox;
 }
 
@@ -109,12 +111,19 @@ Melee2 MakeMelee2(SpriteAnimation& anim) {
   return Melee2{};
 }
 
+/// @brief Melee2 から Melee3 へ移行する（攻撃クリップを先頭から再生）
+Melee3 MakeMelee3(SpriteAnimation& anim) {
+  RestartClip(anim, U"melee_1");
+  return Melee3{};
+}
+
 /// @brief 攻撃判定の発生区間に応じてヒットボックスを生成・更新・破棄する
+/// @param radius 攻撃カプセルの半径（兼 CircleDrawable の表示半径）
 /// @param offsetFn 攻撃フレーム内の進行度から珠のオフセットを算出する関数
 void UpdateMeleeHitbox(entt::registry& registry, entt::entity owner,
                        double elapsed, double activeStart, double activeEnd,
                        bool facingRight, const PlayerConfig& cfg,
-                       entt::entity& hitboxEntity,
+                       entt::entity& hitboxEntity, double radius,
                        s3d::Vec3 (*offsetFn)(double, bool,
                                              const MeleeConfig&)) {
   const auto& melee = cfg.melee;
@@ -124,7 +133,7 @@ void UpdateMeleeHitbox(entt::registry& registry, entt::entity owner,
   if (elapsed >= activeStart && elapsed < activeEnd) {
     if (hitboxEntity == entt::null) {
       const auto& pos = registry.get<WorldPos>(owner);
-      hitboxEntity = SpawnMeleeHitbox(registry, owner, pos, cfg);
+      hitboxEntity = SpawnMeleeHitbox(registry, owner, pos, cfg, radius);
     }
 
     const double progress = (elapsed - activeStart) / (activeEnd - activeStart);
@@ -244,7 +253,8 @@ std::optional<Motion> Tick(Melee1& state, entt::registry& registry,
   state.elapsed += frameData.dt;
 
   UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
-                    anim.facingRight, cfg, state.hitboxEntity, MeleeOrbOffset);
+                    anim.facingRight, cfg, state.hitboxEntity, melee.radius,
+                    MeleeOrbOffset);
 
   // windup・active中の攻撃入力は次段への遷移を予約するのみ
   if (state.elapsed < activeEnd && input.attackDown) {
@@ -269,7 +279,8 @@ std::optional<Motion> Tick(Melee2& state, entt::registry& registry,
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& melee = cfg.melee;
-  const auto& anim = registry.get<SpriteAnimation>(entity);
+  const auto& input = frameData.input;
+  auto& anim = registry.get<SpriteAnimation>(entity);
 
   const double activeStart = melee.windupSec;
   const double activeEnd = melee.windupSec + melee.active2Sec;
@@ -278,9 +289,45 @@ std::optional<Motion> Tick(Melee2& state, entt::registry& registry,
   state.elapsed += frameData.dt;
 
   UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
-                    anim.facingRight, cfg, state.hitboxEntity,
+                    anim.facingRight, cfg, state.hitboxEntity, melee.radius,
                     MeleeSlashOffset);
 
+  // windup・active中の攻撃入力は次段への遷移を予約するのみ
+  if (state.elapsed < activeEnd && input.attackDown) {
+    state.comboQueued = true;
+  }
+
+  // 後隙に入った時点で予約済み、または後隙中の新規入力があれば即座に次段へ
+  if (state.elapsed >= activeEnd && (state.comboQueued || input.attackDown)) {
+    return MakeMelee3(anim);
+  }
+
+  if (state.elapsed >= recoveryEnd) {
+    return Neutral{};
+  }
+
+  return std::nullopt;
+}
+
+std::optional<Motion> Tick(Melee3& state, entt::registry& registry,
+                           entt::entity entity, const FrameData& frameData) {
+  StopHorizontalMovement(registry, entity);
+
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& melee = cfg.melee;
+  const auto& anim = registry.get<SpriteAnimation>(entity);
+
+  const double activeStart = melee.windup3Sec;
+  const double activeEnd = melee.windup3Sec + melee.active3Sec;
+  const double recoveryEnd = activeEnd + melee.recovery3Sec;
+
+  state.elapsed += frameData.dt;
+
+  UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
+                    anim.facingRight, cfg, state.hitboxEntity, melee.radius3,
+                    MeleeOrbOffset);
+
+  // 締め技のためコンボ継続なし、後隙満了で Neutral へ戻るのみ
   if (state.elapsed >= recoveryEnd) {
     return Neutral{};
   }

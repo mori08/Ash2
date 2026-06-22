@@ -21,6 +21,14 @@ struct MeleeConfig {
   double active2Sec;
   /// 2段目の斬り上げの振り幅（capMidH を中心とした上下の幅）
   double slashRiseHeight;
+  /// 3段目の構え時間（秒）
+  double windup3Sec;
+  /// 3段目の攻撃判定が有効な時間（秒）
+  double active3Sec;
+  /// 3段目の後隙時間（秒）
+  double recovery3Sec;
+  /// 3段目の攻撃カプセルの半径
+  double radius3;
 };
 
 /// @brief 遠距離攻撃の設定値
