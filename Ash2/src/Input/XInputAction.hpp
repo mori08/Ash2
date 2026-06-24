@@ -7,6 +7,11 @@
 /// @note メンバ変数を持たない。ToInputState()
 /// は毎フレームコントローラー状態を直接参照する
 struct XInputAction {
+  /// 左スティックに適用するデッドゾーン（`InputDeviceSelector`
+  /// もスティック傾き判定に同じ定数を参照する）
+  static constexpr DeadZone LeftThumbDeadZone{
+      .size = 0.24, .maxValue = 1.0, .type = DeadZoneType::Circular};
+
   /// @brief 現在のコントローラー入力状態を InputState に変換して返す
   [[nodiscard]] static InputState ToInputState();
 };
@@ -16,8 +21,6 @@ inline InputState XInputAction::ToInputState() {
 
   // `XInput(0)` は const 参照のため `setLeftThumbDeadZone()` を直接呼べず、
   // ここで明示的にデッドゾーンを適用する
-  constexpr DeadZone LeftThumbDeadZone{
-      .size = 0.24, .maxValue = 1.0, .type = DeadZoneType::Circular};
   const Vec2 stickAxis =
       LeftThumbDeadZone(Vec2{pad.leftThumbX, pad.leftThumbY});
 

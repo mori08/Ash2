@@ -24,11 +24,13 @@ inline InputState InputDeviceSelector::update() {
     m_activeDevice = Device::Keyboard;
   }
   // 最後に入力があったデバイスへ切り替える
+  const Vec2 stickAxis = XInputAction::LeftThumbDeadZone(
+      Vec2{XInput(0).leftThumbX, XInput(0).leftThumbY});
   if (XInput(0).isConnected() &&
       (XInput(0).buttonUp.down() || XInput(0).buttonDown.down() ||
        XInput(0).buttonLeft.down() || XInput(0).buttonRight.down() ||
        XInput(0).buttonA.down() || XInput(0).buttonB.down() ||
-       XInput(0).buttonY.down())) {
+       XInput(0).buttonY.down() || !stickAxis.isZero())) {
     m_activeDevice = Device::Gamepad;
   } else if (!Keyboard::GetAllInputs().isEmpty() ||
              !Mouse::GetAllInputs().isEmpty()) {
