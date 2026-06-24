@@ -99,9 +99,9 @@ WorldPos { w, h, d }
 | [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換 |
 | [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー → InputState 変換（左スティック+十字ボタンで移動、A/B/Y でジャンプ/近距離/遠距離） |
 
-`Main.cpp` が毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える。切断時はキーボードへ自動フォールバック。
+[`InputDeviceSelector`](../Ash2/src/Input/InputDeviceSelector.hpp) が毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える（ボタン入力に加え、左スティックがデッドゾーンを超えて傾いた場合もゲームパッドへの切り替え条件とする）。切断時はキーボードへ自動フォールバック。
 
-**移動入力の正規化方針：** `InputState::moveAxis`（`Vec2`、x=横方向/y=奥行き方向）は「常に長さ 1.0 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側にあり、`PlayerMotion::Tick(Neutral&, ...)` は無条件にこの値を信頼してそのまま速度計算に使う（System 側で正規化やクランプを行わない）。`XInputAction` は左スティックにデッドゾーン処理（`DeadZone`）を適用し、十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
+**移動入力の正規化方針：** `InputState::moveAxis`（`Vec2`、x=横方向/y=奥行き方向）は「常に長さ 1.0 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側にあり、`PlayerMotion::Tick(Neutral&, ...)` は無条件にこの値を信頼してそのまま速度計算に使う（System 側で正規化やクランプを行わない）。`XInputAction` は左スティックのデッドゾーン定数（`LeftThumbDeadZone`、`InputDeviceSelector` も参照する公開 `static constexpr` メンバ）を適用し、十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
 
 ---
 
