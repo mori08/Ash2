@@ -8,9 +8,11 @@
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Hierarchy.hpp"
+#include "Component/Invincible.hpp"
 #include "Component/LocalOffset.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
+#include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/AnimationData.hpp"
@@ -177,6 +179,18 @@ Ranged MakeRanged(const AnimationData& playerData, SpriteAnimation& anim) {
   return Ranged{.timer = GetClipDuration(playerData, U"ranged_attack")};
 }
 
+/// @brief Dash へ移行する（スタミナ消費、クリップの設定）
+///
+/// 専用のダッシュ用クリップは未用意のため、移動主体の動きという特性が近い
+/// "move" クリップを暫定的に流用する。
+Dash MakeDash(entt::registry& registry, entt::entity entity,
+              const PlayerConfig& cfg, SpriteAnimation& anim) {
+  auto& stamina = registry.get<Stamina>(entity);
+  stamina.current = std::max(0, stamina.current - cfg.dash.staminaCost);
+  SetClip(anim, U"move");
+  return Dash{};
+}
+
 }  // namespace
 
 std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
@@ -217,6 +231,10 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
       vel.d = 0.0;
       SpawnProjectile(registry, pos, anim.facingRight, cfg);
       return MakeRanged(playerData, anim);
+    }
+    if (input.dashDown &&
+        registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
+      return MakeDash(registry, entity, cfg, anim);
     }
   }
 
@@ -266,6 +284,12 @@ std::optional<Motion> Tick(Melee1& state, entt::registry& registry,
     return MakeMelee2(anim);
   }
 
+  // 後隙中のダッシュ入力でダッシュへキャンセル（ST不足時は無視）
+  if (state.elapsed >= activeEnd && input.dashDown &&
+      registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
+    return MakeDash(registry, entity, cfg, anim);
+  }
+
   if (state.elapsed >= recoveryEnd) {
     return Neutral{};
   }
@@ -300,6 +324,12 @@ std::optional<Motion> Tick(Melee2& state, entt::registry& registry,
   // 後隙に入った時点で予約済み、または後隙中の新規入力があれば即座に次段へ
   if (state.elapsed >= activeEnd && (state.comboQueued || input.attackDown)) {
     return MakeMelee3(anim);
+  }
+
+  // 後隙中のダッシュ入力でダッシュへキャンセル（ST不足時は無視）
+  if (state.elapsed >= activeEnd && input.dashDown &&
+      registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
+    return MakeDash(registry, entity, cfg, anim);
   }
 
   if (state.elapsed >= recoveryEnd) {
@@ -341,6 +371,56 @@ std::optional<Motion> Tick(Ranged& state, entt::registry& registry,
 
   state.timer -= frameData.dt;
   if (state.timer <= 0.0) {
+    return Neutral{};
+  }
+
+  return std::nullopt;
+}
+
+std::optional<Motion> Tick(Dash& state, entt::registry& registry,
+                           entt::entity entity, const FrameData& frameData) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& dash = cfg.dash;
+  const auto& input = frameData.input;
+  auto& vel = registry.get<Velocity>(entity);
+  auto& anim = registry.get<SpriteAnimation>(entity);
+
+  const double dashStart = dash.windupSec;
+  const double dashEnd = dash.windupSec + dash.dashSec;
+  const double recoveryAEnd = dashEnd + dash.recoveryASec;
+  const double recoveryBEnd = recoveryAEnd + dash.recoveryBSec;
+
+  state.elapsed += frameData.dt;
+
+  // 構え・ダッシュ中（後隙入り前）は無敵、後隙入りで除去する
+  if (state.elapsed < dashEnd) {
+    registry.emplace_or_replace<Invincible>(entity);
+  } else {
+    registry.remove<Invincible>(entity);
+  }
+
+  // ダッシュ移動中：フリー方向、無方向なら facingRight から前方
+  if (state.elapsed >= dashStart && state.elapsed < dashEnd) {
+    if (!input.moveAxis.isZero()) {
+      const Vec2 dir = input.moveAxis.normalized();
+      vel.w = dir.x * dash.speed;
+      vel.d = dir.y * dash.speed;
+    } else {
+      vel.w = (anim.facingRight ? 1.0 : -1.0) * dash.speed;
+      vel.d = 0.0;
+    }
+  } else {
+    vel.w = 0.0;
+    vel.d = 0.0;
+  }
+
+  // 後隙B中のダッシュ入力はダッシュ攻撃への遷移を予約するのみ
+  // （遷移先の実装は #164）
+  if (state.elapsed >= recoveryAEnd && input.dashDown) {
+    state.dashAttackQueued = true;
+  }
+
+  if (state.elapsed >= recoveryBEnd) {
     return Neutral{};
   }
 

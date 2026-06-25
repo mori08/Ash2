@@ -415,6 +415,7 @@
     <ClInclude Include="src\Component\Stagger.hpp" />
     <ClInclude Include="src\System\HitstopSystem.hpp" />
     <ClInclude Include="src\System\StaggerSystem.hpp" />
+    <ClInclude Include="src\Component\Invincible.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

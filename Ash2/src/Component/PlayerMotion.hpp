@@ -43,4 +43,12 @@ struct Ranged {
   double timer = 0.0;
 };
 
+/// @brief ダッシュ中（構え・ダッシュ・後隙A・後隙Bの4区間を持つ）
+struct Dash {
+  /// モーション開始からの経過時間（秒）
+  double elapsed = 0.0;
+  /// 後隙B中のダッシュ攻撃への遷移予約（#164 で遷移先を実装するまでは保持のみ）
+  bool dashAttackQueued = false;
+};
+
 }  // namespace PlayerMotion

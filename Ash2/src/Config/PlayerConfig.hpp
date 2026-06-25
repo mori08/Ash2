@@ -31,6 +31,22 @@ struct MeleeConfig {
   double radius3;
 };
 
+/// @brief ダッシュの設定値
+struct DashConfig {
+  /// ダッシュ移動速度（ピクセル/秒）
+  double speed;
+  /// 構え時間（秒）
+  double windupSec;
+  /// ダッシュ時間（秒）
+  double dashSec;
+  /// 後隙A（キャンセル不可）の時間（秒）
+  double recoveryASec;
+  /// 後隙B（キャンセル可）の時間（秒）
+  double recoveryBSec;
+  /// 1回の発生に必要なスタミナ消費量
+  int staminaCost;
+};
+
 /// @brief 遠距離攻撃の設定値
 struct RangedConfig {
   /// 攻撃リーチ（w 軸方向の距離）
@@ -55,6 +71,7 @@ struct PlayerConfig {
   double gravity;
   MeleeConfig melee;
   RangedConfig ranged;
+  DashConfig dash;
 
   /// @brief TOML からプレイヤー設定を生成する
   [[nodiscard]] static PlayerConfig FromToml(const s3d::TOMLValue& toml);

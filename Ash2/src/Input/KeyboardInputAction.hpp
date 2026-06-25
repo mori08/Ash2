@@ -13,6 +13,7 @@ struct KeyboardInputAction {
   InputGroup reloadConfig;
   InputGroup attack;
   InputGroup rangedAttack;
+  InputGroup dash;
 
   /// @brief デフォルトのキー割り当てを返す
   [[nodiscard]] static KeyboardInputAction Default();
@@ -31,6 +32,7 @@ inline KeyboardInputAction KeyboardInputAction::Default() {
       .reloadConfig = KeyF5,
       .attack = MouseL,
       .rangedAttack = MouseR,
+      .dash = KeyShift,
   };
 }
 
@@ -48,5 +50,6 @@ inline InputState KeyboardInputAction::toInputState() const {
       .reloadConfig = reloadConfig.down(),
       .attackDown = attack.down(),
       .rangedAttackDown = rangedAttack.down(),
+      .dashDown = dash.down(),
   };
 }

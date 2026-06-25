@@ -7,6 +7,7 @@
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Hp.hpp"
+#include "Component/Invincible.hpp"
 #include "Component/WorldPos.hpp"
 
 /// @brief 攻撃側・被弾側のエンティティの組
@@ -81,7 +82,8 @@ inline s3d::Array<HitPair> HitSystem::Update(entt::registry& registry) {
   s3d::Array<HitPair> hits;
 
   auto attackers = registry.view<WorldPos, Collider, Attack>();
-  auto targets = registry.view<WorldPos, Collider, Hp>();
+  auto targets =
+      registry.view<WorldPos, Collider, Hp>(entt::exclude<Invincible>);
 
   for (auto&& [attacker, aPos, aCol, atk] : attackers.each()) {
     // root が設定されている場合はルートの Attack を参照してヒット管理する

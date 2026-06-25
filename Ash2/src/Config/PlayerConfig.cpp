@@ -3,6 +3,7 @@
 PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
   const auto& m = toml[U"melee"];
   const auto& r = toml[U"ranged"];
+  const auto& d = toml[U"dash"];
   return {
       .speed = toml[U"speed"].get<double>(),
       .jumpSpeed = toml[U"jump_speed"].get<double>(),
@@ -30,6 +31,15 @@ PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
               .damage = r[U"damage"].get<int>(),
               .bulletSpeed = r[U"bullet_speed"].get<double>(),
               .spawnHeight = r[U"spawn_height"].get<double>(),
+          },
+      .dash =
+          {
+              .speed = d[U"speed"].get<double>(),
+              .windupSec = d[U"windup_sec"].get<double>(),
+              .dashSec = d[U"dash_sec"].get<double>(),
+              .recoveryASec = d[U"recovery_a_sec"].get<double>(),
+              .recoveryBSec = d[U"recovery_b_sec"].get<double>(),
+              .staminaCost = d[U"stamina_cost"].get<int>(),
           },
   };
 }

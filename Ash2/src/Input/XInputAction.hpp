@@ -39,6 +39,7 @@ inline InputState XInputAction::ToInputState() {
       .jumpDown = pad.buttonA.down(),
       .reloadConfig = false,
       .attackDown = pad.buttonB.down(),
-      .rangedAttackDown = pad.buttonY.down(),
+      .rangedAttackDown = pad.buttonX.down(),
+      .dashDown = pad.buttonY.down(),
   };
 }
