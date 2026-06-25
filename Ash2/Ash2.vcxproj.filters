@@ -1085,6 +1085,9 @@
     <ClInclude Include="Component\Stagger.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Invincible.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="System\HitstopSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>

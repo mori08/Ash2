@@ -4,12 +4,14 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/Invincible.hpp"
 #include "Component/LocalOffset.hpp"
 #include "Component/Motion.hpp"
 #include "Component/Player.hpp"
 #include "Component/PlayerMotion.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
+#include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/AnimationData.hpp"
@@ -45,6 +47,12 @@ void SetupContext(entt::registry& registry) {
                  .damage = 5,
                  .bulletSpeed = 300.0,
                  .spawnHeight = 40.0},
+      .dash = {.speed = 500.0,
+               .windupSec = 0.0,
+               .dashSec = 0.15,
+               .recoveryASec = 0.15,
+               .recoveryBSec = 0.15,
+               .staminaCost = 20},
   });
 
   AnimationDataRegistry animReg;
@@ -73,6 +81,7 @@ entt::entity MakePlayer(entt::registry& registry) {
   registry.emplace<SpriteAnimation>(
       player, SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"});
   registry.emplace<Motion>(player, PlayerMotion::Neutral{});
+  registry.emplace<Stamina>(player, Stamina{.max = 100, .current = 100});
   return player;
 }
 
@@ -704,6 +713,219 @@ TEST_CASE("PlayerMotionSystem - Melee3 stops horizontal movement") {
   const auto& vel = registry.get<Velocity>(player);
   REQUIRE(vel.w == Approx(0.0));
   REQUIRE(vel.d == Approx(0.0));
+}
+
+TEST_CASE("PlayerMotionSystem - dash input transitions Neutral to Dash") {
+  // ダッシュ入力で Neutral から Dash へ遷移し、ST が1回分消費される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  FrameData frameData{};
+  frameData.input.dashDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(std::get<PlayerMotion::Dash>(motion).elapsed == Approx(0.0));
+
+  // dash.staminaCost(20) 分が消費される
+  REQUIRE(registry.get<Stamina>(player).current == 80);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - dash input is ignored when stamina is "
+    "insufficient") {
+  // ST不足の場合はダッシュ入力を無視し Neutral のまま、ST も減らない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Stamina>(player).current = 10;
+
+  FrameData frameData{};
+  frameData.input.dashDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+  REQUIRE(registry.get<Stamina>(player).current == 10);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash grants Invincible during windup and dash") {
+  // 構え・ダッシュ中（elapsed < dashEnd）は Invincible が付与される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  // dash.windupSec(0.0) + dash.dashSec(0.15) = 0.15 未満
+  registry.replace<Motion>(player, PlayerMotion::Dash{.elapsed = 0.0});
+
+  const FrameData frameData{.dt = 0.1};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(registry.all_of<Invincible>(player));
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(registry.get<Motion>(player)));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash removes Invincible when entering recovery") {
+  // dashEnd(0.15) を超えた時点で Invincible が除去される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.emplace<Invincible>(player);
+  registry.replace<Motion>(player, PlayerMotion::Dash{.elapsed = 0.14});
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE_FALSE(registry.all_of<Invincible>(player));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash moves in facing direction when no move "
+    "input") {
+  // ダッシュ中に移動入力がない場合は facingRight 方向へ移動する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<SpriteAnimation>(player).facingRight = true;
+
+  registry.replace<Motion>(player, PlayerMotion::Dash{.elapsed = 0.0});
+
+  const FrameData frameData{.dt = 0.05};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  // dash.speed(500.0)
+  REQUIRE(vel.w == Approx(500.0));
+  REQUIRE(vel.d == Approx(0.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash moves in free direction when input given") {
+  // ダッシュ中にフリー方向の移動入力があればその方向へ移動する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<Motion>(player, PlayerMotion::Dash{.elapsed = 0.0});
+
+  FrameData frameData{.dt = 0.05};
+  frameData.input.moveAxis = Vec2{0.0, 1.0};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(0.0));
+  REQUIRE(vel.d == Approx(500.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash queues dash attack on dash input during "
+    "recovery B") {
+  // 後隙B中（recoveryAEnd 以降）のダッシュ入力で dashAttackQueued が立つ
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  // dashEnd(0.15) + recoveryASec(0.15) = 0.30 が recoveryAEnd
+  registry.replace<Motion>(player, PlayerMotion::Dash{.elapsed = 0.29});
+
+  FrameData frameData{.dt = 0.02};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(std::get<PlayerMotion::Dash>(motion).dashAttackQueued);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash transitions to Neutral at recovery B end "
+    "even when dashAttackQueued") {
+  // recoveryBEnd を超えたら dashAttackQueued の有無に関わらず Neutral へ戻る
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  // recoveryBEnd は windupSec+dashSec+recoveryASec+recoveryBSec = 0.45
+  registry.replace<Motion>(
+      player, PlayerMotion::Dash{.elapsed = 0.44, .dashAttackQueued = true});
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+}
+
+TEST_CASE("PlayerMotionSystem - Melee1 recovery dash input cancels into Dash") {
+  // Melee1 の後隙中にダッシュ入力があるとダッシュへキャンセルする
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  // activeEnd(0.15) を既に過ぎている状態
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::Melee1{.elapsed = 0.16, .hitboxEntity = entt::null});
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(registry.get<Stamina>(player).current == 80);
+}
+
+TEST_CASE("PlayerMotionSystem - Melee2 recovery dash input cancels into Dash") {
+  // Melee2 の後隙中にダッシュ入力があるとダッシュへキャンセルする
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  // activeEnd(0.20) を既に過ぎている状態
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::Melee2{.elapsed = 0.21, .hitboxEntity = entt::null});
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(registry.get<Stamina>(player).current == 80);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Melee1 recovery dash input is ignored without "
+    "leftover hitbox") {
+  // Melee1 後隙からダッシュへキャンセルする際、ヒットボックスは既に破棄済み
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  const auto hitbox = registry.create();
+  registry.emplace<LocalOffset>(hitbox);
+  registry.emplace<Collider>(hitbox);
+  // activeEnd(0.15) を跨ぐ dt でヒットボックスが破棄される
+  registry.replace<Motion>(
+      player, PlayerMotion::Melee1{.elapsed = 0.14, .hitboxEntity = hitbox});
+
+  FrameData frameData{.dt = 0.02};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE_FALSE(registry.valid(hitbox));
 }
 
 #endif

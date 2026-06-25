@@ -12,4 +12,5 @@ struct InputState {
   bool reloadConfig = false;
   bool attackDown = false;
   bool rangedAttackDown = false;
+  bool dashDown = false;
 };
