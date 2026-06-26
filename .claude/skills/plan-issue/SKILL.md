@@ -55,7 +55,9 @@ Issue #<number> の実装計画を立ててください。
 
 Plan エージェントのレポートをもとに、親が `tmp/plan-<number>.md` を作成する。
 
-作成後、クリッカブルなリンクでユーザーに提示する。
+作成後、Bash で `code tmp/plan-<number>.md` を実行してファイルを IDE で開く。
+
+その後、クリッカブルなリンクでユーザーに提示する。
 
 ```
 計画を記録しました → [plan-<number>.md](tmp/plan-<number>.md)
