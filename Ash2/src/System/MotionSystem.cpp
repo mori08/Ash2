@@ -25,6 +25,8 @@ s3d::String MotionName(const Motion& m) {
           return U"Ranged";
         else if constexpr (std::is_same_v<T, PlayerMotion::Dash>)
           return U"Dash";
+        else if constexpr (std::is_same_v<T, PlayerMotion::DashAttack>)
+          return U"DashAttack";
       },
       m);
 }

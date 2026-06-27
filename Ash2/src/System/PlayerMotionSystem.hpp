@@ -49,9 +49,17 @@ namespace PlayerMotion {
                                          const FrameData& frameData);
 
 /// @brief Dash 状態の更新（移動・タイマー減算・無敵の付与/除去・
-/// 後隙Bでのダッシュ攻撃キャンセル予約）
+/// 後隙Aからのダッシュ攻撃キャンセル予約・後隙B開始時の遷移）
 /// @return 遷移先がある場合はその Motion、なければ std::nullopt
 [[nodiscard]] std::optional<Motion> Tick(Dash& state, entt::registry& registry,
+                                         entt::entity entity,
+                                         const FrameData& frameData);
+
+/// @brief DashAttack 状態の更新（突進・軌道上のヒットボックス管理・後隙満了で
+/// Neutral へ戻る）
+/// @return 遷移先がある場合はその Motion、なければ std::nullopt
+[[nodiscard]] std::optional<Motion> Tick(DashAttack& state,
+                                         entt::registry& registry,
                                          entt::entity entity,
                                          const FrameData& frameData);
 
