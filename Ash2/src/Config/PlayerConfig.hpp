@@ -63,6 +63,24 @@ struct RangedConfig {
   int staminaCost;
 };
 
+/// @brief ダッシュ攻撃の設定値
+struct DashAttackConfig {
+  /// 構え時間（秒）
+  double windupSec;
+  /// 攻撃判定が有効な時間（秒）
+  double activeSec;
+  /// 後隙時間（秒）
+  double recoverySec;
+  /// 突進速度（ピクセル/秒）
+  double speed;
+  /// ヒットボックスの軌道半径（w-d 平面上の円）
+  double orbitRadius;
+  /// 攻撃カプセルの半径
+  double radius;
+  /// 与えるダメージ量
+  int damage;
+};
+
 /// @brief スタミナ回復の設定値
 struct StaminaConfig {
   /// 行動後に回復が始まるまでの待機秒数
@@ -82,6 +100,7 @@ struct PlayerConfig {
   MeleeConfig melee;
   RangedConfig ranged;
   DashConfig dash;
+  DashAttackConfig dashAttack;
   StaminaConfig stamina;
 
   /// @brief TOML からプレイヤー設定を生成する

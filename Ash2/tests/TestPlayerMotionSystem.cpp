@@ -826,9 +826,9 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Dash queues dash attack on dash input during "
+    "PlayerMotionSystem - Dash queues dash attack on attack input during "
     "recovery B") {
-  // 後隙B中（recoveryAEnd 以降）のダッシュ入力で dashAttackQueued が立つ
+  // 後隙B中（recoveryAEnd 以降）の近接攻撃入力で dashAttackQueued が立つ
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -837,12 +837,53 @@ TEST_CASE(
   registry.replace<Motion>(player, PlayerMotion::Dash{.elapsed = 0.29});
 
   FrameData frameData{.dt = 0.02};
-  frameData.input.dashDown = true;
+  frameData.input.attackDown = true;
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
   REQUIRE(std::get<PlayerMotion::Dash>(motion).dashAttackQueued);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash cancels into Dash on dash input during "
+    "recovery B") {
+  // 後隙B中（recoveryAEnd 以降）のダッシュ入力で Dash へキャンセルする
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<Motion>(player, PlayerMotion::Dash{.elapsed = 0.29});
+
+  FrameData frameData{.dt = 0.02};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(std::get<PlayerMotion::Dash>(motion).elapsed ==
+          Approx(0.0).margin(0.001));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash re-dashes when dashQueued upon entering "
+    "recovery B") {
+  // ダッシュ中に予約された再ダッシュが後隙B入りで発動する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  // dashQueued = true（ダッシュ中の入力で予約済み）、後隙Aの末端
+  registry.replace<Motion>(
+      player, PlayerMotion::Dash{.elapsed = 0.29, .dashQueued = true});
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(std::get<PlayerMotion::Dash>(motion).elapsed ==
+          Approx(0.0).margin(0.001));
 }
 
 TEST_CASE(

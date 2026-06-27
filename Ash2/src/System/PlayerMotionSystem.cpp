@@ -196,6 +196,26 @@ Dash MakeDash(entt::registry& registry, entt::entity entity,
   return Dash{};
 }
 
+/// @brief
+/// 攻撃フレーム内の進行度からダッシュ攻撃の珠オフセット（水平軌道）を返す
+///
+/// Vec3 の x が w 軸（横）、z が d 軸（奥行き）、y が高さ固定（capMidH）。
+/// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
+s3d::Vec3 DashAttackOrbOffset(double progress, const PlayerConfig& cfg) {
+  const double angle = s3d::Math::TwoPi * progress;
+  const double r = cfg.dashAttack.orbitRadius;
+  return Vec3{r * std::cos(angle), cfg.melee.capMidH, r * std::sin(angle)};
+}
+
+/// @brief DashAttack へ移行する
+/// @param dashDir ダッシュ時の移動方向（正規化済み）
+DashAttack MakeDashAttack(SpriteAnimation& anim, s3d::Vec2 dashDir) {
+  // 専用クリップ未用意のため "melee_1" を暫定流用する
+  SetClip(anim, U"melee_1");
+  return DashAttack{
+      .elapsed = 0.0, .hitboxEntity = entt::null, .dashDir = dashDir};
+}
+
 }  // namespace
 
 std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
@@ -406,27 +426,107 @@ std::optional<Motion> Tick(Dash& state, entt::registry& registry,
   }
 
   // ダッシュ移動中：フリー方向、無方向なら facingRight から前方
+  // 移動中に方向ベクトルを lastDashDir へ記録する（後隙では vel
+  // がゼロになるため 後隙より前に必ず記録を終える）
   if (state.elapsed >= dashStart && state.elapsed < dashEnd) {
     if (!input.moveAxis.isZero()) {
       const Vec2 dir = input.moveAxis.normalized();
       vel.w = dir.x * dash.speed;
       vel.d = dir.y * dash.speed;
+      state.lastDashDir = dir;
     } else {
-      vel.w = (anim.facingRight ? 1.0 : -1.0) * dash.speed;
+      const double sign = anim.facingRight ? 1.0 : -1.0;
+      vel.w = sign * dash.speed;
       vel.d = 0.0;
+      state.lastDashDir = Vec2{sign, 0.0};
     }
   } else {
     vel.w = 0.0;
     vel.d = 0.0;
   }
 
-  // 後隙B中のダッシュ入力はダッシュ攻撃への遷移を予約するのみ
-  // （遷移先の実装は #164）
-  if (state.elapsed >= recoveryAEnd && input.dashDown) {
-    state.dashAttackQueued = true;
+  // 後隙B終了時：常に Neutral へ戻る（DashAttack 遷移より先に評価する）
+  if (state.elapsed >= recoveryBEnd) {
+    return Neutral{};
   }
 
-  if (state.elapsed >= recoveryBEnd) {
+  // 後隙B中：前フレームまでに予約済みならダッシュ攻撃へ遷移
+  // 入力受付より先に評価することで、今フレームの入力は次フレーム以降に発動する
+  if (state.elapsed >= recoveryAEnd && state.dashAttackQueued) {
+    return MakeDashAttack(anim, state.lastDashDir);
+  }
+
+  // ダッシュ中・後隙A・B中の入力で遷移を予約する（DashAttack チェック後に評価）
+  if (state.elapsed >= dashStart && input.attackDown) {
+    state.dashAttackQueued = true;
+  }
+  if (state.elapsed >= dashStart && input.dashDown) {
+    state.dashQueued = true;
+  }
+
+  // 後隙B中：再ダッシュ予約済みならダッシュへキャンセル（スタミナ不足時は無視）
+  if (state.elapsed >= recoveryAEnd && state.dashQueued &&
+      registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
+    return MakeDash(registry, entity, cfg, anim);
+  }
+
+  return std::nullopt;
+}
+
+std::optional<Motion> Tick(DashAttack& state, entt::registry& registry,
+                           entt::entity entity, const FrameData& frameData) {
+  StopHorizontalMovement(registry, entity);
+
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& da = cfg.dashAttack;
+  auto& vel = registry.get<Velocity>(entity);
+  auto& anim = registry.get<SpriteAnimation>(entity);
+
+  const double activeStart = da.windupSec;
+  const double activeEnd = da.windupSec + da.activeSec;
+  const double recoveryEnd = activeEnd + da.recoverySec;
+
+  state.elapsed += frameData.dt;
+
+  // 攻撃判定区間：ヒットボックスの生成・軌道更新・後隙以降の破棄
+  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
+    if (state.hitboxEntity == entt::null) {
+      const auto& pos = registry.get<WorldPos>(entity);
+      state.hitboxEntity =
+          SpawnMeleeHitbox(registry, entity, pos, cfg, da.radius);
+      // Attack コンポーネントのダメージをダッシュ攻撃用に上書きする
+      registry.get<Attack>(state.hitboxEntity).damage = da.damage;
+    }
+
+    const double progress =
+        (state.elapsed - activeStart) / (activeEnd - activeStart);
+    const auto offset = DashAttackOrbOffset(progress, cfg);
+
+    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
+    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+  }
+
+  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
+    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+    state.hitboxEntity = entt::null;
+  }
+
+  // 突進フェーズ（構え）：ダッシュ方向へ移動
+  if (state.elapsed < activeStart) {
+    vel.w = state.dashDir.x * da.speed;
+    vel.d = state.dashDir.y * da.speed;
+  } else {
+    vel.w = 0.0;
+    vel.d = 0.0;
+  }
+
+  if (state.dashDir.x > 0.0) {
+    anim.facingRight = true;
+  } else if (state.dashDir.x < 0.0) {
+    anim.facingRight = false;
+  }
+
+  if (state.elapsed >= recoveryEnd) {
     return Neutral{};
   }
 
