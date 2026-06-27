@@ -23,6 +23,7 @@ radius       = 15.0
 damage       = 15
 bullet_speed = 300.0
 spawn_height = 0.0
+stamina_cost = 30
 
 [dash]
 speed           = 600.0
@@ -31,3 +32,7 @@ dash_sec        = 0.15
 recovery_a_sec  = 0.15
 recovery_b_sec  = 0.15
 stamina_cost    = 20
+
+[stamina]
+recovery_delay = 2.0
+recovery_rate  = 0.5

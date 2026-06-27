@@ -59,6 +59,16 @@ struct RangedConfig {
   double bulletSpeed;
   /// 弾の発射高さ（プレイヤーの WorldPos.h からのオフセット）
   double spawnHeight;
+  /// 1回の発生に必要なスタミナ消費量
+  int staminaCost;
+};
+
+/// @brief スタミナ回復の設定値
+struct StaminaConfig {
+  /// 行動後に回復が始まるまでの待機秒数
+  double recoveryDelay;
+  /// 毎秒、スタミナ不足分の何割を回復するか（0.5 = 不足分の半分/秒）
+  double recoveryRate;
 };
 
 /// @brief プレイヤーの設定値
@@ -72,6 +82,7 @@ struct PlayerConfig {
   MeleeConfig melee;
   RangedConfig ranged;
   DashConfig dash;
+  StaminaConfig stamina;
 
   /// @brief TOML からプレイヤー設定を生成する
   [[nodiscard]] static PlayerConfig FromToml(const s3d::TOMLValue& toml);

@@ -141,6 +141,7 @@
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\System\HitstopSystem.cpp" />
     <ClCompile Include="src\System\StaggerSystem.cpp" />
+    <ClCompile Include="src\System\StaminaSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -415,6 +416,7 @@
     <ClInclude Include="src\Component\Stagger.hpp" />
     <ClInclude Include="src\System\HitstopSystem.hpp" />
     <ClInclude Include="src\System\StaggerSystem.hpp" />
+    <ClInclude Include="src\System\StaminaSystem.hpp" />
     <ClInclude Include="src\Component\Invincible.hpp" />
   </ItemGroup>
   <ItemGroup>

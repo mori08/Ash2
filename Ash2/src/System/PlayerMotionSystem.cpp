@@ -173,8 +173,13 @@ void SpawnProjectile(entt::registry& registry, const WorldPos& pos,
   registry.emplace<Projectile>(bullet);
 }
 
-/// @brief Ranged へ移行する（遠距離攻撃クリップの設定と timer の算出）
-Ranged MakeRanged(const AnimationData& playerData, SpriteAnimation& anim) {
+/// @brief Ranged へ移行する（スタミナ消費、遠距離攻撃クリップの設定と timer
+/// の算出）
+Ranged MakeRanged(entt::registry& registry, entt::entity entity,
+                  const PlayerConfig& cfg, const AnimationData& playerData,
+                  SpriteAnimation& anim) {
+  auto& stamina = registry.get<Stamina>(entity);
+  stamina.current = std::max(0, stamina.current - cfg.ranged.staminaCost);
   SetClip(anim, U"ranged_attack");
   return Ranged{.timer = GetClipDuration(playerData, U"ranged_attack")};
 }
@@ -226,11 +231,12 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
       // ヒットボックス（光の珠）は攻撃フレーム開始時に Melee1::Tick が生成する
       return MakeMelee(anim, entt::null);
     }
-    if (input.rangedAttackDown) {
+    if (input.rangedAttackDown &&
+        registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost) {
       vel.w = 0.0;
       vel.d = 0.0;
       SpawnProjectile(registry, pos, anim.facingRight, cfg);
-      return MakeRanged(playerData, anim);
+      return MakeRanged(registry, entity, cfg, playerData, anim);
     }
     if (input.dashDown &&
         registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {

@@ -28,6 +28,7 @@
 #include "System/MovementSystem.hpp"
 #include "System/ProjectileSystem.hpp"
 #include "System/StaggerSystem.hpp"
+#include "System/StaminaSystem.hpp"
 
 constexpr double KDummyPosW = 150.0;
 constexpr s3d::SizeF KDummySize = {60.0, 80.0};
@@ -85,6 +86,7 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
 
   HitstopSystem::Update(registry, dt);
   MotionSystem::Update(registry, frameData);
+  StaminaSystem::Update(registry, dt);
   MovementSystem::Update(registry, dt);
   GravitySystem::Update(registry, dt);
   AttachmentSystem::UpdateTransform(registry);

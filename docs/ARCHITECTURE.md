@@ -120,7 +120,7 @@ WorldPos { w, h, d }
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
 | [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。`root` で複数コライダー構成のルートを指定し、`hitTargets` で攻撃生存期間中の重複ヒットを防ぐ。`hitstopSec` はヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間 |
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
-| [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int フィールド） |
+| [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int フィールド、StaminaSystem が管理する回復端数累積 accum と回復ディレイ計測用 recoveryTimer を持つ） |
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
 | [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, PlayerMotion::Melee1, PlayerMotion::Melee2, PlayerMotion::Melee3, PlayerMotion::Ranged, PlayerMotion::Dash>`）。`Ranged` は再生中クリップの残り時間。`Melee1`/`Melee2`/`Melee3` はコンボの段ごとに分けた型で、モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。`Melee1`/`Melee2` は次段への遷移予約フラグ（`comboQueued`）を持つが、締め技の `Melee3` はコンボ継続を持たずタイマー満了で `Neutral` へ戻るのみ。`Dash` は構え・ダッシュ・後隙A・後隙Bの4区間を `elapsed` 1本で管理し、後隙Bでのダッシュ攻撃キャンセル予約フラグ（`dashAttackQueued`）を持つが、遷移先の実装は #164 で行う |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
@@ -172,6 +172,7 @@ WorldPos { w, h, d }
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
 | [`StaggerSystem::Update`](../Ash2/src/System/StaggerSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `Stagger` を持つエンティティの残り時間を減算し `RectDrawable::size` を縮小、0 以下で `originalSize` に戻して除去する（暫定実装） |
+| [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + Motion` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に `(max - current) / 2 * dt` で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画 |
 
 ---
