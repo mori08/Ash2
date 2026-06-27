@@ -213,6 +213,9 @@
     <ClCompile Include="System\StaggerSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\StaminaSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="GameSetup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1092,6 +1095,9 @@
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\StaggerSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\StaminaSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
