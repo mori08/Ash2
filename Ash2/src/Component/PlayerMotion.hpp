@@ -65,4 +65,10 @@ struct DashAttack {
   s3d::Vec2 dashDir = {1.0, 0.0};
 };
 
+/// @brief 着地硬直中（空中アクションの接地検出から遷移する）
+struct Landing {
+  /// 残り硬直時間（秒）
+  double timer = 0.0;
+};
+
 }  // namespace PlayerMotion

@@ -45,3 +45,6 @@ damage       = 25
 [stamina]
 recovery_delay = 2.0
 recovery_rate  = 0.5
+
+[landing]
+recovery_sec = 0.20

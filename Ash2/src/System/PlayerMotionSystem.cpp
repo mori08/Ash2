@@ -533,4 +533,20 @@ std::optional<Motion> Tick(DashAttack& state, entt::registry& registry,
   return std::nullopt;
 }
 
+std::optional<Motion> Tick(Landing& state, entt::registry& registry,
+                           entt::entity entity, const FrameData& frameData) {
+  StopHorizontalMovement(registry, entity);
+
+  // 専用クリップ未用意のため "idle" を暫定流用
+  auto& anim = registry.get<SpriteAnimation>(entity);
+  SetClip(anim, U"idle");
+
+  state.timer -= frameData.dt;
+  if (state.timer <= 0.0) {
+    return Neutral{};
+  }
+
+  return std::nullopt;
+}
+
 }  // namespace PlayerMotion
