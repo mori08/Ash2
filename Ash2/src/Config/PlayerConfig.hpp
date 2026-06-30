@@ -89,6 +89,12 @@ struct StaminaConfig {
   double recoveryRate;
 };
 
+/// @brief 着地硬直の設定値
+struct LandingConfig {
+  /// 着地硬直時間（秒）
+  double recoverySec;
+};
+
 /// @brief プレイヤーの設定値
 struct PlayerConfig {
   /// 横移動速度（ピクセル/秒）
@@ -102,6 +108,7 @@ struct PlayerConfig {
   DashConfig dash;
   DashAttackConfig dashAttack;
   StaminaConfig stamina;
+  LandingConfig landing;
 
   /// @brief TOML からプレイヤー設定を生成する
   [[nodiscard]] static PlayerConfig FromToml(const s3d::TOMLValue& toml);

@@ -6,6 +6,7 @@ PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
   const auto& d = toml[U"dash"];
   const auto& da = toml[U"dash_attack"];
   const auto& s = toml[U"stamina"];
+  const auto& l = toml[U"landing"];
   return {
       .speed = toml[U"speed"].get<double>(),
       .jumpSpeed = toml[U"jump_speed"].get<double>(),
@@ -58,6 +59,10 @@ PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
           {
               .recoveryDelay = s[U"recovery_delay"].get<double>(),
               .recoveryRate = s[U"recovery_rate"].get<double>(),
+          },
+      .landing =
+          {
+              .recoverySec = l[U"recovery_sec"].get<double>(),
           },
   };
 }

@@ -7,4 +7,4 @@
 using Motion = std::variant<PlayerMotion::Neutral, PlayerMotion::Melee1,
                             PlayerMotion::Melee2, PlayerMotion::Melee3,
                             PlayerMotion::Ranged, PlayerMotion::Dash,
-                            PlayerMotion::DashAttack>;
+                            PlayerMotion::DashAttack, PlayerMotion::Landing>;

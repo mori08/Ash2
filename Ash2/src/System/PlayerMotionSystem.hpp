@@ -63,4 +63,11 @@ namespace PlayerMotion {
                                          entt::entity entity,
                                          const FrameData& frameData);
 
+/// @brief Landing 状態の更新（横移動停止・タイマー減算・満了で Neutral へ戻る）
+/// @return 遷移先がある場合はその Motion、なければ std::nullopt
+[[nodiscard]] std::optional<Motion> Tick(Landing& state,
+                                         entt::registry& registry,
+                                         entt::entity entity,
+                                         const FrameData& frameData);
+
 }  // namespace PlayerMotion
