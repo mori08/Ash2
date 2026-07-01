@@ -7,7 +7,7 @@
 #include "Component/Name.hpp"
 
 /// @brief 名前からエンティティへの参照を管理するコンテキスト
-using NameLookup = s3d::HashTable<s3d::String, entt::entity>;
+using NameLookup = HashTable<String, entt::entity>;
 
 namespace NameLookupSystem {
 

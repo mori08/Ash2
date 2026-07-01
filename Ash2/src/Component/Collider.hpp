@@ -7,8 +7,8 @@
 /// radius
 struct Collider {
   /// WorldPos からのオフセット
-  s3d::Vec3 segmentStart;
+  Vec3 segmentStart;
   /// WorldPos からのオフセット
-  s3d::Vec3 segmentEnd;
+  Vec3 segmentEnd;
   double radius;
 };

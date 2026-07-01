@@ -1,6 +1,6 @@
 #include "PlayerConfig.hpp"
 
-PlayerConfig PlayerConfig::FromToml(const s3d::TOMLValue& toml) {
+PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
   const auto& m = toml[U"melee"];
   const auto& r = toml[U"ranged"];
   const auto& d = toml[U"dash"];

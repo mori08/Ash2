@@ -35,25 +35,25 @@ void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
 
 IPhase::PhaseCommand TestMenuPhase::update(entt::registry& registry,
                                            const FrameData& /*frameData*/) {
-  if (s3d::KeyUp.down()) {
+  if (KeyUp.down()) {
     m_selectedIndex = (m_selectedIndex - 1 + static_cast<int>(m_items.size())) %
                       static_cast<int>(m_items.size());
   }
-  if (s3d::KeyDown.down()) {
+  if (KeyDown.down()) {
     m_selectedIndex = (m_selectedIndex + 1) % static_cast<int>(m_items.size());
   }
 
-  if (s3d::KeyEnter.down() && !m_items.empty()) {
+  if (KeyEnter.down() && !m_items.empty()) {
     auto phase = m_items[m_selectedIndex].create(registry);
     return PhaseCommand::Push(std::move(phase));
   }
 
-  s3d::Scene::SetBackground(s3d::ColorF{KBgBrightness});
+  Scene::SetBackground(ColorF{KBgBrightness});
   m_font(U"Test Menu").draw(KTitleX, KTitleY);
 
   for (int i = 0; std::cmp_less(i, m_items.size()); ++i) {
-    const s3d::ColorF color =
-        (i == m_selectedIndex) ? s3d::Palette::Yellow : s3d::Palette::White;
+    const ColorF color =
+        (i == m_selectedIndex) ? Palette::Yellow : Palette::White;
     m_font(m_items[i].label).draw(KItemX, KItemBaseY + i * KItemSpacing, color);
   }
 

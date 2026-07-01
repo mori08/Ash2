@@ -31,8 +31,8 @@
 #include "System/StaminaSystem.hpp"
 
 constexpr double KDummyPosW = 150.0;
-constexpr s3d::SizeF KDummySize = {60.0, 80.0};
-constexpr s3d::ColorF KDummyColor = {0.8, 0.2, 0.2};
+constexpr SizeF KDummySize = {60.0, 80.0};
+constexpr ColorF KDummyColor = {0.8, 0.2, 0.2};
 constexpr double KDummyCapRadius = 30.0;
 constexpr double KDummyCapHeight = 80.0;
 constexpr int KDummyMaxHp = 100;
@@ -102,7 +102,7 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
     reloadPlayer(registry);
   }
 
-  if (s3d::KeyEscape.down()) {
+  if (KeyEscape.down()) {
     return PhaseCommand::Pop();
   }
 
@@ -110,7 +110,7 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
 }
 
 void PlayerTestPhase::applyHitReactions(entt::registry& registry,
-                                        const s3d::Array<HitPair>& hits) {
+                                        const Array<HitPair>& hits) {
   for (const auto& hit : hits) {
     const auto& attack = registry.get<Attack>(hit.attacker);
     if (attack.hitstopSec <= 0.0) continue;
@@ -132,7 +132,7 @@ void PlayerTestPhase::applyHitReactions(entt::registry& registry,
       if (auto* rect = std::get_if<RectDrawable>(drawable); rect != nullptr) {
         // 既にひるみ中なら originalSize を引き継ぎ、縮小済みサイズを
         // originalSize として上書きしてしまうのを防ぐ
-        s3d::SizeF originalSize = rect->size;
+        SizeF originalSize = rect->size;
         if (const auto* existing = registry.try_get<Stagger>(hit.target);
             existing != nullptr) {
           originalSize = existing->originalSize;

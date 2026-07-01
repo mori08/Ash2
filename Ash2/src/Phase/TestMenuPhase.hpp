@@ -24,14 +24,14 @@ class TestMenuPhase : public IPhase {
   /// メニュー項目（表示名 + 生成ラムダ）
   struct MenuItem {
     /// 表示名
-    s3d::String label;
+    String label;
     /// フェーズ生成ラムダ
     std::function<std::unique_ptr<IPhase>(entt::registry&)> create;
   };
 
   static constexpr int KFontSize = 24;
 
-  s3d::Array<MenuItem> m_items;
+  Array<MenuItem> m_items;
   int m_selectedIndex = 0;
-  s3d::Font m_font{KFontSize};
+  Font m_font{KFontSize};
 };

@@ -111,5 +111,5 @@ struct PlayerConfig {
   LandingConfig landing;
 
   /// @brief TOML からプレイヤー設定を生成する
-  [[nodiscard]] static PlayerConfig FromToml(const s3d::TOMLValue& toml);
+  [[nodiscard]] static PlayerConfig FromToml(const TOMLValue& toml);
 };

@@ -9,9 +9,9 @@
 
 #ifdef _DEBUG
 namespace {
-s3d::String MotionName(const Motion& m) {
+String MotionName(const Motion& m) {
   return std::visit(
-      [](const auto& s) -> s3d::String {
+      [](const auto& s) -> String {
         using T = std::decay_t<decltype(s)>;
         if constexpr (std::is_same_v<T, PlayerMotion::Neutral>)
           return U"Neutral";

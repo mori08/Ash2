@@ -15,7 +15,7 @@ struct Attack {
   entt::entity root = entt::null;
 
   /// 攻撃の生存期間中にヒット済みのターゲット（重複ヒット防止用）
-  s3d::HashSet<entt::entity> hitTargets;
+  HashSet<entt::entity> hitTargets;
 
   /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
   double hitstopSec = 0.0;
