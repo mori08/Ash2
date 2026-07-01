@@ -13,6 +13,7 @@ description: Read all source files and report 3-5 findings, then optionally crea
 以下を並列で読む。
 
 - `docs/ARCHITECTURE.md`
+- `docs/REFERENCE.md`
 - `.claude/rules/cpp.md`
 
 ### 2. ソースファイルの走査
@@ -20,21 +21,22 @@ description: Read all source files and report 3-5 findings, then optionally crea
 `Ash2/src/` 以下の `.hpp` / `.cpp` ファイルを Glob で列挙し、すべて読む。
 ファイル数が多い場合はサブエージェントを並列起動して効率よく走査する。
 
-### 3. ARCHITECTURE.md の更新
+### 3. ARCHITECTURE.md / REFERENCE.md の更新
 
 サブエージェントを1つ起動し、以下を指示する。
 
 - `Ash2/src/` 以下のソースファイルをすべて読む
-- `docs/ARCHITECTURE.md` は読まない
-- `.claude/rules/cpp.md` の内容に従い `docs/ARCHITECTURE.md` を一から生成する
+- `docs/ARCHITECTURE.md` と `docs/REFERENCE.md` は読まない
+- `.claude/rules/cpp.md` の内容に従い `docs/ARCHITECTURE.md`（設計意図、200行上限）と
+  `docs/REFERENCE.md`（コンポーネント・システム・フェーズ等の部品一覧、行数上限なし）を一から生成する
 
-サブエージェントの生成結果と現在の `docs/ARCHITECTURE.md` を比較する。
+サブエージェントの生成結果と現在の両ファイルを比較する。
 
 - 新版にあって旧版にない → 追記漏れの可能性
 - 旧版にあって新版にない → 古くなった記述の可能性
 - 構造・表現が大きく違う → 局所解になっていた箇所
 
-比較結果をもとに `docs/ARCHITECTURE.md` を更新する。
+比較結果をもとに `docs/ARCHITECTURE.md` と `docs/REFERENCE.md` を更新する。
 部分修正ではなく、必要なら全体を書き直すこと。
 
 ### 4. テストの確認
@@ -63,7 +65,7 @@ description: Read all source files and report 3-5 findings, then optionally crea
 以下の形式でチャットに出力する。
 
 ```
-## ARCHITECTURE.md 更新内容
+## ARCHITECTURE.md / REFERENCE.md 更新内容
 
 - 追加: <追加した内容の要約>
 - 削除: <削除した内容の要約>

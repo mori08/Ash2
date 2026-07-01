@@ -25,6 +25,7 @@ description: |
 
 **探索方法：**
 - `docs/ARCHITECTURE.md` でプロジェクト構成を把握する
+- `docs/REFERENCE.md` でコンポーネント・システム・フェーズの一覧を把握する
 - `Ash2/src/` 以下の `.hpp` / `.cpp` を Glob・Grep で探索し、出題対象を決定する
 
 **避けるもの：**

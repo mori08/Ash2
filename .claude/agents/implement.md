@@ -17,6 +17,7 @@ The path to the plan file is provided in the input prompt (e.g. `.claude/tmp/pla
 
 Read in parallel:
 - `docs/ARCHITECTURE.md` — architecture, constraints, and directory structure
+- `docs/REFERENCE.md` — existing components/systems/phases and part-specific constraints
 - The plan file at the path specified in the input
 
 From the plan, focus on:
@@ -30,7 +31,7 @@ From the plan, focus on:
 
 Follow the plan's implementation order.
 Apply changes using Edit (for modifications) or Write (for new files).
-Adhere to all constraints described in `ARCHITECTURE.md`.
+Adhere to all constraints described in `ARCHITECTURE.md` and `REFERENCE.md`.
 
 Prefer Glob / Grep / Read / Edit / Write over Bash for all file operations.
 
