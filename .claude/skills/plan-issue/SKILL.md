@@ -14,12 +14,15 @@ Plan サブエージェントに調査と計画を委ね、ユーザーのレビ
 Agent ツール（`subagent_type: Plan`）を起動し、以下を渡す。
 
 ```
+ファイル操作は Glob（探索）・Grep（検索）・Read（読み込み）を優先する。
+
 Issue #<number> の実装計画を立ててください。
 
 ## 調査してほしいこと
 - `gh issue view <number>` でIssueの内容・ラベル・コメントを確認
 - `docs/ARCHITECTURE.md` で設計方針・レイヤー構成を確認
 - `docs/REFERENCE.md` で関連する既存のコンポーネント・システム・フェーズを確認
+- `docs/game_design/` 配下の関連ドキュメント（battle_design.md・motion_design.md 等）でゲームデザイン仕様との整合を確認
 - 変更が必要なファイルと該当箇所
 - 関連するクラス・関数・コンポーネント
 - 影響範囲（呼び出し元・呼び出し先）

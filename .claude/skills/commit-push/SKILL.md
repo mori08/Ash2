@@ -25,6 +25,6 @@ description: ファイルをステージし、適切なメッセージでコミ�
 - issue 参照: 関連 issue がある場合は必ず含める（例: `#3` で参照、`close #3` でマージ時に自動クローズ）。issue を立てずに行う `chore` コミットは省略可
 - コミット直後に必ずプッシュする
 - ステージは `git add -A` でなくファイル名を指定する
-- コミットメッセージ末尾に付記する: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
+- コミットメッセージ末尾に付記する: `Co-Authored-By: Claude <実行中のモデル名> <noreply@anthropic.com>`（モデル名は固定文字列にせず、その時点で自分が実行しているモデルの名称を使う。例: Claude Sonnet 5）
 
 `$ARGUMENTS` でメッセージが指定された場合はそのまま使う。指定がない場合は diff からメッセージを作成する。

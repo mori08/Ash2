@@ -13,7 +13,7 @@ Do not build, run, or test — that is handled by a separate agent.
 
 ### 1. Read context and plan
 
-The path to the plan file is provided in the input prompt (e.g. `.claude/tmp/plan-42.md`).
+The path to the plan file is provided in the input prompt (e.g. `tmp/plan-42.md`).
 
 Read in parallel:
 - `docs/ARCHITECTURE.md` — architecture, constraints, and directory structure
