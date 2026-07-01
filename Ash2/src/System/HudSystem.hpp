@@ -18,26 +18,25 @@ class HudSystem {
     constexpr double KStaminaBarY = 40.0;
     constexpr double KBarWidth = 200.0;
     constexpr double KBarHeight = 18.0;
-    constexpr s3d::ColorF KBgColor{0.2, 0.2, 0.2, 0.7};
-    constexpr s3d::ColorF KHpColor{0.2, 0.8, 0.2};
-    constexpr s3d::ColorF KStaminaColor{0.9, 0.8, 0.1};
+    constexpr ColorF KBgColor{0.2, 0.2, 0.2, 0.7};
+    constexpr ColorF KHpColor{0.2, 0.8, 0.2};
+    constexpr ColorF KStaminaColor{0.9, 0.8, 0.1};
 
     auto view = registry.view<const Player, const Hp, const Stamina>();
     for (const auto& [entity, hp, stamina] : view.each()) {
-      s3d::RectF{KBarX, KHpBarY, KBarWidth, KBarHeight}.draw(KBgColor);
+      RectF{KBarX, KHpBarY, KBarWidth, KBarHeight}.draw(KBgColor);
       if (hp.max > 0) {
         const double hpRatio =
-            s3d::Clamp(static_cast<double>(hp.current) / hp.max, 0.0, 1.0);
-        s3d::RectF{KBarX, KHpBarY, KBarWidth * hpRatio, KBarHeight}.draw(
-            KHpColor);
+            Clamp(static_cast<double>(hp.current) / hp.max, 0.0, 1.0);
+        RectF{KBarX, KHpBarY, KBarWidth * hpRatio, KBarHeight}.draw(KHpColor);
       }
 
-      s3d::RectF{KBarX, KStaminaBarY, KBarWidth, KBarHeight}.draw(KBgColor);
+      RectF{KBarX, KStaminaBarY, KBarWidth, KBarHeight}.draw(KBgColor);
       if (stamina.max > 0) {
-        const double staminaRatio = s3d::Clamp(
-            static_cast<double>(stamina.current) / stamina.max, 0.0, 1.0);
-        s3d::RectF{KBarX, KStaminaBarY, KBarWidth * staminaRatio, KBarHeight}
-            .draw(KStaminaColor);
+        const double staminaRatio =
+            Clamp(static_cast<double>(stamina.current) / stamina.max, 0.0, 1.0);
+        RectF{KBarX, KStaminaBarY, KBarWidth * staminaRatio, KBarHeight}.draw(
+            KStaminaColor);
       }
 
       // Player タグを持つエンティティは 1

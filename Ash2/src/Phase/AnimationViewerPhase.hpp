@@ -10,7 +10,7 @@ class AnimationViewerPhase : public IPhase {
   /// @brief AnimationViewerPhase の生成パラメータ
   struct Param {
     /// AnimationDataRegistry のキー（エンティティ種別名）
-    s3d::String dataKey;
+    String dataKey;
   };
 
   explicit AnimationViewerPhase(const Param& param);
@@ -28,11 +28,11 @@ class AnimationViewerPhase : public IPhase {
   static constexpr int KFontSize = 20;
 
   /// AnimationDataRegistry のキー
-  s3d::String m_dataKey;
+  String m_dataKey;
   /// 表示対象エンティティ
   entt::entity m_entity = entt::null;
   /// クリップ名の配列（ソート済み）
-  s3d::Array<s3d::String> m_clips;
+  Array<String> m_clips;
   int m_clipIndex = 0;
-  s3d::Font m_font{KFontSize};
+  Font m_font{KFontSize};
 };

@@ -33,8 +33,7 @@ class PlayerTestPhase : public IPhase {
   ///
   /// 本格的なリアクション設計は #132/#134 のスコープであり、ここでは
   /// 近接1段目の操作感確認に必要な最小限の暫定実装を行う。
-  void applyHitReactions(entt::registry& registry,
-                         const s3d::Array<HitPair>& hits);
+  void applyHitReactions(entt::registry& registry, const Array<HitPair>& hits);
 
   entt::entity m_playerRoot = entt::null;
   entt::entity m_dummyTarget = entt::null;

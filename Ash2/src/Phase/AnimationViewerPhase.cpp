@@ -47,18 +47,18 @@ void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
 
 IPhase::PhaseCommand AnimationViewerPhase::update(entt::registry& registry,
                                                   const FrameData& frameData) {
-  if (s3d::KeyEscape.down()) {
+  if (KeyEscape.down()) {
     return PhaseCommand::Pop();
   }
 
   if (!m_clips.empty()) {
     bool changed = false;
-    if (s3d::KeyLeft.down()) {
+    if (KeyLeft.down()) {
       m_clipIndex = (m_clipIndex - 1 + static_cast<int>(m_clips.size())) %
                     static_cast<int>(m_clips.size());
       changed = true;
     }
-    if (s3d::KeyRight.down()) {
+    if (KeyRight.down()) {
       m_clipIndex = (m_clipIndex + 1) % static_cast<int>(m_clips.size());
       changed = true;
     }
@@ -71,7 +71,7 @@ IPhase::PhaseCommand AnimationViewerPhase::update(entt::registry& registry,
       }
     }
 
-    if (s3d::KeyF.down() && m_entity != entt::null) {
+    if (KeyF.down() && m_entity != entt::null) {
       auto* anim = registry.try_get<SpriteAnimation>(m_entity);
       if (anim) {
         anim->facingRight = !anim->facingRight;
@@ -81,7 +81,7 @@ IPhase::PhaseCommand AnimationViewerPhase::update(entt::registry& registry,
 
   AnimationSystem::Update(registry, frameData.dt);
 
-  s3d::Scene::SetBackground(s3d::ColorF{KBgBrightness});
+  Scene::SetBackground(ColorF{KBgBrightness});
   m_font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(KTitleX, KTitleY);
   if (!m_clips.empty()) {
     m_font(U"Clip [{}/{}]: {}"_fmt(m_clipIndex + 1, m_clips.size(),
@@ -89,7 +89,7 @@ IPhase::PhaseCommand AnimationViewerPhase::update(entt::registry& registry,
         .draw(KTitleX, KClipInfoY);
   }
   m_font(U"← → : clip  F : flip  Esc : back")
-      .draw(KTitleX, KHintY, s3d::Palette::Gray);
+      .draw(KTitleX, KHintY, Palette::Gray);
 
   return PhaseCommand::None();
 }

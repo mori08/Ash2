@@ -11,5 +11,5 @@ struct Stagger {
   /// 合計時間（秒）。縮み量の正規化に使う
   double duration = 0.0;
   /// 付与前の RectDrawable::size
-  s3d::SizeF originalSize;
+  SizeF originalSize;
 };

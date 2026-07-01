@@ -2,8 +2,6 @@
 
 #include "System/PlayerMotionSystem.hpp"
 
-#include <algorithm>
-
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
@@ -23,14 +21,14 @@ namespace PlayerMotion {
 
 namespace {
 
-constexpr s3d::ColorF KBulletColor = {0.9, 0.9, 0.3};
-constexpr s3d::ColorF KMeleeOrbColor = {1.0, 0.9, 0.5};
+constexpr ColorF KBulletColor = {0.9, 0.9, 0.3};
+constexpr ColorF KMeleeOrbColor = {1.0, 0.9, 0.5};
 /// 暫定のヒットストップ時間（秒）。本格的な数値調整は #132/#134 で行う
 constexpr double KMeleeHitstopSec = 0.05;
 
 /// @brief 指定クリップの再生時間（秒）を返す
 /// @return クリップが見つからない場合は 0.0
-double GetClipDuration(const AnimationData& data, const s3d::String& clip) {
+double GetClipDuration(const AnimationData& data, const String& clip) {
   const auto it = data.clips.find(clip);
   if (it == data.clips.end()) return 0.0;
   return static_cast<double>(it->second.count) / it->second.speed;
@@ -44,7 +42,7 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity) {
 }
 
 /// @brief クリップが変化していれば差し替え、再生位置をリセットする
-void SetClip(SpriteAnimation& anim, const s3d::String& clip) {
+void SetClip(SpriteAnimation& anim, const String& clip) {
   if (clip != anim.currentClip) {
     anim.currentClip = clip;
     anim.elapsed = 0.0;
@@ -52,7 +50,7 @@ void SetClip(SpriteAnimation& anim, const s3d::String& clip) {
 }
 
 /// @brief クリップ名が同じでも再生位置を先頭へ強制的に戻す
-void RestartClip(SpriteAnimation& anim, const s3d::String& clip) {
+void RestartClip(SpriteAnimation& anim, const String& clip) {
   anim.currentClip = clip;
   anim.elapsed = 0.0;
 }
@@ -83,19 +81,18 @@ entt::entity SpawnMeleeHitbox(entt::registry& registry, entt::entity owner,
 
 /// @brief 攻撃フレーム内の珠の前方オフセット（プレイヤー相対）を返す
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
-s3d::Vec3 MeleeOrbOffset(double progress, bool facingRight,
-                         const MeleeConfig& cfg) {
+Vec3 MeleeOrbOffset(double progress, bool facingRight, const MeleeConfig& cfg) {
   const double sign = facingRight ? 1.0 : -1.0;
-  const double eased = s3d::EaseOutQuad(std::clamp(progress, 0.0, 1.0));
+  const double eased = EaseOutQuad(Clamp(progress, 0.0, 1.0));
   return Vec3{sign * cfg.reach * eased, cfg.capMidH, 0.0};
 }
 
 /// @brief 2段目の攻撃フレーム内の珠オフセット（斬り上げ軌道）を返す
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
-s3d::Vec3 MeleeSlashOffset(double progress, bool facingRight,
-                           const MeleeConfig& cfg) {
+Vec3 MeleeSlashOffset(double progress, bool facingRight,
+                      const MeleeConfig& cfg) {
   const double sign = facingRight ? 1.0 : -1.0;
-  const double eased = s3d::EaseOutQuad(std::clamp(progress, 0.0, 1.0));
+  const double eased = EaseOutQuad(Clamp(progress, 0.0, 1.0));
   const double horizontal = sign * cfg.reach * eased;
   const double vertical = cfg.capMidH + (eased - 0.5) * cfg.slashRiseHeight;
   return Vec3{horizontal, vertical, 0.0};
@@ -126,8 +123,7 @@ void UpdateMeleeHitbox(entt::registry& registry, entt::entity owner,
                        double elapsed, double activeStart, double activeEnd,
                        bool facingRight, const PlayerConfig& cfg,
                        entt::entity& hitboxEntity, double radius,
-                       s3d::Vec3 (*offsetFn)(double, bool,
-                                             const MeleeConfig&)) {
+                       Vec3 (*offsetFn)(double, bool, const MeleeConfig&)) {
   const auto& melee = cfg.melee;
 
   // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
@@ -179,7 +175,7 @@ Ranged MakeRanged(entt::registry& registry, entt::entity entity,
                   const PlayerConfig& cfg, const AnimationData& playerData,
                   SpriteAnimation& anim) {
   auto& stamina = registry.get<Stamina>(entity);
-  stamina.current = std::max(0, stamina.current - cfg.ranged.staminaCost);
+  stamina.current = Max(0, stamina.current - cfg.ranged.staminaCost);
   SetClip(anim, U"ranged_attack");
   return Ranged{.timer = GetClipDuration(playerData, U"ranged_attack")};
 }
@@ -191,7 +187,7 @@ Ranged MakeRanged(entt::registry& registry, entt::entity entity,
 Dash MakeDash(entt::registry& registry, entt::entity entity,
               const PlayerConfig& cfg, SpriteAnimation& anim) {
   auto& stamina = registry.get<Stamina>(entity);
-  stamina.current = std::max(0, stamina.current - cfg.dash.staminaCost);
+  stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
   SetClip(anim, U"move");
   return Dash{};
 }
@@ -201,15 +197,15 @@ Dash MakeDash(entt::registry& registry, entt::entity entity,
 ///
 /// Vec3 の x が w 軸（横）、z が d 軸（奥行き）、y が高さ固定（capMidH）。
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
-s3d::Vec3 DashAttackOrbOffset(double progress, const PlayerConfig& cfg) {
-  const double angle = s3d::Math::TwoPi * progress;
+Vec3 DashAttackOrbOffset(double progress, const PlayerConfig& cfg) {
+  const double angle = Math::TwoPi * progress;
   const double r = cfg.dashAttack.orbitRadius;
   return Vec3{r * std::cos(angle), cfg.melee.capMidH, r * std::sin(angle)};
 }
 
 /// @brief DashAttack へ移行する
 /// @param dashDir ダッシュ時の移動方向（正規化済み）
-DashAttack MakeDashAttack(SpriteAnimation& anim, s3d::Vec2 dashDir) {
+DashAttack MakeDashAttack(SpriteAnimation& anim, Vec2 dashDir) {
   // 専用クリップ未用意のため "melee_1" を暫定流用する
   SetClip(anim, U"melee_1");
   return DashAttack{

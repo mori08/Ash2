@@ -2,8 +2,6 @@
 
 #include "System/StaggerSystem.hpp"
 
-#include <cmath>
-
 #include "Component/Drawable.hpp"
 #include "Component/Stagger.hpp"
 
@@ -29,13 +27,12 @@ void StaggerSystem::Update(entt::registry& registry, double dt) {
 
     // duration の中間で最も縮み、両端（開始・終了）で原寸に近づく
     const double progress = stagger.remaining / stagger.duration;
-    const double shrink =
-        (1.0 - std::abs(progress * 2.0 - 1.0)) * KMaxShrinkRatio;
+    const double shrink = (1.0 - Abs(progress * 2.0 - 1.0)) * KMaxShrinkRatio;
     rect->size.y = stagger.originalSize.y * (1.0 - shrink);
   }
 
   // remaining <= 0 になったエンティティから Stagger を除去する
-  s3d::Array<entt::entity> expired;
+  Array<entt::entity> expired;
   for (const auto entity : view) {
     if (view.get<Stagger>(entity).remaining <= 0.0) {
       expired.push_back(entity);

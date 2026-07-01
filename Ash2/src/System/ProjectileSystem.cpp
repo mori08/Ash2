@@ -8,7 +8,7 @@ void ProjectileSystem::Update(entt::registry& registry) {
   const Vec2 cameraOffset = Scene::Center();
   const RectF screenRect = Scene::Rect();
 
-  s3d::Array<entt::entity> toDestroy;
+  Array<entt::entity> toDestroy;
 
   auto view = registry.view<Projectile, WorldPos, Attack>();
   for (auto&& [entity, pos, atk] : view.each()) {

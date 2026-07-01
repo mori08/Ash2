@@ -12,6 +12,14 @@ paths:
 新しい `.cpp` / `.hpp` ファイルを追加するときは、**ビルド前に** `Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
 
 
+## 名前空間
+
+`stdafx.h` の `NO_S3D_USING` は**無効のまま**維持する（`using namespace s3d;` を全体に適用）。
+
+s3d の型・関数は `s3d::` を省略して書く（`Vec2`、`Circle`、`Max` など）。
+
+`std` と `s3d` の両方に同等の関数がある場合は **s3d 側を優先**する（例: `std::max` → `Max`）。
+
 ## コメント
 
 `.cpp` / `.hpp` 共通のルール。

@@ -1,6 +1,6 @@
 #include "Config/AnimationData.hpp"
 
-AnimationData AnimationData::FromToml(const s3d::TOMLValue& toml) {
+AnimationData AnimationData::FromToml(const TOMLValue& toml) {
   const auto& off = toml[U"draw_offset"];
   AnimationData data{
       .textureKey = toml[U"texture"].getString(),

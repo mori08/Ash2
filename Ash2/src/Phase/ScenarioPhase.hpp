@@ -9,7 +9,7 @@ class ScenarioPhase : public IPhase {
   /// @brief ScenarioPhase の生成パラメータ
   struct Param {
     /// 処理するシナリオセクション名
-    s3d::String sectionName;
+    String sectionName;
   };
 
   explicit ScenarioPhase(const Param& param);
@@ -22,6 +22,6 @@ class ScenarioPhase : public IPhase {
                                     const FrameData& frameData) override;
 
  private:
-  s3d::String m_sectionName;
+  String m_sectionName;
   size_t m_currentStep = 0;
 };
