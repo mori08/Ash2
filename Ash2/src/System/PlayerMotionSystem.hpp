@@ -63,6 +63,14 @@ namespace PlayerMotion {
                                          entt::entity entity,
                                          const FrameData& frameData);
 
+/// @brief AirAttack 状態の更新（垂直面の軌道上のヒットボックス管理・
+/// 接地で Landing へ遷移・後隙満了で Neutral へ戻る）
+/// @return 遷移先がある場合はその Motion、なければ std::nullopt
+[[nodiscard]] std::optional<Motion> Tick(AirAttack& state,
+                                         entt::registry& registry,
+                                         entt::entity entity,
+                                         const FrameData& frameData);
+
 /// @brief Landing 状態の更新（横移動停止・タイマー減算・満了で Neutral へ戻る）
 /// @return 遷移先がある場合はその Motion、なければ std::nullopt
 [[nodiscard]] std::optional<Motion> Tick(Landing& state,

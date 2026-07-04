@@ -42,6 +42,14 @@ orbit_radius = 50.0
 radius       = 25.0
 damage       = 25
 
+[air_attack]
+windup_sec   = 0.05
+active_sec   = 0.25
+recovery_sec = 0.20
+orbit_radius = 50.0
+radius       = 25.0
+damage       = 25
+
 [stamina]
 recovery_delay = 2.0
 recovery_rate  = 0.5

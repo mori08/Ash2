@@ -212,6 +212,29 @@ DashAttack MakeDashAttack(SpriteAnimation& anim, Vec2 dashDir) {
       .elapsed = 0.0, .hitboxEntity = entt::null, .dashDir = dashDir};
 }
 
+/// @brief
+/// 攻撃フレーム内の進行度から空中攻撃の珠オフセット（垂直軌道）を返す
+///
+/// Vec3 の x が w 軸（横）、y が高さ（capMidH を中心に周回）、z は 0
+/// 固定。DashAttack の w-d 平面軌道に対し、こちらは w-h 平面（垂直面）を
+/// 周回する。回転方向はプレイヤーの向きに応じて左右反転する。
+/// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
+/// @param facingRight プレイヤーの向き（false なら w 成分の符号を反転）
+Vec3 AirAttackOrbOffset(double progress, const PlayerConfig& cfg,
+                        bool facingRight) {
+  const double angle = Math::TwoPi * progress;
+  const double r = cfg.airAttack.orbitRadius;
+  const double w = facingRight ? r * std::cos(angle) : -r * std::cos(angle);
+  return Vec3{w, cfg.melee.capMidH - r * std::sin(angle), 0.0};
+}
+
+/// @brief AirAttack へ移行する
+AirAttack MakeAirAttack(SpriteAnimation& anim) {
+  // 専用クリップ未用意のため "melee_1" を暫定流用する
+  SetClip(anim, U"melee_1");
+  return AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null};
+}
+
 }  // namespace
 
 std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
@@ -258,6 +281,11 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
         registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
       return MakeDash(registry, entity, cfg, anim);
     }
+  } else if (input.attackDown) {
+    // 空中攻撃への入場（AirAttack::Tick が接地検出で Landing へ遷移させる）
+    vel.w = 0.0;
+    vel.d = 0.0;
+    return MakeAirAttack(anim);
   }
 
   // ロコモーションクリップ（idle/move/jump）
@@ -522,6 +550,60 @@ std::optional<Motion> Tick(DashAttack& state, entt::registry& registry,
     anim.facingRight = false;
   }
 
+  if (state.elapsed >= recoveryEnd) {
+    return Neutral{};
+  }
+
+  return std::nullopt;
+}
+
+std::optional<Motion> Tick(AirAttack& state, entt::registry& registry,
+                           entt::entity entity, const FrameData& frameData) {
+  StopHorizontalMovement(registry, entity);
+
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& aa = cfg.airAttack;
+  const auto& pos = registry.get<WorldPos>(entity);
+
+  const double activeStart = aa.windupSec;
+  const double activeEnd = aa.windupSec + aa.activeSec;
+  const double recoveryEnd = activeEnd + aa.recoverySec;
+
+  state.elapsed += frameData.dt;
+
+  // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
+  if (pos.isOnGround()) {
+    if (state.hitboxEntity != entt::null) {
+      Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+      state.hitboxEntity = entt::null;
+    }
+    return Landing{.timer = cfg.landing.recoverySec};
+  }
+
+  // 攻撃判定区間：ヒットボックスの生成・軌道更新・後隙以降の破棄
+  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
+    if (state.hitboxEntity == entt::null) {
+      state.hitboxEntity =
+          SpawnMeleeHitbox(registry, entity, pos, cfg, aa.radius);
+      // Attack コンポーネントのダメージを空中攻撃用に上書きする
+      registry.get<Attack>(state.hitboxEntity).damage = aa.damage;
+    }
+
+    const double progress =
+        (state.elapsed - activeStart) / (activeEnd - activeStart);
+    const auto& anim = registry.get<SpriteAnimation>(entity);
+    const auto offset = AirAttackOrbOffset(progress, cfg, anim.facingRight);
+
+    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
+    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+  }
+
+  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
+    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+    state.hitboxEntity = entt::null;
+  }
+
+  // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
   if (state.elapsed >= recoveryEnd) {
     return Neutral{};
   }

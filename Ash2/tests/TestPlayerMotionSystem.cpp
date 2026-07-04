@@ -53,6 +53,13 @@ void SetupContext(entt::registry& registry) {
                .recoveryASec = 0.15,
                .recoveryBSec = 0.15,
                .staminaCost = 20},
+      .airAttack = {.windupSec = 0.05,
+                    .activeSec = 0.25,
+                    .recoverySec = 0.20,
+                    .orbitRadius = 50.0,
+                    .radius = 20.0,
+                    .damage = 15},
+      .landing = {.recoverySec = 0.20},
   });
 
   AnimationDataRegistry animReg;
@@ -151,8 +158,10 @@ TEST_CASE("PlayerMotionSystem - no attack input keeps Neutral") {
   REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
 }
 
-TEST_CASE("PlayerMotionSystem - airborne player ignores attack input") {
-  // 空中にいる場合は攻撃入力を無視する
+TEST_CASE(
+    "PlayerMotionSystem - airborne player attack input transitions Neutral "
+    "to AirAttack") {
+  // 空中にいる場合は攻撃入力で AirAttack へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -161,6 +170,123 @@ TEST_CASE("PlayerMotionSystem - airborne player ignores attack input") {
   FrameData frameData{};
   frameData.input.attackDown = true;
 
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::AirAttack>(motion));
+
+  const auto& air = std::get<PlayerMotion::AirAttack>(motion);
+  REQUIRE(air.elapsed == Approx(0.0));
+  // 構え中（windupSec 未満）はヒットボックス未生成
+  REQUIRE(air.hitboxEntity == entt::entity{entt::null});
+
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_1");
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack spawns hitbox and moves along vertical "
+    "orbit during active frame") {
+  // 攻撃判定区間でヒットボックスが生成され、w-h 平面上の円軌道で移動する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null});
+
+  // windupSec(0.05) を跨ぎ、activeSec(0.25) 中の進行度 0.25 地点まで進める
+  const FrameData frameData{.dt = 0.1125};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& air = std::get<PlayerMotion::AirAttack>(motion);
+  REQUIRE(air.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(registry.valid(air.hitboxEntity));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(air.hitboxEntity));
+
+  // 進行度0.25 → 円の頂点（w=0、h=capMidH(40.0)-orbitRadius(50.0)=-10.0）
+  const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
+  REQUIRE(localOffset.value.w == Approx(0.0).margin(0.001));
+  REQUIRE(localOffset.value.h == Approx(-10.0));
+  REQUIRE(localOffset.value.d == Approx(0.0));
+
+  const auto& attack = registry.get<Attack>(air.hitboxEntity);
+  REQUIRE(attack.damage == 15);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack orbit mirrors horizontally when facing "
+    "left") {
+  // 左向きのとき w 成分の符号が反転する（progress 0.25 は cos=0 で符号の
+  // 影響を受けないため、progress 0.0 で検証する）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
+  registry.get<SpriteAnimation>(player).facingRight = false;
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null});
+
+  // windupSec(0.05) ちょうどまで進め、progress 0.0（w = -orbitRadius）にする
+  const FrameData frameData{.dt = 0.05};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& air = std::get<PlayerMotion::AirAttack>(motion);
+  REQUIRE(air.hitboxEntity != entt::entity{entt::null});
+
+  // 進行度0.0 → w = -orbitRadius(50.0)、h = capMidH(40.0)
+  const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
+  REQUIRE(localOffset.value.w == Approx(-50.0));
+  REQUIRE(localOffset.value.h == Approx(40.0));
+  REQUIRE(localOffset.value.d == Approx(0.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack transitions to Landing when player "
+    "lands, destroying leftover hitbox") {
+  // 後隙中でも接地したら Landing へ強制遷移し、ヒットボックスは破棄される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 0.0;  // 接地
+
+  const auto hitbox = registry.create();
+  registry.emplace<LocalOffset>(hitbox);
+  registry.emplace<Collider>(hitbox);
+  registry.replace<Motion>(
+      player, PlayerMotion::AirAttack{.elapsed = 0.1, .hitboxEntity = hitbox});
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Landing>(motion));
+  REQUIRE_FALSE(registry.valid(hitbox));
+
+  const auto& landing = std::get<PlayerMotion::Landing>(motion);
+  REQUIRE(landing.timer == Approx(0.20));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack transitions to Neutral on recovery "
+    "timeout while still airborne") {
+  // 接地せずに後隙が満了した場合はタイマー満了で Neutral へ戻る
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 500.0;  // 十分な高さで着地しない
+
+  // recoveryEnd は windupSec+activeSec+recoverySec = 0.05+0.25+0.20 = 0.50
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirAttack{.elapsed = 0.49, .hitboxEntity = entt::null});
+
+  const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
