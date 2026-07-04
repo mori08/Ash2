@@ -55,12 +55,13 @@
 
 #### `Motion`
 
-エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, Melee1, Melee2, Melee3, Ranged, Dash, DashAttack, Landing>`）。
+エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, Melee1, Melee2, Melee3, Ranged, Dash, DashAttack, AirAttack, Landing>`）。
 
 - **Ranged**: 再生中クリップの残り時間を持つ
 - **Melee1 / Melee2 / Melee3**: コンボの段ごとに分けた型。モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。`Melee1`/`Melee2` は次段への遷移予約フラグ（`comboQueued`）を持つが、締め技の `Melee3` はコンボ継続を持たずタイマー満了で `Neutral` へ戻るのみ
 - **Dash**: 構え・ダッシュ・後隙A・後隙Bの4区間を `elapsed` 1本で管理する。ダッシュ中・後隙A・B中の攻撃入力（`attackDown`）でダッシュ攻撃を予約（`dashAttackQueued`）し、後隙B中に `DashAttack` へ遷移する。後隙B中のダッシュ入力（`dashDown`）は再ダッシュにキャンセルする。ダッシュ移動中の方向を `lastDashDir` に記録し `DashAttack::dashDir` へ引き渡す
 - **DashAttack**: 構え・攻撃・後隙の3区間を持ち、攻撃判定（`hitboxEntity`）を w-d 平面の円軌道上で更新する
+- **AirAttack**: `Neutral` が空中（`!WorldPos::isOnGround()`）で攻撃入力を受けたときに入場する。構え・攻撃・後隙の3区間を持ち、攻撃判定（`hitboxEntity`）を w-h 平面（垂直面）の円軌道上で更新する。後隙中も含め毎フレーム接地を検出し、接地した時点で（残っていればヒットボックスを破棄したうえで）`Landing` へ強制遷移する。接地せずに後隙が満了した場合はタイマー満了で `Neutral` へ戻る。リアクション Lv2・スタミナ枯渇時の威力低下は `DashAttack` 同様に未実装（暫定のダメージ+ヒットストップのみ、本格対応は #134 のスコープ）
 - **Landing**: 着地硬直のタイマー状態。空中アクションの接地検出から遷移する
 
 ---

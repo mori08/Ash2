@@ -5,6 +5,7 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
   const auto& r = toml[U"ranged"];
   const auto& d = toml[U"dash"];
   const auto& da = toml[U"dash_attack"];
+  const auto& aa = toml[U"air_attack"];
   const auto& s = toml[U"stamina"];
   const auto& l = toml[U"landing"];
   return {
@@ -54,6 +55,15 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
               .orbitRadius = da[U"orbit_radius"].get<double>(),
               .radius = da[U"radius"].get<double>(),
               .damage = da[U"damage"].get<int>(),
+          },
+      .airAttack =
+          {
+              .windupSec = aa[U"windup_sec"].get<double>(),
+              .activeSec = aa[U"active_sec"].get<double>(),
+              .recoverySec = aa[U"recovery_sec"].get<double>(),
+              .orbitRadius = aa[U"orbit_radius"].get<double>(),
+              .radius = aa[U"radius"].get<double>(),
+              .damage = aa[U"damage"].get<int>(),
           },
       .stamina =
           {

@@ -81,6 +81,22 @@ struct DashAttackConfig {
   int damage;
 };
 
+/// @brief 空中攻撃の設定値
+struct AirAttackConfig {
+  /// 構え時間（秒）
+  double windupSec;
+  /// 攻撃判定が有効な時間（秒）
+  double activeSec;
+  /// 後隙時間（秒）
+  double recoverySec;
+  /// ヒットボックスの軌道半径（w-h 平面上の円）
+  double orbitRadius;
+  /// 攻撃カプセルの半径
+  double radius;
+  /// 与えるダメージ量
+  int damage;
+};
+
 /// @brief スタミナ回復の設定値
 struct StaminaConfig {
   /// 行動後に回復が始まるまでの待機秒数
@@ -107,6 +123,7 @@ struct PlayerConfig {
   RangedConfig ranged;
   DashConfig dash;
   DashAttackConfig dashAttack;
+  AirAttackConfig airAttack;
   StaminaConfig stamina;
   LandingConfig landing;
 
