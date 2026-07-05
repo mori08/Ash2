@@ -74,6 +74,13 @@ struct AirAttack {
   entt::entity hitboxEntity = entt::null;
 };
 
+/// @brief 空中ダッシュ中（構え・ダッシュ・後隙A・後隙Bの4区間を持ち、
+/// 接地で Landing へ遷移する）
+struct AirDash {
+  /// モーション開始からの経過時間（秒）
+  double elapsed = 0.0;
+};
+
 /// @brief 着地硬直中（空中アクションの接地検出から遷移する）
 struct Landing {
   /// 残り硬直時間（秒）
