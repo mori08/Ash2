@@ -62,11 +62,21 @@ winget install Python.Python.3.12
 ### 5. clang-format / clang-tidy
 
 Visual Studio の C++ ワークロードに同梱されているものを使う。
+**LLVM 19 系を前提とする**（CI が clang-format-19 を使うため。
+VS 2022 17.14 の同梱バージョンは 19.1.x。18 系以前だった場合は VS が 17.14 より古いので、
+Visual Studio Installer から VS 本体を更新する）。
+
 `~/.bashrc` に環境変数を設定する（パスはエディションに合わせて読み替える）:
 
 ```bash
 export CLANG_FORMAT="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clang-format.exe"
 export CLANG_TIDY="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clang-tidy.exe"
+```
+
+バージョン確認:
+
+```bash
+"$CLANG_FORMAT" --version   # 19.x であること
 ```
 
 ### 6. GitHub CLI
