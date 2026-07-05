@@ -71,6 +71,14 @@ namespace PlayerMotion {
                                          entt::entity entity,
                                          const FrameData& frameData);
 
+/// @brief AirDash 状態の更新（ダッシュ移動・無敵の付与/除去・
+/// 接地で Landing へ強制遷移）
+/// @return 遷移先がある場合はその Motion、なければ std::nullopt
+[[nodiscard]] std::optional<Motion> Tick(AirDash& state,
+                                         entt::registry& registry,
+                                         entt::entity entity,
+                                         const FrameData& frameData);
+
 /// @brief Landing 状態の更新（横移動停止・タイマー減算・満了で Neutral へ戻る）
 /// @return 遷移先がある場合はその Motion、なければ std::nullopt
 [[nodiscard]] std::optional<Motion> Tick(Landing& state,

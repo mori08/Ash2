@@ -1095,4 +1095,147 @@ TEST_CASE(
   REQUIRE_FALSE(registry.valid(hitbox));
 }
 
+TEST_CASE(
+    "PlayerMotionSystem - airborne player dash input transitions Neutral to "
+    "AirDash") {
+  // 空中でのダッシュ入力で Neutral から AirDash へ遷移し、ST が1回分消費される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;
+
+  FrameData frameData{};
+  frameData.input.dashDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::AirDash>(motion));
+  REQUIRE(std::get<PlayerMotion::AirDash>(motion).elapsed == Approx(0.0));
+
+  // dash.staminaCost(20) 分が消費される
+  REQUIRE(registry.get<Stamina>(player).current == 80);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - airborne dash input is ignored when stamina is "
+    "insufficient") {
+  // ST不足の場合は空中ダッシュ入力を無視し Neutral のまま、ST も減らない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;
+  registry.get<Stamina>(player).current = 10;
+
+  FrameData frameData{};
+  frameData.input.dashDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+  REQUIRE(registry.get<Stamina>(player).current == 10);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDash grants Invincible during windup and dash") {
+  // 構え・ダッシュ中（elapsed < dashEnd）は Invincible が付与される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;  // 空中（接地遷移を避ける）
+
+  // dash.windupSec(0.0) + dash.dashSec(0.15) = 0.15 未満
+  registry.replace<Motion>(player, PlayerMotion::AirDash{.elapsed = 0.0});
+
+  const FrameData frameData{.dt = 0.1};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(registry.all_of<Invincible>(player));
+  REQUIRE(std::holds_alternative<PlayerMotion::AirDash>(
+      registry.get<Motion>(player)));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDash removes Invincible when entering "
+    "recovery") {
+  // dashEnd(0.15) を超えた時点で Invincible が除去される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;  // 空中（接地遷移を避ける）
+
+  registry.emplace<Invincible>(player);
+  registry.replace<Motion>(player, PlayerMotion::AirDash{.elapsed = 0.14});
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE_FALSE(registry.all_of<Invincible>(player));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDash fixes vertical velocity to zero during "
+    "dash movement") {
+  // ダッシュ移動区間中は垂直速度が 0 に固定される（暫定仕様）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;    // 空中（接地遷移を避ける）
+  registry.get<Velocity>(player).h = -200.0;  // 落下中を模した垂直速度
+  registry.get<SpriteAnimation>(player).facingRight = true;
+
+  registry.replace<Motion>(player, PlayerMotion::AirDash{.elapsed = 0.0});
+
+  const FrameData frameData{.dt = 0.05};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.h == Approx(0.0));
+  // dash.speed(500.0)
+  REQUIRE(vel.w == Approx(500.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDash transitions to Landing when player lands") {
+  // 移動・後隙中いずれでも接地したら Landing へ強制遷移する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 0.0;  // 接地
+  registry.emplace<Invincible>(player);
+
+  registry.replace<Motion>(player, PlayerMotion::AirDash{.elapsed = 0.1});
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Landing>(motion));
+  // 接地遷移時に Invincible が残らないよう除去される
+  REQUIRE_FALSE(registry.all_of<Invincible>(player));
+
+  const auto& landing = std::get<PlayerMotion::Landing>(motion);
+  REQUIRE(landing.timer == Approx(0.20));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDash transitions to Neutral on recovery "
+    "timeout while still airborne") {
+  // 接地せずに後隙が満了した場合はタイマー満了で Neutral へ戻る
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 500.0;  // 十分な高さで着地しない
+
+  // recoveryBEnd は windupSec+dashSec+recoveryASec+recoveryBSec = 0.45
+  registry.replace<Motion>(player, PlayerMotion::AirDash{.elapsed = 0.44});
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+}
+
 #endif

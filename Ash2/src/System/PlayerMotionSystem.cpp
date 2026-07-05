@@ -235,6 +235,18 @@ AirAttack MakeAirAttack(SpriteAnimation& anim) {
   return AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null};
 }
 
+/// @brief AirDash へ移行する（スタミナ消費、クリップの設定）
+///
+/// 基本仕様は Dash と同じ（motion_design.md）ため MakeDash 同様に dash
+/// 設定を流用する。
+AirDash MakeAirDash(entt::registry& registry, entt::entity entity,
+                    const PlayerConfig& cfg, SpriteAnimation& anim) {
+  auto& stamina = registry.get<Stamina>(entity);
+  stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
+  SetClip(anim, U"move");
+  return AirDash{};
+}
+
 }  // namespace
 
 std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
@@ -286,6 +298,10 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
     vel.w = 0.0;
     vel.d = 0.0;
     return MakeAirAttack(anim);
+  } else if (input.dashDown &&
+             registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
+    // 空中ダッシュへの入場（AirDash::Tick が接地検出で Landing へ遷移させる）
+    return MakeAirDash(registry, entity, cfg, anim);
   }
 
   // ロコモーションクリップ（idle/move/jump）
@@ -605,6 +621,61 @@ std::optional<Motion> Tick(AirAttack& state, entt::registry& registry,
 
   // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
   if (state.elapsed >= recoveryEnd) {
+    return Neutral{};
+  }
+
+  return std::nullopt;
+}
+
+std::optional<Motion> Tick(AirDash& state, entt::registry& registry,
+                           entt::entity entity, const FrameData& frameData) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& dash = cfg.dash;
+  const auto& input = frameData.input;
+  const auto& pos = registry.get<WorldPos>(entity);
+  auto& vel = registry.get<Velocity>(entity);
+  auto& anim = registry.get<SpriteAnimation>(entity);
+
+  const double dashStart = dash.windupSec;
+  const double dashEnd = dash.windupSec + dash.dashSec;
+  const double recoveryBEnd = dashEnd + dash.recoveryASec + dash.recoveryBSec;
+
+  state.elapsed += frameData.dt;
+
+  // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
+  if (pos.isOnGround()) {
+    registry.remove<Invincible>(entity);
+    return Landing{.timer = cfg.landing.recoverySec};
+  }
+
+  // 構え・ダッシュ中（後隙入り前）は無敵、後隙入りで除去する
+  if (state.elapsed < dashEnd) {
+    registry.emplace_or_replace<Invincible>(entity);
+  } else {
+    registry.remove<Invincible>(entity);
+  }
+
+  // ダッシュ移動中：フリー方向、無方向なら facingRight から前方
+  // 垂直速度は移動区間中 0 に固定する（重力の影響を受けない、暫定仕様）
+  if (state.elapsed >= dashStart && state.elapsed < dashEnd) {
+    vel.h = 0.0;
+    if (!input.moveAxis.isZero()) {
+      const Vec2 dir = input.moveAxis.normalized();
+      vel.w = dir.x * dash.speed;
+      vel.d = dir.y * dash.speed;
+    } else {
+      const double sign = anim.facingRight ? 1.0 : -1.0;
+      vel.w = sign * dash.speed;
+      vel.d = 0.0;
+    }
+  } else {
+    vel.w = 0.0;
+    vel.d = 0.0;
+  }
+
+  // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
+  // （AirDash は再ダッシュ・ダッシュ攻撃キャンセルを持たない）
+  if (state.elapsed >= recoveryBEnd) {
     return Neutral{};
   }
 
