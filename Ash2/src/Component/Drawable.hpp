@@ -10,7 +10,7 @@ struct BorderStyle {
 };
 
 /// @brief WorldPos を描画形状内のどの点に合わせるか
-enum class DrawAnchor : std::uint8_t {
+enum class DrawAnchor : uint8 {
   /// 形状の中心
   Center,
   /// 形状の下端中央

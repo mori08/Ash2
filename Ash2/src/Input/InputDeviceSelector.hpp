@@ -11,7 +11,7 @@ struct InputDeviceSelector {
   [[nodiscard]] InputState update();
 
  private:
-  enum class Device : std::uint8_t { Keyboard, Gamepad };
+  enum class Device : uint8 { Keyboard, Gamepad };
 
   /// キーボード/マウス入力アクション
   KeyboardInputAction m_keyboardAction = KeyboardInputAction::Default();

@@ -18,7 +18,7 @@ paths:
 
 s3d の型・関数は `s3d::` を省略して書く（`Vec2`、`Circle`、`Max` など）。
 
-`std` と `s3d` の両方に同等の関数がある場合は **s3d 側を優先**する（例: `std::max` → `Max`）。
+`std` と `s3d` の両方に同等の型・関数がある場合は **s3d 側を優先**する（例: `std::max` → `Max`、`std::optional` → `Optional`）。
 
 ## コメント
 
