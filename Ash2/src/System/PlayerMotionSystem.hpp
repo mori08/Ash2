@@ -1,6 +1,5 @@
 #pragma once
 #include <entt/entt.hpp>
-#include <optional>
 
 #include "Component/Motion.hpp"
 #include "Component/PlayerMotion.hpp"
@@ -11,79 +10,70 @@ namespace PlayerMotion {
 
 /// @brief Neutral 状態の更新（移動・ジャンプ・向き・クリップ決定、Melee/Ranged
 /// への入場判定）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(Neutral& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(Neutral& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief Melee1 状態の更新（横移動停止・タイマー減算・ヒットボックス管理・
 /// コンボ予約判定）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(Melee1& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(Melee1& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief Melee2 状態の更新（横移動停止・タイマー減算・ヒットボックス管理・
 /// コンボ予約判定）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(Melee2& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(Melee2& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief Melee3 状態の更新（横移動停止・タイマー減算・ヒットボックス管理、
 /// 締め技のためコンボ継続なし）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(Melee3& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(Melee3& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief Ranged 状態の更新（横移動停止・タイマー減算）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(Ranged& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(Ranged& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief Dash 状態の更新（移動・タイマー減算・無敵の付与/除去・
 /// 後隙Aからのダッシュ攻撃キャンセル予約・後隙B開始時の遷移）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(Dash& state, entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(Dash& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief DashAttack 状態の更新（突進・軌道上のヒットボックス管理・後隙満了で
 /// Neutral へ戻る）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(DashAttack& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief AirAttack 状態の更新（垂直面の軌道上のヒットボックス管理・
 /// 接地で Landing へ遷移・後隙満了で Neutral へ戻る）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(AirAttack& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief AirDash 状態の更新（ダッシュ移動・無敵の付与/除去・
 /// 接地で Landing へ強制遷移）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(AirDash& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(AirDash& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 /// @brief Landing 状態の更新（横移動停止・タイマー減算・満了で Neutral へ戻る）
-/// @return 遷移先がある場合はその Motion、なければ std::nullopt
-[[nodiscard]] std::optional<Motion> Tick(Landing& state,
-                                         entt::registry& registry,
-                                         entt::entity entity,
-                                         const FrameData& frameData);
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(Landing& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
 
 }  // namespace PlayerMotion

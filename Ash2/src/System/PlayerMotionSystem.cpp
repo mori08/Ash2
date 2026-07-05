@@ -200,7 +200,7 @@ Dash MakeDash(entt::registry& registry, entt::entity entity,
 Vec3 DashAttackOrbOffset(double progress, const PlayerConfig& cfg) {
   const double angle = Math::TwoPi * progress;
   const double r = cfg.dashAttack.orbitRadius;
-  return Vec3{r * std::cos(angle), cfg.melee.capMidH, r * std::sin(angle)};
+  return Vec3{r * Math::Cos(angle), cfg.melee.capMidH, r * Math::Sin(angle)};
 }
 
 /// @brief DashAttack へ移行する
@@ -224,8 +224,8 @@ Vec3 AirAttackOrbOffset(double progress, const PlayerConfig& cfg,
                         bool facingRight) {
   const double angle = Math::TwoPi * progress;
   const double r = cfg.airAttack.orbitRadius;
-  const double w = facingRight ? r * std::cos(angle) : -r * std::cos(angle);
-  return Vec3{w, cfg.melee.capMidH - r * std::sin(angle), 0.0};
+  const double w = facingRight ? r * Math::Cos(angle) : -r * Math::Cos(angle);
+  return Vec3{w, cfg.melee.capMidH - r * Math::Sin(angle), 0.0};
 }
 
 /// @brief AirAttack へ移行する
@@ -249,8 +249,8 @@ AirDash MakeAirDash(entt::registry& registry, entt::entity entity,
 
 }  // namespace
 
-std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   const auto& input = frameData.input;
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& playerData =
@@ -318,11 +318,11 @@ std::optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
     SetClip(anim, U"idle");
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(Melee1& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(Melee1& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -360,11 +360,11 @@ std::optional<Motion> Tick(Melee1& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(Melee2& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(Melee2& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -402,11 +402,11 @@ std::optional<Motion> Tick(Melee2& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(Melee3& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(Melee3& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -428,11 +428,11 @@ std::optional<Motion> Tick(Melee3& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(Ranged& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(Ranged& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   state.timer -= frameData.dt;
@@ -440,11 +440,11 @@ std::optional<Motion> Tick(Ranged& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(Dash& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(Dash& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& dash = cfg.dash;
   const auto& input = frameData.input;
@@ -510,11 +510,11 @@ std::optional<Motion> Tick(Dash& state, entt::registry& registry,
     return MakeDash(registry, entity, cfg, anim);
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(DashAttack& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -570,11 +570,11 @@ std::optional<Motion> Tick(DashAttack& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(AirAttack& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -624,11 +624,11 @@ std::optional<Motion> Tick(AirAttack& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(AirDash& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(AirDash& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& dash = cfg.dash;
   const auto& input = frameData.input;
@@ -679,11 +679,11 @@ std::optional<Motion> Tick(AirDash& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
-std::optional<Motion> Tick(Landing& state, entt::registry& registry,
-                           entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(Landing& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   // 専用クリップ未用意のため "idle" を暫定流用
@@ -695,7 +695,7 @@ std::optional<Motion> Tick(Landing& state, entt::registry& registry,
     return Neutral{};
   }
 
-  return std::nullopt;
+  return none;
 }
 
 }  // namespace PlayerMotion

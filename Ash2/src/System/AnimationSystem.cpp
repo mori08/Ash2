@@ -1,7 +1,6 @@
 #include "System/AnimationSystem.hpp"
 
 #include <cassert>
-#include <cmath>
 
 #include "Component/Drawable.hpp"
 #include "Component/Hitstop.hpp"
@@ -25,7 +24,7 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
     assert(clip.count > 0 && "clip.count は正の値でなければならない");
     assert(clip.speed > 0.0 && "clip.speed は正の値でなければならない");
     const double cycleDuration = clip.count / clip.speed;
-    anim.elapsed = std::fmod(anim.elapsed, cycleDuration);
+    anim.elapsed = Math::Fmod(anim.elapsed, cycleDuration);
     const int col = static_cast<int>(anim.elapsed * clip.speed) % clip.count;
     auto region = TextureAsset{data.textureKey}(
         col * data.size.x, clip.row * data.size.y, data.size.x, data.size.y);
