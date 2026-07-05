@@ -6,12 +6,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/no-compound-commands.py"
+            "command": "python .claude/hooks/no-compound-commands.py"
           },
           {
             "type": "command",
             "if": "Bash(git push*)",
-            "command": "python3 .claude/hooks/check-commit-count.py",
+            "command": "python .claude/hooks/check-commit-count.py",
             "statusMessage": "コミット数を確認中..."
           }
         ]

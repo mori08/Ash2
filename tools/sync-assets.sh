@@ -13,8 +13,18 @@ find "$ASSET_DIR" -type f | sort | while read -r file; do
   echo "$rel"
 done > "$ASSET_LIST"
 
+# python3 がなければ python を使う（Windows のストアスタブは --version が失敗する）
+if python3 --version >/dev/null 2>&1; then
+  PYTHON=python3
+elif python --version >/dev/null 2>&1; then
+  PYTHON=python
+else
+  echo "ERROR: Python 3 が見つかりません" >&2
+  exit 1
+fi
+
 # Resource.rc の App Resources セクションを更新
-python3 - "$RESOURCE_RC" "$ASSET_LIST" <<'EOF'
+"$PYTHON" - "$RESOURCE_RC" "$ASSET_LIST" <<'EOF'
 import sys, re
 
 rc_path, list_path = sys.argv[1], sys.argv[2]
