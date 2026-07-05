@@ -8,3 +8,5 @@
 - [Visual Studio 2022](https://visualstudio.microsoft.com/)
 - [Siv3D](https://siv3d.github.io/) v0.6.16
 - [vcpkg](https://vcpkg.io/)（`vcpkg integrate install` を事前に実行）
+
+セットアップ手順の詳細は [docs/SETUP.md](docs/SETUP.md) を参照。
