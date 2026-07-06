@@ -31,6 +31,8 @@ String MotionName(const Motion& m) {
           return U"AirAttack";
         else if constexpr (std::is_same_v<T, PlayerMotion::AirDash>)
           return U"AirDash";
+        else if constexpr (std::is_same_v<T, PlayerMotion::AirDashAttack>)
+          return U"AirDashAttack";
         else if constexpr (std::is_same_v<T, PlayerMotion::Landing>)
           return U"Landing";
       },

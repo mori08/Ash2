@@ -53,6 +53,13 @@ void SetupContext(entt::registry& registry) {
                .recoveryASec = 0.15,
                .recoveryBSec = 0.15,
                .staminaCost = 20},
+      .dashAttack = {.windupSec = 0.05,
+                     .activeSec = 0.20,
+                     .recoverySec = 0.20,
+                     .speed = 600.0,
+                     .orbitRadius = 30.0,
+                     .radius = 20.0,
+                     .damage = 20},
       .airAttack = {.windupSec = 0.05,
                     .activeSec = 0.25,
                     .recoverySec = 0.20,
@@ -1230,6 +1237,140 @@ TEST_CASE(
 
   // recoveryBEnd は windupSec+dashSec+recoveryASec+recoveryBSec = 0.45
   registry.replace<Motion>(player, PlayerMotion::AirDash{.elapsed = 0.44});
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDash queues air dash attack on attack input "
+    "during recovery B") {
+  // 後隙B中（recoveryAEnd 以降）の近接攻撃入力で dashAttackQueued が立つ
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;  // 空中（接地遷移を避ける）
+
+  // dashEnd(0.15) + recoveryASec(0.15) = 0.30 が recoveryAEnd
+  registry.replace<Motion>(player, PlayerMotion::AirDash{.elapsed = 0.29});
+
+  FrameData frameData{.dt = 0.02};
+  frameData.input.attackDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::AirDash>(motion));
+  REQUIRE(std::get<PlayerMotion::AirDash>(motion).dashAttackQueued);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDash transitions to AirDashAttack when "
+    "dashAttackQueued at recovery A end") {
+  // 後隙A終了時に予約済みなら空中ダッシュ攻撃へ遷移し、方向を引き継ぐ
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;  // 空中（接地遷移を避ける）
+
+  // recoveryAEnd(0.30) を跨ぐ dt
+  registry.replace<Motion>(
+      player, PlayerMotion::AirDash{.elapsed = 0.29,
+                                    .dashAttackQueued = true,
+                                    .lastDashDir = Vec2{0.0, 1.0}});
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::AirDashAttack>(motion));
+
+  const auto& airDashAttack = std::get<PlayerMotion::AirDashAttack>(motion);
+  REQUIRE(airDashAttack.elapsed == Approx(0.0));
+  REQUIRE(airDashAttack.hitboxEntity == entt::entity{entt::null});
+  REQUIRE(airDashAttack.dashDir.x == Approx(0.0));
+  REQUIRE(airDashAttack.dashDir.y == Approx(1.0));
+
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_1");
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDashAttack spawns hitbox and moves along w-d "
+    "orbit during active frame") {
+  // 攻撃判定区間でヒットボックスが生成され、w-d 平面上の円軌道で移動する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
+
+  registry.replace<Motion>(
+      player, PlayerMotion::AirDashAttack{.elapsed = 0.0,
+                                          .hitboxEntity = entt::null,
+                                          .dashDir = Vec2{1.0, 0.0}});
+
+  // windupSec(0.05) を跨ぎ、activeSec(0.20) 中の進行度 0.25 地点まで進める
+  const FrameData frameData{.dt = 0.10};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& airDashAttack = std::get<PlayerMotion::AirDashAttack>(motion);
+  REQUIRE(airDashAttack.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(registry.valid(airDashAttack.hitboxEntity));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(
+      airDashAttack.hitboxEntity));
+
+  // 進行度0.25 → 円上の点（w=0、h=capMidH(40.0)、d=orbitRadius(30.0)）
+  const auto& localOffset =
+      registry.get<LocalOffset>(airDashAttack.hitboxEntity);
+  REQUIRE(localOffset.value.w == Approx(0.0).margin(0.001));
+  REQUIRE(localOffset.value.h == Approx(40.0));
+  REQUIRE(localOffset.value.d == Approx(30.0));
+
+  const auto& attack = registry.get<Attack>(airDashAttack.hitboxEntity);
+  REQUIRE(attack.damage == 20);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDashAttack transitions to Landing when player "
+    "lands, destroying leftover hitbox") {
+  // 後隙中でも接地したら Landing へ強制遷移し、ヒットボックスは破棄される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 0.0;  // 接地
+
+  const auto hitbox = registry.create();
+  registry.emplace<LocalOffset>(hitbox);
+  registry.emplace<Collider>(hitbox);
+  registry.replace<Motion>(player, PlayerMotion::AirDashAttack{
+                                       .elapsed = 0.1, .hitboxEntity = hitbox});
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Landing>(motion));
+  REQUIRE_FALSE(registry.valid(hitbox));
+
+  const auto& landing = std::get<PlayerMotion::Landing>(motion);
+  REQUIRE(landing.timer == Approx(0.20));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirDashAttack transitions to Neutral on recovery "
+    "timeout while still airborne") {
+  // 接地せずに後隙が満了した場合はタイマー満了で Neutral へ戻る
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 500.0;  // 十分な高さで着地しない
+
+  // recoveryEnd は windupSec+activeSec+recoverySec = 0.05+0.20+0.20 = 0.45
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirDashAttack{.elapsed = 0.44, .hitboxEntity = entt::null});
 
   const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);

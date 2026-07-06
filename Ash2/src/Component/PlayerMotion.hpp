@@ -79,6 +79,21 @@ struct AirAttack {
 struct AirDash {
   /// モーション開始からの経過時間（秒）
   double elapsed = 0.0;
+  /// 空中ダッシュ攻撃への遷移予約（後隙B開始時に発生）
+  bool dashAttackQueued = false;
+  /// ダッシュ移動中に記録した最終方向ベクトル（正規化済み）
+  Vec2 lastDashDir = {1.0, 0.0};
+};
+
+/// @brief 空中ダッシュ攻撃中（構え・攻撃・後隙の3区間を持ち、
+/// 接地で Landing へ遷移する）
+struct AirDashAttack {
+  /// モーション開始からの経過時間（秒）
+  double elapsed = 0.0;
+  /// 攻撃判定の子エンティティ
+  entt::entity hitboxEntity = entt::null;
+  /// ダッシュ時の移動方向（突進フェーズに使用、正規化済み）
+  Vec2 dashDir = {1.0, 0.0};
 };
 
 /// @brief 着地硬直中（空中アクションの接地検出から遷移する）

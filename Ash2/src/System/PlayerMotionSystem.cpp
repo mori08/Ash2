@@ -247,6 +247,15 @@ AirDash MakeAirDash(entt::registry& registry, entt::entity entity,
   return AirDash{};
 }
 
+/// @brief AirDashAttack へ移行する
+/// @param dashDir ダッシュ時の移動方向（正規化済み）
+AirDashAttack MakeAirDashAttack(SpriteAnimation& anim, Vec2 dashDir) {
+  // 専用クリップ未用意のため "melee_1" を暫定流用する
+  SetClip(anim, U"melee_1");
+  return AirDashAttack{
+      .elapsed = 0.0, .hitboxEntity = entt::null, .dashDir = dashDir};
+}
+
 }  // namespace
 
 Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
@@ -638,7 +647,8 @@ Optional<Motion> Tick(AirDash& state, entt::registry& registry,
 
   const double dashStart = dash.windupSec;
   const double dashEnd = dash.windupSec + dash.dashSec;
-  const double recoveryBEnd = dashEnd + dash.recoveryASec + dash.recoveryBSec;
+  const double recoveryAEnd = dashEnd + dash.recoveryASec;
+  const double recoveryBEnd = recoveryAEnd + dash.recoveryBSec;
 
   state.elapsed += frameData.dt;
 
@@ -657,25 +667,110 @@ Optional<Motion> Tick(AirDash& state, entt::registry& registry,
 
   // ダッシュ移動中：フリー方向、無方向なら facingRight から前方
   // 垂直速度は移動区間中 0 に固定する（重力の影響を受けない、暫定仕様）
+  // 移動中に方向ベクトルを lastDashDir へ記録する（後隙では vel
+  // がゼロになるため後隙より前に必ず記録を終える）
   if (state.elapsed >= dashStart && state.elapsed < dashEnd) {
     vel.h = 0.0;
     if (!input.moveAxis.isZero()) {
       const Vec2 dir = input.moveAxis.normalized();
       vel.w = dir.x * dash.speed;
       vel.d = dir.y * dash.speed;
+      state.lastDashDir = dir;
     } else {
       const double sign = anim.facingRight ? 1.0 : -1.0;
       vel.w = sign * dash.speed;
       vel.d = 0.0;
+      state.lastDashDir = Vec2{sign, 0.0};
     }
   } else {
     vel.w = 0.0;
     vel.d = 0.0;
   }
 
-  // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
-  // （AirDash は再ダッシュ・ダッシュ攻撃キャンセルを持たない）
+  // 後隙B終了時：常に Neutral へ戻る（AirDashAttack 遷移より先に評価する）
   if (state.elapsed >= recoveryBEnd) {
+    return Neutral{};
+  }
+
+  // 後隙B中：前フレームまでに予約済みなら空中ダッシュ攻撃へ遷移
+  // 入力受付より先に評価することで、今フレームの入力は次フレーム以降に発動する
+  if (state.elapsed >= recoveryAEnd && state.dashAttackQueued) {
+    return MakeAirDashAttack(anim, state.lastDashDir);
+  }
+
+  // ダッシュ中・後隙A・B中の攻撃入力で遷移を予約する
+  // （AirDashAttack チェック後に評価）
+  if (state.elapsed >= dashStart && input.attackDown) {
+    state.dashAttackQueued = true;
+  }
+
+  return none;
+}
+
+Optional<Motion> Tick(AirDashAttack& state, entt::registry& registry,
+                      entt::entity entity, const FrameData& frameData) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  const auto& da = cfg.dashAttack;
+  const auto& pos = registry.get<WorldPos>(entity);
+  auto& vel = registry.get<Velocity>(entity);
+  auto& anim = registry.get<SpriteAnimation>(entity);
+
+  const double activeStart = da.windupSec;
+  const double activeEnd = da.windupSec + da.activeSec;
+  const double recoveryEnd = activeEnd + da.recoverySec;
+
+  state.elapsed += frameData.dt;
+
+  // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
+  if (pos.isOnGround()) {
+    if (state.hitboxEntity != entt::null) {
+      Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+      state.hitboxEntity = entt::null;
+    }
+    return Landing{.timer = cfg.landing.recoverySec};
+  }
+
+  // 攻撃判定区間：ヒットボックスの生成・軌道更新・後隙以降の破棄
+  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
+    if (state.hitboxEntity == entt::null) {
+      state.hitboxEntity =
+          SpawnMeleeHitbox(registry, entity, pos, cfg, da.radius);
+      // Attack コンポーネントのダメージをダッシュ攻撃用に上書きする
+      registry.get<Attack>(state.hitboxEntity).damage = da.damage;
+    }
+
+    const double progress =
+        (state.elapsed - activeStart) / (activeEnd - activeStart);
+    const auto offset = DashAttackOrbOffset(progress, cfg);
+
+    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
+    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+  }
+
+  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
+    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+    state.hitboxEntity = entt::null;
+  }
+
+  // 突進フェーズ（構え）：ダッシュ方向へ移動
+  // 垂直速度は AirDash の暫定仕様に合わせ 0 に固定する（重力の影響を受けない）
+  if (state.elapsed < activeStart) {
+    vel.w = state.dashDir.x * da.speed;
+    vel.d = state.dashDir.y * da.speed;
+    vel.h = 0.0;
+  } else {
+    vel.w = 0.0;
+    vel.d = 0.0;
+  }
+
+  if (state.dashDir.x > 0.0) {
+    anim.facingRight = true;
+  } else if (state.dashDir.x < 0.0) {
+    anim.facingRight = false;
+  }
+
+  // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
+  if (state.elapsed >= recoveryEnd) {
     return Neutral{};
   }
 
