@@ -64,9 +64,19 @@ namespace PlayerMotion {
                                     const FrameData& frameData);
 
 /// @brief AirDash 状態の更新（ダッシュ移動・無敵の付与/除去・
-/// 接地で Landing へ強制遷移）
+/// 接地で Landing へ強制遷移・後隙Bからの空中ダッシュ攻撃キャンセル予約・
+/// 後隙B開始時の遷移）
 /// @return 遷移先がある場合はその Motion、なければ none
 [[nodiscard]] Optional<Motion> Tick(AirDash& state, entt::registry& registry,
+                                    entt::entity entity,
+                                    const FrameData& frameData);
+
+/// @brief AirDashAttack 状態の更新（突進・w-d
+/// 平面の軌道上のヒットボックス管理・接地で Landing へ遷移・
+/// 後隙満了で Neutral へ戻る）
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(AirDashAttack& state,
+                                    entt::registry& registry,
                                     entt::entity entity,
                                     const FrameData& frameData);
 

@@ -55,14 +55,15 @@
 
 #### `Motion`
 
-エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, Melee1, Melee2, Melee3, Ranged, Dash, DashAttack, AirAttack, AirDash, Landing>`）。
+エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, Melee1, Melee2, Melee3, Ranged, Dash, DashAttack, AirAttack, AirDash, AirDashAttack, Landing>`）。
 
 - **Ranged**: 再生中クリップの残り時間を持つ
 - **Melee1 / Melee2 / Melee3**: コンボの段ごとに分けた型。モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。`Melee1`/`Melee2` は次段への遷移予約フラグ（`comboQueued`）を持つが、締め技の `Melee3` はコンボ継続を持たずタイマー満了で `Neutral` へ戻るのみ
 - **Dash**: 構え・ダッシュ・後隙A・後隙Bの4区間を `elapsed` 1本で管理する。ダッシュ中・後隙A・B中の攻撃入力（`attackDown`）でダッシュ攻撃を予約（`dashAttackQueued`）し、後隙B中に `DashAttack` へ遷移する。後隙B中のダッシュ入力（`dashDown`）は再ダッシュにキャンセルする。ダッシュ移動中の方向を `lastDashDir` に記録し `DashAttack::dashDir` へ引き渡す
 - **DashAttack**: 構え・攻撃・後隙の3区間を持ち、攻撃判定（`hitboxEntity`）を w-d 平面の円軌道上で更新する
 - **AirAttack**: `Neutral` が空中（`!WorldPos::isOnGround()`）で攻撃入力を受けたときに入場する。構え・攻撃・後隙の3区間を持ち、攻撃判定（`hitboxEntity`）を w-h 平面（垂直面）の円軌道上で更新する。後隙中も含め毎フレーム接地を検出し、接地した時点で（残っていればヒットボックスを破棄したうえで）`Landing` へ強制遷移する。接地せずに後隙が満了した場合はタイマー満了で `Neutral` へ戻る。リアクション Lv2・スタミナ枯渇時の威力低下は `DashAttack` 同様に未実装（暫定のダメージ+ヒットストップのみ、本格対応は #134 のスコープ）
-- **AirDash**: `Neutral` が空中（`!WorldPos::isOnGround()`）でダッシュ入力を受けたときに入場する。基本仕様は `Dash` と同じで `DashConfig` を流用し、構え・ダッシュ・後隙A・後隙Bの4区間を `elapsed` 1本で管理する。地上 `Dash` と異なり再ダッシュ・ダッシュ攻撃へのキャンセルは持たず（空中ダッシュ攻撃は #189 のスコープ）、ダッシュ移動区間中は垂直速度を 0 に固定して重力の影響を受けない（暫定仕様）。構え・ダッシュ中は `Invincible` を付与し後隙入りで除去する。後隙中も含め毎フレーム接地を検出し、接地した時点で（`Invincible` を除去したうえで）`Landing` へ強制遷移する。接地せずに後隙が満了した場合はタイマー満了で `Neutral` へ戻る
+- **AirDash**: `Neutral` が空中（`!WorldPos::isOnGround()`）でダッシュ入力を受けたときに入場する。基本仕様は `Dash` と同じで `DashConfig` を流用し、構え・ダッシュ・後隙A・後隙Bの4区間を `elapsed` 1本で管理する。地上 `Dash` と異なり再ダッシュへのキャンセルは持たないが、地上 `Dash` と同じパターンでダッシュ中・後隙A・B中の攻撃入力（`attackDown`）で空中ダッシュ攻撃を予約（`dashAttackQueued`）し、後隙B中に `AirDashAttack` へ遷移する。ダッシュ移動区間中は垂直速度を 0 に固定して重力の影響を受けず（暫定仕様）、移動中の方向を `lastDashDir` に記録し `AirDashAttack::dashDir` へ引き渡す。構え・ダッシュ中は `Invincible` を付与し後隙入りで除去する。後隙中も含め毎フレーム接地を検出し、接地した時点で（`Invincible` を除去したうえで）`Landing` へ強制遷移する。接地せずに後隙が満了した場合はタイマー満了で `Neutral` へ戻る
+- **AirDashAttack**: `AirDash` の後隙B中に空中ダッシュ攻撃の入力を予約すると遷移する。構え・攻撃・後隙の3区間を持ち、設定値は地上 `DashAttack` と共通の `DashAttackConfig`（`cfg.dashAttack`）を流用する。攻撃判定（`hitboxEntity`）は `DashAttack` と同じ w-d 平面の円軌道上で更新する。突進フェーズ（構え）中は `AirDash` の暫定仕様に合わせ垂直速度を 0 に固定する。後隙中も含め毎フレーム接地を検出し、接地した時点で（残っていればヒットボックスを破棄したうえで）`Landing` へ強制遷移する。接地せずに後隙が満了した場合はタイマー満了で `Neutral` へ戻る。`Invincible` は付与しない（地上 `DashAttack` と同様）
 - **Landing**: 着地硬直のタイマー状態。空中アクションの接地検出から遷移する
 
 ---
