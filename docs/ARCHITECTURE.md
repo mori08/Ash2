@@ -44,7 +44,8 @@ Main.cpp
   ├── PhaseStack          ← ゲーム状態をスタックで管理
   │     └── IPhase        ← 各フェーズが ECS を操作
   ├── AttachmentSystem    ← 毎フレーム: 親子座標伝播
-  └── DrawSystem          ← 毎フレーム: 描画
+  ├── DrawSystem          ← 毎フレーム: ワールド描画
+  └── HudSystem           ← 毎フレーム: 画面固定 HUD
 ```
 
 **設計方針：**
@@ -52,6 +53,8 @@ Main.cpp
 - フェーズがゲームロジックを持ち、System は描画・座標伝播などの横断的処理を担う。
 - Config / Input はフレームワーク非依存の構造体として分離し、テスト・リロードを容易にする。
 - 依存方向は一方向（`Phase → System → Component/Config`）。`Component` は他レイヤーに依存しない（`Hierarchy` のみ、自身の整合性を保つため `entt::registry` を直接操作する例外）。
+- 副作用の自動化はシグナルで行う（`Name` の追加・削除 → `NameLookup` 同期、`Hierarchy` の削除 → 自動 Detach）。
+- 排他的な行動状態は `Motion`（`std::variant`）で表現し、`MotionSystem` が `std::visit` で状態ごとの `Tick()` にディスパッチする。状態遷移は `Tick()` の返り値 `Optional<Motion>` でのみ行う（`Tick()` 内で直接 `replace` しない）。
 
 ---
 
@@ -67,6 +70,14 @@ while (System::Update()) {
     DrawSystem::Draw(registry)
     HudSystem::Draw(registry)
 }
+```
+
+ゲームプレイ系システムの呼び出し順はフェーズが所有する。標準の実行順（PlayerTestPhase、後続システムはこの順序を前提とする）：
+
+```
+HitstopSystem → MotionSystem → StaminaSystem → MovementSystem → GravitySystem
+→ AttachmentSystem → HitSystem →（ヒットリアクション付与）→ ProjectileSystem
+→ StaggerSystem → AnimationSystem
 ```
 
 起動時に `InitializeRegistry()` が `registry.ctx()` へ以下をセット：
@@ -91,13 +102,18 @@ WorldPos { w, h, d }
 描画順:   d が大きい（奥）→ 先に描画（DrawOrderLess: a.d > b.d）
 ```
 
+カメラは `Scene::Center()` の固定オフセットのみ（スクロールなし）。接地判定は `h <= 0`（`WorldPos::isOnGround()`）で、`GravitySystem` が地面への沈み込みを 0 にクランプする。
+
 **制約：** `WorldPos` は常に絶対座標。子エンティティも `WorldPos` を持ち、`AttachmentSystem` が毎フレーム親の絶対座標 + `LocalOffset` で上書きする。
 
-**描画・判定の基準点：** `WorldPos` は `Drawable`（`DrawAnchor`）と `Collider`（オフセット）の共通基準点だが、「中心」か「接地点」かはエンティティごとに異なる。`DrawAnchor` のデフォルトは `Center`、接地キャラクター（プレイヤー等、`Collider` を「足元からのカプセル」として持つエンティティ）は生成時に `BottomCenter` を明示する。
+**描画・判定の基準点：** `WorldPos` は `Drawable`（`DrawAnchor`）と `Collider`（オフセット）の共通基準点だが、「中心」か「接地点」かはエンティティごとに異なる。`DrawAnchor` のデフォルトは `Center`、接地キャラクター（プレイヤー等、`Collider` を「足元からのカプセル」として持つエンティティ）は生成時に `BottomCenter` を明示する。当たり判定のカプセルは w/h/d 空間の線分 + 半径で表し、`Collider` の `Vec3` は x=w、y=h、z=d に対応する。
 
 ---
 
 ## 主要な制約
 
 - **ビルドは `tools/build.sh`、実行は `tools/run.sh` で行う。** デバッガを使った調査はユーザーが Visual Studio 2022 で行う。
+- **Hitstop 除外規約：** `Hitstop` を持つエンティティは `MotionSystem` / `MovementSystem` / `GravitySystem` / `AnimationSystem` の view から `entt::exclude` で除外される。時間依存のシステムを追加するときは同様の除外が必要か検討すること。
+- **`Name` は構築後不変。** `NameLookup` が構築・破棄シグナルでのみ同期されるため。
+- **アセットのパス解決は必ず `AssetPath()` を通す。** デバッグ（ファイル）とリリース（埋め込みリソース）の差を吸収する。
 - このドキュメントは 200 行上限。超過する場合はコード例→実装詳細→未使用の設計説明の順で削る。
