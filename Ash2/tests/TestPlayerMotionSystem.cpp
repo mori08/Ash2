@@ -315,6 +315,63 @@ TEST_CASE("PlayerMotionSystem - jump input immediately switches to jump clip") {
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"jump");
 }
 
+TEST_CASE(
+    "PlayerMotionSystem - simultaneous jump and melee attack input "
+    "transitions to Melee1 without vertical velocity") {
+  // 同一フレームのジャンプ＋近接攻撃入力は Melee1 へ遷移し、上昇しない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  FrameData frameData{};
+  frameData.input.jumpDown = true;
+  frameData.input.attackDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Melee1>(motion));
+  REQUIRE(registry.get<Velocity>(player).h == Approx(0.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - simultaneous jump and ranged attack input "
+    "transitions to Ranged without vertical velocity") {
+  // 同一フレームのジャンプ＋遠距離攻撃入力は Ranged へ遷移し、上昇しない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  FrameData frameData{};
+  frameData.input.jumpDown = true;
+  frameData.input.rangedAttackDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Ranged>(motion));
+  REQUIRE(registry.get<Velocity>(player).h == Approx(0.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - simultaneous jump and dash input transitions to "
+    "Dash without vertical velocity") {
+  // 同一フレームのジャンプ＋ダッシュ入力は Dash へ遷移し、上昇しない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  FrameData frameData{};
+  frameData.input.jumpDown = true;
+  frameData.input.dashDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(registry.get<Velocity>(player).h == Approx(0.0));
+}
+
 TEST_CASE("PlayerMotionSystem - elapsed expiry transitions Melee1 to Neutral") {
   // elapsed が windupSec+activeSec+recoverySec を超え、comboQueued
   // が立っていない場合は Melee1 から Neutral
