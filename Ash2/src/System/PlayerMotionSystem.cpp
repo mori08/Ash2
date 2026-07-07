@@ -272,10 +272,6 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
   vel.w = input.moveAxis.x * cfg.speed;
   vel.d = input.moveAxis.y * cfg.speed;
 
-  if (input.jumpDown && pos.isOnGround()) {
-    vel.h = cfg.jumpSpeed;
-  }
-
   if (vel.w > 0.0) {
     anim.facingRight = true;
   } else if (vel.w < 0.0) {
@@ -311,6 +307,10 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
              registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
     // 空中ダッシュへの入場（AirDash::Tick が接地検出で Landing へ遷移させる）
     return MakeAirDash(registry, entity, cfg, anim);
+  }
+
+  if (input.jumpDown && pos.isOnGround()) {
+    vel.h = cfg.jumpSpeed;
   }
 
   // ロコモーションクリップ（idle/move/jump）
