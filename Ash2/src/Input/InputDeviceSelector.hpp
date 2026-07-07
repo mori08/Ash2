@@ -30,7 +30,8 @@ inline InputState InputDeviceSelector::update() {
       (XInput(0).buttonUp.down() || XInput(0).buttonDown.down() ||
        XInput(0).buttonLeft.down() || XInput(0).buttonRight.down() ||
        XInput(0).buttonA.down() || XInput(0).buttonB.down() ||
-       XInput(0).buttonY.down() || !stickAxis.isZero())) {
+       XInput(0).buttonX.down() || XInput(0).buttonY.down() ||
+       !stickAxis.isZero())) {
     m_activeDevice = Device::Gamepad;
   } else if (!Keyboard::GetAllInputs().isEmpty() ||
              !Mouse::GetAllInputs().isEmpty()) {
