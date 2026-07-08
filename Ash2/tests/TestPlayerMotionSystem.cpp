@@ -191,6 +191,35 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "PlayerMotionSystem - airborne player ranged attack input transitions "
+    "Neutral to Ranged") {
+  // 空中にいる場合も遠距離攻撃入力で Ranged
+  // へ遷移し、弾エンティティが生成される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;
+
+  FrameData frameData{};
+  frameData.input.rangedAttackDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Ranged>(motion));
+
+  const auto& ranged = std::get<PlayerMotion::Ranged>(motion);
+  REQUIRE(ranged.timer == Approx(4.0 / 8.0));
+
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip ==
+          U"ranged_attack");
+
+  // 弾エンティティが生成されている
+  const auto bulletView = registry.view<Projectile>();
+  REQUIRE(bulletView.size() == 1);
+}
+
+TEST_CASE(
     "PlayerMotionSystem - AirAttack spawns hitbox and moves along vertical "
     "orbit during active frame") {
   // 攻撃判定区間でヒットボックスが生成され、w-h 平面上の円軌道で移動する

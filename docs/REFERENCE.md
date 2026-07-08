@@ -57,7 +57,7 @@
 
 エンティティの排他的な行動状態（`std::variant<PlayerMotion::Neutral, Melee1, Melee2, Melee3, Ranged, Dash, DashAttack, AirAttack, AirDash, AirDashAttack, Landing>`）。
 
-- **Ranged**: 再生中クリップの残り時間を持つ
+- **Ranged**: 再生中クリップの残り時間を持つ。`Neutral` から接地・空中いずれでも入場できる（空中発動時も専用の遷移や着地処理は持たず、Neutral 復帰までの挙動は地上と同一）
 - **Melee1 / Melee2 / Melee3**: コンボの段ごとに分けた型。モーション開始からの経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。`Melee1`/`Melee2` は次段への遷移予約フラグ（`comboQueued`）を持つが、締め技の `Melee3` はコンボ継続を持たずタイマー満了で `Neutral` へ戻るのみ
 - **Dash**: 構え・ダッシュ・後隙A・後隙Bの4区間を `elapsed` 1本で管理する。ダッシュ中・後隙A・B中の攻撃入力（`attackDown`）でダッシュ攻撃を予約（`dashAttackQueued`）し、後隙B中に `DashAttack` へ遷移する。後隙B中のダッシュ入力（`dashDown`）は再ダッシュにキャンセルする。ダッシュ移動中の方向を `lastDashDir` に記録し `DashAttack::dashDir` へ引き渡す
 - **DashAttack**: 構え・攻撃・後隙の3区間を持ち、攻撃判定（`hitboxEntity`）を w-d 平面の円軌道上で更新する
