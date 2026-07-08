@@ -303,6 +303,15 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
     vel.w = 0.0;
     vel.d = 0.0;
     return MakeAirAttack(anim);
+  } else if (input.rangedAttackDown &&
+             registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost) {
+    // 空中遠距離攻撃への入場。Ranged は地上・空中で共有するため、
+    // 着地しても Landing を挟まずタイマー満了で Neutral
+    // に戻る（地上と同一挙動）。
+    vel.w = 0.0;
+    vel.d = 0.0;
+    SpawnProjectile(registry, pos, anim.facingRight, cfg);
+    return MakeRanged(registry, entity, cfg, playerData, anim);
   } else if (input.dashDown &&
              registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
     // 空中ダッシュへの入場（AirDash::Tick が接地検出で Landing へ遷移させる）
