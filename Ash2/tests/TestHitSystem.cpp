@@ -86,4 +86,62 @@ TEST_CASE("HitSystem - multi-collider attack hits target only once") {
   REQUIRE(hits.size() == 1);
 }
 
+TEST_CASE("HitSystem - collider with destroyed root is skipped") {
+  // 破棄済みの root
+  // を参照するコライダーはスキップされ、クラッシュもダメージもない
+  entt::registry registry;
+
+  // 破棄済みの root エンティティ（生成直後に破棄し、無効な entity にする）
+  auto root = registry.create();
+  registry.destroy(root);
+
+  // 攻撃コライダー（無効な root を参照）
+  auto attacker = registry.create();
+  registry.emplace<WorldPos>(attacker, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
+  registry.emplace<Collider>(attacker, Collider{.segmentStart = {0.0, 0.0, 0.0},
+                                                .segmentEnd = {0.0, 0.0, 0.0},
+                                                .radius = 10.0});
+  registry.emplace<Attack>(attacker, Attack{.damage = 5, .root = root});
+
+  // 被弾エンティティ（重なる位置）
+  auto target = registry.create();
+  registry.emplace<WorldPos>(target, WorldPos{.w = 5.0, .h = 0.0, .d = 0.0});
+  registry.emplace<Collider>(target, Collider{.segmentStart = {0.0, 0.0, 0.0},
+                                              .segmentEnd = {0.0, 0.0, 0.0},
+                                              .radius = 10.0});
+  registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
+
+  const auto hits = HitSystem::Update(registry);
+  REQUIRE(registry.get<Hp>(target).current == 100);
+  REQUIRE(hits.isEmpty());
+}
+
+TEST_CASE("HitSystem - collider with root lacking Attack is skipped") {
+  // Attack を持たない root を参照するコライダーはスキップされる
+  entt::registry registry;
+
+  // Attack を持たない root エンティティ
+  auto root = registry.create();
+
+  // 攻撃コライダー（Attack 非保持の root を参照）
+  auto attacker = registry.create();
+  registry.emplace<WorldPos>(attacker, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
+  registry.emplace<Collider>(attacker, Collider{.segmentStart = {0.0, 0.0, 0.0},
+                                                .segmentEnd = {0.0, 0.0, 0.0},
+                                                .radius = 10.0});
+  registry.emplace<Attack>(attacker, Attack{.damage = 5, .root = root});
+
+  // 被弾エンティティ（重なる位置）
+  auto target = registry.create();
+  registry.emplace<WorldPos>(target, WorldPos{.w = 5.0, .h = 0.0, .d = 0.0});
+  registry.emplace<Collider>(target, Collider{.segmentStart = {0.0, 0.0, 0.0},
+                                              .segmentEnd = {0.0, 0.0, 0.0},
+                                              .radius = 10.0});
+  registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
+
+  const auto hits = HitSystem::Update(registry);
+  REQUIRE(registry.get<Hp>(target).current == 100);
+  REQUIRE(hits.isEmpty());
+}
+
 #endif
