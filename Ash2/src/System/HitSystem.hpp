@@ -87,6 +87,13 @@ inline Array<HitPair> HitSystem::Update(entt::registry& registry) {
   for (auto&& [attacker, aPos, aCol, atk] : attackers.each()) {
     // root が設定されている場合はルートの Attack を参照してヒット管理する
     const auto rootEntity = (atk.root != entt::null) ? atk.root : attacker;
+    // root は破棄済み・Attack 非保持の可能性があるため参照前に検証する
+    // （attacker 自身が root の場合は attackers
+    // ビューの走査対象なので必ず有効） valid
+    // を先に評価する短絡順序を維持し、破棄済みエンティティへの all_of/get
+    // 呼び出し（未定義動作）を避ける
+    if (!registry.valid(rootEntity) || !registry.all_of<Attack>(rootEntity))
+      continue;
     auto& rootAtk = registry.get<Attack>(rootEntity);
 
     const Vec3 worldA{aPos.w, aPos.h, aPos.d};
