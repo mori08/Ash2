@@ -2,6 +2,8 @@
 
 #include "System/PlayerMotionSystem.hpp"
 
+#include <functional>
+
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
@@ -55,94 +57,108 @@ void RestartClip(SpriteAnimation& anim, const String& clip) {
   anim.elapsed = 0.0;
 }
 
-/// @brief 近接攻撃判定エンティティ（光の珠）を生成する
+/// @brief 攻撃判定エンティティの半径・ダメージ量をまとめた仕様
+// SpawnAttackHitbox の引数で double の radius と int の damage が隣接すると
+// 呼び出し側で取り違えやすいため、1つの構造体にまとめて渡す
+// （bugprone-easily-swappable-parameters 対策）。
+struct HitboxSpec {
+  /// 攻撃カプセルの半径（兼 CircleDrawable の表示半径）
+  double radius = 0.0;
+  /// 与えるダメージ量
+  int damage = 0;
+};
+
+/// @brief 攻撃判定エンティティ（光の珠）を生成する
 ///
-/// Component/Attack.hpp の Attack（ダメージ用）を付与する。
-/// 生成時点では構え中につき珠は体の近くに静止した位置に置く。
-/// Collider は珠エンティティ自身の原点からのオフセット 0 で固定し、
-/// 珠の現在位置は UpdateMeleeHitbox が更新する LocalOffset のみが担う。
-/// @param radius 攻撃カプセルの半径（兼 CircleDrawable の表示半径）
-entt::entity SpawnMeleeHitbox(entt::registry& registry, entt::entity owner,
-                              const WorldPos& pos, const PlayerConfig& cfg,
-                              double radius) {
+/// Component/Attack.hpp の Attack（ダメージ用）を spec.damage
+/// で確定させて付与する（生成後の上書きは行わない）。生成時点では構え中につき
+/// 珠は体の近くに静止した位置に置く。Collider は珠エンティティ自身の原点からの
+/// オフセット 0 で固定し、珠の現在位置は UpdateAttackHitbox が更新する
+/// LocalOffset のみが担う。
+entt::entity SpawnAttackHitbox(entt::registry& registry, entt::entity owner,
+                               const WorldPos& pos, const HitboxSpec& spec) {
   const auto hitbox = registry.create();
   registry.emplace<WorldPos>(hitbox, pos);
   registry.emplace<LocalOffset>(hitbox, LocalOffset{});
   Hierarchy::Attach(registry, owner, hitbox);
   registry.emplace<Collider>(hitbox, Collider{.segmentStart = Vec3::Zero(),
                                               .segmentEnd = Vec3::Zero(),
-                                              .radius = radius});
-  registry.emplace<Attack>(hitbox, Attack{.damage = cfg.melee.damage,
-                                          .hitstopSec = KMeleeHitstopSec});
+                                              .radius = spec.radius});
+  registry.emplace<Attack>(
+      hitbox, Attack{.damage = spec.damage, .hitstopSec = KMeleeHitstopSec});
   registry.emplace<Drawable>(
-      hitbox, CircleDrawable{.radius = radius, .color = KMeleeOrbColor});
+      hitbox, CircleDrawable{.radius = spec.radius, .color = KMeleeOrbColor});
   return hitbox;
 }
 
-/// @brief 攻撃フレーム内の珠の前方オフセット（プレイヤー相対）を返す
+/// @brief 突き出し軌道（近接1・3段目）の珠オフセット（プレイヤー相対）を返す
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
-Vec3 MeleeOrbOffset(double progress, bool facingRight, const MeleeConfig& cfg) {
+Vec3 MeleeThrustOffset(double progress, bool facingRight, double reach,
+                       double capMidH) {
   const double sign = facingRight ? 1.0 : -1.0;
   const double eased = EaseOutQuad(Clamp(progress, 0.0, 1.0));
-  return Vec3{sign * cfg.reach * eased, cfg.capMidH, 0.0};
+  return Vec3{sign * reach * eased, capMidH, 0.0};
 }
 
-/// @brief 2段目の攻撃フレーム内の珠オフセット（斬り上げ軌道）を返す
+/// @brief 斬り上げ軌道（近接2段目）の珠オフセットを返す
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
+// reach / capMidH は隣接する double 引数として渡すと取り違えやすいため
+// （bugprone-easily-swappable-parameters 対策）、両者を保持する MeleeConfig
+// への const 参照で受け取る。
 Vec3 MeleeSlashOffset(double progress, bool facingRight,
-                      const MeleeConfig& cfg) {
+                      const MeleeConfig& melee, double slashRiseHeight) {
   const double sign = facingRight ? 1.0 : -1.0;
   const double eased = EaseOutQuad(Clamp(progress, 0.0, 1.0));
-  const double horizontal = sign * cfg.reach * eased;
-  const double vertical = cfg.capMidH + (eased - 0.5) * cfg.slashRiseHeight;
+  const double horizontal = sign * melee.reach * eased;
+  const double vertical = melee.capMidH + (eased - 0.5) * slashRiseHeight;
   return Vec3{horizontal, vertical, 0.0};
 }
 
-/// @brief Melee1 へ移行する（攻撃クリップの設定）
-Melee1 MakeMelee(SpriteAnimation& anim, entt::entity hitboxEntity) {
-  SetClip(anim, U"melee_1");
-  return Melee1{.elapsed = 0.0, .hitboxEntity = hitboxEntity};
-}
-
-/// @brief Melee1 から Melee2 へ移行する（攻撃クリップを先頭から再生）
-Melee2 MakeMelee2(SpriteAnimation& anim) {
-  RestartClip(anim, U"melee_1");
-  return Melee2{};
-}
-
-/// @brief Melee2 から Melee3 へ移行する（攻撃クリップを先頭から再生）
-Melee3 MakeMelee3(SpriteAnimation& anim) {
-  RestartClip(anim, U"melee_1");
-  return Melee3{};
+/// @brief 段の軌道設定から、進行度→珠オフセットのラムダを作る
+std::function<Vec3(double)> MakeMeleeOffsetFn(const MeleeStageConfig& stage,
+                                              bool facingRight,
+                                              const MeleeConfig& melee) {
+  switch (stage.trajectory) {
+    case MeleeTrajectory::Slash:
+      return [=, &melee](double progress) {
+        return MeleeSlashOffset(progress, facingRight, melee,
+                                stage.slashRiseHeight);
+      };
+    case MeleeTrajectory::Thrust:
+    default:
+      return [=, &melee](double progress) {
+        return MeleeThrustOffset(progress, facingRight, melee.reach,
+                                 melee.capMidH);
+      };
+  }
 }
 
 /// @brief 攻撃判定の発生区間に応じてヒットボックスを生成・更新・破棄する
+/// @param timeline 攻撃のタイムライン（active 区間の判定に使用）
 /// @param radius 攻撃カプセルの半径（兼 CircleDrawable の表示半径）
+/// @param damage 生成時に確定させるダメージ量
 /// @param offsetFn 攻撃フレーム内の進行度から珠のオフセットを算出する関数
-void UpdateMeleeHitbox(entt::registry& registry, entt::entity owner,
-                       double elapsed, double activeStart, double activeEnd,
-                       bool facingRight, const PlayerConfig& cfg,
-                       entt::entity& hitboxEntity, double radius,
-                       Vec3 (*offsetFn)(double, bool, const MeleeConfig&)) {
-  const auto& melee = cfg.melee;
-
+void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
+                        double elapsed, const MotionTimeline& timeline,
+                        double radius, int damage, entt::entity& hitboxEntity,
+                        const std::function<Vec3(double)>& offsetFn) {
   // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
   // 補間で移動させる
-  if (elapsed >= activeStart && elapsed < activeEnd) {
+  if (timeline.isActive(elapsed)) {
     if (hitboxEntity == entt::null) {
       const auto& pos = registry.get<WorldPos>(owner);
-      hitboxEntity = SpawnMeleeHitbox(registry, owner, pos, cfg, radius);
+      hitboxEntity = SpawnAttackHitbox(
+          registry, owner, pos, HitboxSpec{.radius = radius, .damage = damage});
     }
 
-    const double progress = (elapsed - activeStart) / (activeEnd - activeStart);
-    const auto offset = offsetFn(progress, facingRight, melee);
+    const auto offset = offsetFn(timeline.activeProgress(elapsed));
 
     auto& localOffset = registry.get<LocalOffset>(hitboxEntity);
     localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
   }
 
   // 後隙以降：ヒットボックスが残っていれば破棄する
-  if (elapsed >= activeEnd && hitboxEntity != entt::null) {
+  if (elapsed >= timeline.activeEnd() && hitboxEntity != entt::null) {
     Hierarchy::DestroyWithChildren(registry, hitboxEntity);
     hitboxEntity = entt::null;
   }
@@ -169,6 +185,17 @@ void SpawnProjectile(entt::registry& registry, const WorldPos& pos,
   registry.emplace<Projectile>(bullet);
 }
 
+/// @brief 指定段の Melee へ移行する（攻撃クリップを先頭から再生）
+/// @param stage 移行先のコンボ段インデックス
+/// @param hitboxEntity 引き継ぐ攻撃判定エンティティ（通常は entt::null）
+Melee MakeMelee(SpriteAnimation& anim, int stage,
+                entt::entity hitboxEntity = entt::null) {
+  // Neutral からの初回入場でもクリップは melee_1 以外から必ず切り替わるため、
+  // RestartClip と SetClip の挙動差は生じない。
+  RestartClip(anim, U"melee_1");
+  return Melee{.stage = stage, .elapsed = 0.0, .hitboxEntity = hitboxEntity};
+}
+
 /// @brief Ranged へ移行する（スタミナ消費、遠距離攻撃クリップの設定と timer
 /// の算出）
 Ranged MakeRanged(entt::registry& registry, entt::entity entity,
@@ -184,12 +211,13 @@ Ranged MakeRanged(entt::registry& registry, entt::entity entity,
 ///
 /// 専用のダッシュ用クリップは未用意のため、移動主体の動きという特性が近い
 /// "move" クリップを暫定的に流用する。
+/// @param air 空中発動か（true: 空中ダッシュ相当）
 Dash MakeDash(entt::registry& registry, entt::entity entity,
-              const PlayerConfig& cfg, SpriteAnimation& anim) {
+              const PlayerConfig& cfg, SpriteAnimation& anim, bool air) {
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
   SetClip(anim, U"move");
-  return Dash{};
+  return Dash{.air = air};
 }
 
 /// @brief
@@ -197,35 +225,44 @@ Dash MakeDash(entt::registry& registry, entt::entity entity,
 ///
 /// Vec3 の x が w 軸（横）、z が d 軸（奥行き）、y が高さ固定（capMidH）。
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
-Vec3 DashAttackOrbOffset(double progress, const PlayerConfig& cfg) {
+// progress / orbitRadius は隣接する double 引数として渡すと取り違えやすいため
+// （bugprone-easily-swappable-parameters 対策）、orbitRadius は
+// DashAttackConfig への const 参照経由で受け取る。
+Vec3 DashAttackOrbOffset(double progress, const DashAttackConfig& da,
+                         double capMidH) {
   const double angle = Math::TwoPi * progress;
-  const double r = cfg.dashAttack.orbitRadius;
-  return Vec3{r * Math::Cos(angle), cfg.melee.capMidH, r * Math::Sin(angle)};
+  return Vec3{da.orbitRadius * Math::Cos(angle), capMidH,
+              da.orbitRadius * Math::Sin(angle)};
 }
 
 /// @brief DashAttack へ移行する
+/// @param air 空中発動か（true: 空中ダッシュ攻撃相当）
 /// @param dashDir ダッシュ時の移動方向（正規化済み）
-DashAttack MakeDashAttack(SpriteAnimation& anim, Vec2 dashDir) {
+DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir) {
   // 専用クリップ未用意のため "melee_1" を暫定流用する
   SetClip(anim, U"melee_1");
-  return DashAttack{
-      .elapsed = 0.0, .hitboxEntity = entt::null, .dashDir = dashDir};
+  return DashAttack{.elapsed = 0.0,
+                    .air = air,
+                    .hitboxEntity = entt::null,
+                    .dashDir = dashDir};
 }
 
-/// @brief
-/// 攻撃フレーム内の進行度から空中攻撃の珠オフセット（垂直軌道）を返す
+/// @brief 攻撃フレーム内の進行度から空中攻撃の珠オフセット（垂直軌道）を返す
 ///
 /// Vec3 の x が w 軸（横）、y が高さ（capMidH を中心に周回）、z は 0
 /// 固定。DashAttack の w-d 平面軌道に対し、こちらは w-h 平面（垂直面）を
 /// 周回する。回転方向はプレイヤーの向きに応じて左右反転する。
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
 /// @param facingRight プレイヤーの向き（false なら w 成分の符号を反転）
-Vec3 AirAttackOrbOffset(double progress, const PlayerConfig& cfg,
-                        bool facingRight) {
+// progress / orbitRadius は隣接する double 引数として渡すと取り違えやすいため
+// （bugprone-easily-swappable-parameters 対策）、orbitRadius は
+// AirAttackConfig への const 参照経由で受け取る。
+Vec3 AirAttackOrbOffset(double progress, const AirAttackConfig& aa,
+                        double capMidH, bool facingRight) {
   const double angle = Math::TwoPi * progress;
-  const double r = cfg.airAttack.orbitRadius;
-  const double w = facingRight ? r * Math::Cos(angle) : -r * Math::Cos(angle);
-  return Vec3{w, cfg.melee.capMidH - r * Math::Sin(angle), 0.0};
+  const double w = facingRight ? aa.orbitRadius * Math::Cos(angle)
+                               : -aa.orbitRadius * Math::Cos(angle);
+  return Vec3{w, capMidH - aa.orbitRadius * Math::Sin(angle), 0.0};
 }
 
 /// @brief AirAttack へ移行する
@@ -233,27 +270,6 @@ AirAttack MakeAirAttack(SpriteAnimation& anim) {
   // 専用クリップ未用意のため "melee_1" を暫定流用する
   SetClip(anim, U"melee_1");
   return AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null};
-}
-
-/// @brief AirDash へ移行する（スタミナ消費、クリップの設定）
-///
-/// 基本仕様は Dash と同じ（motion_design.md）ため MakeDash 同様に dash
-/// 設定を流用する。
-AirDash MakeAirDash(entt::registry& registry, entt::entity entity,
-                    const PlayerConfig& cfg, SpriteAnimation& anim) {
-  auto& stamina = registry.get<Stamina>(entity);
-  stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
-  SetClip(anim, U"move");
-  return AirDash{};
-}
-
-/// @brief AirDashAttack へ移行する
-/// @param dashDir ダッシュ時の移動方向（正規化済み）
-AirDashAttack MakeAirDashAttack(SpriteAnimation& anim, Vec2 dashDir) {
-  // 専用クリップ未用意のため "melee_1" を暫定流用する
-  SetClip(anim, U"melee_1");
-  return AirDashAttack{
-      .elapsed = 0.0, .hitboxEntity = entt::null, .dashDir = dashDir};
 }
 
 }  // namespace
@@ -284,8 +300,8 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
       // 直前で設定した横方向速度を打ち消す（持ち越すと1フレーム分滑る）
       vel.w = 0.0;
       vel.d = 0.0;
-      // ヒットボックス（光の珠）は攻撃フレーム開始時に Melee1::Tick が生成する
-      return MakeMelee(anim, entt::null);
+      // ヒットボックス（光の珠）は攻撃フレーム開始時に Melee::Tick が生成する
+      return MakeMelee(anim, 0);
     }
     if (input.rangedAttackDown &&
         registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost) {
@@ -296,7 +312,7 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
     }
     if (input.dashDown &&
         registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
-      return MakeDash(registry, entity, cfg, anim);
+      return MakeDash(registry, entity, cfg, anim, /*air=*/false);
     }
   } else if (input.attackDown) {
     // 空中攻撃への入場（AirAttack::Tick が接地検出で Landing へ遷移させる）
@@ -314,8 +330,9 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
     return MakeRanged(registry, entity, cfg, playerData, anim);
   } else if (input.dashDown &&
              registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
-    // 空中ダッシュへの入場（AirDash::Tick が接地検出で Landing へ遷移させる）
-    return MakeAirDash(registry, entity, cfg, anim);
+    // 空中ダッシュへの入場（Dash::Tick が air フラグにより接地検出で Landing
+    // へ遷移させる）
+    return MakeDash(registry, entity, cfg, anim, /*air=*/true);
   }
 
   if (input.jumpDown && pos.isOnGround()) {
@@ -339,110 +356,47 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
   return none;
 }
 
-Optional<Motion> Tick(Melee1& state, entt::registry& registry,
+Optional<Motion> Tick(Melee& state, entt::registry& registry,
                       entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& melee = cfg.melee;
+  const auto& stageCfg = melee.stages[state.stage];
+  const auto& timeline = stageCfg.timeline;
   const auto& input = frameData.input;
   auto& anim = registry.get<SpriteAnimation>(entity);
 
-  const double activeStart = melee.windupSec;
-  const double activeEnd = melee.windupSec + melee.activeSec;
-  const double recoveryEnd = activeEnd + melee.recoverySec;
-
   state.elapsed += frameData.dt;
 
-  UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
-                    anim.facingRight, cfg, state.hitboxEntity, melee.radius,
-                    MeleeOrbOffset);
+  const auto offsetFn = MakeMeleeOffsetFn(stageCfg, anim.facingRight, melee);
+  UpdateAttackHitbox(registry, entity, state.elapsed, timeline, stageCfg.radius,
+                     melee.damage, state.hitboxEntity, offsetFn);
 
-  // windup・active中の攻撃入力は次段への遷移を予約するのみ
-  if (state.elapsed < activeEnd && input.attackDown) {
-    state.comboQueued = true;
+  const bool hasNextStage =
+      state.stage + 1 < static_cast<int>(melee.stages.size());
+
+  if (hasNextStage) {
+    // 構え〜後隙A中の攻撃入力は次段への遷移を予約するのみ
+    if (!timeline.isCancelable(state.elapsed) && input.attackDown) {
+      state.comboQueued = true;
+    }
+
+    // 後隙Bに入った時点で予約済み、または後隙B中の新規入力があれば即座に次段へ
+    if (timeline.isCancelable(state.elapsed) &&
+        (state.comboQueued || input.attackDown)) {
+      return MakeMelee(anim, state.stage + 1);
+    }
+
+    // 後隙中のダッシュ入力でダッシュへキャンセル（ST不足時は無視）
+    // 締め技（最終段）はキャンセル不可のためこの分岐に入らない
+    if (timeline.isCancelable(state.elapsed) && input.dashDown &&
+        registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
+      return MakeDash(registry, entity, cfg, anim, /*air=*/false);
+    }
   }
 
-  // 後隙に入った時点で予約済み、または後隙中の新規入力があれば即座に次段へ
-  if (state.elapsed >= activeEnd && (state.comboQueued || input.attackDown)) {
-    return MakeMelee2(anim);
-  }
-
-  // 後隙中のダッシュ入力でダッシュへキャンセル（ST不足時は無視）
-  if (state.elapsed >= activeEnd && input.dashDown &&
-      registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
-    return MakeDash(registry, entity, cfg, anim);
-  }
-
-  if (state.elapsed >= recoveryEnd) {
-    return Neutral{};
-  }
-
-  return none;
-}
-
-Optional<Motion> Tick(Melee2& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
-  StopHorizontalMovement(registry, entity);
-
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& melee = cfg.melee;
-  const auto& input = frameData.input;
-  auto& anim = registry.get<SpriteAnimation>(entity);
-
-  const double activeStart = melee.windupSec;
-  const double activeEnd = melee.windupSec + melee.active2Sec;
-  const double recoveryEnd = activeEnd + melee.recoverySec;
-
-  state.elapsed += frameData.dt;
-
-  UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
-                    anim.facingRight, cfg, state.hitboxEntity, melee.radius,
-                    MeleeSlashOffset);
-
-  // windup・active中の攻撃入力は次段への遷移を予約するのみ
-  if (state.elapsed < activeEnd && input.attackDown) {
-    state.comboQueued = true;
-  }
-
-  // 後隙に入った時点で予約済み、または後隙中の新規入力があれば即座に次段へ
-  if (state.elapsed >= activeEnd && (state.comboQueued || input.attackDown)) {
-    return MakeMelee3(anim);
-  }
-
-  // 後隙中のダッシュ入力でダッシュへキャンセル（ST不足時は無視）
-  if (state.elapsed >= activeEnd && input.dashDown &&
-      registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
-    return MakeDash(registry, entity, cfg, anim);
-  }
-
-  if (state.elapsed >= recoveryEnd) {
-    return Neutral{};
-  }
-
-  return none;
-}
-
-Optional<Motion> Tick(Melee3& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
-  StopHorizontalMovement(registry, entity);
-
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& melee = cfg.melee;
-  const auto& anim = registry.get<SpriteAnimation>(entity);
-
-  const double activeStart = melee.windup3Sec;
-  const double activeEnd = melee.windup3Sec + melee.active3Sec;
-  const double recoveryEnd = activeEnd + melee.recovery3Sec;
-
-  state.elapsed += frameData.dt;
-
-  UpdateMeleeHitbox(registry, entity, state.elapsed, activeStart, activeEnd,
-                    anim.facingRight, cfg, state.hitboxEntity, melee.radius3,
-                    MeleeOrbOffset);
-
-  // 締め技のためコンボ継続なし、後隙満了で Neutral へ戻るのみ
-  if (state.elapsed >= recoveryEnd) {
+  if (timeline.isFinished(state.elapsed)) {
     return Neutral{};
   }
 
@@ -465,28 +419,34 @@ Optional<Motion> Tick(Dash& state, entt::registry& registry,
                       entt::entity entity, const FrameData& frameData) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& dash = cfg.dash;
+  const auto& timeline = dash.timeline;
   const auto& input = frameData.input;
+  const auto& pos = registry.get<WorldPos>(entity);
   auto& vel = registry.get<Velocity>(entity);
   auto& anim = registry.get<SpriteAnimation>(entity);
 
-  const double dashStart = dash.windupSec;
-  const double dashEnd = dash.windupSec + dash.dashSec;
-  const double recoveryAEnd = dashEnd + dash.recoveryASec;
-  const double recoveryBEnd = recoveryAEnd + dash.recoveryBSec;
-
   state.elapsed += frameData.dt;
 
+  // 接地検出はタイマー満了より先に評価する（空中発動時のみ、地上 Dash
+  // は接地遷移を持たない）
+  if (state.air && pos.isOnGround()) {
+    registry.remove<Invincible>(entity);
+    return Landing{.timer = cfg.landing.recoverySec};
+  }
+
   // 構え・ダッシュ中（後隙入り前）は無敵、後隙入りで除去する
-  if (state.elapsed < dashEnd) {
+  if (state.elapsed < timeline.activeEnd()) {
     registry.emplace_or_replace<Invincible>(entity);
   } else {
     registry.remove<Invincible>(entity);
   }
 
   // ダッシュ移動中：フリー方向、無方向なら facingRight から前方
-  // 移動中に方向ベクトルを lastDashDir へ記録する（後隙では vel
-  // がゼロになるため 後隙より前に必ず記録を終える）
-  if (state.elapsed >= dashStart && state.elapsed < dashEnd) {
+  // 空中発動時は移動区間中の垂直速度を 0 に固定する（重力の影響を受けない、
+  // 暫定仕様）。移動中に方向ベクトルを lastDashDir へ記録する
+  // （後隙では vel がゼロになるため後隙より前に必ず記録を終える）
+  if (timeline.isActive(state.elapsed)) {
+    if (state.air) vel.h = 0.0;
     if (!input.moveAxis.isZero()) {
       const Vec2 dir = input.moveAxis.normalized();
       vel.w = dir.x * dash.speed;
@@ -504,28 +464,28 @@ Optional<Motion> Tick(Dash& state, entt::registry& registry,
   }
 
   // 後隙B終了時：常に Neutral へ戻る（DashAttack 遷移より先に評価する）
-  if (state.elapsed >= recoveryBEnd) {
+  if (timeline.isFinished(state.elapsed)) {
     return Neutral{};
   }
 
   // 後隙B中：前フレームまでに予約済みならダッシュ攻撃へ遷移
   // 入力受付より先に評価することで、今フレームの入力は次フレーム以降に発動する
-  if (state.elapsed >= recoveryAEnd && state.dashAttackQueued) {
-    return MakeDashAttack(anim, state.lastDashDir);
+  if (timeline.isCancelable(state.elapsed) && state.dashAttackQueued) {
+    return MakeDashAttack(anim, state.air, state.lastDashDir);
   }
 
   // ダッシュ中・後隙A・B中の入力で遷移を予約する（DashAttack チェック後に評価）
-  if (state.elapsed >= dashStart && input.attackDown) {
+  if (state.elapsed >= timeline.activeStart() && input.attackDown) {
     state.dashAttackQueued = true;
   }
-  if (state.elapsed >= dashStart && input.dashDown) {
+  if (state.elapsed >= timeline.activeStart() && input.dashDown) {
     state.dashQueued = true;
   }
 
   // 後隙B中：再ダッシュ予約済みならダッシュへキャンセル（スタミナ不足時は無視）
-  if (state.elapsed >= recoveryAEnd && state.dashQueued &&
+  if (timeline.isCancelable(state.elapsed) && state.dashQueued &&
       registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
-    return MakeDash(registry, entity, cfg, anim);
+    return MakeDash(registry, entity, cfg, anim, state.air);
   }
 
   return none;
@@ -537,42 +497,37 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& da = cfg.dashAttack;
+  const auto& timeline = da.timeline;
+  const auto& pos = registry.get<WorldPos>(entity);
   auto& vel = registry.get<Velocity>(entity);
   auto& anim = registry.get<SpriteAnimation>(entity);
 
-  const double activeStart = da.windupSec;
-  const double activeEnd = da.windupSec + da.activeSec;
-  const double recoveryEnd = activeEnd + da.recoverySec;
-
   state.elapsed += frameData.dt;
 
-  // 攻撃判定区間：ヒットボックスの生成・軌道更新・後隙以降の破棄
-  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
-    if (state.hitboxEntity == entt::null) {
-      const auto& pos = registry.get<WorldPos>(entity);
-      state.hitboxEntity =
-          SpawnMeleeHitbox(registry, entity, pos, cfg, da.radius);
-      // Attack コンポーネントのダメージをダッシュ攻撃用に上書きする
-      registry.get<Attack>(state.hitboxEntity).damage = da.damage;
+  // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先、
+  // 空中発動時のみ。地上 DashAttack は接地遷移を持たない）
+  if (state.air && pos.isOnGround()) {
+    if (state.hitboxEntity != entt::null) {
+      Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
+      state.hitboxEntity = entt::null;
     }
-
-    const double progress =
-        (state.elapsed - activeStart) / (activeEnd - activeStart);
-    const auto offset = DashAttackOrbOffset(progress, cfg);
-
-    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
-    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+    return Landing{.timer = cfg.landing.recoverySec};
   }
 
-  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
-    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
-    state.hitboxEntity = entt::null;
-  }
+  // 攻撃判定区間：ヒットボックスの生成・軌道更新・後隙以降の破棄
+  const double capMidH = cfg.melee.capMidH;
+  const auto offsetFn = [&da, capMidH](double progress) {
+    return DashAttackOrbOffset(progress, da, capMidH);
+  };
+  UpdateAttackHitbox(registry, entity, state.elapsed, timeline, da.radius,
+                     da.damage, state.hitboxEntity, offsetFn);
 
   // 突進フェーズ（構え）：ダッシュ方向へ移動
-  if (state.elapsed < activeStart) {
+  // 空中発動時は AirDash の暫定仕様に合わせ垂直速度を 0 に固定する
+  if (state.elapsed < timeline.activeStart()) {
     vel.w = state.dashDir.x * da.speed;
     vel.d = state.dashDir.y * da.speed;
+    if (state.air) vel.h = 0.0;
   } else {
     vel.w = 0.0;
     vel.d = 0.0;
@@ -584,7 +539,7 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
     anim.facingRight = false;
   }
 
-  if (state.elapsed >= recoveryEnd) {
+  if (timeline.isFinished(state.elapsed)) {
     return Neutral{};
   }
 
@@ -597,11 +552,8 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& aa = cfg.airAttack;
+  const auto& timeline = aa.timeline;
   const auto& pos = registry.get<WorldPos>(entity);
-
-  const double activeStart = aa.windupSec;
-  const double activeEnd = aa.windupSec + aa.activeSec;
-  const double recoveryEnd = activeEnd + aa.recoverySec;
 
   state.elapsed += frameData.dt;
 
@@ -614,172 +566,16 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
     return Landing{.timer = cfg.landing.recoverySec};
   }
 
-  // 攻撃判定区間：ヒットボックスの生成・軌道更新・後隙以降の破棄
-  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
-    if (state.hitboxEntity == entt::null) {
-      state.hitboxEntity =
-          SpawnMeleeHitbox(registry, entity, pos, cfg, aa.radius);
-      // Attack コンポーネントのダメージを空中攻撃用に上書きする
-      registry.get<Attack>(state.hitboxEntity).damage = aa.damage;
-    }
-
-    const double progress =
-        (state.elapsed - activeStart) / (activeEnd - activeStart);
-    const auto& anim = registry.get<SpriteAnimation>(entity);
-    const auto offset = AirAttackOrbOffset(progress, cfg, anim.facingRight);
-
-    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
-    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
-  }
-
-  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
-    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
-    state.hitboxEntity = entt::null;
-  }
+  const auto& anim = registry.get<SpriteAnimation>(entity);
+  const bool facingRight = anim.facingRight;
+  const auto offsetFn = [&aa, &cfg, facingRight](double progress) {
+    return AirAttackOrbOffset(progress, aa, cfg.melee.capMidH, facingRight);
+  };
+  UpdateAttackHitbox(registry, entity, state.elapsed, timeline, aa.radius,
+                     aa.damage, state.hitboxEntity, offsetFn);
 
   // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
-  if (state.elapsed >= recoveryEnd) {
-    return Neutral{};
-  }
-
-  return none;
-}
-
-Optional<Motion> Tick(AirDash& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& dash = cfg.dash;
-  const auto& input = frameData.input;
-  const auto& pos = registry.get<WorldPos>(entity);
-  auto& vel = registry.get<Velocity>(entity);
-  auto& anim = registry.get<SpriteAnimation>(entity);
-
-  const double dashStart = dash.windupSec;
-  const double dashEnd = dash.windupSec + dash.dashSec;
-  const double recoveryAEnd = dashEnd + dash.recoveryASec;
-  const double recoveryBEnd = recoveryAEnd + dash.recoveryBSec;
-
-  state.elapsed += frameData.dt;
-
-  // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
-  if (pos.isOnGround()) {
-    registry.remove<Invincible>(entity);
-    return Landing{.timer = cfg.landing.recoverySec};
-  }
-
-  // 構え・ダッシュ中（後隙入り前）は無敵、後隙入りで除去する
-  if (state.elapsed < dashEnd) {
-    registry.emplace_or_replace<Invincible>(entity);
-  } else {
-    registry.remove<Invincible>(entity);
-  }
-
-  // ダッシュ移動中：フリー方向、無方向なら facingRight から前方
-  // 垂直速度は移動区間中 0 に固定する（重力の影響を受けない、暫定仕様）
-  // 移動中に方向ベクトルを lastDashDir へ記録する（後隙では vel
-  // がゼロになるため後隙より前に必ず記録を終える）
-  if (state.elapsed >= dashStart && state.elapsed < dashEnd) {
-    vel.h = 0.0;
-    if (!input.moveAxis.isZero()) {
-      const Vec2 dir = input.moveAxis.normalized();
-      vel.w = dir.x * dash.speed;
-      vel.d = dir.y * dash.speed;
-      state.lastDashDir = dir;
-    } else {
-      const double sign = anim.facingRight ? 1.0 : -1.0;
-      vel.w = sign * dash.speed;
-      vel.d = 0.0;
-      state.lastDashDir = Vec2{sign, 0.0};
-    }
-  } else {
-    vel.w = 0.0;
-    vel.d = 0.0;
-  }
-
-  // 後隙B終了時：常に Neutral へ戻る（AirDashAttack 遷移より先に評価する）
-  if (state.elapsed >= recoveryBEnd) {
-    return Neutral{};
-  }
-
-  // 後隙B中：前フレームまでに予約済みなら空中ダッシュ攻撃へ遷移
-  // 入力受付より先に評価することで、今フレームの入力は次フレーム以降に発動する
-  if (state.elapsed >= recoveryAEnd && state.dashAttackQueued) {
-    return MakeAirDashAttack(anim, state.lastDashDir);
-  }
-
-  // ダッシュ中・後隙A・B中の攻撃入力で遷移を予約する
-  // （AirDashAttack チェック後に評価）
-  if (state.elapsed >= dashStart && input.attackDown) {
-    state.dashAttackQueued = true;
-  }
-
-  return none;
-}
-
-Optional<Motion> Tick(AirDashAttack& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& da = cfg.dashAttack;
-  const auto& pos = registry.get<WorldPos>(entity);
-  auto& vel = registry.get<Velocity>(entity);
-  auto& anim = registry.get<SpriteAnimation>(entity);
-
-  const double activeStart = da.windupSec;
-  const double activeEnd = da.windupSec + da.activeSec;
-  const double recoveryEnd = activeEnd + da.recoverySec;
-
-  state.elapsed += frameData.dt;
-
-  // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
-  if (pos.isOnGround()) {
-    if (state.hitboxEntity != entt::null) {
-      Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
-      state.hitboxEntity = entt::null;
-    }
-    return Landing{.timer = cfg.landing.recoverySec};
-  }
-
-  // 攻撃判定区間：ヒットボックスの生成・軌道更新・後隙以降の破棄
-  if (state.elapsed >= activeStart && state.elapsed < activeEnd) {
-    if (state.hitboxEntity == entt::null) {
-      state.hitboxEntity =
-          SpawnMeleeHitbox(registry, entity, pos, cfg, da.radius);
-      // Attack コンポーネントのダメージをダッシュ攻撃用に上書きする
-      registry.get<Attack>(state.hitboxEntity).damage = da.damage;
-    }
-
-    const double progress =
-        (state.elapsed - activeStart) / (activeEnd - activeStart);
-    const auto offset = DashAttackOrbOffset(progress, cfg);
-
-    auto& localOffset = registry.get<LocalOffset>(state.hitboxEntity);
-    localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
-  }
-
-  if (state.elapsed >= activeEnd && state.hitboxEntity != entt::null) {
-    Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
-    state.hitboxEntity = entt::null;
-  }
-
-  // 突進フェーズ（構え）：ダッシュ方向へ移動
-  // 垂直速度は AirDash の暫定仕様に合わせ 0 に固定する（重力の影響を受けない）
-  if (state.elapsed < activeStart) {
-    vel.w = state.dashDir.x * da.speed;
-    vel.d = state.dashDir.y * da.speed;
-    vel.h = 0.0;
-  } else {
-    vel.w = 0.0;
-    vel.d = 0.0;
-  }
-
-  if (state.dashDir.x > 0.0) {
-    anim.facingRight = true;
-  } else if (state.dashDir.x < 0.0) {
-    anim.facingRight = false;
-  }
-
-  // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
-  if (state.elapsed >= recoveryEnd) {
+  if (timeline.isFinished(state.elapsed)) {
     return Neutral{};
   }
 

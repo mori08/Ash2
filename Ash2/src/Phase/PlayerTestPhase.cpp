@@ -153,7 +153,7 @@ void PlayerTestPhase::reloadPlayer(entt::registry& registry) {
 }
 
 void PlayerTestPhase::onBeforePop(entt::registry& registry) {
-  // 攻撃判定エンティティ（PlayerMotion::Melee1/Melee2.hitboxEntity）は
+  // 攻撃判定エンティティ（PlayerMotion::Melee.hitboxEntity 等）は
   // m_playerRoot の子孫なので DestroyWithChildren で連動して破棄される
   if (m_playerRoot != entt::null) {
     Hierarchy::DestroyWithChildren(registry, m_playerRoot);

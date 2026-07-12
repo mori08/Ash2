@@ -1,5 +1,32 @@
 #include "PlayerConfig.hpp"
 
+namespace {
+
+/// @brief TOML 値から MotionTimeline を生成する
+/// @note windup_sec/active_sec/recovery_a_sec/recovery_b_sec
+/// の4キーを持つテーブルであればよく、melee の段テーブルのように
+/// 他のキーを併せ持っていても構わない
+MotionTimeline ParseTimeline(const TOMLValue& toml) {
+  return MotionTimeline{
+      .windupSec = toml[U"windup_sec"].get<double>(),
+      .activeSec = toml[U"active_sec"].get<double>(),
+      .recoveryASec = toml[U"recovery_a_sec"].get<double>(),
+      .recoveryBSec = toml[U"recovery_b_sec"].get<double>(),
+  };
+}
+
+/// @brief TOML の trajectory 文字列を MeleeTrajectory へ変換する
+// 初期化経路の設定読み込みであり、expected を返せない FromToml
+// の下請けのため、不明な値は throw で致命として確定させる
+MeleeTrajectory ParseMeleeTrajectory(const String& value) {
+  if (value == U"thrust") return MeleeTrajectory::Thrust;
+  if (value == U"slash") return MeleeTrajectory::Slash;
+  throw Error{U"PlayerConfig::FromToml: 不明な melee trajectory \"" + value +
+              U"\""};
+}
+
+}  // namespace
+
 PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
   const auto& m = toml[U"melee"];
   const auto& r = toml[U"ranged"];
@@ -8,6 +35,25 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
   const auto& aa = toml[U"air_attack"];
   const auto& s = toml[U"stamina"];
   const auto& l = toml[U"landing"];
+
+  Array<MeleeStageConfig> stages;
+  // Why not: m[U"stage"] がテーブル配列として存在しない場合に
+  // tableArrayView() を呼ぶと不正アクセスになるため、
+  // 事前に isTableArray() で存在確認する。
+  // キー欠落時は空の stages のままとし、旧 get<T>() のデフォルト値
+  // 挙動に倣って寛容に扱う。
+  if (const auto& stageValue = m[U"stage"]; stageValue.isTableArray()) {
+    for (const auto& stageToml : stageValue.tableArrayView()) {
+      stages.push_back(MeleeStageConfig{
+          .timeline = ParseTimeline(stageToml),
+          .radius = stageToml[U"radius"].get<double>(),
+          .trajectory =
+              ParseMeleeTrajectory(stageToml[U"trajectory"].get<String>()),
+          .slashRiseHeight = stageToml[U"slash_rise_height"].get<double>(),
+      });
+    }
+  }
+
   return {
       .speed = toml[U"speed"].get<double>(),
       .jumpSpeed = toml[U"jump_speed"].get<double>(),
@@ -16,17 +62,8 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
           {
               .capMidH = m[U"cap_mid_h"].get<double>(),
               .reach = m[U"reach"].get<double>(),
-              .radius = m[U"radius"].get<double>(),
               .damage = m[U"damage"].get<int>(),
-              .windupSec = m[U"windup_sec"].get<double>(),
-              .activeSec = m[U"active_sec"].get<double>(),
-              .recoverySec = m[U"recovery_sec"].get<double>(),
-              .active2Sec = m[U"active2_sec"].get<double>(),
-              .slashRiseHeight = m[U"slash_rise_height"].get<double>(),
-              .windup3Sec = m[U"windup3_sec"].get<double>(),
-              .active3Sec = m[U"active3_sec"].get<double>(),
-              .recovery3Sec = m[U"recovery3_sec"].get<double>(),
-              .radius3 = m[U"radius3"].get<double>(),
+              .stages = std::move(stages),
           },
       .ranged =
           {
@@ -40,17 +77,12 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
       .dash =
           {
               .speed = d[U"speed"].get<double>(),
-              .windupSec = d[U"windup_sec"].get<double>(),
-              .dashSec = d[U"dash_sec"].get<double>(),
-              .recoveryASec = d[U"recovery_a_sec"].get<double>(),
-              .recoveryBSec = d[U"recovery_b_sec"].get<double>(),
+              .timeline = ParseTimeline(d),
               .staminaCost = d[U"stamina_cost"].get<int>(),
           },
       .dashAttack =
           {
-              .windupSec = da[U"windup_sec"].get<double>(),
-              .activeSec = da[U"active_sec"].get<double>(),
-              .recoverySec = da[U"recovery_sec"].get<double>(),
+              .timeline = ParseTimeline(da),
               .speed = da[U"speed"].get<double>(),
               .orbitRadius = da[U"orbit_radius"].get<double>(),
               .radius = da[U"radius"].get<double>(),
@@ -58,9 +90,7 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
           },
       .airAttack =
           {
-              .windupSec = aa[U"windup_sec"].get<double>(),
-              .activeSec = aa[U"active_sec"].get<double>(),
-              .recoverySec = aa[U"recovery_sec"].get<double>(),
+              .timeline = ParseTimeline(aa),
               .orbitRadius = aa[U"orbit_radius"].get<double>(),
               .radius = aa[U"radius"].get<double>(),
               .damage = aa[U"damage"].get<int>(),

@@ -1,48 +1,93 @@
 #pragma once
 #include <Siv3D.hpp>
 
+/// @brief 攻撃・ダッシュ系アクション共通の4区間タイムライン
+///
+/// 構え（windup）・攻撃/移動（active）・後隙A（recoveryA、キャンセル不可）・
+/// 後隙B（recoveryB、キャンセル可）の順に経過する。区間の意味はアクションごとに
+/// 異なる（例: Dash の active はダッシュ移動時間）。
+// 経過時刻からの区間判定はアクションを問わず共通のため、この構造体に集約する。
+struct MotionTimeline {
+  /// 構え時間（秒）
+  double windupSec = 0.0;
+  /// 攻撃/移動が有効な時間（秒）
+  double activeSec = 0.0;
+  /// 後隙A（キャンセル不可）の時間（秒）
+  double recoveryASec = 0.0;
+  /// 後隙B（キャンセル可）の時間（秒）
+  double recoveryBSec = 0.0;
+
+  /// @brief active 区間の開始時刻（秒）
+  [[nodiscard]] double activeStart() const { return windupSec; }
+  /// @brief active 区間の終了時刻（秒）
+  [[nodiscard]] double activeEnd() const { return windupSec + activeSec; }
+  /// @brief 後隙Aの終了時刻（秒）
+  [[nodiscard]] double recoveryAEnd() const {
+    return activeEnd() + recoveryASec;
+  }
+  /// @brief 後隙Bの終了時刻（秒、モーション全体の終了時刻でもある）
+  [[nodiscard]] double recoveryBEnd() const {
+    return recoveryAEnd() + recoveryBSec;
+  }
+
+  /// @brief active 区間中か
+  [[nodiscard]] bool isActive(double elapsed) const {
+    return elapsed >= activeStart() && elapsed < activeEnd();
+  }
+  /// @brief 後隙B（キャンセル可能区間）に入っているか
+  [[nodiscard]] bool isCancelable(double elapsed) const {
+    return elapsed >= recoveryAEnd();
+  }
+  /// @brief モーション全体が終了したか
+  [[nodiscard]] bool isFinished(double elapsed) const {
+    return elapsed >= recoveryBEnd();
+  }
+  /// @brief active 区間内の進行度
+  /// @return 0.0〜1.0（区間外を渡した場合は範囲外の値になりうる）
+  [[nodiscard]] double activeProgress(double elapsed) const {
+    return (elapsed - activeStart()) / activeSec;
+  }
+};
+
+/// @brief 近接攻撃の軌道パターン
+enum class MeleeTrajectory : uint8 {
+  /// 前方への直線的な突き出し
+  Thrust,
+  /// 斜め下から斜め上への斬り上げ
+  Slash,
+};
+
+/// @brief 近接コンボの段ごとの設定値
+struct MeleeStageConfig {
+  /// この段のタイムライン
+  MotionTimeline timeline;
+  /// 攻撃カプセルの半径
+  double radius = 0.0;
+  /// 軌道パターン
+  MeleeTrajectory trajectory = MeleeTrajectory::Thrust;
+  /// Slash 軌道時の斬り上げの振り幅（capMidH を中心とした上下の幅）。
+  /// Thrust では未使用
+  double slashRiseHeight = 0.0;
+};
+
 /// @brief 近距離攻撃の設定値
 struct MeleeConfig {
   /// 攻撃カプセルの高さ中点（WorldPos.h 方向オフセット）
   double capMidH;
   /// 攻撃リーチ（w 軸方向の距離）
   double reach;
-  /// 攻撃カプセルの半径
-  double radius;
-  /// 与えるダメージ量
+  /// 与えるダメージ量（全段共通）
   int damage;
-  /// 構え時間（秒）
-  double windupSec;
-  /// 攻撃判定が有効な時間（秒）
-  double activeSec;
-  /// 後隙時間（秒）
-  double recoverySec;
-  /// 2段目の攻撃判定が有効な時間（秒）
-  double active2Sec;
-  /// 2段目の斬り上げの振り幅（capMidH を中心とした上下の幅）
-  double slashRiseHeight;
-  /// 3段目の構え時間（秒）
-  double windup3Sec;
-  /// 3段目の攻撃判定が有効な時間（秒）
-  double active3Sec;
-  /// 3段目の後隙時間（秒）
-  double recovery3Sec;
-  /// 3段目の攻撃カプセルの半径
-  double radius3;
+  /// コンボ段ごとの設定（先頭が1段目）
+  Array<MeleeStageConfig> stages;
 };
 
 /// @brief ダッシュの設定値
 struct DashConfig {
   /// ダッシュ移動速度（ピクセル/秒）
   double speed;
-  /// 構え時間（秒）
-  double windupSec;
-  /// ダッシュ時間（秒）
-  double dashSec;
-  /// 後隙A（キャンセル不可）の時間（秒）
-  double recoveryASec;
-  /// 後隙B（キャンセル可）の時間（秒）
-  double recoveryBSec;
+  /// 構え・ダッシュ・後隙A・後隙Bのタイムライン（activeSec がダッシュ移動時間）
+  MotionTimeline timeline;
   /// 1回の発生に必要なスタミナ消費量
   int staminaCost;
 };
@@ -65,12 +110,8 @@ struct RangedConfig {
 
 /// @brief ダッシュ攻撃の設定値
 struct DashAttackConfig {
-  /// 構え時間（秒）
-  double windupSec;
-  /// 攻撃判定が有効な時間（秒）
-  double activeSec;
-  /// 後隙時間（秒）
-  double recoverySec;
+  /// 構え・攻撃・後隙A・後隙Bのタイムライン（recoveryBSec は 0 相当）
+  MotionTimeline timeline;
   /// 突進速度（ピクセル/秒）
   double speed;
   /// ヒットボックスの軌道半径（w-d 平面上の円）
@@ -83,12 +124,8 @@ struct DashAttackConfig {
 
 /// @brief 空中攻撃の設定値
 struct AirAttackConfig {
-  /// 構え時間（秒）
-  double windupSec;
-  /// 攻撃判定が有効な時間（秒）
-  double activeSec;
-  /// 後隙時間（秒）
-  double recoverySec;
+  /// 構え・攻撃・後隙A・後隙Bのタイムライン（recoveryBSec は 0 相当）
+  MotionTimeline timeline;
   /// ヒットボックスの軌道半径（w-h 平面上の円）
   double orbitRadius;
   /// 攻撃カプセルの半径
