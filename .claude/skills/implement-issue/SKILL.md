@@ -33,10 +33,19 @@ Agent ツール（`subagent_type: implement`）を起動し、プランファイ
 Implement エージェントの出力から変更ファイル一覧を取り出し、それをプロンプトに含めて Agent ツール（`subagent_type: ci`）を起動する。
 問題なければ OK を返す。問題があれば即座に NG レポートを返し、c〜d はスキップして e へ進む。
 
-#### c. Review サブエージェント
+#### c. Review + Rule-Review サブエージェント（並列）
 
-Agent ツール（`subagent_type: review`）を起動する。
-問題なければ OK を返す。問題があれば即座に NG レポートを返し、d はスキップして e へ進む。
+以下のエージェントを**1つのメッセージで同時に**起動する。
+
+- Agent ツール（`subagent_type: review`）× 1 — 正しさ・モダン C++・設計のレビュー
+- Agent ツール（`subagent_type: rule-review`）× rule の数 — rule 準拠チェック。
+  変更ファイルに `paths` がマッチする `.claude/rules/*.md` を対象とし、**rule 1件につき1起動**する。
+  `cpp.md` は節ごとに分割し、節がリンクする docs ファイル（`docs/ERROR_HANDLING.md` など）のパスもプロンプトに含める
+  （docs へのリンクを持たない節は、rule ファイルのパスと節名のみでよい）。
+  各プロンプトには対象 rule のファイルパス・節名と、
+  「ファイル操作は Glob（探索）・Grep（検索）・Read（読み込み）を優先する」ルールを明記する。
+
+全エージェントの結果が揃うのを待ち、1つでも NG があれば NG レポートをまとめて e へ進む。
 
 #### d. ビジュアルチェック（ゲームを実行してテストしたい箇所がある場合）
 
