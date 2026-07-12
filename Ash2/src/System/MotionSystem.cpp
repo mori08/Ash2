@@ -15,24 +15,16 @@ String MotionName(const Motion& m) {
         using T = std::decay_t<decltype(s)>;
         if constexpr (std::is_same_v<T, PlayerMotion::Neutral>)
           return U"Neutral";
-        else if constexpr (std::is_same_v<T, PlayerMotion::Melee1>)
-          return U"Melee1";
-        else if constexpr (std::is_same_v<T, PlayerMotion::Melee2>)
-          return U"Melee2";
-        else if constexpr (std::is_same_v<T, PlayerMotion::Melee3>)
-          return U"Melee3";
+        else if constexpr (std::is_same_v<T, PlayerMotion::Melee>)
+          return U"Melee" + Format(s.stage + 1);
         else if constexpr (std::is_same_v<T, PlayerMotion::Ranged>)
           return U"Ranged";
         else if constexpr (std::is_same_v<T, PlayerMotion::Dash>)
-          return U"Dash";
+          return s.air ? U"AirDash" : U"Dash";
         else if constexpr (std::is_same_v<T, PlayerMotion::DashAttack>)
-          return U"DashAttack";
+          return s.air ? U"AirDashAttack" : U"DashAttack";
         else if constexpr (std::is_same_v<T, PlayerMotion::AirAttack>)
           return U"AirAttack";
-        else if constexpr (std::is_same_v<T, PlayerMotion::AirDash>)
-          return U"AirDash";
-        else if constexpr (std::is_same_v<T, PlayerMotion::AirDashAttack>)
-          return U"AirDashAttack";
         else if constexpr (std::is_same_v<T, PlayerMotion::Landing>)
           return U"Landing";
       },
