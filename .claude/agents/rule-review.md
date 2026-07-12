@@ -27,6 +27,10 @@ git diff main...HEAD
 - Judge **only** against the specified rule. Bugs, design concerns, and style issues
   outside the rule are out of scope — do not report them.
 - Use `Read` to look up surrounding context if the diff alone is insufficient to judge.
+- When you find a violation, sweep the **entire diff** for other occurrences of the
+  same pattern before writing the report, and list every occurrence you find.
+  A report that surfaces only the first instance forces another review round —
+  fixing your report should resolve the pattern in one pass.
 - Rate each violation 0–100 (confidence that it actually violates the rule).
   Only report violations scoring 80 or above.
 

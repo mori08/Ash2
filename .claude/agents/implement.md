@@ -18,7 +18,13 @@ The path to the plan file is provided in the input prompt (e.g. `tmp/plan-42.md`
 Read in parallel:
 - `docs/ARCHITECTURE.md` — architecture, constraints, and directory structure
 - `docs/REFERENCE.md` — existing components/systems/phases and part-specific constraints
+- `.claude/rules/*.md` — coding rules whose `paths` frontmatter matches the files
+  you will change
 - The plan file at the path specified in the input
+
+When a rule section links to a docs file (e.g. `docs/COMMENT.md`,
+`docs/ERROR_HANDLING.md`), read it **before** writing the code it governs
+(comments, error handling, …). These linked docs are mandatory reading, not optional.
 
 From the plan, focus on:
 - `## 実装方針` — what to implement
