@@ -50,9 +50,7 @@ If the terminal output is insufficient to diagnose a failure, read `logs/build.l
 ./tools/run-tests.sh
 ```
 
-The script always exits with code 0. Determine pass/fail from the output:
-- **Pass**: output contains `All tests passed`
-- **Fail**: output contains `failed` (case-insensitive) or does not contain `All tests passed`
+The script exits with code 0 on pass, non-zero on failure. Determine pass/fail from the exit code.
 
 ## Output
 
