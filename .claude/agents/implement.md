@@ -27,11 +27,11 @@ When a rule section links to a docs file (e.g. `docs/COMMENT.md`,
 (comments, error handling, …). These linked docs are mandatory reading, not optional.
 
 From the plan, focus on:
-- `## 実装方針` — what to implement
-- `## 変更ファイル一覧` — which files to touch
-- `## 実装順序` — the order to follow
-- `## 注意点` — constraints and risks
-- `## 修正 N回目` — any fix instructions appended by the implement-issue loop
+- `## § 実装方針` — what to implement, design decisions, and the files to change
+- `## § 手順` — the order to follow
+- `## § 注意点` — constraints and risks
+- `## § 影響` — affected and confirmed-unaffected areas
+- `## § 修正 N回目` — any fix instructions appended by the implement-issue loop
 
 ### 2. Implement
 
