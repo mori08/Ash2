@@ -39,7 +39,9 @@ void MotionSystem::Update(entt::registry& registry,
   for (const auto entity : view) {
     auto& motion = view.get<Motion>(entity);
     auto next = std::visit(
-        [&](auto& state) { return Tick(state, registry, entity, frameData); },
+        [&](MotionState auto& state) {
+          return Tick(state, registry, entity, frameData);
+        },
         motion);
     if (next.has_value()) {
       APP_LOG(U"[Motion] " + MotionName(motion) + U" → " + MotionName(*next));
