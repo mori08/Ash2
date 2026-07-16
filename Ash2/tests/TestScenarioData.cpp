@@ -58,4 +58,22 @@ TEST_CASE("ScenarioData::FromToml - unknown action throws Error") {
   REQUIRE_THROWS_AS(ScenarioData::FromToml(reader), Error);
 }
 
+TEST_CASE("ScenarioData::FromToml - missing duration throws Error") {
+  constexpr std::string_view Toml =
+      "[[intro]]\n"
+      "action = \"push\"\n"
+      "phase = \"wait\"\n";
+  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  REQUIRE_THROWS_AS(ScenarioData::FromToml(reader), Error);
+}
+
+TEST_CASE("ScenarioData::FromToml - missing param throws Error") {
+  constexpr std::string_view Toml =
+      "[[intro]]\n"
+      "action = \"push\"\n"
+      "phase = \"scenario\"\n";
+  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  REQUIRE_THROWS_AS(ScenarioData::FromToml(reader), Error);
+}
+
 #endif
