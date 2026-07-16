@@ -171,4 +171,4 @@
 - `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
-- `Motion` に新しい状態型を追加したときは、`MotionSystem.cpp` の `MotionName()`（デバッグログ用）にも分岐を追加する。
+- `Motion` に新しい状態型を追加したときは、`MotionSystem.cpp` の `MotionName()`（デバッグログ用）にも分岐を追加する。また、`MotionSystem::Update` の `std::visit` は `MotionState` concept（`MotionSystem.hpp`）で制約されているため、新状態型は `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。

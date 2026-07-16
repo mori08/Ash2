@@ -5,6 +5,15 @@
 
 struct FrameData;
 
+/// @brief Motion variant の状態型が満たすべき Tick() 契約
+/// （ADL で解決される Tick(state, registry, entity, frameData) が
+/// Optional<Motion> を返すこと）
+template <typename S>
+concept MotionState =
+    requires(S& s, entt::registry& r, entt::entity e, const FrameData& f) {
+      { Tick(s, r, e, f) } -> std::same_as<Optional<Motion>>;
+    };
+
 /// @brief Motion の状態遷移・更新を行う共通ディスパッチャ
 class MotionSystem {
  public:
