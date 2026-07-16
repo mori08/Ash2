@@ -3,6 +3,7 @@
 [![build-test](https://github.com/mori08/Ash2/actions/workflows/build-test.yml/badge.svg)](https://github.com/mori08/Ash2/actions/workflows/build-test.yml)
 [![clang-format](https://github.com/mori08/Ash2/actions/workflows/clang-format.yml/badge.svg)](https://github.com/mori08/Ash2/actions/workflows/clang-format.yml)
 [![clang-tidy](https://github.com/mori08/Ash2/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/mori08/Ash2/actions/workflows/clang-tidy.yml)
+[![CodeQL](https://github.com/mori08/Ash2/actions/workflows/codeql.yml/badge.svg)](https://github.com/mori08/Ash2/actions/workflows/codeql.yml)
 
 疑似3D視点のベルトアクションゲーム。奥行きを持つ2D表現でのアクションを目指した作品。
 
