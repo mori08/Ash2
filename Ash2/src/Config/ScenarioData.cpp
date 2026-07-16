@@ -10,9 +10,14 @@
 
 namespace {
 
-/// @brief 型 T のパラメータを保持し、make() で T を生成する IPhaseMaker
-/// @tparam T IPhase を継承するフェーズクラス（T::Param を持つこと）
+/// @brief IPhase を継承し、const Param& から構築可能な Param を持つフェーズ型
 template <typename T>
+concept PhaseWithParam = std::derived_from<T, IPhase> &&
+                         std::move_constructible<typename T::Param> &&
+                         std::constructible_from<T, const typename T::Param&>;
+
+/// @brief 型 T のパラメータを保持し、make() で T を生成する IPhaseMaker
+template <PhaseWithParam T>
 class PhaseMaker : public IPhaseMaker {
  public:
   explicit PhaseMaker(typename T::Param param) : m_param(std::move(param)) {}
@@ -29,9 +34,8 @@ class PhaseMaker : public IPhaseMaker {
 using PhaseLoader = std::function<IPhaseMaker::Ptr(const TOMLValue&)>;
 
 /// @brief 型 T に対する PhaseLoader を生成するヘルパー
-/// @tparam T IPhase を継承するフェーズクラス（T::Param を持つこと）
 /// @param parse TOML 値から T::Param を生成するラムダ
-template <typename T, typename F>
+template <PhaseWithParam T, typename F>
 PhaseLoader MakeLoader(F&& parse) {
   return [p = std::forward<F>(parse)](const TOMLValue& step) {
     return std::make_shared<const PhaseMaker<T>>(p(step));
