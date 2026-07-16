@@ -29,9 +29,9 @@ class TestMenuPhase : public IPhase {
     std::function<std::unique_ptr<IPhase>(entt::registry&)> create;
   };
 
-  static constexpr int KFontSize = 24;
+  static constexpr int32 KFontSize = 24;
 
   Array<MenuItem> m_items;
-  int m_selectedIndex = 0;
+  size_t m_selectedIndex = 0;
   Font m_font{KFontSize};
 };

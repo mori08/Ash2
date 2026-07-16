@@ -35,14 +35,14 @@ void StaminaSystem::Update(entt::registry& registry, double dt) {
 
     // 端数を accum に積み立てて毎フレームの切り捨て誤差を防ぐ
     stamina.accum += gain;
-    const int intGain = static_cast<int>(stamina.accum);
+    const auto intGain = static_cast<int32>(stamina.accum);
     if (intGain > 0) {
       stamina.accum -= static_cast<double>(intGain);
       stamina.current += intGain;
     }
 
     // 満タンに近い残量を丸めて微小な誤差が残り続けるのを防ぐ
-    if (stamina.current >= static_cast<int>(stamina.max * KFullThreshold)) {
+    if (stamina.current >= static_cast<int32>(stamina.max * KFullThreshold)) {
       stamina.current = stamina.max;
     }
   }

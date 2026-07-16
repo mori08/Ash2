@@ -1,17 +1,15 @@
 #include "Phase/TestMenuPhase.hpp"
 
-#include <utility>
-
 #include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/PlayerTestPhase.hpp"
 
 namespace {
 constexpr double KBgBrightness = 0.1;
-constexpr int KTitleX = 40;
-constexpr int KTitleY = 40;
-constexpr int KItemX = 60;
-constexpr int KItemBaseY = 100;
-constexpr int KItemSpacing = 40;
+constexpr int32 KTitleX = 40;
+constexpr int32 KTitleY = 40;
+constexpr int32 KItemX = 60;
+constexpr int32 KItemBaseY = 100;
+constexpr int32 KItemSpacing = 40;
 }  // namespace
 
 void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
@@ -36,11 +34,10 @@ void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
 IPhase::PhaseCommand TestMenuPhase::update(entt::registry& registry,
                                            const FrameData& /*frameData*/) {
   if (KeyUp.down()) {
-    m_selectedIndex = (m_selectedIndex - 1 + static_cast<int>(m_items.size())) %
-                      static_cast<int>(m_items.size());
+    m_selectedIndex = (m_selectedIndex - 1 + m_items.size()) % m_items.size();
   }
   if (KeyDown.down()) {
-    m_selectedIndex = (m_selectedIndex + 1) % static_cast<int>(m_items.size());
+    m_selectedIndex = (m_selectedIndex + 1) % m_items.size();
   }
 
   if (KeyEnter.down() && !m_items.empty()) {
@@ -51,10 +48,12 @@ IPhase::PhaseCommand TestMenuPhase::update(entt::registry& registry,
   Scene::SetBackground(ColorF{KBgBrightness});
   m_font(U"Test Menu").draw(KTitleX, KTitleY);
 
-  for (int i = 0; std::cmp_less(i, m_items.size()); ++i) {
+  for (size_t i = 0; i < m_items.size(); ++i) {
     const ColorF color =
         (i == m_selectedIndex) ? Palette::Yellow : Palette::White;
-    m_font(m_items[i].label).draw(KItemX, KItemBaseY + i * KItemSpacing, color);
+    m_font(m_items[i].label)
+        .draw(KItemX, KItemBaseY + static_cast<double>(i) * KItemSpacing,
+              color);
   }
 
   return PhaseCommand::None();

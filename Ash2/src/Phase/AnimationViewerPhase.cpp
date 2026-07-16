@@ -10,10 +10,10 @@
 
 namespace {
 constexpr double KBgBrightness = 0.15;
-constexpr int KTitleX = 20;
-constexpr int KTitleY = 20;
-constexpr int KClipInfoY = 50;
-constexpr int KHintY = 80;
+constexpr int32 KTitleX = 20;
+constexpr int32 KTitleY = 20;
+constexpr int32 KClipInfoY = 50;
+constexpr int32 KHintY = 80;
 }  // namespace
 
 AnimationViewerPhase::AnimationViewerPhase(const Param& param)
@@ -54,12 +54,11 @@ IPhase::PhaseCommand AnimationViewerPhase::update(entt::registry& registry,
   if (!m_clips.empty()) {
     bool changed = false;
     if (KeyLeft.down()) {
-      m_clipIndex = (m_clipIndex - 1 + static_cast<int>(m_clips.size())) %
-                    static_cast<int>(m_clips.size());
+      m_clipIndex = (m_clipIndex - 1 + m_clips.size()) % m_clips.size();
       changed = true;
     }
     if (KeyRight.down()) {
-      m_clipIndex = (m_clipIndex + 1) % static_cast<int>(m_clips.size());
+      m_clipIndex = (m_clipIndex + 1) % m_clips.size();
       changed = true;
     }
 

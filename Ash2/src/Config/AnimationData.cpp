@@ -4,7 +4,7 @@ AnimationData AnimationData::FromToml(const TOMLValue& toml) {
   const auto& off = toml[U"draw_offset"];
   AnimationData data{
       .textureKey = toml[U"texture"].getString(),
-      .size = {toml[U"width"].get<int>(), toml[U"height"].get<int>()},
+      .size = {toml[U"width"].get<int32>(), toml[U"height"].get<int32>()},
       .drawOffset = {off[U"x"].get<double>(), off[U"y"].get<double>()},
   };
 
@@ -15,8 +15,8 @@ AnimationData AnimationData::FromToml(const TOMLValue& toml) {
     }
     const auto& clip = member.value;
     data.clips[member.name] = AnimationClip{
-        .row = clip[U"row"].get<int>(),
-        .count = clip[U"count"].get<int>(),
+        .row = clip[U"row"].get<int32>(),
+        .count = clip[U"count"].get<int32>(),
         .speed = clip[U"speed"].get<double>(),
     };
   }

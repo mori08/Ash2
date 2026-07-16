@@ -12,7 +12,7 @@ struct Neutral {};
 /// @brief 近接攻撃中（コンボ段は stage で参照する）
 struct Melee {
   /// コンボ段のインデックス（0始まり、cfg.melee.stages を参照する）
-  int stage = 0;
+  size_t stage = 0;
   /// モーション開始からの経過時間（秒）
   double elapsed = 0.0;
   /// 攻撃判定の子エンティティ
