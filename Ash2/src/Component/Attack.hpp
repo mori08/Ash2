@@ -9,7 +9,7 @@
 /// も持つとき、攻撃判定が有効になる。
 struct Attack {
   /// 与えるダメージ量
-  int damage = 0;
+  int32 damage = 0;
 
   /// 複数コライダー構成時のルートエンティティ（単体の場合は entt::null）
   entt::entity root = entt::null;

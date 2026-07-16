@@ -58,14 +58,14 @@ void RestartClip(SpriteAnimation& anim, const String& clip) {
 }
 
 /// @brief 攻撃判定エンティティの半径・ダメージ量をまとめた仕様
-// SpawnAttackHitbox の引数で double の radius と int の damage が隣接すると
+// SpawnAttackHitbox の引数で double の radius と int32 の damage が隣接すると
 // 呼び出し側で取り違えやすいため、1つの構造体にまとめて渡す
 // （bugprone-easily-swappable-parameters 対策）。
 struct HitboxSpec {
   /// 攻撃カプセルの半径（兼 CircleDrawable の表示半径）
   double radius = 0.0;
   /// 与えるダメージ量
-  int damage = 0;
+  int32 damage = 0;
 };
 
 /// @brief 攻撃判定エンティティ（光の珠）を生成する
@@ -140,7 +140,7 @@ std::function<Vec3(double)> MakeMeleeOffsetFn(const MeleeStageConfig& stage,
 /// @param offsetFn 攻撃フレーム内の進行度から珠のオフセットを算出する関数
 void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
                         double elapsed, const MotionTimeline& timeline,
-                        double radius, int damage, entt::entity& hitboxEntity,
+                        double radius, int32 damage, entt::entity& hitboxEntity,
                         const std::function<Vec3(double)>& offsetFn) {
   // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
   // 補間で移動させる
@@ -188,7 +188,7 @@ void SpawnProjectile(entt::registry& registry, const WorldPos& pos,
 /// @brief 指定段の Melee へ移行する（攻撃クリップを先頭から再生）
 /// @param stage 移行先のコンボ段インデックス
 /// @param hitboxEntity 引き継ぐ攻撃判定エンティティ（通常は entt::null）
-Melee MakeMelee(SpriteAnimation& anim, int stage,
+Melee MakeMelee(SpriteAnimation& anim, size_t stage,
                 entt::entity hitboxEntity = entt::null) {
   // Neutral からの初回入場でもクリップは melee_1 以外から必ず切り替わるため、
   // RestartClip と SetClip の挙動差は生じない。
@@ -373,8 +373,7 @@ Optional<Motion> Tick(Melee& state, entt::registry& registry,
   UpdateAttackHitbox(registry, entity, state.elapsed, timeline, stageCfg.radius,
                      melee.damage, state.hitboxEntity, offsetFn);
 
-  const bool hasNextStage =
-      state.stage + 1 < static_cast<int>(melee.stages.size());
+  const bool hasNextStage = state.stage + 1 < melee.stages.size();
 
   if (hasNextStage) {
     // 構え〜後隙A中の攻撃入力は次段への遷移を予約するのみ

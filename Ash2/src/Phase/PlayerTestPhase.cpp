@@ -35,9 +35,9 @@ constexpr SizeF KDummySize = {60.0, 80.0};
 constexpr ColorF KDummyColor = {0.8, 0.2, 0.2};
 constexpr double KDummyCapRadius = 30.0;
 constexpr double KDummyCapHeight = 80.0;
-constexpr int KDummyMaxHp = 100;
-constexpr int KPlayerMaxHp = 100;
-constexpr int KPlayerMaxStamina = 100;
+constexpr int32 KDummyMaxHp = 100;
+constexpr int32 KPlayerMaxHp = 100;
+constexpr int32 KPlayerMaxStamina = 100;
 /// 暫定のひるみ時間（秒）。本格的な数値調整は #132/#134 で行う
 constexpr double KStaggerSec = 0.15;
 

@@ -8,9 +8,9 @@
 namespace {
 
 struct PhaseSpy {
-  int afterPushCount = 0;
-  int beforePopCount = 0;
-  int updateCount = 0;
+  int32 afterPushCount = 0;
+  int32 beforePopCount = 0;
+  int32 updateCount = 0;
 };
 
 class MockPhase : public IPhase {

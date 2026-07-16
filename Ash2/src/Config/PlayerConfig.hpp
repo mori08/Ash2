@@ -77,7 +77,7 @@ struct MeleeConfig {
   /// 攻撃リーチ（w 軸方向の距離）
   double reach;
   /// 与えるダメージ量（全段共通）
-  int damage;
+  int32 damage;
   /// コンボ段ごとの設定（先頭が1段目）
   Array<MeleeStageConfig> stages;
 };
@@ -89,7 +89,7 @@ struct DashConfig {
   /// 構え・ダッシュ・後隙A・後隙Bのタイムライン（activeSec がダッシュ移動時間）
   MotionTimeline timeline;
   /// 1回の発生に必要なスタミナ消費量
-  int staminaCost;
+  int32 staminaCost;
 };
 
 /// @brief 遠距離攻撃の設定値
@@ -99,13 +99,13 @@ struct RangedConfig {
   /// 攻撃カプセルの半径（弾コライダーの半径・CircleDrawable の表示半径と兼用）
   double radius;
   /// 与えるダメージ量
-  int damage;
+  int32 damage;
   /// 弾の移動速度（横方向、ピクセル/秒）
   double bulletSpeed;
   /// 弾の発射高さ（プレイヤーの WorldPos.h からのオフセット）
   double spawnHeight;
   /// 1回の発生に必要なスタミナ消費量
-  int staminaCost;
+  int32 staminaCost;
 };
 
 /// @brief ダッシュ攻撃の設定値
@@ -119,7 +119,7 @@ struct DashAttackConfig {
   /// 攻撃カプセルの半径
   double radius;
   /// 与えるダメージ量
-  int damage;
+  int32 damage;
 };
 
 /// @brief 空中攻撃の設定値
@@ -131,7 +131,7 @@ struct AirAttackConfig {
   /// 攻撃カプセルの半径
   double radius;
   /// 与えるダメージ量
-  int damage;
+  int32 damage;
 };
 
 /// @brief スタミナ回復の設定値

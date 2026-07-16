@@ -4,8 +4,8 @@
 /// @brief スプライトシート上の1アニメーションクリップ
 struct AnimationClip {
   /// スプライトシート上の行番号（0始まり）
-  int row;
-  int count;
+  int32 row;
+  int32 count;
   /// コマ/秒
   double speed;
 };

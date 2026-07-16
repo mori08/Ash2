@@ -25,7 +25,8 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
     assert(clip.speed > 0.0 && "clip.speed は正の値でなければならない");
     const double cycleDuration = clip.count / clip.speed;
     anim.elapsed = Math::Fmod(anim.elapsed, cycleDuration);
-    const int col = static_cast<int>(anim.elapsed * clip.speed) % clip.count;
+    const int32 col =
+        static_cast<int32>(anim.elapsed * clip.speed) % clip.count;
     auto region = TextureAsset{data.textureKey}(
         col * data.size.x, clip.row * data.size.y, data.size.x, data.size.y);
 

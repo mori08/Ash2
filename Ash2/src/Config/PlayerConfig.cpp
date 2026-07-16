@@ -62,23 +62,23 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
           {
               .capMidH = m[U"cap_mid_h"].get<double>(),
               .reach = m[U"reach"].get<double>(),
-              .damage = m[U"damage"].get<int>(),
+              .damage = m[U"damage"].get<int32>(),
               .stages = std::move(stages),
           },
       .ranged =
           {
               .reach = r[U"reach"].get<double>(),
               .radius = r[U"radius"].get<double>(),
-              .damage = r[U"damage"].get<int>(),
+              .damage = r[U"damage"].get<int32>(),
               .bulletSpeed = r[U"bullet_speed"].get<double>(),
               .spawnHeight = r[U"spawn_height"].get<double>(),
-              .staminaCost = r[U"stamina_cost"].get<int>(),
+              .staminaCost = r[U"stamina_cost"].get<int32>(),
           },
       .dash =
           {
               .speed = d[U"speed"].get<double>(),
               .timeline = ParseTimeline(d),
-              .staminaCost = d[U"stamina_cost"].get<int>(),
+              .staminaCost = d[U"stamina_cost"].get<int32>(),
           },
       .dashAttack =
           {
@@ -86,14 +86,14 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
               .speed = da[U"speed"].get<double>(),
               .orbitRadius = da[U"orbit_radius"].get<double>(),
               .radius = da[U"radius"].get<double>(),
-              .damage = da[U"damage"].get<int>(),
+              .damage = da[U"damage"].get<int32>(),
           },
       .airAttack =
           {
               .timeline = ParseTimeline(aa),
               .orbitRadius = aa[U"orbit_radius"].get<double>(),
               .radius = aa[U"radius"].get<double>(),
-              .damage = aa[U"damage"].get<int>(),
+              .damage = aa[U"damage"].get<int32>(),
           },
       .stamina =
           {
