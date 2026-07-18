@@ -57,7 +57,6 @@ git push --force-with-lease   # featureブランチへのforce-push
 | `bug` | 不具合修正 |
 | `refactor` | リファクタリング（PR経由） |
 | `chore` | Claude設定・依存更新・環境整備など（直接コミット）。`.cpp` / `.hpp` を編集する場合は使わない |
-| `clang-tidy` | clang-tidy 自動レポート（CI が自動で付与） |
 
 ## PRの作成
 

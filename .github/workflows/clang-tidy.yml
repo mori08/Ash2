@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  issues: write
+  security-events: write
 
 env:
   SIV3D_VERSION: 0.6.16
@@ -33,6 +33,18 @@ jobs:
         shell: pwsh
         working-directory: Ash2
         run: vcpkg install --triplet x64-windows "--x-install-root=$env:GITHUB_WORKSPACE\Ash2\vcpkg_installed\x64-windows"
+
+      - name: Cache clang-tidy-sarif
+        id: cache-sarif-tool
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/clang-tidy-sarif.exe
+          key: clang-tidy-sarif-v0.8.0
+
+      - name: Install clang-tidy-sarif
+        if: steps.cache-sarif-tool.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: cargo install clang-tidy-sarif --version 0.8.0 --locked
 
       - name: Run clang-tidy
         id: tidy
@@ -66,72 +78,52 @@ jobs:
             "-imsvc", "$projectDir\vcpkg_installed\x64-windows\x64-windows\include"
           )
 
-          $failedFiles = @()
+          $rawLog = "$env:RUNNER_TEMP\clang-tidy.log"
+          $hasWarnings = $false
 
           Get-ChildItem -Path "$projectDir\src", "$projectDir\tests" -Filter "*.cpp" -Recurse |
             Where-Object { $_.Name -ne "stdafx.cpp" } |
             ForEach-Object {
               Write-Host "Checking: $($_.Name)"
-              clang-tidy @tidyOpts $_.FullName '--' @compileFlags 2>&1 | Write-Host
-              if ($LASTEXITCODE -ne 0) { $failedFiles += $_.Name }
+              $output = clang-tidy @tidyOpts $_.FullName '--' @compileFlags 2>&1
+              $output | Write-Host
+              $output | Out-File -FilePath $rawLog -Append -Encoding utf8
+              if ($LASTEXITCODE -ne 0) { $hasWarnings = $true }
             }
 
-          if ($failedFiles.Count -gt 0) {
-            $failed = ($failedFiles | Sort-Object) -join ','
-            "result=failure" >> $env:GITHUB_OUTPUT
-            "failed_files=$failed" >> $env:GITHUB_OUTPUT
-          } else {
-            "result=success" >> $env:GITHUB_OUTPUT
-          }
+          $result = if ($hasWarnings) { "failure" } else { "success" }
+          "result=$result" >> $env:GITHUB_OUTPUT
 
-      - name: Ensure clang-tidy label exists
+      - name: Convert to SARIF
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh label create clang-tidy --color "e4e669" --description "clang-tidy 自動レポート" --force
+          # 警告の位置をリポジトリ相対パスに変換する（Code scanning はリポジトリ相対 URI を要求するため）
+          $rawLog = "$env:RUNNER_TEMP\clang-tidy.log"
+          $relLog = "$env:RUNNER_TEMP\clang-tidy-rel.log"
+          $prefix = "$env:GITHUB_WORKSPACE\"
 
-      - name: Update or create issue
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $result = "${{ steps.tidy.outputs.result }}"
-          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          $date   = (Get-Date -Format "yyyy-MM-dd")
-
-          $issueJson   = gh issue list --label clang-tidy --state open --json number | ConvertFrom-Json
-          $issueNumber = if ($issueJson.Count -gt 0) { $issueJson[0].number } else { $null }
-
-          if ($result -eq "success") {
-            if ($issueNumber) {
-              gh issue close $issueNumber --comment "✅ $date の実行で警告がなくなりました。[実行ログ]($runUrl)"
-              Write-Host "Closed issue #$issueNumber"
-            }
-          } else {
-            $failedList = "${{ steps.tidy.outputs.failed_files }}" -split ',' |
-              ForEach-Object { "- ``$_``" }
-
-            $body = "## clang-tidy 警告レポート ($date)`n`n" +
-                    "以下のファイルで警告が検出されました。`n`n" +
-                    ($failedList -join "`n") + "`n`n" +
-                    "詳細は[実行ログ]($runUrl)を参照してください。"
-
-            $bodyFile = "$env:RUNNER_TEMP\issue_body.md"
-            $body | Out-File -FilePath $bodyFile -Encoding utf8
-
-            if ($issueNumber) {
-              gh issue edit $issueNumber --body-file $bodyFile
-              Write-Host "Updated issue #$issueNumber"
+          $lines = if (Test-Path $rawLog) { Get-Content $rawLog } else { @() }
+          $lines | ForEach-Object {
+            if ($_ -match '^([A-Za-z]:\\[^:]+):\d+:\d+: ' -and $Matches[1].StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+              $relPath = $Matches[1].Substring($prefix.Length).Replace('\', '/')
+              $_.Replace($Matches[1], $relPath)
             } else {
-              gh issue create --title "clang-tidy 警告レポート" --label clang-tidy --body-file $bodyFile
-              Write-Host "Created new issue"
+              $_
             }
-          }
+          } | Out-File -FilePath $relLog -Encoding utf8
+
+          cmd /c "clang-tidy-sarif < `"$relLog`" > results.sarif"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
+          category: clang-tidy
 
       - name: Fail if warnings detected
         if: steps.tidy.outputs.result == 'failure'
         shell: pwsh
         run: |
-          Write-Host "##[error]clang-tidy warnings detected. See the issue for details."
+          Write-Host "##[error]clang-tidy warnings detected. See the Security tab (Code scanning alerts) for details."
           exit 1
