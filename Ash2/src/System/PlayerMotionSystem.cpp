@@ -190,9 +190,10 @@ void SpawnProjectile(entt::registry& registry, const WorldPos& pos,
 /// @param hitboxEntity 引き継ぐ攻撃判定エンティティ（通常は entt::null）
 Melee MakeMelee(SpriteAnimation& anim, size_t stage,
                 entt::entity hitboxEntity = entt::null) {
-  // Neutral からの初回入場でもクリップは melee_1 以外から必ず切り替わるため、
+  // 段ごとに専用クリップ（melee_1/melee_2/melee_3）へ切り替わるため、
+  // 呼び出し元（初回入場・コンボ継続いずれも）で必ずクリップ名が変わり、
   // RestartClip と SetClip の挙動差は生じない。
-  RestartClip(anim, U"melee_1");
+  RestartClip(anim, U"melee_{}"_fmt(stage + 1));
   return Melee{.stage = stage, .elapsed = 0.0, .hitboxEntity = hitboxEntity};
 }
 
@@ -208,15 +209,12 @@ Ranged MakeRanged(entt::registry& registry, entt::entity entity,
 }
 
 /// @brief Dash へ移行する（スタミナ消費、クリップの設定）
-///
-/// 専用のダッシュ用クリップは未用意のため、移動主体の動きという特性が近い
-/// "move" クリップを暫定的に流用する。
 /// @param air 空中発動か（true: 空中ダッシュ相当）
 Dash MakeDash(entt::registry& registry, entt::entity entity,
               const PlayerConfig& cfg, SpriteAnimation& anim, bool air) {
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
-  SetClip(anim, U"move");
+  SetClip(anim, U"dash");
   return Dash{.air = air};
 }
 
@@ -239,8 +237,7 @@ Vec3 DashAttackOrbOffset(double progress, const DashAttackConfig& da,
 /// @param air 空中発動か（true: 空中ダッシュ攻撃相当）
 /// @param dashDir ダッシュ時の移動方向（正規化済み）
 DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir) {
-  // 専用クリップ未用意のため "melee_1" を暫定流用する
-  SetClip(anim, U"melee_1");
+  SetClip(anim, U"dash_attack");
   return DashAttack{.elapsed = 0.0,
                     .air = air,
                     .hitboxEntity = entt::null,
@@ -267,8 +264,7 @@ Vec3 AirAttackOrbOffset(double progress, const AirAttackConfig& aa,
 
 /// @brief AirAttack へ移行する
 AirAttack MakeAirAttack(SpriteAnimation& anim) {
-  // 専用クリップ未用意のため "melee_1" を暫定流用する
-  SetClip(anim, U"melee_1");
+  SetClip(anim, U"air_attack");
   return AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null};
 }
 
@@ -339,14 +335,14 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
     vel.h = cfg.jumpSpeed;
   }
 
-  // ロコモーションクリップ（idle/move/jump）
+  // ロコモーションクリップ（idle/move/jump_rise/jump_fall）
   // pos は前フレームまでの値のため、ジャンプ入力で vel.h を設定した
   // 直後のフレームでは isOnGround() がまだ true のままになる。
   // vel.h > 0.0（ジャンプによる上昇）の場合のみ判定に加えることで、
   // 重力による接地中の微小な負の vel.h には反応せず、
-  // 入力と同フレームで jump クリップに切り替える。
+  // 入力と同フレームで jump_rise クリップに切り替える。
   if (!pos.isOnGround() || vel.h > 0.0) {
-    SetClip(anim, U"jump");
+    SetClip(anim, vel.h > 0.0 ? U"jump_rise" : U"jump_fall");
   } else if (vel.w != 0.0 || vel.d != 0.0) {
     SetClip(anim, U"move");
   } else {
@@ -585,9 +581,8 @@ Optional<Motion> Tick(Landing& state, entt::registry& registry,
                       entt::entity entity, const FrameData& frameData) {
   StopHorizontalMovement(registry, entity);
 
-  // 専用クリップ未用意のため "idle" を暫定流用
   auto& anim = registry.get<SpriteAnimation>(entity);
-  SetClip(anim, U"idle");
+  SetClip(anim, U"landing");
 
   state.timer -= frameData.dt;
   if (state.timer <= 0.0) {
