@@ -13,17 +13,52 @@ row = 1
 count = 2
 speed = 8.0
 
-[jump]
+[jump_rise]
 row = 2
 count = 1
 speed = 6.0
 
-[melee_1]
+[jump_fall]
 row = 3
+count = 1
+speed = 6.0
+
+[landing]
+row = 4
+count = 1
+speed = 5.0
+
+[melee_1]
+row = 5
 count = 2
 speed = 5.714285714285714
 
+[melee_2]
+row = 6
+count = 2
+speed = 5.0
+
+[melee_3]
+row = 7
+count = 2
+speed = 4.0
+
 [ranged_attack]
-row = 4
+row = 8
 count = 1
+speed = 6.0
+
+[dash]
+row = 9
+count = 3
+speed = 6.666666666666667
+
+[dash_attack]
+row = 10
+count = 3
+speed = 5.0
+
+[air_attack]
+row = 11
+count = 3
 speed = 6.0

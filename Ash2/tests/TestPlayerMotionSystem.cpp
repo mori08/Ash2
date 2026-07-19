@@ -103,7 +103,10 @@ void SetupContext(entt::registry& registry) {
   };
   playerData.clips[U"idle"] = AnimationClip{.row = 0, .count = 4, .speed = 4.0};
   playerData.clips[U"move"] = AnimationClip{.row = 1, .count = 4, .speed = 8.0};
-  playerData.clips[U"jump"] = AnimationClip{.row = 2, .count = 1, .speed = 1.0};
+  playerData.clips[U"jump_rise"] =
+      AnimationClip{.row = 2, .count = 1, .speed = 1.0};
+  playerData.clips[U"jump_fall"] =
+      AnimationClip{.row = 3, .count = 1, .speed = 1.0};
   playerData.clips[U"melee_1"] =
       AnimationClip{.row = 3, .count = 6, .speed = 12.0};
   playerData.clips[U"ranged_attack"] =
@@ -215,7 +218,7 @@ TEST_CASE(
   // 構え中（windupSec 未満）はヒットボックス未生成
   REQUIRE(air.hitboxEntity == entt::entity{entt::null});
 
-  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_1");
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"air_attack");
 }
 
 TEST_CASE(
@@ -358,8 +361,11 @@ TEST_CASE(
   REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
 }
 
-TEST_CASE("PlayerMotionSystem - jump input immediately switches to jump clip") {
-  // ジャンプ入力と同フレームで jump クリップに切り替わる（1フレーム遅延の修正）
+TEST_CASE(
+    "PlayerMotionSystem - jump input immediately switches to jump_rise "
+    "clip") {
+  // ジャンプ入力と同フレームで jump_rise
+  // クリップに切り替わる（1フレーム遅延の修正）
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -370,7 +376,7 @@ TEST_CASE("PlayerMotionSystem - jump input immediately switches to jump clip") {
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.get<Velocity>(player).h == Approx(300.0));
-  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"jump");
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"jump_rise");
 }
 
 TEST_CASE(
@@ -1574,7 +1580,7 @@ TEST_CASE(
   REQUIRE(dashAttack.dashDir.x == Approx(0.0));
   REQUIRE(dashAttack.dashDir.y == Approx(1.0));
 
-  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_1");
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"dash_attack");
 }
 
 TEST_CASE(
