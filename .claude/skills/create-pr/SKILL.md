@@ -27,7 +27,7 @@ Issue のスコープと実装内容にズレがあれば、ユーザーに報�
 
 `$ARGUMENTS` が指定されていればタイトルとして使う。
 指定がない場合は `git log main..HEAD --oneline` と `git diff main...HEAD --stat` を参照して、
-適切なタイトルを日本語で提案しユーザーに確認する。
+適切なタイトルを日本語で決める。
 
 本文（body）は `git log main..HEAD --oneline` を元に変更概要を日本語で簡潔にまとめる。
 
