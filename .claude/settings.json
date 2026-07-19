@@ -52,7 +52,7 @@
       "Bash(./tools/build.sh*)",
       "Bash(./tools/run-tests.sh*)",
       "Bash(./tools/run.sh*)",
-      "Write(tmp/*)",
+      "Edit(tmp/*)",
       "Bash(mkdir -p tmp*)",
       "Bash(rm tmp/*)"
     ]
