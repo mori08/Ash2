@@ -130,6 +130,7 @@
     <ClCompile Include="src\Phase\TestMenuPhase.cpp" />
     <ClCompile Include="src\Phase\AnimationViewerPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
+    <ClCompile Include="src\Phase\PhaseLoaders.cpp" />
     <ClCompile Include="src\Component\Hierarchy.cpp" />
     <ClCompile Include="src\System\AnimationSystem.cpp" />
     <ClCompile Include="src\System\PlayerMotion\Helper.cpp" />
@@ -397,6 +398,7 @@
     <ClInclude Include="src\Config\ScenarioData.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
+    <ClInclude Include="src\Phase\PhaseLoaders.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Asset.hpp" />
     <ClInclude Include="src\Debug.hpp" />
