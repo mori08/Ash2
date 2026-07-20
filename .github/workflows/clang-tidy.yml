@@ -15,7 +15,7 @@ jobs:
   clang-tidy:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download Siv3D SDK
         shell: pwsh
@@ -24,7 +24,7 @@ jobs:
           Expand-Archive -Path "C:\OpenSiv3D_SDK.zip" -DestinationPath "C:"
 
       - name: Cache vcpkg packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: Ash2/vcpkg_installed
           key: vcpkg-x64-windows-${{ hashFiles('Ash2/vcpkg.json', 'Ash2/vcpkg-configuration.json') }}
@@ -36,7 +36,7 @@ jobs:
 
       - name: Cache clang-tidy-sarif
         id: cache-sarif-tool
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/bin/clang-tidy-sarif.exe
           key: clang-tidy-sarif-v0.8.0
