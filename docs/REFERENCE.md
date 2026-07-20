@@ -111,13 +111,24 @@
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。新たに成立したヒットの `HitPair`（attacker/target）配列を返す |
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する（暫定実装） |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion` の全状態（Neutral/Melee/Ranged/Dash/DashAttack/AirAttack/Landing の7状態、`Dash`/`DashAttack` は `air` フラグで地上・空中を兼ねる）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了、無敵の付与/除去、接地検出）を行う。各状態の `Tick()` 実体は [`PlayerMotionSystem.cpp`](../Ash2/src/System/PlayerMotionSystem.cpp) にある。デバッグビルドでは遷移を `APP_LOG` に出力する |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion` の全状態（Neutral/Melee/Ranged/Dash/DashAttack/AirAttack/Landing の7状態、`Dash`/`DashAttack` は `air` フラグで地上・空中を兼ねる）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了、無敵の付与/除去、接地検出）を行う。デバッグビルドでは遷移を `APP_LOG` に出力する |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
 | [`StaggerSystem::Update`](../Ash2/src/System/StaggerSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `Stagger` を持つエンティティの残り時間を減算し `RectDrawable::size` を縮小、0 以下で `originalSize` に戻して除去する（暫定実装） |
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + Motion` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定） |
+
+### プレイヤーモーションの実装ファイル
+
+`MotionSystem::Update` が呼ぶ `Tick()` は [`PlayerMotionSystem.hpp`](../Ash2/src/System/PlayerMotionSystem.hpp) が宣言し、実体は `Ash2/src/System/PlayerMotion/` 配下に状態ごとに分かれている。
+
+- 状態別の `Tick()` と入場関数
+  - [`Neutral.cpp`](../Ash2/src/System/PlayerMotion/Neutral.cpp) / [`Melee.cpp`](../Ash2/src/System/PlayerMotion/Melee.cpp) / [`Ranged.cpp`](../Ash2/src/System/PlayerMotion/Ranged.cpp) / [`Dash.cpp`](../Ash2/src/System/PlayerMotion/Dash.cpp) / [`DashAttack.cpp`](../Ash2/src/System/PlayerMotion/DashAttack.cpp) / [`AirAttack.cpp`](../Ash2/src/System/PlayerMotion/AirAttack.cpp) / [`Landing.cpp`](../Ash2/src/System/PlayerMotion/Landing.cpp)
+- 複数状態が使う共通ヘルパー
+  - [`Helper.hpp`](../Ash2/src/System/PlayerMotion/Helper.hpp)（クリップ設定・水平移動停止・攻撃ヒットボックス更新）
+- 状態遷移用の入場関数の宣言
+  - [`Transition.hpp`](../Ash2/src/System/PlayerMotion/Transition.hpp)（定義は遷移先の状態の `.cpp` が持つ）
 
 ---
 

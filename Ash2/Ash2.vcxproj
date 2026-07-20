@@ -132,7 +132,14 @@
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
     <ClCompile Include="src\Component\Hierarchy.cpp" />
     <ClCompile Include="src\System\AnimationSystem.cpp" />
-    <ClCompile Include="src\System\PlayerMotionSystem.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\Helper.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\Neutral.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\Melee.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\Ranged.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\Dash.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\DashAttack.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\AirAttack.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\Landing.cpp" />
     <ClCompile Include="src\System\MotionSystem.cpp" />
     <ClCompile Include="src\System\ProjectileSystem.cpp" />
     <ClCompile Include="src\System\MovementSystem.cpp" />
@@ -377,6 +384,8 @@
     <ClInclude Include="src\Component\Player.hpp" />
     <ClInclude Include="src\Component\Velocity.hpp" />
     <ClInclude Include="src\System\AnimationSystem.hpp" />
+    <ClInclude Include="src\System\PlayerMotion\Helper.hpp" />
+    <ClInclude Include="src\System\PlayerMotion\Transition.hpp" />
     <ClInclude Include="src\System\PlayerMotionSystem.hpp" />
     <ClInclude Include="src\System\MotionSystem.hpp" />
     <ClInclude Include="src\System\AttachmentSystem.hpp" />
