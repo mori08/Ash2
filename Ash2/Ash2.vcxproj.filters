@@ -39,6 +39,12 @@
     <Filter Include="Source Files\System">
       <UniqueIdentifier>{d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\System\PlayerMotion">
+      <UniqueIdentifier>{ac55f070-be09-4cd0-91d0-905fabdee757}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\System\PlayerMotion">
+      <UniqueIdentifier>{65d2089d-e714-466a-9f05-e3fb78caeb38}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -186,8 +192,29 @@
     <ClCompile Include="System\AnimationSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="System\PlayerMotionSystem.cpp">
-      <Filter>Source Files\System</Filter>
+    <ClCompile Include="System\PlayerMotion\Helper.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PlayerMotion\Neutral.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PlayerMotion\Melee.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PlayerMotion\Ranged.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PlayerMotion\Dash.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PlayerMotion\DashAttack.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PlayerMotion\AirAttack.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PlayerMotion\Landing.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
     </ClCompile>
     <ClCompile Include="System\MotionSystem.cpp">
       <Filter>Source Files\System</Filter>
@@ -973,6 +1000,12 @@
     </ClInclude>
     <ClInclude Include="System\AnimationSystem.hpp">
       <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\PlayerMotion\Helper.hpp">
+      <Filter>Header Files\System\PlayerMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="System\PlayerMotion\Transition.hpp">
+      <Filter>Header Files\System\PlayerMotion</Filter>
     </ClInclude>
     <ClInclude Include="System\PlayerMotionSystem.hpp">
       <Filter>Header Files\System</Filter>

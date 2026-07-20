@@ -28,6 +28,7 @@ Ash2/src/
 ├── Input/               # 入力抽象化
 ├── Phase/               # フェーズ管理（ゲーム状態機械）
 ├── System/               # ECS システム（ロジックのみ）
+│   └── PlayerMotion/     # PlayerMotionSystem の状態別 Tick() 実装
 └── Util/                 # フレームワーク非依存の汎用ヘルパー
 ```
 
