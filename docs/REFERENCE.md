@@ -96,7 +96,8 @@
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
 
 [`Config/ScenarioData`](../Ash2/src/Config/ScenarioData.hpp) がシナリオロード時に各ステップを `IPhaseMaker`（型消去された `make() -> unique_ptr<IPhase>`）を持つ `ScenarioStep`（`StepPush`/`StepReset`）に変換する。
-変換テーブルは [`Config/ScenarioData.cpp`](../Ash2/src/Config/ScenarioData.cpp) の `kPhaseLoaders` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
+変換テーブルは [`Phase/PhaseLoaders.cpp`](../Ash2/src/Phase/PhaseLoaders.cpp) の `GetPhaseLoaders()` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
+`ScenarioData::FromToml` はこのテーブルを `PhaseLoaderTable` として引数で受け取る（Config 層から具象フェーズへの依存を作らないため）。呼び出し元は `GameSetup` が `GetPhaseLoaders()` を渡して配線する。
 
 ---
 
@@ -183,3 +184,4 @@
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
 - `Motion` に新しい状態型を追加したときは、`MotionSystem.cpp` の `MotionName()`（デバッグログ用）にも分岐を追加する。また、`MotionSystem::Update` の `std::visit` は `MotionState` concept（`MotionSystem.hpp`）で制約されているため、新状態型は `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。
+- 新フェーズを追加し TOML から `push`/`reset` できるようにするときは、`Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()` にもエントリを追加する。

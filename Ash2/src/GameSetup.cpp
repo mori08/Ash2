@@ -6,6 +6,7 @@
 #include "Config/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
+#include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
 
@@ -37,7 +38,8 @@ void InitializeRegistry(entt::registry& registry) {
   LoadAnimations(registry);
 
   const TOMLReader scenarioToml(AssetPath(U"assets/config/scenario.toml"));
-  registry.ctx().emplace<ScenarioData>(ScenarioData::FromToml(scenarioToml));
+  registry.ctx().emplace<ScenarioData>(
+      ScenarioData::FromToml(scenarioToml, GetPhaseLoaders()));
 }
 
 void ReloadConfig(entt::registry& registry) {
