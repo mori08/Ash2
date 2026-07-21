@@ -177,6 +177,9 @@
     <ClCompile Include="Config\AnimationData.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
+    <ClCompile Include="Config\EnemyConfig.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
     <ClCompile Include="Config\PlayerConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
@@ -219,6 +222,15 @@
     <ClCompile Include="System\MotionSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\EnemyMotionSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\EnemySystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\HitReactionSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\ProjectileSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -235,9 +247,6 @@
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="System\HitstopSystem.cpp">
-      <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="System\StaggerSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="System\StaminaSystem.cpp">
@@ -274,6 +283,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestHitSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestEnemyMotionSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestHitReactionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestProjectileSystem.cpp">
@@ -1034,6 +1049,9 @@
     <ClInclude Include="Config\AnimationData.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
+    <ClInclude Include="Config\EnemyConfig.hpp">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
     <ClInclude Include="Config\PlayerConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
@@ -1100,16 +1118,34 @@
     <ClInclude Include="Component\Motion.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Enemy.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\EnemyMotion.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\ReactionLevel.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Projectile.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="System\HitSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="System\HitReactionSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
     <ClInclude Include="System\HudSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\ProjectileSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\EnemyMotionSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\EnemySystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Component\Gravity.hpp">
@@ -1124,16 +1160,10 @@
     <ClInclude Include="Component\Hitstop.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="Component\Stagger.hpp">
-      <Filter>Header Files\Component</Filter>
-    </ClInclude>
     <ClInclude Include="Component\Invincible.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="System\HitstopSystem.hpp">
-      <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="System\StaggerSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\StaminaSystem.hpp">

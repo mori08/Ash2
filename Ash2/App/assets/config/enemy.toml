@@ -1,0 +1,18 @@
+max_hp         = 100
+size_w         = 60.0
+size_h         = 80.0
+capsule_radius = 30.0
+capsule_height = 80.0
+spawn_w        = 150.0
+
+stagger_sec = 0.15
+
+repel_speed = 250.0
+repel_sec   = 0.20
+
+blow_speed_w   = 300.0
+blow_speed_h   = 300.0
+knockback_sec  = 1.00
+
+defeated_sec = 0.50
+respawn_sec  = 1.00

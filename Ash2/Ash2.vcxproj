@@ -121,6 +121,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Config\AnimationData.cpp" />
+    <ClCompile Include="src\Config\EnemyConfig.cpp" />
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
@@ -142,13 +143,15 @@
     <ClCompile Include="src\System\PlayerMotion\AirAttack.cpp" />
     <ClCompile Include="src\System\PlayerMotion\Landing.cpp" />
     <ClCompile Include="src\System\MotionSystem.cpp" />
+    <ClCompile Include="src\System\EnemyMotionSystem.cpp" />
+    <ClCompile Include="src\System\EnemySystem.cpp" />
+    <ClCompile Include="src\System\HitReactionSystem.cpp" />
     <ClCompile Include="src\System\ProjectileSystem.cpp" />
     <ClCompile Include="src\System\MovementSystem.cpp" />
     <ClCompile Include="src\System\GravitySystem.cpp" />
     <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\System\HitstopSystem.cpp" />
-    <ClCompile Include="src\System\StaggerSystem.cpp" />
     <ClCompile Include="src\System\StaminaSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
@@ -157,6 +160,8 @@
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
+    <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
+    <ClCompile Include="tests\TestHitReactionSystem.cpp" />
     <ClCompile Include="tests\TestHitSystem.cpp" />
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
@@ -394,6 +399,7 @@
     <ClInclude Include="src\System\HierarchySystem.hpp" />
     <ClInclude Include="src\System\NameLookup.hpp" />
     <ClInclude Include="src\Config\AnimationData.hpp" />
+    <ClInclude Include="src\Config\EnemyConfig.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
@@ -416,17 +422,21 @@
     <ClInclude Include="src\Component\Stamina.hpp" />
     <ClInclude Include="src\Component\PlayerMotion.hpp" />
     <ClInclude Include="src\Component\Motion.hpp" />
+    <ClInclude Include="src\Component\Enemy.hpp" />
+    <ClInclude Include="src\Component\EnemyMotion.hpp" />
+    <ClInclude Include="src\Component\ReactionLevel.hpp" />
     <ClInclude Include="src\Component\Projectile.hpp" />
     <ClInclude Include="src\System\HitSystem.hpp" />
+    <ClInclude Include="src\System\HitReactionSystem.hpp" />
     <ClInclude Include="src\System\HudSystem.hpp" />
     <ClInclude Include="src\System\ProjectileSystem.hpp" />
+    <ClInclude Include="src\System\EnemyMotionSystem.hpp" />
+    <ClInclude Include="src\System\EnemySystem.hpp" />
     <ClInclude Include="src\Component\Gravity.hpp" />
     <ClInclude Include="src\System\MovementSystem.hpp" />
     <ClInclude Include="src\System\GravitySystem.hpp" />
     <ClInclude Include="src\Component\Hitstop.hpp" />
-    <ClInclude Include="src\Component\Stagger.hpp" />
     <ClInclude Include="src\System\HitstopSystem.hpp" />
-    <ClInclude Include="src\System\StaggerSystem.hpp" />
     <ClInclude Include="src\System\StaminaSystem.hpp" />
     <ClInclude Include="src\Component\Invincible.hpp" />
   </ItemGroup>

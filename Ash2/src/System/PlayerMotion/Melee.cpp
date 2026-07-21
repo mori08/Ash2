@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include "Component/ReactionLevel.hpp"
 #include "Component/Stamina.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
@@ -84,11 +85,14 @@ Optional<Motion> Tick(Melee& state, entt::registry& registry,
 
   state.elapsed += frameData.dt;
 
+  const bool hasNextStage = state.stage + 1 < melee.stages.size();
+  // 次段を持つ1・2段目は小さくひるむだけ、締め技（最終段）は吹っ飛ばす
+  const ReactionLevel reaction =
+      hasNextStage ? ReactionLevel::Stagger : ReactionLevel::Blow;
+
   const auto offsetFn = MakeMeleeOffsetFn(stageCfg, anim.facingRight, melee);
   UpdateAttackHitbox(registry, entity, state.elapsed, timeline, stageCfg.radius,
-                     melee.damage, state.hitboxEntity, offsetFn);
-
-  const bool hasNextStage = state.stage + 1 < melee.stages.size();
+                     melee.damage, reaction, state.hitboxEntity, offsetFn);
 
   if (hasNextStage) {
     // 構え〜後隙A中の攻撃入力は次段への遷移を予約するのみ

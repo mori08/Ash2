@@ -27,6 +27,8 @@ struct HitboxSpec {
   double radius = 0.0;
   /// 与えるダメージ量
   int32 damage = 0;
+  /// 被弾側リアクションの強さ
+  ReactionLevel reaction = ReactionLevel::None;
 };
 
 /// @brief 攻撃判定エンティティ（光の珠）を生成する
@@ -45,8 +47,9 @@ entt::entity SpawnAttackHitbox(entt::registry& registry, entt::entity owner,
   registry.emplace<Collider>(hitbox, Collider{.segmentStart = Vec3::Zero(),
                                               .segmentEnd = Vec3::Zero(),
                                               .radius = spec.radius});
-  registry.emplace<Attack>(
-      hitbox, Attack{.damage = spec.damage, .hitstopSec = KMeleeHitstopSec});
+  registry.emplace<Attack>(hitbox, Attack{.damage = spec.damage,
+                                          .hitstopSec = KMeleeHitstopSec,
+                                          .reaction = spec.reaction});
   registry.emplace<Drawable>(
       hitbox, CircleDrawable{.radius = spec.radius, .color = KMeleeOrbColor});
   return hitbox;
@@ -69,7 +72,8 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity) {
 
 void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
                         double elapsed, const MotionTimeline& timeline,
-                        double radius, int32 damage, entt::entity& hitboxEntity,
+                        double radius, int32 damage, ReactionLevel reaction,
+                        entt::entity& hitboxEntity,
                         const std::function<Vec3(double)>& offsetFn) {
   // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
   // 補間で移動させる
@@ -77,7 +81,8 @@ void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
     if (hitboxEntity == entt::null) {
       const auto& pos = registry.get<WorldPos>(owner);
       hitboxEntity = SpawnAttackHitbox(
-          registry, owner, pos, HitboxSpec{.radius = radius, .damage = damage});
+          registry, owner, pos,
+          HitboxSpec{.radius = radius, .damage = damage, .reaction = reaction});
     }
 
     const auto offset = offsetFn(timeline.activeProgress(elapsed));

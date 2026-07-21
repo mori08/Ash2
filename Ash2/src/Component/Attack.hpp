@@ -3,6 +3,8 @@
 
 #include <entt/entt.hpp>
 
+#include "Component/ReactionLevel.hpp"
+
 /// @brief 攻撃中コンポーネント（タグ兼攻撃力）
 ///
 /// このコンポーネントを持つエンティティが `Collider`
@@ -19,4 +21,7 @@ struct Attack {
 
   /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
   double hitstopSec = 0.0;
+
+  /// 被弾側に生じるリアクションの強さ
+  ReactionLevel reaction = ReactionLevel::None;
 };
