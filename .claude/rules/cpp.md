@@ -3,6 +3,9 @@ paths:
   - "Ash2/src/**/*.cpp"
   - "Ash2/src/**/*.hpp"
   - "Ash2/tests/**/*.cpp"
+review:
+  - エラー処理
+  - コメント
 ---
 
 # コーディングスタイル

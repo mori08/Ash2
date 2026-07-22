@@ -1,6 +1,6 @@
 ---
 name: rule-review
-description: プロンプトで指定された 1 つの rule への準拠を変更差分について確認し、OK または NG レポートを返す（rule ごとに並列起動する）
+description: プロンプトで指定された 1 つの rule への準拠を変更差分について確認し、OK または NG レポートを返す（オプトインされた節ごとに並列起動する）
 model: sonnet
 tools: Bash(git diff:*), Read, Grep
 ---
