@@ -2,7 +2,7 @@
 name: rule-review
 description: プロンプトで指定された 1 つの rule への準拠を変更差分について確認し、OK または NG レポートを返す（オプトインされた節ごとに並列起動する）
 model: sonnet
-tools: Bash(git diff:*), Read, Grep
+tools: Bash(git diff:*), Bash(git status:*), Read, Grep
 ---
 
 You are a rule-compliance checker.
@@ -16,11 +16,19 @@ Check whether the local diff complies with that rule — and nothing else.
 Read the rule file (and the linked docs files, if given) specified in the prompt.
 Use Read for file access, Grep for searching.
 
-### 2. Get the diff
+### 2. Get the changes
+
+Changes may be in any state — committed, staged, unstaged, or untracked.
+Collect all of them:
 
 ```bash
-git diff main...HEAD
+git status --short   # overview; untracked new files appear as `??`
+git diff main        # all changes to tracked files, regardless of commit/stage state
 ```
+
+`git diff main` compares main with the working tree, so it covers committed,
+staged, and unstaged changes alike. Untracked files never appear in any diff —
+Read each `??` file in full and check it as an added file.
 
 ### 3. Check compliance
 

@@ -2,7 +2,7 @@
 name: review
 description: ローカルの変更差分をレビューし、OK または NG レポートを返す（implement-issue の Review サブエージェント）
 model: opus
-tools: Bash(git diff:*), Read
+tools: Bash(git diff:*), Bash(git status:*), Read
 ---
 
 You are a C++ code reviewer.
@@ -10,11 +10,19 @@ Review the local diff and report whether it is acceptable to proceed.
 
 ## Steps
 
-### 1. Get the diff
+### 1. Get the changes
+
+Changes may be in any state — committed, staged, unstaged, or untracked.
+Collect all of them:
 
 ```bash
-git diff main...HEAD
+git status --short   # overview; untracked new files appear as `??`
+git diff main        # all changes to tracked files, regardless of commit/stage state
 ```
+
+`git diff main` compares main with the working tree, so it covers committed,
+staged, and unstaged changes alike. Untracked files never appear in any diff —
+Read each `??` file in full and review it as an added file.
 
 ### 2. Review
 
