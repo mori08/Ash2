@@ -1,6 +1,7 @@
 #include <Siv3D.hpp>
 
 #include "Component/Hierarchy.hpp"
+#include "Component/ReactionLevel.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
@@ -61,7 +62,8 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
     return AirAttackOrbOffset(progress, aa, cfg.melee.capMidH, facingRight);
   };
   UpdateAttackHitbox(registry, entity, state.elapsed, timeline, aa.radius,
-                     aa.damage, state.hitboxEntity, offsetFn);
+                     aa.damage, ReactionLevel::Repel, state.hitboxEntity,
+                     offsetFn);
 
   // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
   if (timeline.isFinished(state.elapsed)) {

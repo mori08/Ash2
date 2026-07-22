@@ -5,6 +5,7 @@
 #include "Component/Hitstop.hpp"
 #include "Debug.hpp"
 #include "Phase/FrameData.hpp"
+#include "System/EnemyMotionSystem.hpp"
 #include "System/PlayerMotionSystem.hpp"
 
 #ifdef _DEBUG
@@ -27,6 +28,16 @@ String MotionName(const Motion& m) {
           return U"AirAttack";
         else if constexpr (std::is_same_v<T, PlayerMotion::Landing>)
           return U"Landing";
+        else if constexpr (std::is_same_v<T, EnemyMotion::Idle>)
+          return U"EnemyIdle";
+        else if constexpr (std::is_same_v<T, EnemyMotion::Stagger>)
+          return U"EnemyStagger";
+        else if constexpr (std::is_same_v<T, EnemyMotion::Repel>)
+          return U"EnemyRepel";
+        else if constexpr (std::is_same_v<T, EnemyMotion::Knockback>)
+          return U"EnemyKnockback";
+        else if constexpr (std::is_same_v<T, EnemyMotion::Defeated>)
+          return U"EnemyDefeated";
       },
       m);
 }

@@ -55,7 +55,7 @@ Main.cpp
 - Config / Input はフレームワーク非依存の構造体として分離し、テスト・リロードを容易にする。
 - 依存方向は一方向（`Phase → System → Component/Config`）。`Component` は他レイヤーに依存しない（`Hierarchy` のみ、自身の整合性を保つため `entt::registry` を直接操作する例外）。
 - 副作用の自動化はシグナルで行う（`Name` の追加・削除 → `NameLookup` 同期、`Hierarchy` の削除 → 自動 Detach）。
-- 排他的な行動状態は `Motion`（`std::variant`）で表現し、`MotionSystem` が `std::visit` で状態ごとの `Tick()` にディスパッチする。状態遷移は `Tick()` の返り値 `Optional<Motion>` でのみ行う（`Tick()` 内で直接 `replace` しない）。
+- 排他的な行動状態は `Motion`（`std::variant`）で表現し、`MotionSystem` が `std::visit` で状態ごとの `Tick()` にディスパッチする。状態遷移は `Tick()` の返り値 `Optional<Motion>` でのみ行う（`Tick()` 内で直接 `replace` しない）。ただし被弾リアクションは外部からの強制遷移のため例外とし、`HitReactionSystem` が `Motion` を直接 `replace` する。
 
 ---
 
@@ -77,13 +77,14 @@ while (System::Update()) {
 
 ```
 HitstopSystem → MotionSystem → StaminaSystem → MovementSystem → GravitySystem
-→ AttachmentSystem → HitSystem →（ヒットリアクション付与）→ ProjectileSystem
-→ StaggerSystem → AnimationSystem
+→ AttachmentSystem → HitSystem → HitReactionSystem → ProjectileSystem
+→ EnemySystem → AnimationSystem
 ```
 
 起動時に `InitializeRegistry()` が `registry.ctx()` へ以下をセット：
 - `NameLookup` — 名前→エンティティの逆引きテーブル
 - `PlayerConfig` — プレイヤー設定
+- `EnemyConfig` — 敵設定
 - `AnimationDataRegistry` — アニメーション設定
 - `ScenarioData` — シナリオデータ
 

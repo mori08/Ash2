@@ -4,6 +4,7 @@
 
 #include "Asset.hpp"
 #include "Config/AnimationData.hpp"
+#include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Phase/PhaseLoaders.hpp"
@@ -34,6 +35,9 @@ void InitializeRegistry(entt::registry& registry) {
   const TOMLReader playerToml(AssetPath(U"assets/config/player.toml"));
   registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(playerToml));
 
+  const TOMLReader enemyToml(AssetPath(U"assets/config/enemy.toml"));
+  registry.ctx().emplace<EnemyConfig>(EnemyConfig::FromToml(enemyToml));
+
   registry.ctx().emplace<AnimationDataRegistry>();
   LoadAnimations(registry);
 
@@ -45,5 +49,7 @@ void InitializeRegistry(entt::registry& registry) {
 void ReloadConfig(entt::registry& registry) {
   const TOMLReader playerToml(AssetPath(U"assets/config/player.toml"));
   registry.ctx().get<PlayerConfig>() = PlayerConfig::FromToml(playerToml);
+  const TOMLReader enemyToml(AssetPath(U"assets/config/enemy.toml"));
+  registry.ctx().get<EnemyConfig>() = EnemyConfig::FromToml(enemyToml);
   LoadAnimations(registry);
 }

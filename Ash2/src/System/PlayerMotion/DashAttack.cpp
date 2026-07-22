@@ -1,6 +1,7 @@
 #include <Siv3D.hpp>
 
 #include "Component/Hierarchy.hpp"
+#include "Component/ReactionLevel.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Phase/FrameData.hpp"
@@ -66,7 +67,8 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
     return DashAttackOrbOffset(progress, da, capMidH);
   };
   UpdateAttackHitbox(registry, entity, state.elapsed, timeline, da.radius,
-                     da.damage, state.hitboxEntity, offsetFn);
+                     da.damage, ReactionLevel::Repel, state.hitboxEntity,
+                     offsetFn);
 
   // 突進フェーズ（構え）：ダッシュ方向へ移動
   // 空中発動時は AirDash の暫定仕様に合わせ垂直速度を 0 に固定する

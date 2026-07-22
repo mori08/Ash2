@@ -1,4 +1,5 @@
 assets/config/animation/player.toml
+assets/config/enemy.toml
 assets/config/player.toml
 assets/config/scenario.toml
 assets/images/player.png

@@ -1,11 +1,11 @@
 #include "Phase/PlayerTestPhase.hpp"
 
-#include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
+#include "Component/Enemy.hpp"
+#include "Component/EnemyMotion.hpp"
 #include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
-#include "Component/Hitstop.hpp"
 #include "Component/Hp.hpp"
 #include "Component/Motion.hpp"
 #include "Component/Name.hpp"
@@ -13,33 +13,27 @@
 #include "Component/PlayerMotion.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
-#include "Component/Stagger.hpp"
 #include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
+#include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 #include "System/AttachmentSystem.hpp"
+#include "System/EnemySystem.hpp"
 #include "System/GravitySystem.hpp"
+#include "System/HitReactionSystem.hpp"
 #include "System/HitSystem.hpp"
 #include "System/HitstopSystem.hpp"
 #include "System/MotionSystem.hpp"
 #include "System/MovementSystem.hpp"
 #include "System/ProjectileSystem.hpp"
-#include "System/StaggerSystem.hpp"
 #include "System/StaminaSystem.hpp"
 
-constexpr double KDummyPosW = 150.0;
-constexpr SizeF KDummySize = {60.0, 80.0};
 constexpr ColorF KDummyColor = {0.8, 0.2, 0.2};
-constexpr double KDummyCapRadius = 30.0;
-constexpr double KDummyCapHeight = 80.0;
-constexpr int32 KDummyMaxHp = 100;
 constexpr int32 KPlayerMaxHp = 100;
 constexpr int32 KPlayerMaxStamina = 100;
-/// 暫定のひるみ時間（秒）。本格的な数値調整は #132/#134 で行う
-constexpr double KStaggerSec = 0.15;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -63,21 +57,32 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<Motion>(m_playerRoot, PlayerMotion::Neutral{});
   AnimationSystem::Update(registry, 0.0);
 
-  // ダミーターゲット（縦カプセル: 足元〜高さ80、半径30）
-  m_dummyTarget = registry.create();
-  registry.emplace<WorldPos>(m_dummyTarget, WorldPos{.w = KDummyPosW});
-  registry.emplace<Drawable>(m_dummyTarget,
-                             RectDrawable{.size = KDummySize,
+  m_dummyTarget = spawnEnemy(registry);
+}
+
+entt::entity PlayerTestPhase::spawnEnemy(entt::registry& registry) {
+  const auto& enemyCfg = registry.ctx().get<EnemyConfig>();
+  const auto& playerCfg = registry.ctx().get<PlayerConfig>();
+
+  const auto enemy = registry.create();
+  registry.emplace<Enemy>(enemy);
+  registry.emplace<WorldPos>(enemy, WorldPos{.w = enemyCfg.spawnW});
+  registry.emplace<Velocity>(enemy);
+  // Knockback の放物線は GravitySystem に任せるため、プレイヤーと同じ重力
+  // 加速度を与える（EnemyConfig は専用の重力値を持たない）
+  registry.emplace<Gravity>(enemy, Gravity{.accel = playerCfg.gravity});
+  registry.emplace<Motion>(enemy, EnemyMotion::Idle{});
+  registry.emplace<Drawable>(enemy,
+                             RectDrawable{.size = enemyCfg.size,
                                           .color = KDummyColor,
                                           .anchor = DrawAnchor::BottomCenter});
-  registry.emplace<Collider>(m_dummyTarget,
-                             Collider{
-                                 .segmentStart = Vec3{0.0, 0.0, 0.0},
-                                 .segmentEnd = Vec3{0.0, KDummyCapHeight, 0.0},
-                                 .radius = KDummyCapRadius,
-                             });
-  registry.emplace<Hp>(m_dummyTarget,
-                       Hp{.max = KDummyMaxHp, .current = KDummyMaxHp});
+  registry.emplace<Collider>(
+      enemy, Collider{.segmentStart = Vec3{0.0, 0.0, 0.0},
+                      .segmentEnd = Vec3{0.0, enemyCfg.capsuleHeight, 0.0},
+                      .radius = enemyCfg.capsuleRadius});
+  registry.emplace<Hp>(enemy,
+                       Hp{.max = enemyCfg.maxHp, .current = enemyCfg.maxHp});
+  return enemy;
 }
 
 IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
@@ -92,11 +97,22 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
   AttachmentSystem::UpdateTransform(registry);
 
   const auto hits = HitSystem::Update(registry);
-  applyHitReactions(registry, hits);
+  HitReactionSystem::Apply(registry, hits);
   ProjectileSystem::Update(registry);
+  EnemySystem::Update(registry);
 
-  StaggerSystem::Update(registry, dt);
   AnimationSystem::Update(registry, dt);
+
+  // 敵が撃破され破棄されたら respawnSec 後に再生成する
+  if (m_dummyTarget != entt::null && !registry.valid(m_dummyTarget)) {
+    m_dummyTarget = entt::null;
+    m_respawnTimer = registry.ctx().get<EnemyConfig>().respawnSec;
+  } else if (m_dummyTarget == entt::null) {
+    m_respawnTimer -= dt;
+    if (m_respawnTimer <= 0.0) {
+      m_dummyTarget = spawnEnemy(registry);
+    }
+  }
 
   if (frameData.input.reloadConfig) {
     reloadPlayer(registry);
@@ -107,44 +123,6 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
   }
 
   return PhaseCommand::None();
-}
-
-void PlayerTestPhase::applyHitReactions(entt::registry& registry,
-                                        const Array<HitPair>& hits) {
-  for (const auto& hit : hits) {
-    const auto& attack = registry.get<Attack>(hit.attacker);
-    if (attack.hitstopSec <= 0.0) continue;
-
-    // ヒットボックスの親（プレイヤー本体）にヒットストップを付与する
-    auto attackerOwner = hit.attacker;
-    if (const auto* hierarchy = registry.try_get<Hierarchy>(hit.attacker);
-        hierarchy != nullptr && hierarchy->parent() != entt::null) {
-      attackerOwner = hierarchy->parent();
-    }
-    registry.emplace_or_replace<Hitstop>(
-        attackerOwner, Hitstop{.remaining = attack.hitstopSec});
-    registry.emplace_or_replace<Hitstop>(
-        hit.target, Hitstop{.remaining = attack.hitstopSec});
-
-    // ひるみリアクション（最小実装：本格的な状態機械は #134 のスコープ）
-    if (auto* drawable = registry.try_get<Drawable>(hit.target);
-        drawable != nullptr) {
-      if (auto* rect = std::get_if<RectDrawable>(drawable); rect != nullptr) {
-        // 既にひるみ中なら originalSize を引き継ぎ、縮小済みサイズを
-        // originalSize として上書きしてしまうのを防ぐ
-        SizeF originalSize = rect->size;
-        if (const auto* existing = registry.try_get<Stagger>(hit.target);
-            existing != nullptr) {
-          originalSize = existing->originalSize;
-          rect->size = originalSize;
-        }
-        registry.emplace_or_replace<Stagger>(
-            hit.target, Stagger{.remaining = KStaggerSec,
-                                .duration = KStaggerSec,
-                                .originalSize = originalSize});
-      }
-    }
-  }
 }
 
 void PlayerTestPhase::reloadPlayer(entt::registry& registry) {
