@@ -49,6 +49,7 @@ Ash2/src/ 以下の .hpp / .cpp を Glob で列挙してすべて読む。
 ### 4. チェックの実施
 
 ステップ 1〜3 で得た情報をもとに、以下の観点でチェックする。
+命令用 Markdown（CLAUDE.md・rules・skills・agents）全般については、`.claude/rules/instruction-md.md` の指針に従っているかも確認する。
 
 #### rules のチェック
 
