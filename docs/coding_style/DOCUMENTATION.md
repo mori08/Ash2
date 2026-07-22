@@ -4,9 +4,9 @@
 
 ## 2つのドキュメントの分担
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — 設計意図（ディレクトリ構成・レイヤー構成・
+- [ARCHITECTURE.md](../ARCHITECTURE.md) — 設計意図（ディレクトリ構成・レイヤー構成・
   ゲームループ・座標系・主要な制約）。**200行上限**。
-- [REFERENCE.md](REFERENCE.md) — 個々の部品一覧（コンポーネント・システム・
+- [REFERENCE.md](../REFERENCE.md) — 個々の部品一覧（コンポーネント・システム・
   フェーズ・入力・アセット）。行数上限なし。機能追加のたびに
   線形に増える前提のドキュメント。
 

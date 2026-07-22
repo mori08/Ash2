@@ -7,13 +7,15 @@ paths:
 
 # コーディングスタイル
 
-各節の詳細は docs 側に切り出してある。**節に書かれたタイミングになったら、必ずリンク先を読むこと。**
-
 ## ファイルの追加
 
-新しい `.cpp` / `.hpp` ファイルを追加するときは、**ビルド前に** `Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
+- 条件：新しい `.cpp` / `.hpp` ファイルを追加するとき
+
+**ビルド前に** `Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
 
 ## s3d の優先使用
+
+- 条件：常時（すべての C++ コード）
 
 `stdafx.h` の `NO_S3D_USING` は**無効のまま**維持する（`using namespace s3d;` を全体に適用）。
 
@@ -30,6 +32,9 @@ s3d に相当がないものは `std` をそのまま使う（例: `std::expecte
 
 ## エラー処理
 
+- 条件：エラーを扱うコードを書く・レビューする前
+- 必読：[docs/coding_style/ERROR_HANDLING.md](../../docs/coding_style/ERROR_HANDLING.md)（使い分けの判断手順）
+
 | 状況 | 手段 |
 |------|------|
 | プログラマのバグ（不変条件・契約違反） | `assert(条件 && "日本語メッセージ")` |
@@ -40,23 +45,20 @@ s3d に相当がないものは `std` をそのまま使う（例: `std::expecte
 例外はゲームループ内（毎フレーム実行される `Phase::update` / System）では投げない。
 新たに throw を書くときは、`Optional` / `expected` で表現しない理由を Why not コメントで添える。
 
-使い分けの判断手順と詳細は [docs/ERROR_HANDLING.md](../../docs/ERROR_HANDLING.md) にある。
-**エラーを扱うコードを書く・レビューする前に必ず読むこと。**
-
 ## コメント
+
+- 条件：新しい関数・構造体・メンバ変数を書く前
+- 必読：[docs/coding_style/COMMENT.md](../../docs/coding_style/COMMENT.md)（記法と例）
 
 - 関数・構造体・メンバ変数には `///` の Doxygen コメント（日本語）。
   名前・型・シグネチャから読み取れない情報のみ書く
 - Why not コメント：自然に書いたら別の実装になる箇所で、
   その理由がコードから読み取れない場合のみ `//` で書く
 
-記法と例は [docs/COMMENT.md](../../docs/COMMENT.md) にある。
-**新しい関数・構造体・メンバ変数を書く前に必ず読むこと。**
-
 ## ドキュメントの更新
+
+- 条件：以下に該当する実装を終えたとき（返答前）
+- 必読：[docs/coding_style/DOCUMENTATION.md](../../docs/coding_style/DOCUMENTATION.md)（更新の判断基準と記述ルール）
 
 ディレクトリ構成・アーキテクチャ方針・座標系・ゲームループを変更したら `docs/ARCHITECTURE.md` を、
 コンポーネント・システム・フェーズ等を追加・削除・仕様変更したら `docs/REFERENCE.md` を更新する。
-
-更新の判断基準と記述ルールは [docs/DOCUMENTATION.md](../../docs/DOCUMENTATION.md) にある。
-**上記に該当する実装を終えたら、返答前に必ず読むこと。**

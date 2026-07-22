@@ -22,8 +22,8 @@ Read in parallel:
   you will change
 - The plan file at the path specified in the input
 
-When a rule section links to a docs file (e.g. `docs/COMMENT.md`,
-`docs/ERROR_HANDLING.md`), read it **before** writing the code it governs
+When a rule section links to a docs file (e.g. `docs/coding_style/COMMENT.md`,
+`docs/coding_style/ERROR_HANDLING.md`), read it **before** writing the code it governs
 (comments, error handling, …). These linked docs are mandatory reading, not optional.
 
 From the plan, focus on:
