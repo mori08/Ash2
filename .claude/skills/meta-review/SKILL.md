@@ -35,8 +35,6 @@ description: Review skills, rules, agents, and docs for staleness or inconsisten
 **指示内容（プロンプトに全文転記すること）：**
 
 ```
-ファイル操作は Glob・Grep・Read を優先する。
-
 Ash2/src/ 以下の .hpp / .cpp を Glob で列挙してすべて読む。
 ドキュメント・スキル・ルール等は読まない。
 

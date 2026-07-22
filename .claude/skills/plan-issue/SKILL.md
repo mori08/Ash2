@@ -14,8 +14,6 @@ Plan サブエージェントに調査と計画を委ね、ユーザーのレビ
 Agent ツール（`subagent_type: Plan`、`model: opus`）を起動し、以下を渡す。
 
 ```
-ファイル操作は Glob（探索）・Grep（検索）・Read（読み込み）を優先する。
-
 Issue #<number> の実装計画を立ててください。
 
 ## 調査してほしいこと

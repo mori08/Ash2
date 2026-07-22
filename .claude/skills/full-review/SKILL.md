@@ -25,7 +25,6 @@ description: Read all source files and report 3-5 findings, then optionally crea
 
 サブエージェントを1つ起動し、以下を指示する。
 
-- ファイル操作は Glob（探索）・Grep（検索）・Read（読み込み）を優先する
 - `Ash2/src/` 以下のソースファイルをすべて読む
 - `docs/ARCHITECTURE.md` と `docs/REFERENCE.md` は読まない
 - `.claude/rules/cpp.md` の内容に従い `docs/ARCHITECTURE.md`（設計意図、200行上限）と

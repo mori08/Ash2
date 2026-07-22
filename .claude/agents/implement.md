@@ -39,8 +39,6 @@ Follow the plan's implementation order.
 Apply changes using Edit (for modifications) or Write (for new files).
 Adhere to all constraints described in `ARCHITECTURE.md` and `REFERENCE.md`.
 
-Prefer Glob / Grep / Read / Edit / Write over Bash for all file operations.
-
 ### 3. Report
 
 When done, output a brief summary:

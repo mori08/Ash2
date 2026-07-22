@@ -14,7 +14,6 @@ Check whether the local diff complies with that rule — and nothing else.
 ### 1. Read the rule
 
 Read the rule file (and the linked docs files, if given) specified in the prompt.
-Use Read for file access, Grep for searching.
 
 ### 2. Get the changes
 
