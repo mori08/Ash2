@@ -12,17 +12,12 @@ Review the local diff and report whether it is acceptable to proceed.
 
 ### 1. Get the changes
 
-Changes may be in any state — committed, staged, unstaged, or untracked.
-Collect all of them:
-
 ```bash
-git status --short   # overview; untracked new files appear as `??`
-git diff main        # all changes to tracked files, regardless of commit/stage state
+git status --short   # untracked new files appear as `??`
+git diff main        # all changes to tracked files, committed or uncommitted
 ```
 
-`git diff main` compares main with the working tree, so it covers committed,
-staged, and unstaged changes alike. Untracked files never appear in any diff —
-Read each `??` file in full and review it as an added file.
+Untracked files do not appear in the diff — Read each `??` file in full and review it as an added file.
 
 ### 2. Review
 

@@ -14,20 +14,20 @@ review:
 
 - 条件：新しい `.cpp` / `.hpp` ファイルを追加するとき
 
-**ビルド前に** `Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
+ビルド前に `Ash2.vcxproj` と `Ash2.vcxproj.filters` の編集も必要。
 
 ## s3d の優先使用
 
 - 条件：常時（すべての C++ コード）
 
-`stdafx.h` の `NO_S3D_USING` は**無効のまま**維持する（`using namespace s3d;` を全体に適用）。
+`stdafx.h` の `NO_S3D_USING` は無効のまま維持する（`using namespace s3d;` を全体に適用）。
 
 s3d の型・関数は `s3d::` を省略して書く（`Vec2`、`Circle`、`Max` など）。
 
-`std` と `s3d` の両方に同等の型・関数がある場合は **s3d 側を優先**する（例: `std::max` → `Max`、`std::optional` → `Optional`）。
+`std` と `s3d` の両方に同等の型・関数がある場合は s3d 側を優先する（例: `std::max` → `Max`、`std::optional` → `Optional`）。
 s3d に相当がないものは `std` をそのまま使う（例: `std::expected`）。
 
-組み込みの数値型は、チュートリアルの頻出型に合わせて以下を使う。
+組み込みの数値型は以下を使う。
 
 - 整数: `int32`（s3d の固定幅エイリアス）。ただし添字・サイズには `size_t` を使う
 - 小数: `double`

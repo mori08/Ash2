@@ -21,12 +21,11 @@ git checkout -b <branch-name>
 
 ### 2. 実装ループ
 
-a〜e を順番に実行する。**NG が出た時点で即座に f へ進み、a に戻る。**
+a〜e を順番に実行する。NG が出た時点で f へ進み、a に戻る。
 
 #### a. Implement サブエージェント
 
 Agent ツール（`subagent_type: implement`）を起動し、プランファイルのパスを渡して実装させる。
-このエージェントはファイルの読み書き・編集を担う。
 
 #### b. CI サブエージェント
 
@@ -35,8 +34,8 @@ Implement エージェントの出力から変更ファイル一覧を取り出�
 
 #### c. Rule-Review サブエージェント（並列）
 
-rule 準拠チェック。Agent ツール（`subagent_type: rule-review`）を**1つのメッセージで同時に**起動する。
-変更ファイルに `paths` がマッチする `.claude/rules/*.md` のうち、frontmatter に `review` キーを持つ rule だけを対象とし、`review` に列挙された**節1つにつき1起動**する。
+rule 準拠チェック。Agent ツール（`subagent_type: rule-review`）を1つのメッセージで同時に起動する。
+変更ファイルに `paths` がマッチする `.claude/rules/*.md` のうち、frontmatter に `review` キーを持つ rule だけを対象とし、`review` に列挙された節1つにつき1起動する。
 各プロンプトには対象 rule のファイルパス・節名と、節に「必読」項目があればそのリンク先パスを含める。
 
 全エージェントの結果が揃うのを待ち、1つでも NG があれば NG レポートをまとめる。
@@ -44,7 +43,6 @@ rule 準拠チェック。Agent ツール（`subagent_type: rule-review`）を**
 #### d. Review サブエージェント
 
 Agent ツール（`subagent_type: review`）× 1 を起動する — 正しさ・モダン C++・設計のレビュー。
-opus を使うため、実行回数を抑える目的で b・c より後に置いている。
 
 #### e. ビジュアルチェック（ゲームを実行してテストしたい箇所がある場合）
 
