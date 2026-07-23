@@ -231,6 +231,9 @@
     <ClCompile Include="System\HitReactionSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\HitSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\ProjectileSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>

@@ -146,6 +146,7 @@
     <ClCompile Include="src\System\EnemyMotionSystem.cpp" />
     <ClCompile Include="src\System\EnemySystem.cpp" />
     <ClCompile Include="src\System\HitReactionSystem.cpp" />
+    <ClCompile Include="src\System\HitSystem.cpp" />
     <ClCompile Include="src\System\ProjectileSystem.cpp" />
     <ClCompile Include="src\System\MovementSystem.cpp" />
     <ClCompile Include="src\System\GravitySystem.cpp" />
