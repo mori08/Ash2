@@ -96,6 +96,13 @@ PR・issue 操作（`/create-pr` スキルや CI 連携）で使用する。
 [公式ドキュメント](https://code.claude.com/docs)を参照してインストールし、
 リポジトリのルートで `claude` を起動してログインする。
 
+### 8. Plan Links 拡張機能（任意）
+
+`tmp/plan-*.md`（計画ファイル）内のバッククォート囲みパスを Ctrl+Click で
+開けるようにする VS Code 拡張機能。ビルド・テスト・実行には不要。
+
+導入手順は [README](../tools/vscode-plan-links/README.md) を参照する。
+
 ## 動作確認
 
 セットアップ後、以下が順に通れば完了。
@@ -122,3 +129,4 @@ bash tools/run-tidy.sh Ash2/src/Main.cpp
 - [TEST.md](TEST.md) — テストの書き方・実行方法
 - [GIT.md](GIT.md) — Git / GitHub 運用ルール
 - [ARCHITECTURE.md](ARCHITECTURE.md) — 設計
+- [tools/vscode-plan-links/README.md](../tools/vscode-plan-links/README.md) — 計画ファイルのパスリンク化拡張（任意）
