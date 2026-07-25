@@ -15,6 +15,7 @@ recovery_a_sec    = 0.00
 recovery_b_sec    = 0.20
 radius            = 25.0
 slash_rise_height = 0.0
+hitstop_sec       = 0.05
 
 [[melee.stage]]
 trajectory        = "slash"
@@ -24,6 +25,7 @@ recovery_a_sec    = 0.00
 recovery_b_sec    = 0.20
 radius            = 25.0
 slash_rise_height = 40.0
+hitstop_sec       = 0.05
 
 [[melee.stage]]
 trajectory        = "thrust"
@@ -33,6 +35,7 @@ recovery_a_sec    = 0.00
 recovery_b_sec    = 0.20
 radius            = 32.0
 slash_rise_height = 0.0
+hitstop_sec       = 0.13
 
 [ranged]
 reach        = 200.0
@@ -59,6 +62,7 @@ speed          = 300.0
 orbit_radius   = 50.0
 radius         = 25.0
 damage         = 25
+hitstop_sec    = 0.08
 
 [air_attack]
 windup_sec     = 0.05
@@ -68,6 +72,7 @@ recovery_b_sec = 0.00
 orbit_radius   = 50.0
 radius         = 25.0
 damage         = 25
+hitstop_sec    = 0.08
 
 [stamina]
 recovery_delay = 2.0

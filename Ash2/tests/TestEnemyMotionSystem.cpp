@@ -4,6 +4,7 @@
 
 #include "Component/Drawable.hpp"
 #include "Component/EnemyMotion.hpp"
+#include "Component/Hitstop.hpp"
 #include "Component/Motion.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
@@ -207,6 +208,66 @@ TEST_CASE("EnemySystem - leaves non-Defeated entities untouched") {
   SetupContext(registry);
   const auto enemy = MakeEnemy(registry, EnemyMotion::Idle{});
 
+  EnemySystem::Update(registry);
+
+  REQUIRE(registry.valid(enemy));
+}
+
+TEST_CASE("EnemyMotionSystem - Hitstop freezes Stagger remaining and size") {
+  // dt = 0 で Tick されるため、残り時間も縮み演出も進まない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto enemy =
+      MakeEnemy(registry, EnemyMotion::Stagger{.remaining = 0.15});
+  registry.emplace<Drawable>(
+      enemy, RectDrawable{.size = {60.0, 80.0}, .color = ColorF{1.0}});
+  registry.emplace<Hitstop>(enemy, Hitstop{.remaining = 0.1});
+
+  const FrameData frameData{.dt = 0.075};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(std::holds_alternative<EnemyMotion::Stagger>(
+      registry.get<Motion>(enemy)));
+  REQUIRE(
+      std::get<EnemyMotion::Stagger>(registry.get<Motion>(enemy)).remaining ==
+      Approx(0.15));
+  const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(enemy));
+  REQUIRE(rect.size.y == Approx(80.0));
+}
+
+TEST_CASE(
+    "EnemyMotionSystem - Hitstop keeps Knockback vel.w on the launch frame") {
+  // blowSpeedH（テスト設定値 300.0）が正である限り、着地判定と組み合わさる
+  // vel.h <= 0 ガードには入らないため vel.w は消えない。blowSpeedH
+  // を 0 にする将来の調整で、このテストが失敗して気付けるようにする
+  entt::registry registry;
+  SetupContext(registry);
+  const auto enemy =
+      MakeEnemy(registry, EnemyMotion::Knockback{.remaining = 0.5});
+  registry.get<WorldPos>(enemy).h = 0.0;  // 接地
+  registry.get<Velocity>(enemy).w = 300.0;
+  registry.get<Velocity>(enemy).h = 300.0;  // 上昇中（打ち上げ直後）
+  registry.emplace<Hitstop>(enemy, Hitstop{.remaining = 0.1});
+
+  const FrameData frameData{.dt = 0.1};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(registry.get<Velocity>(enemy).w == Approx(300.0));
+}
+
+TEST_CASE(
+    "EnemyMotionSystem - Hitstop prevents Defeated from being destroyed by "
+    "EnemySystem") {
+  // dt = 0 で remaining が凍結されるため、停止中は EnemySystem
+  // に破棄されない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto enemy =
+      MakeEnemy(registry, EnemyMotion::Defeated{.remaining = 0.01});
+  registry.emplace<Hitstop>(enemy, Hitstop{.remaining = 0.1});
+
+  const FrameData frameData{.dt = 1.0};
+  MotionSystem::Update(registry, frameData);
   EnemySystem::Update(registry);
 
   REQUIRE(registry.valid(enemy));

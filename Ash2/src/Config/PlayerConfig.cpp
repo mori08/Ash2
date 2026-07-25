@@ -50,6 +50,7 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
           .trajectory =
               ParseMeleeTrajectory(stageToml[U"trajectory"].get<String>()),
           .slashRiseHeight = stageToml[U"slash_rise_height"].get<double>(),
+          .hitstopSec = stageToml[U"hitstop_sec"].get<double>(),
       });
     }
   }
@@ -87,6 +88,7 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
               .orbitRadius = da[U"orbit_radius"].get<double>(),
               .radius = da[U"radius"].get<double>(),
               .damage = da[U"damage"].get<int32>(),
+              .hitstopSec = da[U"hitstop_sec"].get<double>(),
           },
       .airAttack =
           {
@@ -94,6 +96,7 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
               .orbitRadius = aa[U"orbit_radius"].get<double>(),
               .radius = aa[U"radius"].get<double>(),
               .damage = aa[U"damage"].get<int32>(),
+              .hitstopSec = aa[U"hitstop_sec"].get<double>(),
           },
       .stamina =
           {

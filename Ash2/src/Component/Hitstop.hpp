@@ -5,8 +5,8 @@
 ///
 /// このコンポーネントを持つエンティティは、`HitstopSystem`
 /// が経過時間を減算し、0 以下になった時点で除去する。
-/// 付与中は `MotionSystem`/`MovementSystem`/`GravitySystem`/`AnimationSystem`
-/// の更新がスキップされる。
+/// 付与中は `MovementSystem`/`GravitySystem`/`AnimationSystem`
+/// の更新がスキップされる。`MotionSystem` は除外せず dt = 0 で呼ばれる。
 struct Hitstop {
   /// 残り時間（秒）
   double remaining = 0.0;

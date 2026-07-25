@@ -4,6 +4,7 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/Hitstop.hpp"
 #include "Component/Invincible.hpp"
 #include "Component/LocalOffset.hpp"
 #include "Component/Motion.hpp"
@@ -44,6 +45,7 @@ void SetupContext(entt::registry& registry) {
                                        .recoveryBSec = 0.20},
                           .radius = 20.0,
                           .trajectory = MeleeTrajectory::Thrust,
+                          .hitstopSec = 0.05,
                       },
                       // 2段目相当（斬り上げ）
                       MeleeStageConfig{
@@ -54,6 +56,7 @@ void SetupContext(entt::registry& registry) {
                           .radius = 20.0,
                           .trajectory = MeleeTrajectory::Slash,
                           .slashRiseHeight = 40.0,
+                          .hitstopSec = 0.05,
                       },
                       // 3段目相当（締め技、突き出し）
                       MeleeStageConfig{
@@ -63,6 +66,7 @@ void SetupContext(entt::registry& registry) {
                                        .recoveryBSec = 0.20},
                           .radius = 25.0,
                           .trajectory = MeleeTrajectory::Thrust,
+                          .hitstopSec = 0.13,
                       },
                   },
           },
@@ -84,14 +88,16 @@ void SetupContext(entt::registry& registry) {
                      .speed = 600.0,
                      .orbitRadius = 30.0,
                      .radius = 20.0,
-                     .damage = 20},
+                     .damage = 20,
+                     .hitstopSec = 0.08},
       .airAttack = {.timeline = {.windupSec = 0.05,
                                  .activeSec = 0.25,
                                  .recoveryASec = 0.20,
                                  .recoveryBSec = 0.0},
                     .orbitRadius = 50.0,
                     .radius = 20.0,
-                    .damage = 15},
+                    .damage = 15,
+                    .hitstopSec = 0.08},
       .landing = {.recoverySec = 0.20},
   });
 
@@ -964,6 +970,37 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "PlayerMotionSystem - Melee hitstopSec differs per stage, following "
+    "config") {
+  // 締め技（3段目）は1段目より長いヒットストップ時間を持つ（コンボ段との連動）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<Motion>(
+      player, PlayerMotion::Melee{
+                  .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null});
+  // windupSec(0.05) を跨ぐ dt
+  MotionSystem::Update(registry, FrameData{.dt = 0.06});
+  const auto stage0Hitbox =
+      std::get<PlayerMotion::Melee>(registry.get<Motion>(player)).hitboxEntity;
+  const double stage0HitstopSec = registry.get<Attack>(stage0Hitbox).hitstopSec;
+
+  registry.replace<Motion>(
+      player, PlayerMotion::Melee{
+                  .stage = 2, .elapsed = 0.0, .hitboxEntity = entt::null});
+  // windupSec(0.10) を跨ぐ dt
+  MotionSystem::Update(registry, FrameData{.dt = 0.11});
+  const auto stage2Hitbox =
+      std::get<PlayerMotion::Melee>(registry.get<Motion>(player)).hitboxEntity;
+  const double stage2HitstopSec = registry.get<Attack>(stage2Hitbox).hitstopSec;
+
+  REQUIRE(stage0HitstopSec == Approx(0.05));
+  REQUIRE(stage2HitstopSec == Approx(0.13));
+  REQUIRE(stage2HitstopSec > stage0HitstopSec);
+}
+
+TEST_CASE(
     "PlayerMotionSystem - Melee stage 2 destroys hitbox when entering "
     "recovery") {
   // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが破棄される
@@ -1690,6 +1727,92 @@ TEST_CASE(
 
   const auto& motion = registry.get<Motion>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Hitstop freezes Melee elapsed and keeps the same "
+    "hitboxEntity") {
+  // Hitstop 中は dt = 0 で Tick されるため、elapsed もヒットボックスの再生成も
+  // 起きない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.emplace<Hitstop>(player, Hitstop{.remaining = 0.05});
+
+  const auto hitbox = registry.create();
+  registry.emplace<LocalOffset>(hitbox);
+  registry.emplace<Collider>(hitbox);
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::Melee{.stage = 0, .elapsed = 0.06, .hitboxEntity = hitbox});
+
+  const FrameData frameData{.dt = 0.1};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& melee = std::get<PlayerMotion::Melee>(motion);
+  REQUIRE(melee.elapsed == Approx(0.06));
+  REQUIRE(melee.hitboxEntity == hitbox);
+  REQUIRE(registry.valid(hitbox));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Hitstop still lets attackDown set comboQueued "
+    "during active frame") {
+  // dt = 0 でも input は読まれるため、停止中の攻撃入力は予約として拾える
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.emplace<Hitstop>(player, Hitstop{.remaining = 0.05});
+
+  // windupSec(0.05) を超え activeEnd(0.15) 未満（active区間）
+  registry.replace<Motion>(
+      player, PlayerMotion::Melee{
+                  .stage = 0, .elapsed = 0.10, .hitboxEntity = entt::null});
+
+  FrameData frameData{.dt = 0.1};
+  frameData.input.attackDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& melee = std::get<PlayerMotion::Melee>(motion);
+  // elapsed は凍結されたまま
+  REQUIRE(melee.elapsed == Approx(0.10));
+  REQUIRE(melee.comboQueued);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Melee resumes and transitions to next stage once "
+    "Hitstop clears") {
+  // 停止中は次段への遷移が起きず、Hitstop 除去後の後隙Bで初めて遷移する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.emplace<Hitstop>(player, Hitstop{.remaining = 0.05});
+
+  // activeEnd(0.15) 手前、次段への予約は既に立っている
+  registry.replace<Motion>(player,
+                           PlayerMotion::Melee{.stage = 0,
+                                               .elapsed = 0.14,
+                                               .hitboxEntity = entt::null,
+                                               .comboQueued = true});
+
+  // 停止中：dt を与えても elapsed は凍結されたまま、まだ Melee stage 0
+  MotionSystem::Update(registry, FrameData{.dt = 0.1});
+  {
+    const auto& motion = registry.get<Motion>(player);
+    const auto& melee = std::get<PlayerMotion::Melee>(motion);
+    REQUIRE(melee.stage == 0);
+    REQUIRE(melee.elapsed == Approx(0.14));
+  }
+
+  // 停止解除後：activeEnd を跨いで後隙Bへ入り、予約済みの次段へ遷移する
+  registry.remove<Hitstop>(player);
+  MotionSystem::Update(registry, FrameData{.dt = 0.02});
+
+  const auto& motion = registry.get<Motion>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
+  REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 1);
 }
 
 #endif

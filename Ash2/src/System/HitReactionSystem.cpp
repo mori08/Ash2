@@ -33,10 +33,15 @@ void HitReactionSystem::Apply(entt::registry& registry,
     // hitstopSec 0 の攻撃（弾など）はヒットストップ付与のみ省く。
     // 撃破判定・リアクション適用まで飛ばすと弾で敵が倒れなくなる
     if (attack.hitstopSec > 0.0) {
-      registry.emplace_or_replace<Hitstop>(
-          attackerOwner, Hitstop{.remaining = attack.hitstopSec});
-      registry.emplace_or_replace<Hitstop>(
-          hit.target, Hitstop{.remaining = attack.hitstopSec});
+      // 長い停止中に別ヒットの短い停止で上書きされないよう、
+      // 既に付与済みなら長い方を残す
+      const auto grantHitstop = [&registry,
+                                 sec = attack.hitstopSec](entt::entity e) {
+        auto& hitstop = registry.get_or_emplace<Hitstop>(e);
+        hitstop.remaining = Max(hitstop.remaining, sec);
+      };
+      grantHitstop(attackerOwner);
+      grantHitstop(hit.target);
     }
 
     // リアクションは Enemy を持つ被弾側にのみ適用する（プレイヤーの被弾は

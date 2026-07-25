@@ -68,6 +68,8 @@ struct MeleeStageConfig {
   /// Slash 軌道時の斬り上げの振り幅（capMidH を中心とした上下の幅）。
   /// Thrust では未使用
   double slashRiseHeight = 0.0;
+  /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
+  double hitstopSec = 0.0;
 };
 
 /// @brief 近距離攻撃の設定値
@@ -120,6 +122,8 @@ struct DashAttackConfig {
   double radius;
   /// 与えるダメージ量
   int32 damage;
+  /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
+  double hitstopSec = 0.0;
 };
 
 /// @brief 空中攻撃の設定値
@@ -132,6 +136,8 @@ struct AirAttackConfig {
   double radius;
   /// 与えるダメージ量
   int32 damage;
+  /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
+  double hitstopSec = 0.0;
 };
 
 /// @brief スタミナ回復の設定値

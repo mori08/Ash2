@@ -289,6 +289,48 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "HitReactionSystem - overlapping Hitstop keeps the longer remaining "
+    "time") {
+  // 停止中に短いヒットが重なっても、長い方の残り時間を維持する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto longAttacker =
+      MakeAttacker(registry, 0.0, ReactionLevel::Stagger, /*hitstopSec=*/0.2);
+  const auto shortAttacker =
+      MakeAttacker(registry, 0.0, ReactionLevel::Stagger, /*hitstopSec=*/0.05);
+  const auto target = MakeTarget(registry, 50.0);
+
+  HitReactionSystem::Apply(
+      registry, {HitPair{.attacker = longAttacker, .target = target}});
+  REQUIRE(registry.get<Hitstop>(target).remaining == Approx(0.2));
+
+  HitReactionSystem::Apply(
+      registry, {HitPair{.attacker = shortAttacker, .target = target}});
+  REQUIRE(registry.get<Hitstop>(target).remaining == Approx(0.2));
+}
+
+TEST_CASE(
+    "HitReactionSystem - overlapping Hitstop extends to a longer new "
+    "remaining time") {
+  // 停止中により長いヒットが重なったら、その長い方へ更新する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto shortAttacker =
+      MakeAttacker(registry, 0.0, ReactionLevel::Stagger, /*hitstopSec=*/0.05);
+  const auto longAttacker =
+      MakeAttacker(registry, 0.0, ReactionLevel::Stagger, /*hitstopSec=*/0.2);
+  const auto target = MakeTarget(registry, 50.0);
+
+  HitReactionSystem::Apply(
+      registry, {HitPair{.attacker = shortAttacker, .target = target}});
+  REQUIRE(registry.get<Hitstop>(target).remaining == Approx(0.05));
+
+  HitReactionSystem::Apply(
+      registry, {HitPair{.attacker = longAttacker, .target = target}});
+  REQUIRE(registry.get<Hitstop>(target).remaining == Approx(0.2));
+}
+
+TEST_CASE(
     "HitReactionSystem - non-Enemy target only receives Hitstop, no "
     "reaction applied") {
   // Enemy を持たない被弾側（プレイヤー想定）はリアクション適用の対象外
