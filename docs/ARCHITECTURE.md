@@ -115,7 +115,7 @@ WorldPos { w, h, d }
 ## 主要な制約
 
 - **ビルドは `tools/build.sh`、実行は `tools/run.sh` で行う。** デバッガを使った調査はユーザーが Visual Studio 2022 で行う。
-- **Hitstop 除外規約：** `Hitstop` を持つエンティティは `MotionSystem` / `MovementSystem` / `GravitySystem` / `AnimationSystem` の view から `entt::exclude` で除外される。時間依存のシステムを追加するときは同様の除外が必要か検討すること。
+- **Hitstop 除外規約：** `Hitstop` を持つエンティティは `MovementSystem` / `GravitySystem` / `AnimationSystem` の view から `entt::exclude` で除外される。`MotionSystem` は除外せず dt = 0 の `FrameData` で呼ぶ（入力の取りこぼしを避けつつタイムラインの経過だけ凍結する）。時間依存のシステムを追加するときは同様の対応が必要か検討すること。
 - **`Name` は構築後不変。** `NameLookup` が構築・破棄シグナルでのみ同期されるため。
 - **アセットのパス解決は必ず `AssetPath()` を通す。** デバッグ（ファイル）とリリース（埋め込みリソース）の差を吸収する。
 - このドキュメントは 200 行上限。超過する場合はコード例→実装詳細→未使用の設計説明の順で削る。

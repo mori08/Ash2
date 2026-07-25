@@ -61,9 +61,12 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
   const auto offsetFn = [&aa, &cfg, facingRight](double progress) {
     return AirAttackOrbOffset(progress, aa, cfg.melee.capMidH, facingRight);
   };
-  UpdateAttackHitbox(registry, entity, state.elapsed, timeline, aa.radius,
-                     aa.damage, ReactionLevel::Repel, state.hitboxEntity,
-                     offsetFn);
+  UpdateAttackHitbox(registry, entity, state.elapsed, timeline,
+                     HitboxSpec{.radius = aa.radius,
+                                .damage = aa.damage,
+                                .reaction = ReactionLevel::Repel,
+                                .hitstopSec = aa.hitstopSec},
+                     state.hitboxEntity, offsetFn);
 
   // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
   if (timeline.isFinished(state.elapsed)) {

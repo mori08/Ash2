@@ -41,7 +41,7 @@
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
 | [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`variant`）。状態ごとの詳細は下記「複雑なコンポーネントの詳細」参照 |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
-| [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MotionSystem`/`MovementSystem`/`GravitySystem`/`AnimationSystem` の対象から除外される（暫定実装、本格化は #132） |
+| [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MovementSystem`/`GravitySystem`/`AnimationSystem` の対象から除外される。`MotionSystem` は除外せず dt = 0 で呼ぶ |
 | [`Invincible`](../Ash2/src/Component/Invincible.hpp) | 無敵状態であることを示すタグ。`HitSystem` の被弾対象ビューから除外される。`PlayerMotion::Dash`（地上・空中いずれも）が構え・ダッシュ中は毎フレーム付与し、後隙入りで除去する |
 
 ### 複雑なコンポーネントの詳細
@@ -118,9 +118,9 @@
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（攻撃入力時） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。新たに成立したヒットの `HitPair`（attacker/target）配列を返す |
-| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitPair` ごとに、攻撃側本体（ヒットボックスの `Hierarchy` 親）と被弾側へ `Attack.hitstopSec` 分の `Hitstop` を付与する（`hitstopSec<=0` はスキップ）。`Enemy` を持つ被弾側に限り、`Hp` 枯渇時は `reaction` によらず `Defeated` へ（`Collider`/`Hp` を除去）、それ以外は `Attack.reaction` に応じて `Stagger`/`Repel`/`Knockback` へ `Motion` を強制遷移させ、攻撃側本体との `WorldPos.w` 比較で決めた向きの `Velocity` を設定する |
-| [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する（暫定実装） |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Hitstop` を持たない `Motion` の全状態（`PlayerMotion`: Neutral/Melee/Ranged/Dash/DashAttack/AirAttack/Landing の7状態、`Dash`/`DashAttack` は `air` フラグで地上・空中を兼ねる。`EnemyMotion`: Idle/Stagger/Repel/Knockback/Defeated の5状態）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了、無敵の付与/除去、接地検出）を行う。デバッグビルドでは遷移を `APP_LOG` に出力する |
+| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitPair` ごとに、攻撃側本体（ヒットボックスの `Hierarchy` 親）と被弾側へ `Attack.hitstopSec` 分の `Hitstop` を付与する（`hitstopSec<=0` はスキップ、既に付与中なら `Max` で長い方の残り時間を残す）。`Enemy` を持つ被弾側に限り、`Hp` 枯渇時は `reaction` によらず `Defeated` へ（`Collider`/`Hp` を除去）、それ以外は `Attack.reaction` に応じて `Stagger`/`Repel`/`Knockback` へ `Motion` を強制遷移させ、攻撃側本体との `WorldPos.w` 比較で決めた向きの `Velocity` を設定する |
+| [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Motion` の全状態（`PlayerMotion`: Neutral/Melee/Ranged/Dash/DashAttack/AirAttack/Landing の7状態、`Dash`/`DashAttack` は `air` フラグで地上・空中を兼ねる。`EnemyMotion`: Idle/Stagger/Repel/Knockback/Defeated の5状態）ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了、無敵の付与/除去、接地検出）を行う。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡し、タイムラインを凍結したまま入力の予約（`comboQueued` 等）だけ拾わせる。デバッグビルドでは遷移を `APP_LOG` に出力する |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h` を 0 にする）を適用 |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（弾が存在する間、毎フレーム） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
@@ -155,7 +155,8 @@
 - 基本値（移動速度・ジャンプ初速・重力）と、`MeleeConfig` / `RangedConfig` / `DashConfig` / `DashAttackConfig` / `AirAttackConfig` / `StaminaConfig` / `LandingConfig` の各サブ設定を持つ
 - 地上・空中を共有する `Dash`/`DashAttack`（`air` フラグで区別）は、それぞれ単一の `DashConfig`/`DashAttackConfig` を共通で参照する（専用設定は持たない）
 - `MotionTimeline`（windup/active/recoveryA/recoveryB の4区間、`isActive`/`isCancelable`/`isFinished`/`activeProgress` を持つ）を `DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeStageConfig` が共通で持つ
-- `MeleeConfig` は段共通のパラメータ（`capMidH`/`reach`/`damage`）と、コンボ段ごとの `MeleeStageConfig`（`timeline`/`radius`/`trajectory`/`slashRiseHeight`）の配列 `stages` を持つ。`trajectory` は `MeleeTrajectory::Thrust`（突き出し）/`Slash`（斬り上げ）
+- `MeleeConfig` は段共通のパラメータ（`capMidH`/`reach`/`damage`）と、コンボ段ごとの `MeleeStageConfig`（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`hitstopSec`）の配列 `stages` を持つ。`trajectory` は `MeleeTrajectory::Thrust`（突き出し）/`Slash`（斬り上げ）
+- `hitstopSec`（`MeleeStageConfig`/`DashAttackConfig`/`AirAttackConfig` が個別に持つ）はヒット成立時に `Attack.hitstopSec` へ渡す停止時間で、段・アクションごとに調整できる（`RangedConfig` は持たない。弾は `reaction` が `None` で無反応の仕様のため）
 
 ### [`EnemyConfig`](../Ash2/src/Config/EnemyConfig.hpp)
 

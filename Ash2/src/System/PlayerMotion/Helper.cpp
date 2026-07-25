@@ -15,21 +15,6 @@ namespace PlayerMotion {
 namespace {
 
 constexpr ColorF KMeleeOrbColor = {1.0, 0.9, 0.5};
-/// 暫定のヒットストップ時間（秒）。本格的な数値調整は #132/#134 で行う
-constexpr double KMeleeHitstopSec = 0.05;
-
-/// @brief 攻撃判定エンティティの半径・ダメージ量をまとめた仕様
-// SpawnAttackHitbox の引数で double の radius と int32 の damage が隣接すると
-// 呼び出し側で取り違えやすいため、1つの構造体にまとめて渡す
-// （bugprone-easily-swappable-parameters 対策）。
-struct HitboxSpec {
-  /// 攻撃カプセルの半径（兼 CircleDrawable の表示半径）
-  double radius = 0.0;
-  /// 与えるダメージ量
-  int32 damage = 0;
-  /// 被弾側リアクションの強さ
-  ReactionLevel reaction = ReactionLevel::None;
-};
 
 /// @brief 攻撃判定エンティティ（光の珠）を生成する
 ///
@@ -48,7 +33,7 @@ entt::entity SpawnAttackHitbox(entt::registry& registry, entt::entity owner,
                                               .segmentEnd = Vec3::Zero(),
                                               .radius = spec.radius});
   registry.emplace<Attack>(hitbox, Attack{.damage = spec.damage,
-                                          .hitstopSec = KMeleeHitstopSec,
+                                          .hitstopSec = spec.hitstopSec,
                                           .reaction = spec.reaction});
   registry.emplace<Drawable>(
       hitbox, CircleDrawable{.radius = spec.radius, .color = KMeleeOrbColor});
@@ -72,17 +57,14 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity) {
 
 void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
                         double elapsed, const MotionTimeline& timeline,
-                        double radius, int32 damage, ReactionLevel reaction,
-                        entt::entity& hitboxEntity,
+                        const HitboxSpec& spec, entt::entity& hitboxEntity,
                         const std::function<Vec3(double)>& offsetFn) {
   // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
   // 補間で移動させる
   if (timeline.isActive(elapsed)) {
     if (hitboxEntity == entt::null) {
       const auto& pos = registry.get<WorldPos>(owner);
-      hitboxEntity = SpawnAttackHitbox(
-          registry, owner, pos,
-          HitboxSpec{.radius = radius, .damage = damage, .reaction = reaction});
+      hitboxEntity = SpawnAttackHitbox(registry, owner, pos, spec);
     }
 
     const auto offset = offsetFn(timeline.activeProgress(elapsed));

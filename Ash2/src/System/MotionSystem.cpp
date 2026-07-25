@@ -46,12 +46,18 @@ String MotionName(const Motion& m) {
 
 void MotionSystem::Update(entt::registry& registry,
                           const FrameData& frameData) {
-  auto view = registry.view<Motion>(entt::exclude<Hitstop>);
+  // ヒットストップ中も Tick は呼ぶ（dt = 0 で時間だけ凍結する）。
+  // 除外すると停止中の入力が Tick に届かず、コンボ予約を取りこぼす
+  FrameData frozen = frameData;
+  frozen.dt = 0.0;
+
+  auto view = registry.view<Motion>();
   for (const auto entity : view) {
     auto& motion = view.get<Motion>(entity);
+    const FrameData& fd = registry.all_of<Hitstop>(entity) ? frozen : frameData;
     auto next = std::visit(
         [&](MotionState auto& state) {
-          return Tick(state, registry, entity, frameData);
+          return Tick(state, registry, entity, fd);
         },
         motion);
     if (next.has_value()) {

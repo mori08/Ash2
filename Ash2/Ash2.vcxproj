@@ -163,6 +163,7 @@
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
     <ClCompile Include="tests\TestHitReactionSystem.cpp" />
+    <ClCompile Include="tests\TestHitstopSystem.cpp" />
     <ClCompile Include="tests\TestHitSystem.cpp" />
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />

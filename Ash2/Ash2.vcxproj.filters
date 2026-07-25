@@ -294,6 +294,9 @@
     <ClCompile Include="tests\TestHitReactionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestHitstopSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestProjectileSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

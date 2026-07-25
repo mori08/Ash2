@@ -66,9 +66,12 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
   const auto offsetFn = [&da, capMidH](double progress) {
     return DashAttackOrbOffset(progress, da, capMidH);
   };
-  UpdateAttackHitbox(registry, entity, state.elapsed, timeline, da.radius,
-                     da.damage, ReactionLevel::Repel, state.hitboxEntity,
-                     offsetFn);
+  UpdateAttackHitbox(registry, entity, state.elapsed, timeline,
+                     HitboxSpec{.radius = da.radius,
+                                .damage = da.damage,
+                                .reaction = ReactionLevel::Repel,
+                                .hitstopSec = da.hitstopSec},
+                     state.hitboxEntity, offsetFn);
 
   // 突進フェーズ（構え）：ダッシュ方向へ移動
   // 空中発動時は AirDash の暫定仕様に合わせ垂直速度を 0 に固定する

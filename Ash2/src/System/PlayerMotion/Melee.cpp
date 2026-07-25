@@ -91,8 +91,12 @@ Optional<Motion> Tick(Melee& state, entt::registry& registry,
       hasNextStage ? ReactionLevel::Stagger : ReactionLevel::Blow;
 
   const auto offsetFn = MakeMeleeOffsetFn(stageCfg, anim.facingRight, melee);
-  UpdateAttackHitbox(registry, entity, state.elapsed, timeline, stageCfg.radius,
-                     melee.damage, reaction, state.hitboxEntity, offsetFn);
+  UpdateAttackHitbox(registry, entity, state.elapsed, timeline,
+                     HitboxSpec{.radius = stageCfg.radius,
+                                .damage = melee.damage,
+                                .reaction = reaction,
+                                .hitstopSec = stageCfg.hitstopSec},
+                     state.hitboxEntity, offsetFn);
 
   if (hasNextStage) {
     // 構え〜後隙A中の攻撃入力は次段への遷移を予約するのみ
