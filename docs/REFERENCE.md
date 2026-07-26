@@ -155,7 +155,7 @@
 | システム | タイミング | 処理 |
 |---|---|---|
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Motion` の全状態ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了、無敵の付与/除去、接地検出）を行う。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡し、タイムラインを凍結したまま入力の予約（`comboQueued` 等）だけ拾わせる。デバッグビルドでは遷移を `APP_LOG` に出力する |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Motion` の全状態ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了、無敵の付与/除去、接地検出）を行う。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡し、タイムラインを凍結したまま入力の予約（`comboQueued` 等）だけ拾わせる |
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + Motion` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
@@ -442,6 +442,6 @@
 - `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
-- `Motion` に新しい状態型を追加したときは、`MotionSystem.cpp` の `MotionName()`（デバッグログ用）にも分岐を追加する。また、`MotionSystem::Update` の `std::visit` は `MotionState` concept（`MotionSystem.hpp`）で制約されているため、新状態型は `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。
+- `Motion` に新しい状態型を追加したときは、その型に `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。`MotionSystem::Update` の `std::visit` が `MotionState` concept（`MotionSystem.hpp`）で制約されているため。
 - 新フェーズを追加し TOML から `push`/`reset` できるようにするときは、`Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()` にもエントリを追加する。
 - 新しいアニメーションクリップを参照するときは `assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` の `assert` で落ちる）。
