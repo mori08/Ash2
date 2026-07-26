@@ -78,6 +78,8 @@ Optional<Motion> Tick(Melee& state, entt::registry& registry,
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& melee = cfg.melee;
+  assert(state.stage < melee.stages.size() &&
+         "state.stage は melee.stages の範囲内でなければならない");
   const auto& stageCfg = melee.stages[state.stage];
   const auto& timeline = stageCfg.timeline;
   const auto& input = frameData.input;

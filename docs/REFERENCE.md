@@ -301,6 +301,8 @@
   `Attack.hitstopSec` へ渡す停止時間で、段・アクションごとに調整できる（`RangedConfig` は持たない。
   弾は `reaction` が `None` で無反応の仕様のため）
 - 近接攻撃はスタミナを消費しない（`MeleeConfig` は `staminaCost` を持たない）
+- `[[melee.stage]]` が0件（欠落含む）の場合、`FromToml` は `Error` を投げる
+  （`Tick(Melee&, ...)` の `stages[state.stage]` アクセスを不正にしないため）
 
 ### [`EnemyConfig`](../Ash2/src/Config/EnemyConfig.hpp)
 
