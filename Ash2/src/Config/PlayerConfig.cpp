@@ -40,8 +40,6 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
   // Why not: m[U"stage"] がテーブル配列として存在しない場合に
   // tableArrayView() を呼ぶと不正アクセスになるため、
   // 事前に isTableArray() で存在確認する。
-  // キー欠落時は空の stages のままとし、旧 get<T>() のデフォルト値
-  // 挙動に倣って寛容に扱う。
   if (const auto& stageValue = m[U"stage"]; stageValue.isTableArray()) {
     for (const auto& stageToml : stageValue.tableArrayView()) {
       stages.push_back(MeleeStageConfig{
@@ -53,6 +51,13 @@ PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
           .hitstopSec = stageToml[U"hitstop_sec"].get<double>(),
       });
     }
+  }
+  // Why not: 空の stages を許すと Tick(Melee&, ...) の
+  // stages[state.stage] アクセスが不正になるが、ここは設定読み込みの
+  // 最上位境界であり、呼び出し元の GameSetup は expected を扱わない
+  // 設計のため throw で致命として確定させる。
+  if (stages.isEmpty()) {
+    throw Error{U"PlayerConfig::FromToml: melee.stage がありません"};
   }
 
   return {
