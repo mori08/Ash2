@@ -6,7 +6,6 @@
 #include "Component/PlayerMotion.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
-#include "Config/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 
 namespace PlayerMotion {
@@ -20,8 +19,7 @@ Melee MakeMelee(SpriteAnimation& anim, size_t stage,
 /// @brief Ranged へ移行する（スタミナ消費、遠距離攻撃クリップの設定と timer
 /// の算出）
 Ranged MakeRanged(entt::registry& registry, entt::entity entity,
-                  const PlayerConfig& cfg, const AnimationData& playerData,
-                  SpriteAnimation& anim);
+                  const PlayerConfig& cfg, SpriteAnimation& anim);
 
 /// @brief Dash へ移行する（スタミナ消費、クリップの設定）
 /// @param air 空中発動か（true: 空中ダッシュ相当）

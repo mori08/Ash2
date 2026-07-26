@@ -396,7 +396,8 @@
 ## アニメーションクリップ名
 
 `assets/config/animation/player.toml` のクリップ名としてコードから参照されるもの。
-クリップ名の欠落は `AnimationSystem` の `assert` で検出される。
+クリップ名の欠落は `AnimationSystem` の `assert` で検出される（`ranged_attack` は
+`MakeRanged` でも同様の assert で検出する）。
 
 | クリップ名 | 使用箇所 |
 |---|---|

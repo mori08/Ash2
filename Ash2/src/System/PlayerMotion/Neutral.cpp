@@ -13,8 +13,6 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
                       entt::entity entity, const FrameData& frameData) {
   const auto& input = frameData.input;
   const auto& cfg = registry.ctx().get<PlayerConfig>();
-  const auto& playerData =
-      registry.ctx().get<AnimationDataRegistry>().at(U"player");
   const auto& pos = registry.get<WorldPos>(entity);
   auto& vel = registry.get<Velocity>(entity);
   auto& anim = registry.get<SpriteAnimation>(entity);
@@ -43,7 +41,7 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
       vel.w = 0.0;
       vel.d = 0.0;
       SpawnProjectile(registry, pos, anim.facingRight, cfg);
-      return MakeRanged(registry, entity, cfg, playerData, anim);
+      return MakeRanged(registry, entity, cfg, anim);
     }
     if (input.dashDown &&
         registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
@@ -62,7 +60,7 @@ Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
     vel.w = 0.0;
     vel.d = 0.0;
     SpawnProjectile(registry, pos, anim.facingRight, cfg);
-    return MakeRanged(registry, entity, cfg, playerData, anim);
+    return MakeRanged(registry, entity, cfg, anim);
   } else if (input.dashDown &&
              registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
     // 空中ダッシュへの入場（Dash::Tick が air フラグにより接地検出で Landing
