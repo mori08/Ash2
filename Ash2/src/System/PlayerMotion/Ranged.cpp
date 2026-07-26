@@ -1,11 +1,14 @@
 #include <Siv3D.hpp>
 
+#include <cassert>
+
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
+#include "Config/AnimationData.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
@@ -48,12 +51,19 @@ void SpawnProjectile(entt::registry& registry, const WorldPos& pos,
 }
 
 Ranged MakeRanged(entt::registry& registry, entt::entity entity,
-                  const PlayerConfig& cfg, const AnimationData& playerData,
-                  SpriteAnimation& anim) {
+                  const PlayerConfig& cfg, SpriteAnimation& anim) {
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.ranged.staminaCost);
+
+  const auto& dataRegistry = registry.ctx().get<AnimationDataRegistry>();
+  assert(dataRegistry.contains(anim.dataKey) &&
+         "AnimationDataRegistry にキーが存在しない");
+  const auto& data = dataRegistry.at(anim.dataKey);
+  assert(data.clips.contains(U"ranged_attack") &&
+         "clips に ranged_attack が存在しない");
+
   SetClip(anim, U"ranged_attack");
-  return Ranged{.timer = GetClipDuration(playerData, U"ranged_attack")};
+  return Ranged{.timer = GetClipDuration(data, U"ranged_attack")};
 }
 
 Optional<Motion> Tick(Ranged& state, entt::registry& registry,
