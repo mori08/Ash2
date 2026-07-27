@@ -161,6 +161,7 @@
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
+    <ClCompile Include="tests\TestEnemyConfig.cpp" />
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
     <ClCompile Include="tests\TestHitReactionSystem.cpp" />
     <ClCompile Include="tests\TestHitstopSystem.cpp" />
@@ -404,6 +405,7 @@
     <ClInclude Include="src\Config\EnemyConfig.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
+    <ClInclude Include="src\Config\TomlFields.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseLoaders.hpp" />

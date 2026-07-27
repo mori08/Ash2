@@ -52,6 +52,35 @@ TEST_CASE("AnimationData::FromToml - parses clip entries correctly") {
   REQUIRE(data.clips.at(U"walk").speed == 12.0);
 }
 
+TEST_CASE("AnimationData::FromToml - missing width throws Error") {
+  constexpr std::string_view Toml =
+      "texture = \"assets/images/player.png\"\n"
+      "height = 64\n"
+      "\n"
+      "[draw_offset]\n"
+      "x = -8.0\n"
+      "y = -32.0\n";
+  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  REQUIRE_THROWS_AS(AnimationData::FromToml(reader), Error);
+}
+
+TEST_CASE("AnimationData::FromToml - missing clip row throws Error") {
+  constexpr std::string_view Toml =
+      "texture = \"assets/images/player.png\"\n"
+      "width = 32\n"
+      "height = 64\n"
+      "\n"
+      "[draw_offset]\n"
+      "x = -8.0\n"
+      "y = -32.0\n"
+      "\n"
+      "[idle]\n"
+      "count = 4\n"
+      "speed = 8.0\n";
+  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  REQUIRE_THROWS_AS(AnimationData::FromToml(reader), Error);
+}
+
 TEST_CASE("AnimationData::FromToml - reserved keys are not treated as clips") {
   // texture / width / height / draw_offset はクリップとして誤認されてはならない
   constexpr std::string_view Toml =

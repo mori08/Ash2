@@ -272,6 +272,12 @@
 ## 設定（Config）
 
 `Ash2/src/Config/` 配下。TOML から `FromToml()` で構築し、`registry.ctx()` に格納する。
+`PlayerConfig`/`EnemyConfig`/`AnimationData` はいずれも、必須キーが欠落していると
+`FromToml` が `Error` を投げる（下位の `Parse` 系関数が `std::expected` で失敗を伝播し、
+`FromToml` がそれを致命として確定させる）。
+
+[`TomlFields`](../Ash2/src/Config/TomlFields.hpp) は1テーブル分の必須キー読み出しと
+欠落キーの記録をまとめるヘルパーで、上記3設定の `Parse` 系関数が共通で使う。
 
 ### [`PlayerConfig`](../Ash2/src/Config/PlayerConfig.hpp)
 
@@ -430,6 +436,7 @@
 | `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件 |
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
+| `TestEnemyConfig.cpp` | `EnemyConfig::FromToml` |
 | `TestAnimationData.cpp` | `AnimationData::FromToml` |
 | `TestScenarioData.cpp` | `ScenarioData::FromToml` |
 | `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset |
