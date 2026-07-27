@@ -14,6 +14,7 @@ description: Read all source files and report 3-5 findings, then optionally crea
 
 - `docs/ARCHITECTURE.md`
 - `docs/REFERENCE.md`
+- `docs/coding_style/DOCUMENTATION.md`
 - `.claude/rules/cpp.md`
 
 ### 2. ソースファイルの走査
@@ -27,8 +28,8 @@ description: Read all source files and report 3-5 findings, then optionally crea
 
 - `Ash2/src/` 以下のソースファイルをすべて読む
 - `docs/ARCHITECTURE.md` と `docs/REFERENCE.md` は読まない
-- `.claude/rules/cpp.md` の内容に従い `docs/ARCHITECTURE.md`（設計意図、200行上限）と
-  `docs/REFERENCE.md`（コンポーネント・システム・フェーズ等の部品一覧、行数上限なし）を一から生成する
+- `docs/coding_style/DOCUMENTATION.md` の分担・記述ルールに従い `docs/ARCHITECTURE.md` と
+  `docs/REFERENCE.md` を一から生成する
 
 サブエージェントの生成結果と現在の両ファイルを比較する。
 
@@ -58,7 +59,7 @@ description: Read all source files and report 3-5 findings, then optionally crea
 - バグ・潜在的な問題（クラッシュ、未定義動作、リソースリーク等）
 - `docs/ARCHITECTURE.md` の設計方針との乖離（ECS の使い方、レイヤー違反等）
 - 改善提案（パフォーマンス、可読性、設計の整理）
-- `.claude/rules/cpp.md` のルール違反（命名規則、Doxygen コメント、マジックナンバー等）
+- `.claude/rules/cpp.md` のルール違反（s3d の優先使用、エラー処理の使い分け、Doxygen コメント等）
 
 ### 6. レポートの出力
 
