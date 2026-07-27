@@ -315,6 +315,9 @@
     <ClCompile Include="tests\TestPlayerConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestEnemyConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestWaitPhase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1062,6 +1065,9 @@
       <Filter>Header Files\Config</Filter>
     </ClInclude>
     <ClInclude Include="Config\ScenarioData.hpp">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\TomlFields.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
     <ClInclude Include="Phase\ScenarioPhase.hpp">
