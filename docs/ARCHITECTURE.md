@@ -174,7 +174,7 @@ x=w、y=h、z=d に対応する。
 Debug ビルドでは F5（`InputState::reloadConfig`）で再読込でき、`PlayerTestPhase` は自分自身を
 エンティティごと作り直して即座に反映する。
 
-アセットは `assets/asset_list` を単一の入り口として扱い、Debug はファイルから・Release は
+アセットは `Ash2/App/assets/asset_list` を単一の入り口として扱い、Debug はファイルから・Release は
 埋め込みリソースから読む差異を `Asset.hpp` に閉じ込める。パス解決は必ず `AssetPath()` を通す。
 
 ---

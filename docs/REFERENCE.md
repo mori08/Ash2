@@ -1,6 +1,8 @@
 # REFERENCE.md
 
 「沼に焚べ」の部品一覧。設計意図・レイヤー構成・座標系などは [ARCHITECTURE.md](ARCHITECTURE.md) を参照。
+ゲームデザイン上の仕様（モーションの区間秒数・キャンセル可否・リアクション Lv など）は
+[docs/game_design/](game_design/) 配下（[motion_design.md](game_design/motion_design.md) ほか）を参照。
 
 行数上限なし。機能追加のたびに更新する前提のドキュメント。
 
@@ -23,28 +25,12 @@
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
 | [`ReactionLevel`](../Ash2/src/Component/ReactionLevel.hpp) | 被弾側に生じるリアクションの強さを表す `enum class`（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応） |
-| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。フィールドの詳細は下記「複雑なコンポーネントの詳細」参照 |
+| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。`reaction` の割り当て元と遷移先は下記「リアクションの対応」参照 |
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int32 フィールド、StaminaSystem が管理する回復端数累積 accum と回復ディレイ計測用 recoveryTimer を持つ） |
 | [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`variant`）。状態ごとの詳細は下記「モーション状態型」参照 |
 | [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MovementSystem`/`GravitySystem`/`AnimationSystem` の対象から除外される。`MotionSystem` は除外せず dt = 0 で呼ぶ |
 | [`Invincible`](../Ash2/src/Component/Invincible.hpp) | 無敵状態であることを示すタグ。`HitSystem` の被弾対象ビューから除外される。`PlayerMotion::Dash`（地上・空中いずれも）が構え・ダッシュ中は毎フレーム付与し、後隙入りで除去する |
-
-### 複雑なコンポーネントの詳細
-
-#### `Attack`
-
-攻撃中タグ兼攻撃力。`Collider` と組み合わせて攻撃判定が有効になる。
-
-- `damage`: 与えるダメージ量
-- `root`: 複数コライダー構成のルートを指定する（単体の場合は `entt::null`）。`HitSystem` は
-  ルート側の `hitTargets`・`damage` を参照してヒット管理する
-- `hitTargets`: 攻撃生存期間中の重複ヒットを防ぐ
-- `hitstopSec`: ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間
-- `reaction`: 被弾側に生じるリアクションの強さ（`ReactionLevel`、既定は `None`）。
-  `PlayerMotion::Melee`（次段を持つ段は `Stagger`、最終段は `Blow`）・`DashAttack`（`Repel`）・
-  `AirAttack`（`Repel`）が `Helper::UpdateAttackHitbox` 経由で確定させる。`Ranged` は設定せず
-  既定の `None` のまま（無反応）
 
 ---
 
@@ -80,71 +66,51 @@
 
 `Motion` は `std::variant<PlayerMotion::Neutral, Melee, Ranged, Dash, DashAttack, AirAttack, Landing, EnemyMotion::Idle, Stagger, Repel, Knockback, Defeated>`。
 
+遷移を `Tick()` の戻り値でのみ表現する理由は [ARCHITECTURE.md](ARCHITECTURE.md) の
+「Motion — variant による排他的な行動状態」を参照。
+
 4区間タイムライン（構え/攻撃/後隙A/後隙B）を持つ状態は
 [`Config/PlayerConfig.hpp`](../Ash2/src/Config/PlayerConfig.hpp) の `MotionTimeline`
-（`isActive`/`isCancelable`/`isFinished`/`activeProgress`）で区間判定する。
+（`isActive`/`isCancelable`/`isFinished`/`activeProgress`）で区間判定する。各区間の秒数・
+キャンセル可否・リアクション Lv は [motion_design.md](game_design/motion_design.md) を参照。
 
 ### プレイヤー（`PlayerMotion`）
 
-状態型の定義は [`Component/PlayerMotion.hpp`](../Ash2/src/Component/PlayerMotion.hpp)、
+状態型の定義と各状態が持つデータは [`Component/PlayerMotion.hpp`](../Ash2/src/Component/PlayerMotion.hpp)、
 `Tick()` の宣言は [`System/PlayerMotionSystem.hpp`](../Ash2/src/System/PlayerMotionSystem.hpp)。
 `Dash`/`DashAttack` は `air` フラグ1つで地上・空中の両方を表す（#207 で型を統合、旧 `AirDash`/`AirDashAttack` は廃止）。
 
-- **Neutral**: 通常状態（待機・移動・ジャンプ）。各アクションへの入場判定を行う。保持データなし。
-  接地中は Melee/Ranged/Dash へ、空中では AirAttack/Ranged/Dash へ入場できる
-- **Ranged**: 再生中クリップの残り時間（`timer`）を持つ。`Neutral` から接地・空中いずれでも
-  入場できる（空中発動時も専用の遷移や着地処理は持たず、Neutral 復帰までの挙動は地上と同一）
-- **Melee**: コンボ段インデックス（`stage`）を持つ単一の型。段ごとの設定は `cfg.melee.stages[stage]`
-  （`MeleeStageConfig`、軌道は `MeleeTrajectory::Thrust`/`Slash`）を参照する。モーション開始からの
-  経過時間（`elapsed`）・攻撃判定の子エンティティ（`hitboxEntity`）を持つ。次段が存在する段
-  （1・2段目相当）は次段への遷移予約フラグ（`comboQueued`）と後隙中のダッシュキャンセルを持つが、
-  次段を持たない最終段（締め技、3段目相当）はコンボ継続・ダッシュキャンセルのいずれも持たず
-  タイマー満了で `Neutral` へ戻るのみ。各段の `MotionTimeline` は `recoveryASec=0` として後隙全体を
-  キャンセル可能区間として扱う（Melee は元々後隙A/B分割を持たないため）
-- **Dash**: `air` フラグで地上・空中を切り替える。構え・ダッシュ・後隙A・後隙Bの4区間を
-  `elapsed` 1本で管理する。構え・ダッシュ中（`elapsed < activeEnd()`）は地上・空中いずれも
-  `Invincible` を毎フレーム付与し、後隙入りで除去する。ダッシュ中・後隙A・B中の攻撃入力
-  （`attackDown`）でダッシュ攻撃を予約（`dashAttackQueued`）し、後隙B中に `DashAttack`
-  （`air` を引き継ぐ）へ遷移する。後隙B中のダッシュ入力（`dashDown`）は再ダッシュにキャンセルする
-  （`dashQueued`、地上・空中共通の仕様）。ダッシュ移動中の方向を `lastDashDir` に記録し
-  `DashAttack::dashDir` へ引き渡す。`air=true` の場合のみ、移動区間中の垂直速度を 0 に固定して
-  重力の影響を受けず（暫定仕様）、後隙中も含め毎フレーム接地を検出して接地した時点で
-  （`Invincible` を除去したうえで）`Landing` へ強制遷移する。`air=false`（地上）の場合は
-  これらの `air` 専用分岐を通らず、接地遷移も持たない
-- **DashAttack**: `air` フラグで地上・空中を切り替える。構え・攻撃・後隙の3区間
-  （`recoveryBSec=0` として即 Neutral 復帰）を持ち、攻撃判定（`hitboxEntity`）を w-d 平面の
-  円軌道上で更新する。`air=true` の場合のみ、突進フェーズ中の垂直速度を 0 に固定し、後隙中も
-  含め毎フレーム接地を検出して接地した時点で（残っていればヒットボックスを破棄したうえで）
-  `Landing` へ強制遷移する。`air=false`（地上）の場合は接地遷移を持たない。スタミナ枯渇時の
-  威力低下（リアクション降格）は未実装、本格対応は #233 のスコープ
-- **AirAttack**: `Neutral` が空中（`!WorldPos::isOnGround()`）で攻撃入力を受けたときに入場する。
-  地上に対応する型を持たない唯一の空中専用状態。構え・攻撃・後隙の3区間（`recoveryBSec=0`）を
-  持ち、攻撃判定（`hitboxEntity`）を w-h 平面（垂直面）の円軌道上で更新する（回転方向は
-  プレイヤーの向きに応じて左右反転する）。後隙中も含め毎フレーム接地を検出し、接地した時点で
-  （残っていればヒットボックスを破棄したうえで）`Landing` へ強制遷移する。接地せずに後隙が
-  満了した場合はタイマー満了で `Neutral` へ戻る。スタミナ枯渇時の威力低下は `DashAttack` 同様に
-  未実装、本格対応は #233 のスコープ
-- **Landing**: 着地硬直のタイマー状態（`timer`）。空中アクションの接地検出から遷移する
+| 状態 | 主な遷移先 | 実装 |
+|---|---|---|
+| `Neutral` | 接地中の入力で `Melee`/`Ranged`/`Dash`、空中の入力で `AirAttack`/`Ranged`/`Dash` | [`Neutral.cpp`](../Ash2/src/System/PlayerMotion/Neutral.cpp) |
+| `Melee` | 後隙Bの攻撃入力・予約で次段の `Melee`、後隙Bのダッシュ入力で `Dash`、満了で `Neutral` | [`Melee.cpp`](../Ash2/src/System/PlayerMotion/Melee.cpp) |
+| `Ranged` | 満了で `Neutral`（空中発動時も着地処理を挟まず地上と同一） | [`Ranged.cpp`](../Ash2/src/System/PlayerMotion/Ranged.cpp) |
+| `Dash` | 後隙Bの予約で `DashAttack`（`air` を引き継ぐ）／再ダッシュの `Dash`、満了で `Neutral`、接地で `Landing`（`air=true` のみ） | [`Dash.cpp`](../Ash2/src/System/PlayerMotion/Dash.cpp) |
+| `DashAttack` | 満了で `Neutral`、接地で `Landing`（`air=true` のみ） | [`DashAttack.cpp`](../Ash2/src/System/PlayerMotion/DashAttack.cpp) |
+| `AirAttack` | 接地で `Landing`、接地しなければ満了で `Neutral` | [`AirAttack.cpp`](../Ash2/src/System/PlayerMotion/AirAttack.cpp) |
+| `Landing` | 満了で `Neutral` | [`Landing.cpp`](../Ash2/src/System/PlayerMotion/Landing.cpp) |
 
 ### 敵（`EnemyMotion`）
 
-状態型の定義は [`Component/EnemyMotion.hpp`](../Ash2/src/Component/EnemyMotion.hpp)。
-各状態は `remaining`（残り時間）1つだけを持つ（`Idle` は空構造体）。
+状態型の定義と各状態が持つデータは [`Component/EnemyMotion.hpp`](../Ash2/src/Component/EnemyMotion.hpp)。
+5状態とも `Tick()` の実装は [`EnemyMotionSystem.cpp`](../Ash2/src/System/EnemyMotionSystem.cpp) にまとまっている。
 
-- **Idle**: 敵の通常状態（無反応）
-- **Stagger**: ひるみ中。`Tick()` が `RectDrawable::size` を `EnemyConfig::size` を基準に縦縮みさせ、
-  満了時に原寸へ戻して `Idle` へ遷移する（縮み幅は duration の中間で最大、両端で原寸に近づく）
-- **Repel**: 弾かれ中。被弾時に `HitReactionSystem` が `Velocity.w` を押し出し方向×
-  `EnemyConfig::repelSpeed` に設定し、`Tick()` は残り時間を減算するのみ。満了時に `Velocity.w` を
-  0 に戻し `Idle` へ遷移する
-- **Knockback**: 吹っ飛び中。被弾時に `HitReactionSystem` が `Velocity.w`/`Velocity.h` を設定し、
-  放物線は `MovementSystem`/`GravitySystem` に委ねる（`Gravity` の付与が前提）。`Tick()` は残り時間を
-  減算し、接地中かつ下降中（`isOnGround()` かつ `vel.h <= 0`）は `Velocity.w` を 0 に固定する
-  （打ち上げ直後は接地したまま Tick に入るため、上昇中は止めない）。満了時に `Idle` へ遷移する
-- **Defeated**: 撃破後の消滅演出中。`HitReactionSystem` が `Hp` 枯渇を検出した時点で
-  `Collider`/`Hp` を外し（被弾判定から除外）入場させる。`Tick()` は残り時間を減算しながら
-  `RectDrawable::color.a` を残り時間比でフェードアウトさせる（`Idle` への遷移はしない）。
-  満了エンティティの破棄は `EnemySystem` が行う
+| 状態 | 主な遷移先 |
+|---|---|
+| `Idle` | なし（通常状態。`Tick()` は何もしない） |
+| `Stagger` | 満了で `Idle`（`Tick()` が `RectDrawable::size` を縦縮みさせ、満了時に原寸へ戻す） |
+| `Repel` | 満了で `Idle`（満了時に `Velocity.w` を 0 に戻す） |
+| `Knockback` | 満了で `Idle`（放物線は `MovementSystem`/`GravitySystem` に委ねる） |
+| `Defeated` | なし（`RectDrawable::color.a` をフェードさせ、満了エンティティは `EnemySystem` が破棄する） |
+
+### 例外
+
+- `air=true` の `Dash`/`DashAttack` と `AirAttack` は、後隙中も含め毎フレーム接地を検出して
+  `Landing` へ強制遷移する（タイマー満了より先に評価する）
+- `Dash` は構え・ダッシュ中のみ `Invincible` を毎フレーム付与し、後隙入りで除去する
+- `Melee` の後隙A/Bの配分は段ごとに異なる（次段を持つ段はキャンセル可、締め技はキャンセル不可）
+- 敵の状態遷移は `Tick()` の戻り値ではなく `HitReactionSystem` が直接行う
+  （[ARCHITECTURE.md](ARCHITECTURE.md) の「例外：外部要因による強制遷移」）
 
 ---
 
@@ -155,13 +121,13 @@
 | システム | タイミング | 処理 |
 |---|---|---|
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Motion` の全状態ごとの `Tick()` を呼び、移動・ジャンプ・向き・クリップ決定・状態遷移（攻撃判定/弾エンティティ生成、タイマー満了、無敵の付与/除去、接地検出）を行う。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡し、タイムラインを凍結したまま入力の予約（`comboQueued` 等）だけ拾わせる |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Motion` の状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<Motion>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（理由は [ARCHITECTURE.md](ARCHITECTURE.md) の「ヒットストップの実現方法」） |
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + Motion` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋フェーズ内（PlayerTestPhase、GravitySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。PlayerTestPhase では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（PlayerTestPhase、AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。新たに成立したヒットの `HitPair`（attacker/target）配列を返す |
-| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitPair` ごとに、攻撃側本体（ヒットボックスの `Hierarchy` 親）と被弾側へ `Attack.hitstopSec` 分の `Hitstop` を付与する（`hitstopSec<=0` はスキップ、既に付与中なら `Max` で長い方の残り時間を残す）。`Enemy` を持つ被弾側に限り、`Hp` 枯渇時は `reaction` によらず `Defeated` へ（`Collider`/`Hp` を除去）、それ以外は `Attack.reaction` に応じて `Stagger`/`Repel`/`Knockback` へ `Motion` を強制遷移させ、攻撃側本体との `WorldPos.w` 比較で決めた向きの `Velocity` を設定する |
+| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitPair` ごとに、攻撃側本体（ヒットボックスの `Hierarchy` 親）と被弾側へ `Hitstop` を付与し、`Enemy` を持つ被弾側の `Motion` と `Velocity` を下記「リアクションの対応」に従って強制遷移させる |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（PlayerTestPhase、HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | フェーズ内（PlayerTestPhase、ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外でまとめて破棄する |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転） |
@@ -169,6 +135,21 @@
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
+
+### リアクションの対応
+
+`Attack.reaction`（`ReactionLevel`）は各 `PlayerMotion` の `Tick()` が `PlayerMotion::UpdateAttackHitbox`
+経由で固定値を割り当て、`HitReactionSystem::Apply` が `Enemy` の遷移先を決める。
+
+| `Attack.reaction` | 割り当て元 | 遷移先 |
+|---|---|---|
+| `None`（既定） | `Ranged` の弾 | 遷移しない（無反応） |
+| `Stagger` | `Melee`（次段を持つ段） | `EnemyMotion::Stagger` |
+| `Repel` | `DashAttack` / `AirAttack` | `EnemyMotion::Repel` |
+| `Blow` | `Melee`（最終段） | `EnemyMotion::Knockback` |
+
+`Hp` 枯渇時は `reaction` によらず `Collider`/`Hp` を除去して `EnemyMotion::Defeated` へ遷移する。
+`Repel`/`Knockback` の `Velocity` は攻撃側本体との `WorldPos.w` 比較で向きを決める。
 
 ### システム付随の型・関数
 
@@ -190,14 +171,13 @@
 
 `MotionSystem::Update` が呼ぶ `Tick()` は
 [`PlayerMotionSystem.hpp`](../Ash2/src/System/PlayerMotionSystem.hpp) が宣言し、実体は
-`Ash2/src/System/PlayerMotion/` 配下に状態ごとに分かれている。
+`Ash2/src/System/PlayerMotion/` 配下に状態ごとに分かれている（対応は上記「モーション状態型」の
+「実装」列を参照）。状態別 `.cpp` は自身の `Tick()` と入場関数の定義を持つ。
 
-- 状態別の `Tick()` と入場関数
-  - [`Neutral.cpp`](../Ash2/src/System/PlayerMotion/Neutral.cpp) / [`Melee.cpp`](../Ash2/src/System/PlayerMotion/Melee.cpp) / [`Ranged.cpp`](../Ash2/src/System/PlayerMotion/Ranged.cpp) / [`Dash.cpp`](../Ash2/src/System/PlayerMotion/Dash.cpp) / [`DashAttack.cpp`](../Ash2/src/System/PlayerMotion/DashAttack.cpp) / [`AirAttack.cpp`](../Ash2/src/System/PlayerMotion/AirAttack.cpp) / [`Landing.cpp`](../Ash2/src/System/PlayerMotion/Landing.cpp)
-- 複数状態が使う共通ヘルパー
-  - [`Helper.hpp`](../Ash2/src/System/PlayerMotion/Helper.hpp)
-- 状態遷移用の入場関数の宣言
-  - [`Transition.hpp`](../Ash2/src/System/PlayerMotion/Transition.hpp)（定義は遷移先の状態の `.cpp` が持つ）
+| 名前 | 役割 |
+|---|---|
+| [`Helper.hpp`](../Ash2/src/System/PlayerMotion/Helper.hpp) | 複数状態が使う共通ヘルパー |
+| [`Transition.hpp`](../Ash2/src/System/PlayerMotion/Transition.hpp) | 状態遷移用の入場関数の宣言（定義は遷移先の状態の `.cpp` が持つ） |
 
 ### プレイヤーモーションの補助部品
 
@@ -281,7 +261,7 @@
 
 ### [`PlayerConfig`](../Ash2/src/Config/PlayerConfig.hpp)
 
-- `assets/config/player.toml` から読み込むプレイヤー設定
+- `Ash2/App/assets/config/player.toml` から読み込むプレイヤー設定
 - 基本値（移動速度 `speed`・ジャンプ初速 `jumpSpeed`・重力 `gravity`）と、`MeleeConfig` /
   `RangedConfig` / `DashConfig` / `DashAttackConfig` / `AirAttackConfig` / `StaminaConfig` /
   `LandingConfig` の各サブ設定を持つ
@@ -312,7 +292,7 @@
 
 ### [`EnemyConfig`](../Ash2/src/Config/EnemyConfig.hpp)
 
-- `assets/config/enemy.toml` から読み込む敵設定
+- `Ash2/App/assets/config/enemy.toml` から読み込む敵設定
 - ステータス・形状（`maxHp`/`size`/`capsuleRadius`/`capsuleHeight`/`spawnW`）と、`EnemyMotion`
   各状態の演出パラメータ（`staggerSec`、`repelSpeed`/`repelSec`、`blowSpeedW`/`blowSpeedH`/
   `knockbackSec`、`defeatedSec`/`respawnSec`）を持つ
@@ -327,13 +307,13 @@
 - スプライトシート単位のアニメーション共有データ（テクスチャキー・コマサイズ・描画オフセット・
   クリップ表）
 - `AnimationClip` は行番号・コマ数・再生速度（コマ/秒）を持つ
-- `AnimationDataRegistry`（キー: 設定ファイルのベース名）として `assets/config/animation/*.toml` から
-  一括ロードされる
+- `AnimationDataRegistry`（キー: 設定ファイルのベース名）として
+  `Ash2/App/assets/config/animation/*.toml` から一括ロードされる
 - `texture`/`width`/`height`/`draw_offset` は予約キーで、それ以外のテーブルがクリップとして扱われる
 
 ### [`ScenarioData`](../Ash2/src/Config/ScenarioData.hpp)
 
-- `assets/config/scenario.toml` から読み込むシナリオ（セクション名 → ステップ列）
+- `Ash2/App/assets/config/scenario.toml` から読み込むシナリオ（セクション名 → ステップ列）
 - 同ヘッダが `IPhaseMaker` / `PhaseLoader` / `PhaseLoaderTable` / `StepPush` / `StepReset` /
   `ScenarioStep` を定義する
 - 詳細は上記「フェーズシステム」を参照
@@ -376,10 +356,12 @@
 
 ## アセット管理（[Asset.hpp](../Ash2/src/Asset.hpp)）
 
+アセットの実体は `Ash2/App/assets/` 配下。下記2行の `assets/asset_list` は実行時に参照されるパス文字列そのもの。
+
 - デバッグ: `assets/asset_list` をファイルから読む
 - リリース: `assets/asset_list` を埋め込みリソースから読む
 - `.png` → `TextureAsset`、`.mp3` → `AudioAsset` としてキー（相対パス）で登録
-- アニメーション設定: `assets/config/animation/*.toml`（起動時に全ファイルをスキャン）
+- アニメーション設定: `Ash2/App/assets/config/animation/*.toml`（起動時に全ファイルをスキャン）
 
 ---
 
@@ -390,7 +372,7 @@
 | [`Main`](../Ash2/src/Main.cpp) | アプリの入口。アセット登録 → registry 初期化 → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `AttachmentSystem` → `DrawSystem` → `HudSystem` を回す。例外は `crash.log` に記録して再 throw。Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行して終了 |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する |
 | [`ReloadConfig`](../Ash2/src/GameSetup.hpp) | Debug ビルド専用。`PlayerConfig` / `EnemyConfig` / アニメーションデータを再読込する |
-| [`GetAssetList`](../Ash2/src/Asset.hpp) | `assets/asset_list` を読んでアセットパス一覧を返す |
+| [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す |
 | [`AssetPath`](../Ash2/src/Asset.hpp) | Debug では `FilePath`、Release では `Resource` パスを返す |
 | [`RegisterAssets`](../Ash2/src/Asset.hpp) | `.png`/`.mp3` をアセットシステムに登録する |
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
@@ -401,7 +383,7 @@
 
 ## アニメーションクリップ名
 
-`assets/config/animation/player.toml` のクリップ名としてコードから参照されるもの。
+`Ash2/App/assets/config/animation/player.toml` のクリップ名としてコードから参照されるもの。
 クリップ名の欠落は `AnimationSystem` の `assert` で検出される（`ranged_attack` は
 `MakeRanged` でも同様の assert で検出する）。
 
@@ -452,4 +434,4 @@
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
 - `Motion` に新しい状態型を追加したときは、その型に `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。`MotionSystem::Update` の `std::visit` が `MotionState` concept（`MotionSystem.hpp`）で制約されているため。
 - 新フェーズを追加し TOML から `push`/`reset` できるようにするときは、`Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()` にもエントリを追加する。
-- 新しいアニメーションクリップを参照するときは `assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` の `assert` で落ちる）。
+- 新しいアニメーションクリップを参照するときは `Ash2/App/assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` の `assert` で落ちる）。
