@@ -1,10 +1,19 @@
 name: CodeQL
 
+# paths-ignore は解析対象の C++ に影響しないファイルのみ
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.claude/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.claude/**'
   schedule:
     - cron: '0 3 * * 1'  # 毎週月曜 12:00 JST
   workflow_dispatch:

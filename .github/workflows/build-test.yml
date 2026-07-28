@@ -1,13 +1,22 @@
 name: build-test
 
 # push(main) は、PR を経ない chore コミットの検証と README バッジの更新のため
+# paths-ignore はビルド結果に影響しないファイルのみ。.github/** は除外しない
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.claude/**'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.claude/**'
   workflow_dispatch:
 
 env:
