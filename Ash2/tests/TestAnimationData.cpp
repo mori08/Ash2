@@ -4,7 +4,7 @@
 #include "Config/AnimationData.hpp"
 
 TEST_CASE("AnimationData::FromToml - parses top-level fields correctly") {
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "texture = \"assets/images/player.png\"\n"
       "width = 32\n"
       "height = 64\n"
@@ -12,7 +12,7 @@ TEST_CASE("AnimationData::FromToml - parses top-level fields correctly") {
       "[draw_offset]\n"
       "x = -8.0\n"
       "y = -32.0\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   const AnimationData data = AnimationData::FromToml(reader);
   REQUIRE(data.textureKey == U"assets/images/player.png");
   REQUIRE(data.size.x == 32);
@@ -22,7 +22,7 @@ TEST_CASE("AnimationData::FromToml - parses top-level fields correctly") {
 }
 
 TEST_CASE("AnimationData::FromToml - parses clip entries correctly") {
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "texture = \"assets/images/enemy.png\"\n"
       "width = 48\n"
       "height = 48\n"
@@ -40,7 +40,7 @@ TEST_CASE("AnimationData::FromToml - parses clip entries correctly") {
       "row = 1\n"
       "count = 6\n"
       "speed = 12.0\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   const AnimationData data = AnimationData::FromToml(reader);
   REQUIRE(data.clips.contains(U"idle"));
   REQUIRE(data.clips.at(U"idle").row == 0);
@@ -53,19 +53,19 @@ TEST_CASE("AnimationData::FromToml - parses clip entries correctly") {
 }
 
 TEST_CASE("AnimationData::FromToml - missing width throws Error") {
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "texture = \"assets/images/player.png\"\n"
       "height = 64\n"
       "\n"
       "[draw_offset]\n"
       "x = -8.0\n"
       "y = -32.0\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   REQUIRE_THROWS_AS(AnimationData::FromToml(reader), Error);
 }
 
 TEST_CASE("AnimationData::FromToml - missing clip row throws Error") {
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "texture = \"assets/images/player.png\"\n"
       "width = 32\n"
       "height = 64\n"
@@ -77,13 +77,13 @@ TEST_CASE("AnimationData::FromToml - missing clip row throws Error") {
       "[idle]\n"
       "count = 4\n"
       "speed = 8.0\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   REQUIRE_THROWS_AS(AnimationData::FromToml(reader), Error);
 }
 
 TEST_CASE("AnimationData::FromToml - reserved keys are not treated as clips") {
   // texture / width / height / draw_offset はクリップとして誤認されてはならない
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "texture = \"assets/images/player.png\"\n"
       "width = 32\n"
       "height = 64\n"
@@ -91,7 +91,7 @@ TEST_CASE("AnimationData::FromToml - reserved keys are not treated as clips") {
       "[draw_offset]\n"
       "x = 0.0\n"
       "y = 0.0\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   const AnimationData data = AnimationData::FromToml(reader);
   REQUIRE_FALSE(data.clips.contains(U"texture"));
   REQUIRE_FALSE(data.clips.contains(U"width"));
