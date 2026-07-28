@@ -345,7 +345,7 @@
 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側に
 あり、`PlayerMotion::Tick(Neutral&, ...)` は無条件にこの値を信頼してそのまま速度計算に使う
 （System 側で正規化やクランプを行わない）。`XInputAction` は左スティックのデッドゾーン定数
-（`LeftThumbDeadZone`、`InputDeviceSelector` も参照する公開 `static constexpr` メンバ）を適用し、
+（`KLeftThumbDeadZone`、`InputDeviceSelector` も参照する公開 `static constexpr` メンバ）を適用し、
 十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
 
 **フェーズの直接キー入力：** `TestMenuPhase`（↑↓/Enter）・`PlayerTestPhase`（Esc）・

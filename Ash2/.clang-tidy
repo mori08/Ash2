@@ -46,9 +46,13 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.EnumConstantCase
     value: CamelCase
-  # constexpr 定数: PascalCase
+  # constexpr 定数: K + PascalCase
+  # 接頭辞 K を除いた残りが PascalCase か検査されるため、
+  # K の次が小文字になる語は K を重ねる（例: Knockback → KKnockbackForce）
   - key: readability-identifier-naming.ConstexprVariableCase
     value: CamelCase
+  - key: readability-identifier-naming.ConstexprVariablePrefix
+    value: K
   # マジックナンバー: 0, 1, -1, 2 は例外
   - key: readability-magic-numbers.IgnoredIntegerValues
     value: '0;1;-1;2'

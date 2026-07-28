@@ -4,7 +4,7 @@
 #include "Config/EnemyConfig.hpp"
 
 TEST_CASE("EnemyConfig::FromToml - parses all fields correctly") {
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "max_hp = 100\n"
       "size_w = 60.0\n"
       "size_h = 80.0\n"
@@ -19,7 +19,7 @@ TEST_CASE("EnemyConfig::FromToml - parses all fields correctly") {
       "knockback_sec = 1.00\n"
       "defeated_sec = 0.50\n"
       "respawn_sec = 1.00\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   const EnemyConfig cfg = EnemyConfig::FromToml(reader);
   REQUIRE(cfg.maxHp == 100);
   REQUIRE(cfg.size.x == 60.0);
@@ -38,7 +38,7 @@ TEST_CASE("EnemyConfig::FromToml - parses all fields correctly") {
 }
 
 TEST_CASE("EnemyConfig::FromToml - missing max_hp throws Error") {
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "size_w = 60.0\n"
       "size_h = 80.0\n"
       "capsule_radius = 30.0\n"
@@ -52,7 +52,7 @@ TEST_CASE("EnemyConfig::FromToml - missing max_hp throws Error") {
       "knockback_sec = 1.00\n"
       "defeated_sec = 0.50\n"
       "respawn_sec = 1.00\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   REQUIRE_THROWS_AS(EnemyConfig::FromToml(reader), Error);
 }
 

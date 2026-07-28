@@ -8,7 +8,7 @@
 namespace {
 
 /// @brief 全必須キーを満たす PlayerConfig 用 TOML（テストの基準値）
-constexpr std::string_view FullToml =
+constexpr std::string_view KFullToml =
     "speed = 150.0\n"
     "jump_speed = 400.0\n"
     "gravity = 900.0\n"
@@ -67,7 +67,7 @@ constexpr std::string_view FullToml =
 }  // namespace
 
 TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
-  const TOMLReader reader{MemoryViewReader{FullToml.data(), FullToml.size()}};
+  const TOMLReader reader{MemoryViewReader{KFullToml.data(), KFullToml.size()}};
   const PlayerConfig cfg = PlayerConfig::FromToml(reader);
   REQUIRE(cfg.speed == 150.0);
   REQUIRE(cfg.jumpSpeed == 400.0);
@@ -87,16 +87,16 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
 }
 
 TEST_CASE("PlayerConfig::FromToml - missing melee.stage throws Error") {
-  constexpr std::string_view Toml =
+  constexpr std::string_view KToml =
       "speed = 150.0\n"
       "jump_speed = 400.0\n"
       "gravity = 900.0\n";
-  const TOMLReader reader{MemoryViewReader{Toml.data(), Toml.size()}};
+  const TOMLReader reader{MemoryViewReader{KToml.data(), KToml.size()}};
   REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
 TEST_CASE("PlayerConfig::FromToml - missing speed throws Error") {
-  std::string toml{FullToml};
+  std::string toml{KFullToml};
   const auto pos = toml.find("speed = 150.0\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"speed = 150.0\n"}.size());
@@ -107,7 +107,7 @@ TEST_CASE("PlayerConfig::FromToml - missing speed throws Error") {
 TEST_CASE(
     "PlayerConfig::FromToml - missing melee.stage trajectory throws Error "
     "(not \"unknown value\")") {
-  std::string toml{FullToml};
+  std::string toml{KFullToml};
   const auto pos = toml.find("trajectory = \"thrust\"\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"trajectory = \"thrust\"\n"}.size());
@@ -125,7 +125,7 @@ TEST_CASE(
 TEST_CASE(
     "PlayerConfig::FromToml - unknown melee.stage trajectory value throws "
     "Error") {
-  std::string toml{FullToml};
+  std::string toml{KFullToml};
   const auto pos = toml.find("trajectory = \"thrust\"\n");
   REQUIRE(pos != std::string::npos);
   toml.replace(pos, std::string_view{"trajectory = \"thrust\"\n"}.size(),
