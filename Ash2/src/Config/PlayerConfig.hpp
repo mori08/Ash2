@@ -154,6 +154,12 @@ struct LandingConfig {
   double recoverySec;
 };
 
+/// @brief 攻撃演出共通の設定値
+struct AttackEffectConfig {
+  /// ヒットボックス解放後のフェードアウト時間（秒）
+  double fadeSec = 0.0;
+};
+
 /// @brief プレイヤーの設定値
 struct PlayerConfig {
   /// 横移動速度（ピクセル/秒）
@@ -169,6 +175,7 @@ struct PlayerConfig {
   AirAttackConfig airAttack;
   StaminaConfig stamina;
   LandingConfig landing;
+  AttackEffectConfig attackEffect;
 
   /// @brief TOML からプレイヤー設定を生成する
   [[nodiscard]] static PlayerConfig FromToml(const TOMLValue& toml);

@@ -184,7 +184,8 @@ Debug ビルドでは F5（`InputState::reloadConfig`）で再読込でき、`Pl
 - **ビルドは `tools/build.sh`、実行は `tools/run.sh` で行う。** デバッガを使った調査は
   ユーザーが Visual Studio 2022 で行う
 - **破棄は親から。** `Hierarchy` を持つエンティティは `Hierarchy::DestroyWithChildren` で破棄し、
-  子（攻撃判定の珠）が孤児になるのを防ぐ。独立エンティティである弾はタグで検索して個別に破棄する
+  子（攻撃判定の珠）が孤児になるのを防ぐ。独立エンティティ（弾、フェード中に親から
+  `Detach` された珠）はタグ（`Projectile`/`FadeOut`）で検索して個別に破棄する
 - **ビューの走査中に `destroy` しない。** 破棄対象は配列に集めてループの外でまとめて破棄する
   （`EnemySystem` / `ProjectileSystem`）
 - **タイムラインは共通化する。** 攻撃・ダッシュ系はすべて `MotionTimeline`（構え／有効／

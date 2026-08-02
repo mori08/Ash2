@@ -1,9 +1,11 @@
 #include "Phase/PlayerTestPhase.hpp"
 
 #include "Component/Collider.hpp"
+#include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
+#include "Component/FadeOut.hpp"
 #include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
@@ -22,6 +24,7 @@
 #include "System/AnimationSystem.hpp"
 #include "System/AttachmentSystem.hpp"
 #include "System/EnemySystem.hpp"
+#include "System/FadeOutSystem.hpp"
 #include "System/GravitySystem.hpp"
 #include "System/HitReactionSystem.hpp"
 #include "System/HitSystem.hpp"
@@ -72,10 +75,10 @@ entt::entity PlayerTestPhase::spawnEnemy(entt::registry& registry) {
   // 加速度を与える（EnemyConfig は専用の重力値を持たない）
   registry.emplace<Gravity>(enemy, Gravity{.accel = playerCfg.gravity});
   registry.emplace<Motion>(enemy, EnemyMotion::Idle{});
-  registry.emplace<Drawable>(enemy,
-                             RectDrawable{.size = enemyCfg.size,
-                                          .color = KDummyColor,
-                                          .anchor = DrawAnchor::BottomCenter});
+  registry.emplace<Drawable>(
+      enemy,
+      RectDrawable{.size = enemyCfg.size, .anchor = DrawAnchor::BottomCenter});
+  registry.emplace<DrawColor>(enemy, DrawColor{.color = KDummyColor});
   registry.emplace<Collider>(
       enemy, Collider{.segmentStart = Vec3{0.0, 0.0, 0.0},
                       .segmentEnd = Vec3{0.0, enemyCfg.capsuleHeight, 0.0},
@@ -100,6 +103,7 @@ IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
   HitReactionSystem::Apply(registry, hits);
   ProjectileSystem::Update(registry);
   EnemySystem::Update(registry);
+  FadeOutSystem::Update(registry, dt);
 
   AnimationSystem::Update(registry, dt);
 
@@ -145,6 +149,12 @@ void PlayerTestPhase::onBeforePop(entt::registry& registry) {
   // 弾は独立エンティティ（m_playerRoot の子孫ではない）なので、
   // Projectile タグで検索して個別に破棄する
   for (const auto entity : registry.view<Projectile>()) {
+    registry.destroy(entity);
+  }
+
+  // フェード中のヒットボックスも m_playerRoot から Detach 済みの独立
+  // エンティティなので、FadeOut タグで検索して個別に破棄する
+  for (const auto entity : registry.view<FadeOut>()) {
     registry.destroy(entity);
   }
 }

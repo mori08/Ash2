@@ -4,6 +4,7 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/Stamina.hpp"
@@ -45,8 +46,9 @@ void SpawnProjectile(entt::registry& registry, const WorldPos& pos,
                                          .radius = cfg.ranged.radius,
                                      });
   registry.emplace<Attack>(bullet, Attack{.damage = cfg.ranged.damage});
-  registry.emplace<Drawable>(bullet, CircleDrawable{.radius = cfg.ranged.radius,
-                                                    .color = KBulletColor});
+  registry.emplace<Drawable>(bullet,
+                             CircleDrawable{.radius = cfg.ranged.radius});
+  registry.emplace<DrawColor>(bullet, DrawColor{.color = KBulletColor});
   registry.emplace<Projectile>(bullet);
 }
 

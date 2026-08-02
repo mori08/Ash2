@@ -21,7 +21,6 @@ enum class DrawAnchor : uint8 {
 struct RectDrawable {
   /// 描画サイズ（幅・高さ）
   SizeF size;
-  ColorF color;
   /// none = 枠線なし
   Optional<BorderStyle> border;
   DrawAnchor anchor = DrawAnchor::Center;
@@ -30,7 +29,6 @@ struct RectDrawable {
 /// @brief 円描画データ
 struct CircleDrawable {
   double radius;
-  ColorF color;
   /// none = 枠線なし
   Optional<BorderStyle> border;
 };
@@ -42,7 +40,6 @@ struct PieDrawable {
   double startAngle;
   /// ラジアン
   double angle;
-  ColorF color;
   /// none = 枠線なし
   Optional<BorderStyle> border;
 };

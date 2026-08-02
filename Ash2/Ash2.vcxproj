@@ -145,6 +145,7 @@
     <ClCompile Include="src\System\MotionSystem.cpp" />
     <ClCompile Include="src\System\EnemyMotionSystem.cpp" />
     <ClCompile Include="src\System\EnemySystem.cpp" />
+    <ClCompile Include="src\System\FadeOutSystem.cpp" />
     <ClCompile Include="src\System\HitReactionSystem.cpp" />
     <ClCompile Include="src\System\HitSystem.cpp" />
     <ClCompile Include="src\System\ProjectileSystem.cpp" />
@@ -163,6 +164,7 @@
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
     <ClCompile Include="tests\TestEnemyConfig.cpp" />
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
+    <ClCompile Include="tests\TestFadeOutSystem.cpp" />
     <ClCompile Include="tests\TestHitReactionSystem.cpp" />
     <ClCompile Include="tests\TestHitstopSystem.cpp" />
     <ClCompile Include="tests\TestHitSystem.cpp" />
@@ -436,6 +438,8 @@
     <ClInclude Include="src\System\ProjectileSystem.hpp" />
     <ClInclude Include="src\System\EnemyMotionSystem.hpp" />
     <ClInclude Include="src\System\EnemySystem.hpp" />
+    <ClInclude Include="src\Component\FadeOut.hpp" />
+    <ClInclude Include="src\System\FadeOutSystem.hpp" />
     <ClInclude Include="src\Component\Gravity.hpp" />
     <ClInclude Include="src\System\MovementSystem.hpp" />
     <ClInclude Include="src\System\GravitySystem.hpp" />
@@ -443,6 +447,7 @@
     <ClInclude Include="src\System\HitstopSystem.hpp" />
     <ClInclude Include="src\System\StaminaSystem.hpp" />
     <ClInclude Include="src\Component\Invincible.hpp" />
+    <ClInclude Include="src\Component\DrawColor.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

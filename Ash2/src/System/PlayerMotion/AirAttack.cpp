@@ -1,6 +1,5 @@
 #include <Siv3D.hpp>
 
-#include "Component/Hierarchy.hpp"
 #include "Component/ReactionLevel.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
@@ -50,8 +49,8 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
   // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
   if (pos.isOnGround()) {
     if (state.hitboxEntity != entt::null) {
-      Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
-      state.hitboxEntity = entt::null;
+      state.hitboxEntity = ReleaseAttackHitbox(registry, state.hitboxEntity,
+                                               cfg.attackEffect.fadeSec);
     }
     return Landing{.timer = cfg.landing.recoverySec};
   }
@@ -65,7 +64,8 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
                      HitboxSpec{.radius = aa.radius,
                                 .damage = aa.damage,
                                 .reaction = ReactionLevel::Repel,
-                                .hitstopSec = aa.hitstopSec},
+                                .hitstopSec = aa.hitstopSec,
+                                .fadeSec = cfg.attackEffect.fadeSec},
                      state.hitboxEntity, offsetFn);
 
   // 接地せずに終わった場合はタイマー満了で Neutral へ戻る

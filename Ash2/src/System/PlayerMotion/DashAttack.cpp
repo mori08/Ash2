@@ -1,6 +1,5 @@
 #include <Siv3D.hpp>
 
-#include "Component/Hierarchy.hpp"
 #include "Component/ReactionLevel.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
@@ -55,8 +54,8 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
   // 空中発動時のみ。地上 DashAttack は接地遷移を持たない）
   if (state.air && pos.isOnGround()) {
     if (state.hitboxEntity != entt::null) {
-      Hierarchy::DestroyWithChildren(registry, state.hitboxEntity);
-      state.hitboxEntity = entt::null;
+      state.hitboxEntity = ReleaseAttackHitbox(registry, state.hitboxEntity,
+                                               cfg.attackEffect.fadeSec);
     }
     return Landing{.timer = cfg.landing.recoverySec};
   }
@@ -70,7 +69,8 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
                      HitboxSpec{.radius = da.radius,
                                 .damage = da.damage,
                                 .reaction = ReactionLevel::Repel,
-                                .hitstopSec = da.hitstopSec},
+                                .hitstopSec = da.hitstopSec,
+                                .fadeSec = cfg.attackEffect.fadeSec},
                      state.hitboxEntity, offsetFn);
 
   // 突進フェーズ（構え）：ダッシュ方向へ移動

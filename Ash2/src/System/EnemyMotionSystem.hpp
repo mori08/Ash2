@@ -39,7 +39,7 @@ namespace EnemyMotion {
                                     entt::entity entity,
                                     const FrameData& frameData);
 
-/// @brief Defeated 状態の更新（RectDrawable::color.a
+/// @brief Defeated 状態の更新（DrawColor::color.a
 /// を残り時間比でフェードアウトさせながら残り時間を減算する。満了後の破棄は
 /// EnemySystem が行う）
 /// @return 常に none

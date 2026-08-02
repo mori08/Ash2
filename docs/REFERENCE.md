@@ -18,6 +18,7 @@
 | [`LocalOffset`](../Ash2/src/Component/LocalOffset.hpp) | 親からの相対座標（Hierarchy 付きエンティティのみ） |
 | [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作） |
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画形状の variant。詳細は下記「描画データ型」参照 |
+| [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`KDefaultDrawColor`）として扱われる |
 | [`SpriteAnimation`](../Ash2/src/Component/SpriteAnimation.hpp) | アニメーション再生状態（per-entity）。共有データは `AnimationDataRegistry` を `dataKey` で参照する |
 | [`Name`](../Ash2/src/Component/Name.hpp) | エンティティ名（`const String`、構築後不変。NameLookup と対応） |
 | [`Player`](../Ash2/src/Component/Player.hpp) | プレイヤータグ（データなし） |
@@ -31,6 +32,7 @@
 | [`Motion`](../Ash2/src/Component/Motion.hpp) | エンティティの排他的な行動状態（`variant`）。状態ごとの詳細は下記「モーション状態型」参照 |
 | [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MovementSystem`/`GravitySystem`/`AnimationSystem` の対象から除外される。`MotionSystem` は除外せず dt = 0 で呼ぶ |
 | [`Invincible`](../Ash2/src/Component/Invincible.hpp) | 無敵状態であることを示すタグ。`HitSystem` の被弾対象ビューから除外される。`PlayerMotion::Dash`（地上・空中いずれも）が構え・ダッシュ中は毎フレーム付与し、後隙入りで除去する |
+| [`FadeOut`](../Ash2/src/Component/FadeOut.hpp) | 透過しながら消滅する途中であることを示すコンポーネント（`duration`/`remaining`）。`FadeOutSystem` が `DrawColor::color.a` を更新し、満了時にエンティティを破棄する |
 
 ---
 
@@ -38,14 +40,16 @@
 
 [`Component/Drawable.hpp`](../Ash2/src/Component/Drawable.hpp) が定義する。
 `Drawable` は `variant<RectDrawable, CircleDrawable, PieDrawable, TextureDrawable>`。
+色は形状側ではなく [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) が一括で持つ
+（上記「コンポーネント一覧」参照）。
 
 | 名前 | 役割 |
 |---|---|
-| `RectDrawable` | 矩形描画（サイズ・色・枠線・`DrawAnchor`） |
-| `CircleDrawable` | 円描画（半径・色・枠線） |
-| `PieDrawable` | 扇形描画（半径・開始角・角度・色・枠線）。角度は12時方向から時計回りのラジアン |
+| `RectDrawable` | 矩形描画（サイズ・枠線・`DrawAnchor`） |
+| `CircleDrawable` | 円描画（半径・枠線） |
+| `PieDrawable` | 扇形描画（半径・開始角・角度・枠線）。角度は12時方向から時計回りのラジアン |
 | `TextureDrawable` | テクスチャ描画（`TextureRegion`・描画オフセット・`DrawAnchor`） |
-| `BorderStyle` | 枠線スタイル（色・太さ）。各形状の `border` が `none` なら枠線なし |
+| `BorderStyle` | 枠線スタイル（色・太さ）。各形状の `border` が `none` なら枠線なし。`DrawColor` の影響は受けず常に不透明で描画される（構築箇所ゼロの未使用コード、整理は #251） |
 | `DrawAnchor` | `WorldPos` を形状のどこに合わせるか（`Center` / `BottomCenter`）。`RectDrawable` と `TextureDrawable` のみが持ち、既定は `Center` |
 
 ---
@@ -101,7 +105,7 @@
 | `Stagger` | 満了で `Idle`（`Tick()` が `RectDrawable::size` を縦縮みさせ、満了時に原寸へ戻す） |
 | `Repel` | 満了で `Idle`（満了時に `Velocity.w` を 0 に戻す） |
 | `Knockback` | 満了で `Idle`（放物線は `MovementSystem`/`GravitySystem` に委ねる） |
-| `Defeated` | なし（`RectDrawable::color.a` をフェードさせ、満了エンティティは `EnemySystem` が破棄する） |
+| `Defeated` | なし（`DrawColor::color.a` をフェードさせ、満了エンティティは `EnemySystem` が破棄する） |
 
 ### 例外
 
@@ -130,8 +134,9 @@
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitPair` ごとに、攻撃側本体（ヒットボックスの `Hierarchy` 親）と被弾側へ `Hitstop` を付与し、`Enemy` を持つ被弾側の `Motion` と `Velocity` を下記「リアクションの対応」に従って強制遷移させる |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（PlayerTestPhase、HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | フェーズ内（PlayerTestPhase、ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外でまとめて破棄する |
+| [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | フェーズ内（PlayerTestPhase、EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転） |
-| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画 |
+| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
@@ -183,10 +188,11 @@
 
 | 名前 | 役割 | 定義 |
 |---|---|---|
-| `HitboxSpec` | 攻撃判定エンティティの生成仕様（半径・ダメージ・リアクション・ヒットストップ時間）をまとめた構造体 | `Helper.hpp` |
+| `HitboxSpec` | 攻撃判定エンティティの生成仕様（半径・ダメージ・リアクション・ヒットストップ時間・フェード時間）をまとめた構造体 | `Helper.hpp` |
 | `SetClip` | クリップが変化していれば差し替え、再生位置をリセットする | `Helper.hpp`/`.cpp` |
 | `StopHorizontalMovement` | 横方向（w・d）の速度を 0 にする | `Helper.hpp`/`.cpp` |
-| `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティ（光の珠）を生成・`LocalOffset` 更新・破棄する。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
+| `ReleaseAttackHitbox` | ヒットボックスを `Hierarchy::Detach` → `Attack` 除去 → `FadeOut` 付与の順で解放する。`fadeSec` が 0 以下なら即座に破棄する | `Helper.hpp`/`.cpp` |
+| `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティ（光の珠）を生成・`LocalOffset` 更新し、後隙入りで `ReleaseAttackHitbox` を呼ぶ。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
 | `MakeMelee` | 指定段の `Melee` を生成（`melee_{stage+1}` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
 | `MakeRanged` | `Ranged` を生成（スタミナ消費、`timer` はクリップ再生時間から算出） | `Transition.hpp` / `Ranged.cpp` |
 | `MakeDash` | `Dash` を生成（スタミナ消費、`air` フラグ設定） | `Transition.hpp` / `Dash.cpp` |
@@ -264,7 +270,7 @@
 - `Ash2/App/assets/config/player.toml` から読み込むプレイヤー設定
 - 基本値（移動速度 `speed`・ジャンプ初速 `jumpSpeed`・重力 `gravity`）と、`MeleeConfig` /
   `RangedConfig` / `DashConfig` / `DashAttackConfig` / `AirAttackConfig` / `StaminaConfig` /
-  `LandingConfig` の各サブ設定を持つ
+  `LandingConfig` / `AttackEffectConfig` の各サブ設定を持つ
 - 地上・空中を共有する `Dash`/`DashAttack`（`air` フラグで区別）は、それぞれ単一の
   `DashConfig`/`DashAttackConfig` を共通で参照する（専用設定は持たない）
 
@@ -282,6 +288,7 @@
 | `AirAttackConfig` | タイムライン・軌道半径（w-h 平面）・カプセル半径・ダメージ・ヒットストップ時間 |
 | `StaminaConfig` | 回復開始待機秒数 `recoveryDelay`・毎秒の不足分回復割合 `recoveryRate` |
 | `LandingConfig` | 着地硬直時間 `recoverySec` |
+| `AttackEffectConfig` | ヒットボックス解放後のフェードアウト時間 `fadeSec`（全攻撃共通の1値。`HitboxSpec::fadeSec` として渡される） |
 
 - `hitstopSec`（`MeleeStageConfig`/`DashAttackConfig`/`AirAttackConfig` が個別に持つ）はヒット成立時に
   `Attack.hitstopSec` へ渡す停止時間で、段・アクションごとに調整できる（`RangedConfig` は持たない。
@@ -415,6 +422,7 @@
 | `TestHitstopSystem.cpp` | `HitstopSystem` |
 | `TestPlayerMotionSystem.cpp` | プレイヤー各状態の `Tick()` |
 | `TestEnemyMotionSystem.cpp` | 敵各状態の `Tick()`、`EnemySystem` |
+| `TestFadeOutSystem.cpp` | `FadeOutSystem` の `DrawColor::color.a` 減衰・満了時の破棄 |
 | `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件 |
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
@@ -430,6 +438,7 @@
 
 - `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren）経由で操作する。
 - `Drawable` の型変更は `std::visit` を使い、DrawSystem と AnimationSystem の両方への影響を確認する。
+- 図形（`Drawable`）に `DrawColor` を付け忘れると白（`KDefaultDrawColor`）で描かれる。意図した色にしたい場合は忘れず付与すること。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
 - `Motion` に新しい状態型を追加したときは、その型に `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。`MotionSystem::Update` の `std::visit` が `MotionState` concept（`MotionSystem.hpp`）で制約されているため。

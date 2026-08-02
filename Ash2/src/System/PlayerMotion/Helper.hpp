@@ -23,6 +23,8 @@ struct HitboxSpec {
   ReactionLevel reaction = ReactionLevel::None;
   /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
   double hitstopSec = 0.0;
+  /// 解放時のフェードアウト時間（秒）。0 以下なら即座に破棄する
+  double fadeSec = 0.0;
 };
 
 /// @brief クリップが変化していれば差し替え、再生位置をリセットする
@@ -30,6 +32,15 @@ void SetClip(SpriteAnimation& anim, const String& clip);
 
 /// @brief 横方向の速度を止める
 void StopHorizontalMovement(entt::registry& registry, entt::entity entity);
+
+/// @brief ヒットボックスを攻撃判定から解放し、消滅演出へ引き渡す
+///
+/// `Hierarchy::Detach` で親から切り離し、`Attack` を外して当たり判定から除外
+/// したうえで `FadeOut` を付与する。`fadeSec` が 0 以下の場合はフェードを
+/// 挟まず即座に破棄する。
+/// @return entt::null（呼び出し側の hitboxEntity 変数への代入に使う）
+entt::entity ReleaseAttackHitbox(entt::registry& registry,
+                                 entt::entity hitboxEntity, double fadeSec);
 
 /// @brief 攻撃判定の発生区間に応じてヒットボックスを生成・更新・破棄する
 /// @param timeline 攻撃のタイムライン（active 区間の判定に使用）
