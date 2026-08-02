@@ -228,6 +228,9 @@
     <ClCompile Include="System\EnemySystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\FadeOutSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\HitReactionSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -289,6 +292,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestFadeOutSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestHitReactionSystem.cpp">
@@ -1160,6 +1166,12 @@
     <ClInclude Include="System\EnemySystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="Component\FadeOut.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\FadeOutSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Gravity.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
@@ -1173,6 +1185,9 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="Component\Invincible.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\DrawColor.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="System\HitstopSystem.hpp">

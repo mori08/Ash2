@@ -97,7 +97,8 @@ Optional<Motion> Tick(Melee& state, entt::registry& registry,
                      HitboxSpec{.radius = stageCfg.radius,
                                 .damage = melee.damage,
                                 .reaction = reaction,
-                                .hitstopSec = stageCfg.hitstopSec},
+                                .hitstopSec = stageCfg.hitstopSec,
+                                .fadeSec = cfg.attackEffect.fadeSec},
                      state.hitboxEntity, offsetFn);
 
   if (hasNextStage) {

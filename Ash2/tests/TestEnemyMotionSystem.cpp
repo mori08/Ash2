@@ -2,6 +2,7 @@
 #include <ThirdParty/Catch2/catch.hpp>
 #include <entt/entt.hpp>
 
+#include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/EnemyMotion.hpp"
 #include "Component/Hitstop.hpp"
@@ -51,8 +52,7 @@ TEST_CASE("EnemyMotionSystem - Stagger shrinks RectDrawable vertically") {
   SetupContext(registry);
   const auto enemy =
       MakeEnemy(registry, EnemyMotion::Stagger{.remaining = 0.15});
-  registry.emplace<Drawable>(
-      enemy, RectDrawable{.size = {60.0, 80.0}, .color = ColorF{1.0}});
+  registry.emplace<Drawable>(enemy, RectDrawable{.size = {60.0, 80.0}});
 
   const FrameData frameData{.dt = 0.075};
   MotionSystem::Update(registry, frameData);
@@ -72,8 +72,7 @@ TEST_CASE(
   SetupContext(registry);
   const auto enemy =
       MakeEnemy(registry, EnemyMotion::Stagger{.remaining = 0.01});
-  registry.emplace<Drawable>(
-      enemy, RectDrawable{.size = {60.0, 60.0}, .color = ColorF{1.0}});
+  registry.emplace<Drawable>(enemy, RectDrawable{.size = {60.0, 60.0}});
 
   const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);
@@ -180,6 +179,37 @@ TEST_CASE("EnemyMotionSystem - Knockback transitions to Idle on expiry") {
       std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy)));
 }
 
+TEST_CASE("EnemyMotionSystem - Defeated fades DrawColor::color.a") {
+  // 残り時間比（remaining / defeatedSec）で DrawColor::color.a
+  // をフェードさせる（Drawable の形状は問わない）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto enemy =
+      MakeEnemy(registry, EnemyMotion::Defeated{.remaining = 0.25});
+  registry.emplace<Drawable>(enemy, RectDrawable{.size = {60.0, 80.0}});
+
+  const FrameData frameData{.dt = 0.0};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(registry.get<DrawColor>(enemy).color.a == Approx(0.5));
+}
+
+TEST_CASE(
+    "EnemyMotionSystem - Defeated emplaces DrawColor even without "
+    "Drawable") {
+  // Drawable を持たない敵でも DrawColor が付与される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto enemy =
+      MakeEnemy(registry, EnemyMotion::Defeated{.remaining = 0.50});
+
+  const FrameData frameData{.dt = 0.0};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(registry.all_of<DrawColor>(enemy));
+  REQUIRE(registry.get<DrawColor>(enemy).color.a == Approx(1.0));
+}
+
 TEST_CASE("EnemySystem - destroys entity when Defeated has expired") {
   entt::registry registry;
   SetupContext(registry);
@@ -219,8 +249,7 @@ TEST_CASE("EnemyMotionSystem - Hitstop freezes Stagger remaining and size") {
   SetupContext(registry);
   const auto enemy =
       MakeEnemy(registry, EnemyMotion::Stagger{.remaining = 0.15});
-  registry.emplace<Drawable>(
-      enemy, RectDrawable{.size = {60.0, 80.0}, .color = ColorF{1.0}});
+  registry.emplace<Drawable>(enemy, RectDrawable{.size = {60.0, 80.0}});
   registry.emplace<Hitstop>(enemy, Hitstop{.remaining = 0.1});
 
   const FrameData frameData{.dt = 0.075};

@@ -80,3 +80,6 @@ recovery_rate  = 0.5
 
 [landing]
 recovery_sec = 0.20
+
+[attack_effect]
+fade_sec = 0.30

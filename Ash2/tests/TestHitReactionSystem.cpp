@@ -236,8 +236,7 @@ TEST_CASE(
   SetupContext(registry);
   const auto target = MakeTarget(registry, 50.0);
   registry.replace<Motion>(target, EnemyMotion::Stagger{.remaining = 0.05});
-  registry.emplace<Drawable>(
-      target, RectDrawable{.size = {60.0, 40.0}, .color = Palette::White});
+  registry.emplace<Drawable>(target, RectDrawable{.size = {60.0, 40.0}});
   const auto attacker = MakeAttacker(registry, 0.0, ReactionLevel::Blow);
 
   HitReactionSystem::Apply(registry,

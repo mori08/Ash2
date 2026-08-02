@@ -187,6 +187,15 @@ namespace {
   });
 }
 
+/// @brief TOML から攻撃演出共通の設定値を生成する
+[[nodiscard]] std::expected<AttackEffectConfig, String> ParseAttackEffect(
+    const TOMLValue& ae) {
+  TomlFields f{ae, U"PlayerConfig::ParseAttackEffect", U"attack_effect"};
+  return f.wrap(AttackEffectConfig{
+      .fadeSec = f.get<double>(U"fade_sec"),
+  });
+}
+
 /// @brief TOML からプレイヤー設定を生成する
 [[nodiscard]] std::expected<PlayerConfig, String> Parse(const TOMLValue& toml) {
   auto melee = ParseMelee(toml[U"melee"]);
@@ -217,6 +226,10 @@ namespace {
   if (!landing) {
     return std::unexpected{std::move(landing).error()};
   }
+  auto attackEffect = ParseAttackEffect(toml[U"attack_effect"]);
+  if (!attackEffect) {
+    return std::unexpected{std::move(attackEffect).error()};
+  }
 
   TomlFields f{toml, U"PlayerConfig::Parse"};
   return f.wrap(PlayerConfig{
@@ -230,6 +243,7 @@ namespace {
       .airAttack = *std::move(airAttack),
       .stamina = *std::move(stamina),
       .landing = *std::move(landing),
+      .attackEffect = *std::move(attackEffect),
   });
 }
 

@@ -1,5 +1,6 @@
 #include "System/DrawSystem.hpp"
 
+#include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/WorldPos.hpp"
 #include "Util/Overloaded.hpp"
@@ -10,12 +11,16 @@ void DrawSystem::Draw(const entt::registry& registry) {
   struct DrawEntry {
     std::reference_wrapper<const WorldPos> pos;
     std::reference_wrapper<const Drawable> drawable;
+    ColorF color;
   };
 
   Array<DrawEntry> entries;
   for (const auto& [entity, pos, drawable] :
        registry.view<const WorldPos, const Drawable>().each()) {
-    entries.push_back({std::cref(pos), std::cref(drawable)});
+    const auto* drawColor = registry.try_get<DrawColor>(entity);
+    entries.push_back(
+        {std::cref(pos), std::cref(drawable),
+         (drawColor != nullptr) ? drawColor->color : KDefaultDrawColor});
   }
 
   std::ranges::sort(entries, [](const DrawEntry& a, const DrawEntry& b) {
@@ -24,9 +29,10 @@ void DrawSystem::Draw(const entt::registry& registry) {
 
   for (const auto& entry : entries) {
     const Vec2 screenPos = cameraOffset + entry.pos.get().toScreen();
+    const ColorF& color = entry.color;
     std::visit(
         Overloaded{
-            [&screenPos](const RectDrawable& shape) {
+            [&screenPos, &color](const RectDrawable& shape) {
               const RectF rect = [&] {
                 switch (shape.anchor) {
                   case DrawAnchor::BottomCenter:
@@ -38,21 +44,21 @@ void DrawSystem::Draw(const entt::registry& registry) {
                                  shape.size.y};
                 }
               }();
-              rect.draw(shape.color);
+              rect.draw(color);
               if (shape.border) {
                 rect.drawFrame(shape.border->thickness, shape.border->color);
               }
             },
-            [&screenPos](const CircleDrawable& shape) {
+            [&screenPos, &color](const CircleDrawable& shape) {
               const Circle circle{screenPos, shape.radius};
-              circle.draw(shape.color);
+              circle.draw(color);
               if (shape.border) {
                 circle.drawFrame(shape.border->thickness, shape.border->color);
               }
             },
-            [&screenPos](const PieDrawable& shape) {
+            [&screenPos, &color](const PieDrawable& shape) {
               const Circle circle{screenPos, shape.radius};
-              circle.drawPie(shape.startAngle, shape.angle, shape.color);
+              circle.drawPie(shape.startAngle, shape.angle, color);
               if (shape.border) {
                 const auto& b = *shape.border;
                 circle.drawArc(shape.startAngle, shape.angle, 0.0, b.thickness,
@@ -66,15 +72,15 @@ void DrawSystem::Draw(const entt::registry& registry) {
                 Line{screenPos, p2}.draw(b.thickness, b.color);
               }
             },
-            [&screenPos](const TextureDrawable& shape) {
+            [&screenPos, &color](const TextureDrawable& shape) {
               const Vec2 anchorPos = screenPos + shape.drawOffset;
               switch (shape.anchor) {
                 case DrawAnchor::BottomCenter:
-                  shape.region.draw(Arg::bottomCenter(anchorPos));
+                  shape.region.draw(Arg::bottomCenter(anchorPos), color);
                   break;
                 case DrawAnchor::Center:
                 default:
-                  shape.region.draw(Arg::center(anchorPos));
+                  shape.region.draw(Arg::center(anchorPos), color);
                   break;
               }
             },

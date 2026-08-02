@@ -2,6 +2,7 @@
 
 #include "System/EnemyMotionSystem.hpp"
 
+#include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
@@ -81,12 +82,8 @@ Optional<Motion> Tick(Defeated& state, entt::registry& registry,
   const auto& cfg = registry.ctx().get<EnemyConfig>();
   state.remaining -= frameData.dt;
 
-  if (auto* drawable = registry.try_get<Drawable>(entity);
-      drawable != nullptr) {
-    if (auto* rect = std::get_if<RectDrawable>(drawable); rect != nullptr) {
-      rect->color.a = Max(0.0, state.remaining / cfg.defeatedSec);
-    }
-  }
+  registry.get_or_emplace<DrawColor>(entity).color.a =
+      Max(0.0, state.remaining / cfg.defeatedSec);
 
   return none;
 }

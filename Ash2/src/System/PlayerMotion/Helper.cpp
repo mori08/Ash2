@@ -4,7 +4,9 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
+#include "Component/FadeOut.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/LocalOffset.hpp"
 #include "Component/Velocity.hpp"
@@ -35,8 +37,8 @@ entt::entity SpawnAttackHitbox(entt::registry& registry, entt::entity owner,
   registry.emplace<Attack>(hitbox, Attack{.damage = spec.damage,
                                           .hitstopSec = spec.hitstopSec,
                                           .reaction = spec.reaction});
-  registry.emplace<Drawable>(
-      hitbox, CircleDrawable{.radius = spec.radius, .color = KMeleeOrbColor});
+  registry.emplace<Drawable>(hitbox, CircleDrawable{.radius = spec.radius});
+  registry.emplace<DrawColor>(hitbox, DrawColor{.color = KMeleeOrbColor});
   return hitbox;
 }
 
@@ -53,6 +55,19 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity) {
   auto& vel = registry.get<Velocity>(entity);
   vel.w = 0.0;
   vel.d = 0.0;
+}
+
+entt::entity ReleaseAttackHitbox(entt::registry& registry,
+                                 entt::entity hitboxEntity, double fadeSec) {
+  Hierarchy::Detach(registry, hitboxEntity);
+  registry.remove<Attack>(hitboxEntity);
+  if (fadeSec <= 0.0) {
+    registry.destroy(hitboxEntity);
+  } else {
+    registry.emplace_or_replace<FadeOut>(
+        hitboxEntity, FadeOut{.duration = fadeSec, .remaining = fadeSec});
+  }
+  return entt::null;
 }
 
 void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
@@ -73,10 +88,9 @@ void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
     localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
   }
 
-  // 後隙以降：ヒットボックスが残っていれば破棄する
+  // 後隙以降：ヒットボックスが残っていれば解放する
   if (elapsed >= timeline.activeEnd() && hitboxEntity != entt::null) {
-    Hierarchy::DestroyWithChildren(registry, hitboxEntity);
-    hitboxEntity = entt::null;
+    hitboxEntity = ReleaseAttackHitbox(registry, hitboxEntity, spec.fadeSec);
   }
 }
 

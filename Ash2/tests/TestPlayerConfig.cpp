@@ -62,7 +62,9 @@ constexpr std::string_view KFullToml =
     "recovery_delay = 2.0\n"
     "recovery_rate = 0.5\n"
     "[landing]\n"
-    "recovery_sec = 0.20\n";
+    "recovery_sec = 0.20\n"
+    "[attack_effect]\n"
+    "fade_sec = 0.30\n";
 
 }  // namespace
 
@@ -84,6 +86,7 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg.airAttack.damage == 25);
   REQUIRE(cfg.stamina.recoveryRate == 0.5);
   REQUIRE(cfg.landing.recoverySec == 0.20);
+  REQUIRE(cfg.attackEffect.fadeSec == 0.30);
 }
 
 TEST_CASE("PlayerConfig::FromToml - missing melee.stage throws Error") {

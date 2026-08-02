@@ -4,6 +4,8 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/FadeOut.hpp"
+#include "Component/Hierarchy.hpp"
 #include "Component/Hitstop.hpp"
 #include "Component/Invincible.hpp"
 #include "Component/LocalOffset.hpp"
@@ -99,6 +101,7 @@ void SetupContext(entt::registry& registry) {
                     .damage = 15,
                     .hitstopSec = 0.08},
       .landing = {.recoverySec = 0.20},
+      .attackEffect = {.fadeSec = 0.30},
   });
 
   AnimationDataRegistry animReg;
@@ -339,7 +342,12 @@ TEST_CASE(
 
   const auto& motion = registry.get<Motion>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Landing>(motion));
-  REQUIRE_FALSE(registry.valid(hitbox));
+  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // へ引き渡す（親からも切り離される）
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.all_of<FadeOut>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 
   const auto& landing = std::get<PlayerMotion::Landing>(motion);
   REQUIRE(landing.timer == Approx(0.20));
@@ -445,7 +453,7 @@ TEST_CASE(
 TEST_CASE("PlayerMotionSystem - elapsed expiry transitions Melee to Neutral") {
   // elapsed が windupSec+activeSec+recoveryBSec を超え、comboQueued
   // が立っていない場合は Melee から Neutral
-  // へ遷移し、ヒットボックスが残っていれば破棄する
+  // へ遷移し、ヒットボックスが残っていれば解放する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -461,7 +469,12 @@ TEST_CASE("PlayerMotionSystem - elapsed expiry transitions Melee to Neutral") {
 
   const auto& motion = registry.get<Motion>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
-  REQUIRE_FALSE(registry.valid(hitbox));
+  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // へ引き渡す（親からも切り離される）
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.all_of<FadeOut>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 }
 
 TEST_CASE("PlayerMotionSystem - timer expiry transitions Ranged to Neutral") {
@@ -528,7 +541,7 @@ TEST_CASE(
 TEST_CASE(
     "PlayerMotionSystem - Melee stage 0 destroys hitbox when entering "
     "recovery") {
-  // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが破棄される
+  // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが解放される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -547,7 +560,12 @@ TEST_CASE(
   const auto& motion = registry.get<Motion>(player);
   const auto& melee = std::get<PlayerMotion::Melee>(motion);
   REQUIRE(melee.hitboxEntity == entt::entity{entt::null});
-  REQUIRE_FALSE(registry.valid(hitbox));
+  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // へ引き渡す（親からも切り離される）
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.all_of<FadeOut>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 }
 
 TEST_CASE("PlayerMotionSystem - Melee stage 0 stops horizontal movement") {
@@ -794,7 +812,7 @@ TEST_CASE(
 TEST_CASE(
     "PlayerMotionSystem - Melee stage 1 destroys hitbox when entering "
     "recovery") {
-  // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが破棄される
+  // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが解放される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -813,7 +831,12 @@ TEST_CASE(
   const auto& motion = registry.get<Motion>(player);
   const auto& melee = std::get<PlayerMotion::Melee>(motion);
   REQUIRE(melee.hitboxEntity == entt::entity{entt::null});
-  REQUIRE_FALSE(registry.valid(hitbox));
+  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // へ引き渡す（親からも切り離される）
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.all_of<FadeOut>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 }
 
 TEST_CASE(
@@ -1003,7 +1026,7 @@ TEST_CASE(
 TEST_CASE(
     "PlayerMotionSystem - Melee stage 2 destroys hitbox when entering "
     "recovery") {
-  // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが破棄される
+  // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが解放される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1022,7 +1045,12 @@ TEST_CASE(
   const auto& motion = registry.get<Motion>(player);
   const auto& melee = std::get<PlayerMotion::Melee>(motion);
   REQUIRE(melee.hitboxEntity == entt::entity{entt::null});
-  REQUIRE_FALSE(registry.valid(hitbox));
+  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // へ引き渡す（親からも切り離される）
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.all_of<FadeOut>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 }
 
 TEST_CASE(
@@ -1347,7 +1375,7 @@ TEST_CASE(
 TEST_CASE(
     "PlayerMotionSystem - Melee stage 0 recovery dash input is ignored "
     "without leftover hitbox") {
-  // Melee 後隙からダッシュへキャンセルする際、ヒットボックスは既に破棄済み
+  // Melee 後隙からダッシュへキャンセルする際、ヒットボックスは既に解放済み
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1355,7 +1383,7 @@ TEST_CASE(
   const auto hitbox = registry.create();
   registry.emplace<LocalOffset>(hitbox);
   registry.emplace<Collider>(hitbox);
-  // activeEnd(0.15) を跨ぐ dt でヒットボックスが破棄される
+  // activeEnd(0.15) を跨ぐ dt でヒットボックスが解放される
   registry.replace<Motion>(
       player,
       PlayerMotion::Melee{.stage = 0, .elapsed = 0.14, .hitboxEntity = hitbox});
@@ -1366,7 +1394,12 @@ TEST_CASE(
 
   const auto& motion = registry.get<Motion>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
-  REQUIRE_FALSE(registry.valid(hitbox));
+  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // へ引き渡す（親からも切り離される）
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.all_of<FadeOut>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 }
 
 TEST_CASE(
@@ -1677,7 +1710,12 @@ TEST_CASE(
 
   const auto& motion = registry.get<Motion>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Landing>(motion));
-  REQUIRE_FALSE(registry.valid(hitbox));
+  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // へ引き渡す（親からも切り離される）
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.all_of<FadeOut>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 
   const auto& landing = std::get<PlayerMotion::Landing>(motion);
   REQUIRE(landing.timer == Approx(0.20));
