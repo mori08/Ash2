@@ -21,7 +21,8 @@ C++ / Siv3D v0.6.16 / Visual Studio 2022
 
 ## テスト
 
-[TEST.md](docs/TEST.md) を参照。
+- 書き方・実行方法: [TEST.md](docs/TEST.md)
+- どこまで書くか・評価の観点: [TEST_POLICY.md](docs/TEST_POLICY.md)
 
 ## 設計ドキュメント
 

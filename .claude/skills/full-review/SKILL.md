@@ -15,6 +15,7 @@ description: Read all source files and report 3-5 findings, then optionally crea
 - `docs/ARCHITECTURE.md`
 - `docs/REFERENCE.md`
 - `docs/coding_style/DOCUMENTATION.md`
+- `docs/TEST_POLICY.md`
 - `.claude/rules/cpp.md`
 
 ### 2. ソースファイルの走査
