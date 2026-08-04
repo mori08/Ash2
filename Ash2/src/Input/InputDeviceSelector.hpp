@@ -25,7 +25,8 @@ inline InputState InputDeviceSelector::update() {
   }
   // 最後に入力があったデバイスへ切り替える
   const Vec2 stickAxis = XInputAction::KLeftThumbDeadZone(
-      Vec2{XInput(0).leftThumbX, XInput(0).leftThumbY});
+      Vec2{XInput(0).leftThumbX, XInput(0).leftThumbY}
+  );
   if (XInput(0).isConnected() &&
       (XInput(0).buttonUp.down() || XInput(0).buttonDown.down() ||
        XInput(0).buttonLeft.down() || XInput(0).buttonRight.down() ||

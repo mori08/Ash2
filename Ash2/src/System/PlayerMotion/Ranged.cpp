@@ -31,45 +31,61 @@ double GetClipDuration(const AnimationData& data, const String& clip) {
 
 }  // namespace
 
-void SpawnProjectile(entt::registry& registry, const WorldPos& pos,
-                     bool facingRight, const PlayerConfig& cfg) {
+void SpawnProjectile(
+    entt::registry& registry, const WorldPos& pos, bool facingRight,
+    const PlayerConfig& cfg
+) {
   const double sign = facingRight ? 1.0 : -1.0;
   const auto bullet = registry.create();
   registry.emplace<WorldPos>(
       bullet,
-      WorldPos{.w = pos.w, .h = pos.h + cfg.ranged.spawnHeight, .d = pos.d});
-  registry.emplace<Velocity>(bullet,
-                             Velocity{.w = sign * cfg.ranged.bulletSpeed});
-  registry.emplace<Collider>(bullet, Collider{
-                                         .segmentStart = Vec3{0.0, 0.0, 0.0},
-                                         .segmentEnd = Vec3{0.0, 0.0, 0.0},
-                                         .radius = cfg.ranged.radius,
-                                     });
+      WorldPos{.w = pos.w, .h = pos.h + cfg.ranged.spawnHeight, .d = pos.d}
+  );
+  registry.emplace<Velocity>(
+      bullet, Velocity{.w = sign * cfg.ranged.bulletSpeed}
+  );
+  registry.emplace<Collider>(
+      bullet,
+      Collider{
+          .segmentStart = Vec3{0.0, 0.0, 0.0},
+          .segmentEnd = Vec3{0.0, 0.0, 0.0},
+          .radius = cfg.ranged.radius,
+      }
+  );
   registry.emplace<Attack>(bullet, Attack{.damage = cfg.ranged.damage});
-  registry.emplace<Drawable>(bullet,
-                             CircleDrawable{.radius = cfg.ranged.radius});
+  registry.emplace<Drawable>(
+      bullet, CircleDrawable{.radius = cfg.ranged.radius}
+  );
   registry.emplace<DrawColor>(bullet, DrawColor{.color = KBulletColor});
   registry.emplace<Projectile>(bullet);
 }
 
-Ranged MakeRanged(entt::registry& registry, entt::entity entity,
-                  const PlayerConfig& cfg, SpriteAnimation& anim) {
+Ranged MakeRanged(
+    entt::registry& registry, entt::entity entity, const PlayerConfig& cfg,
+    SpriteAnimation& anim
+) {
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.ranged.staminaCost);
 
   const auto& dataRegistry = registry.ctx().get<AnimationDataRegistry>();
-  assert(dataRegistry.contains(anim.dataKey) &&
-         "AnimationDataRegistry にキーが存在しない");
+  assert(
+      dataRegistry.contains(anim.dataKey) &&
+      "AnimationDataRegistry にキーが存在しない"
+  );
   const auto& data = dataRegistry.at(anim.dataKey);
-  assert(data.clips.contains(U"ranged_attack") &&
-         "clips に ranged_attack が存在しない");
+  assert(
+      data.clips.contains(U"ranged_attack") &&
+      "clips に ranged_attack が存在しない"
+  );
 
   SetClip(anim, U"ranged_attack");
   return Ranged{.timer = GetClipDuration(data, U"ranged_attack")};
 }
 
-Optional<Motion> Tick(Ranged& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Ranged& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   StopHorizontalMovement(registry, entity);
 
   state.timer -= frameData.dt;

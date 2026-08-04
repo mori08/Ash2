@@ -23,8 +23,9 @@ class TomlFields {
     if (auto value = m_table[String{key}].getOpt<T>()) {
       return *std::move(value);
     }
-    m_missing.push_back(m_prefix.isEmpty() ? String{key}
-                                           : (m_prefix + U"." + String{key}));
+    m_missing.push_back(
+        m_prefix.isEmpty() ? String{key} : (m_prefix + U"." + String{key})
+    );
     return T{};
   }
 
@@ -34,8 +35,9 @@ class TomlFields {
     if (m_missing.isEmpty()) {
       return {};
     }
-    return std::unexpected{m_context + U": キーがありません: " +
-                           m_missing.join(U", ", U"", U"")};
+    return std::unexpected{
+        m_context + U": キーがありません: " + m_missing.join(U", ", U"", U"")
+    };
   }
 
   /// @brief 記録した欠落を expected に畳む

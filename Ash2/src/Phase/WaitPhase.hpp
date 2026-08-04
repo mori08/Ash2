@@ -15,8 +15,9 @@ class WaitPhase : public IPhase {
 
   /// @brief 経過時間を積算し、duration を超えたら Pop を返す
   /// @return duration 経過後に Pop、それまでは None
-  [[nodiscard]] PhaseCommand update(entt::registry& registry,
-                                    const FrameData& frameData) override;
+  [[nodiscard]] PhaseCommand update(
+      entt::registry& registry, const FrameData& frameData
+  ) override;
 
  private:
   /// 待機時間（秒）

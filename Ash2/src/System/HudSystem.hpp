@@ -36,7 +36,8 @@ class HudSystem {
         const double staminaRatio =
             Clamp(static_cast<double>(stamina.current) / stamina.max, 0.0, 1.0);
         RectF{KBarX, KStaminaBarY, KBarWidth * staminaRatio, KBarHeight}.draw(
-            KStaminaColor);
+            KStaminaColor
+        );
       }
 
       // Player タグを持つエンティティは 1

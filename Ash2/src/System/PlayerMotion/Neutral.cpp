@@ -9,8 +9,10 @@
 
 namespace PlayerMotion {
 
-Optional<Motion> Tick(Neutral& /*state*/, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Neutral& /*state*/, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   const auto& input = frameData.input;
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& pos = registry.get<WorldPos>(entity);

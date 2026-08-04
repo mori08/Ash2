@@ -41,9 +41,12 @@ void Main() {
 
     InputDeviceSelector inputSelector;
 
-    PhaseStack phaseStack(std::make_unique<ScenarioPhase>(
-                              ScenarioPhase::Param{.sectionName = U"init"}),
-                          registry);
+    PhaseStack phaseStack(
+        std::make_unique<ScenarioPhase>(
+            ScenarioPhase::Param{.sectionName = U"init"}
+        ),
+        registry
+    );
 
     while (System::Update()) {
       const FrameData frameData{

@@ -17,8 +17,9 @@ class TestMenuPhase : public IPhase {
   /// @brief メニュー項目を初期化する
   void onAfterPush(entt::registry& registry) override;
 
-  [[nodiscard]] PhaseCommand update(entt::registry& registry,
-                                    const FrameData& frameData) override;
+  [[nodiscard]] PhaseCommand update(
+      entt::registry& registry, const FrameData& frameData
+  ) override;
 
  private:
   /// メニュー項目（表示名 + 生成ラムダ）

@@ -6,8 +6,9 @@
 /// @brief フェーズをスタックで管理するクラス
 class PhaseStack {
  public:
-  explicit PhaseStack(std::unique_ptr<IPhase>&& initialPhase,
-                      entt::registry& registry);
+  explicit PhaseStack(
+      std::unique_ptr<IPhase>&& initialPhase, entt::registry& registry
+  );
 
   void update(entt::registry& registry, const FrameData& frameData);
 

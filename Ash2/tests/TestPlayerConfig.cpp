@@ -109,7 +109,8 @@ TEST_CASE("PlayerConfig::FromToml - missing speed throws Error") {
 
 TEST_CASE(
     "PlayerConfig::FromToml - missing melee.stage trajectory throws Error "
-    "(not \"unknown value\")") {
+    "(not \"unknown value\")"
+) {
   std::string toml{KFullToml};
   const auto pos = toml.find("trajectory = \"thrust\"\n");
   REQUIRE(pos != std::string::npos);
@@ -127,12 +128,15 @@ TEST_CASE(
 
 TEST_CASE(
     "PlayerConfig::FromToml - unknown melee.stage trajectory value throws "
-    "Error") {
+    "Error"
+) {
   std::string toml{KFullToml};
   const auto pos = toml.find("trajectory = \"thrust\"\n");
   REQUIRE(pos != std::string::npos);
-  toml.replace(pos, std::string_view{"trajectory = \"thrust\"\n"}.size(),
-               "trajectory = \"spin\"\n");
+  toml.replace(
+      pos, std::string_view{"trajectory = \"thrust\"\n"}.size(),
+      "trajectory = \"spin\"\n"
+  );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }

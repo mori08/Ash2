@@ -1,4 +1,6 @@
 BasedOnStyle: Google
+AlignAfterOpenBracket: BlockIndent
+PenaltyBreakScopeResolution: 1000000
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:

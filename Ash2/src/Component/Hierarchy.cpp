@@ -2,8 +2,10 @@
 
 #include "Component/LocalOffset.hpp"
 
-void Hierarchy::Attach(entt::registry& registry, entt::entity parent,
-                       entt::entity child, WorldPos offset) {
+void Hierarchy::Attach(
+    entt::registry& registry, entt::entity parent, entt::entity child,
+    WorldPos offset
+) {
   if (!registry.all_of<Hierarchy>(parent)) {
     registry.emplace<Hierarchy>(parent);
   }
@@ -58,8 +60,9 @@ void Hierarchy::Detach(entt::registry& registry, entt::entity child) {
   registry.remove<LocalOffset>(child);
 }
 
-void Hierarchy::DestroyWithChildren(entt::registry& registry,
-                                    entt::entity entity) {
+void Hierarchy::DestroyWithChildren(
+    entt::registry& registry, entt::entity entity
+) {
   if (!registry.valid(entity)) return;
   if (registry.all_of<Hierarchy>(entity)) {
     auto child = registry.get<const Hierarchy>(entity).m_firstChild;

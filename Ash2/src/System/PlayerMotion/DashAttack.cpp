@@ -20,25 +20,29 @@ namespace {
 // progress / orbitRadius は隣接する double 引数として渡すと取り違えやすいため
 // （bugprone-easily-swappable-parameters 対策）、orbitRadius は
 // DashAttackConfig への const 参照経由で受け取る。
-Vec3 DashAttackOrbOffset(double progress, const DashAttackConfig& da,
-                         double capMidH) {
+Vec3 DashAttackOrbOffset(
+    double progress, const DashAttackConfig& da, double capMidH
+) {
   const double angle = Math::TwoPi * progress;
-  return Vec3{da.orbitRadius * Math::Cos(angle), capMidH,
-              da.orbitRadius * Math::Sin(angle)};
+  return Vec3{
+      da.orbitRadius * Math::Cos(angle), capMidH,
+      da.orbitRadius * Math::Sin(angle)
+  };
 }
 
 }  // namespace
 
 DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir) {
   SetClip(anim, U"dash_attack");
-  return DashAttack{.elapsed = 0.0,
-                    .air = air,
-                    .hitboxEntity = entt::null,
-                    .dashDir = dashDir};
+  return DashAttack{
+      .elapsed = 0.0, .air = air, .hitboxEntity = entt::null, .dashDir = dashDir
+  };
 }
 
-Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    DashAttack& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -54,8 +58,9 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
   // 空中発動時のみ。地上 DashAttack は接地遷移を持たない）
   if (state.air && pos.isOnGround()) {
     if (state.hitboxEntity != entt::null) {
-      state.hitboxEntity = ReleaseAttackHitbox(registry, state.hitboxEntity,
-                                               cfg.attackEffect.fadeSec);
+      state.hitboxEntity = ReleaseAttackHitbox(
+          registry, state.hitboxEntity, cfg.attackEffect.fadeSec
+      );
     }
     return Landing{.timer = cfg.landing.recoverySec};
   }
@@ -65,13 +70,17 @@ Optional<Motion> Tick(DashAttack& state, entt::registry& registry,
   const auto offsetFn = [&da, capMidH](double progress) {
     return DashAttackOrbOffset(progress, da, capMidH);
   };
-  UpdateAttackHitbox(registry, entity, state.elapsed, timeline,
-                     HitboxSpec{.radius = da.radius,
-                                .damage = da.damage,
-                                .reaction = ReactionLevel::Repel,
-                                .hitstopSec = da.hitstopSec,
-                                .fadeSec = cfg.attackEffect.fadeSec},
-                     state.hitboxEntity, offsetFn);
+  UpdateAttackHitbox(
+      registry, entity, state.elapsed, timeline,
+      HitboxSpec{
+          .radius = da.radius,
+          .damage = da.damage,
+          .reaction = ReactionLevel::Repel,
+          .hitstopSec = da.hitstopSec,
+          .fadeSec = cfg.attackEffect.fadeSec
+      },
+      state.hitboxEntity, offsetFn
+  );
 
   // 突進フェーズ（構え）：ダッシュ方向へ移動
   // 空中発動時は AirDash の暫定仕様に合わせ垂直速度を 0 に固定する

@@ -18,8 +18,9 @@ class PlayerTestPhase : public IPhase {
   /// @brief プレイヤーエンティティ（ルート）と敵エンティティを生成する
   void onAfterPush(entt::registry& registry) override;
 
-  [[nodiscard]] PhaseCommand update(entt::registry& registry,
-                                    const FrameData& frameData) override;
+  [[nodiscard]] PhaseCommand update(
+      entt::registry& registry, const FrameData& frameData
+  ) override;
 
   /// @brief プレイヤーエンティティ（ルート＋子孫）と敵エンティティを破棄する
   void onBeforePop(entt::registry& registry) override;

@@ -59,13 +59,15 @@ TEST_CASE("EnemyMotionSystem - Stagger shrinks RectDrawable vertically") {
 
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(enemy));
   REQUIRE(rect.size.y < 80.0);
-  REQUIRE(std::holds_alternative<EnemyMotion::Stagger>(
-      registry.get<Motion>(enemy)));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Stagger>(registry.get<Motion>(enemy))
+  );
 }
 
 TEST_CASE(
     "EnemyMotionSystem - Stagger restores original size and transitions to "
-    "Idle on expiry") {
+    "Idle on expiry"
+) {
   // 満了時（remaining <= 0）は EnemyConfig::size を代入して原寸に戻し、
   // Idle へ遷移する
   entt::registry registry;
@@ -80,13 +82,14 @@ TEST_CASE(
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(enemy));
   REQUIRE(rect.size.x == Approx(60.0));
   REQUIRE(rect.size.y == Approx(80.0));
-  REQUIRE(
-      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy)));
+  REQUIRE(std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+  );
 }
 
 TEST_CASE(
     "EnemyMotionSystem - Repel zeroes velocity and transitions to Idle on "
-    "expiry") {
+    "expiry"
+) {
   entt::registry registry;
   SetupContext(registry);
   const auto enemy = MakeEnemy(registry, EnemyMotion::Repel{.remaining = 0.01});
@@ -96,8 +99,8 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
-  REQUIRE(
-      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy)));
+  REQUIRE(std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+  );
 }
 
 TEST_CASE("EnemyMotionSystem - Repel keeps velocity while remaining") {
@@ -110,13 +113,14 @@ TEST_CASE("EnemyMotionSystem - Repel keeps velocity while remaining") {
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(-250.0));
-  REQUIRE(
-      std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(enemy)));
+  REQUIRE(std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(enemy)
+  ));
 }
 
 TEST_CASE(
     "EnemyMotionSystem - Knockback keeps horizontal velocity on the launch "
-    "frame") {
+    "frame"
+) {
   // 打ち上げ直後は接地したまま Tick に入るので、上昇中は止めてはならない
   entt::registry registry;
   SetupContext(registry);
@@ -132,8 +136,8 @@ TEST_CASE(
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(300.0));
 }
 
-TEST_CASE(
-    "EnemyMotionSystem - Knockback zeroes horizontal velocity on landing") {
+TEST_CASE("EnemyMotionSystem - Knockback zeroes horizontal velocity on landing"
+) {
   entt::registry registry;
   SetupContext(registry);
   const auto enemy =
@@ -147,12 +151,14 @@ TEST_CASE(
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
   REQUIRE(std::holds_alternative<EnemyMotion::Knockback>(
-      registry.get<Motion>(enemy)));
+      registry.get<Motion>(enemy)
+  ));
 }
 
 TEST_CASE(
     "EnemyMotionSystem - Knockback keeps horizontal velocity while "
-    "airborne") {
+    "airborne"
+) {
   entt::registry registry;
   SetupContext(registry);
   const auto enemy =
@@ -175,8 +181,8 @@ TEST_CASE("EnemyMotionSystem - Knockback transitions to Idle on expiry") {
   const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);
 
-  REQUIRE(
-      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy)));
+  REQUIRE(std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+  );
 }
 
 TEST_CASE("EnemyMotionSystem - Defeated fades DrawColor::color.a") {
@@ -196,7 +202,8 @@ TEST_CASE("EnemyMotionSystem - Defeated fades DrawColor::color.a") {
 
 TEST_CASE(
     "EnemyMotionSystem - Defeated emplaces DrawColor even without "
-    "Drawable") {
+    "Drawable"
+) {
   // Drawable を持たない敵でも DrawColor が付与される
   entt::registry registry;
   SetupContext(registry);
@@ -221,8 +228,8 @@ TEST_CASE("EnemySystem - destroys entity when Defeated has expired") {
   REQUIRE_FALSE(registry.valid(enemy));
 }
 
-TEST_CASE(
-    "EnemySystem - keeps entity while Defeated still has remaining time") {
+TEST_CASE("EnemySystem - keeps entity while Defeated still has remaining time"
+) {
   entt::registry registry;
   SetupContext(registry);
   const auto enemy =
@@ -255,17 +262,20 @@ TEST_CASE("EnemyMotionSystem - Hitstop freezes Stagger remaining and size") {
   const FrameData frameData{.dt = 0.075};
   MotionSystem::Update(registry, frameData);
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Stagger>(
-      registry.get<Motion>(enemy)));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Stagger>(registry.get<Motion>(enemy))
+  );
   REQUIRE(
       std::get<EnemyMotion::Stagger>(registry.get<Motion>(enemy)).remaining ==
-      Approx(0.15));
+      Approx(0.15)
+  );
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(enemy));
   REQUIRE(rect.size.y == Approx(80.0));
 }
 
 TEST_CASE(
-    "EnemyMotionSystem - Hitstop keeps Knockback vel.w on the launch frame") {
+    "EnemyMotionSystem - Hitstop keeps Knockback vel.w on the launch frame"
+) {
   // blowSpeedH（テスト設定値 300.0）が正である限り、着地判定と組み合わさる
   // vel.h <= 0 ガードには入らないため vel.w は消えない。blowSpeedH
   // を 0 にする将来の調整で、このテストが失敗して気付けるようにする
@@ -286,7 +296,8 @@ TEST_CASE(
 
 TEST_CASE(
     "EnemyMotionSystem - Hitstop prevents Defeated from being destroyed by "
-    "EnemySystem") {
+    "EnemySystem"
+) {
   // dt = 0 で remaining が凍結されるため、停止中は EnemySystem
   // に破棄されない
   entt::registry registry;

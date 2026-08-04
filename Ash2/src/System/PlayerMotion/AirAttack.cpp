@@ -20,8 +20,9 @@ namespace {
 // progress / orbitRadius は隣接する double 引数として渡すと取り違えやすいため
 // （bugprone-easily-swappable-parameters 対策）、orbitRadius は
 // AirAttackConfig への const 参照経由で受け取る。
-Vec3 AirAttackOrbOffset(double progress, const AirAttackConfig& aa,
-                        double capMidH, bool facingRight) {
+Vec3 AirAttackOrbOffset(
+    double progress, const AirAttackConfig& aa, double capMidH, bool facingRight
+) {
   const double angle = Math::TwoPi * progress;
   const double w = facingRight ? aa.orbitRadius * Math::Cos(angle)
                                : -aa.orbitRadius * Math::Cos(angle);
@@ -35,8 +36,10 @@ AirAttack MakeAirAttack(SpriteAnimation& anim) {
   return AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null};
 }
 
-Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    AirAttack& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -49,8 +52,9 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
   // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
   if (pos.isOnGround()) {
     if (state.hitboxEntity != entt::null) {
-      state.hitboxEntity = ReleaseAttackHitbox(registry, state.hitboxEntity,
-                                               cfg.attackEffect.fadeSec);
+      state.hitboxEntity = ReleaseAttackHitbox(
+          registry, state.hitboxEntity, cfg.attackEffect.fadeSec
+      );
     }
     return Landing{.timer = cfg.landing.recoverySec};
   }
@@ -60,13 +64,17 @@ Optional<Motion> Tick(AirAttack& state, entt::registry& registry,
   const auto offsetFn = [&aa, &cfg, facingRight](double progress) {
     return AirAttackOrbOffset(progress, aa, cfg.melee.capMidH, facingRight);
   };
-  UpdateAttackHitbox(registry, entity, state.elapsed, timeline,
-                     HitboxSpec{.radius = aa.radius,
-                                .damage = aa.damage,
-                                .reaction = ReactionLevel::Repel,
-                                .hitstopSec = aa.hitstopSec,
-                                .fadeSec = cfg.attackEffect.fadeSec},
-                     state.hitboxEntity, offsetFn);
+  UpdateAttackHitbox(
+      registry, entity, state.elapsed, timeline,
+      HitboxSpec{
+          .radius = aa.radius,
+          .damage = aa.damage,
+          .reaction = ReactionLevel::Repel,
+          .hitstopSec = aa.hitstopSec,
+          .fadeSec = cfg.attackEffect.fadeSec
+      },
+      state.hitboxEntity, offsetFn
+  );
 
   // 接地せずに終わった場合はタイマー満了で Neutral へ戻る
   if (timeline.isFinished(state.elapsed)) {

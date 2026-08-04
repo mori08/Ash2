@@ -5,7 +5,8 @@ namespace {
 /// @brief TOML の 1 ステップ値を ScenarioStep に変換する
 /// @note "make" アクションは別 Issue で対応予定のためエラーとする
 [[nodiscard]] std::expected<ScenarioStep, String> ParseStep(
-    const TOMLValue& step, const PhaseLoaderTable& loaders) {
+    const TOMLValue& step, const PhaseLoaderTable& loaders
+) {
   const auto action = step[U"action"].getOpt<String>();
   if (!action) {
     return std::unexpected{U"ScenarioData::ParseStep: action がありません"};
@@ -18,8 +19,9 @@ namespace {
     }
     const auto it = loaders.find(*phaseName);
     if (it == loaders.end()) {
-      return std::unexpected{U"ScenarioData::ParseStep: 未登録のフェーズ名 \"" +
-                             *phaseName + U"\""};
+      return std::unexpected{
+          U"ScenarioData::ParseStep: 未登録のフェーズ名 \"" + *phaseName + U"\""
+      };
     }
     auto maker = it->second(step);
     if (!maker) {
@@ -34,17 +36,20 @@ namespace {
   if (*action == U"make") {
     return std::unexpected{
         U"ScenarioData::ParseStep: \"make\" アクションは未対応です（Issue "
-        U"#67 スコープ外）"};
+        U"#67 スコープ外）"
+    };
   }
 
-  return std::unexpected{U"ScenarioData::ParseStep: 不明なアクション \"" +
-                         *action + U"\""};
+  return std::unexpected{
+      U"ScenarioData::ParseStep: 不明なアクション \"" + *action + U"\""
+  };
 }
 
 }  // namespace
 
-ScenarioData ScenarioData::FromToml(const TOMLValue& toml,
-                                    const PhaseLoaderTable& loaders) {
+ScenarioData ScenarioData::FromToml(
+    const TOMLValue& toml, const PhaseLoaderTable& loaders
+) {
   ScenarioData data;
 
   for (const auto& member : toml.tableView()) {

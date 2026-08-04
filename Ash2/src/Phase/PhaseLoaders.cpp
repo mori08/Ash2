@@ -33,8 +33,8 @@ class PhaseMaker : public IPhaseMaker {
 /// unexpected でエラーメッセージを返す）
 template <PhaseWithParam T, typename F>
 PhaseLoader MakeLoader(F&& parse) {
-  return [p = std::forward<F>(parse)](
-             const TOMLValue& step) -> std::expected<IPhaseMaker::Ptr, String> {
+  return [p = std::forward<F>(parse)](const TOMLValue& step
+         ) -> std::expected<IPhaseMaker::Ptr, String> {
     auto param = p(step);
     if (!param) {
       return std::unexpected{std::move(param).error()};
@@ -52,45 +52,54 @@ const PhaseLoaderTable& GetPhaseLoaders() {
            [](const TOMLValue&)
                -> std::expected<PlayerTestPhase::Param, String> {
              return PlayerTestPhase::Param{};
-           })},
+           }
+       )},
       {U"test_menu",
        MakeLoader<TestMenuPhase>(
            [](const TOMLValue&) -> std::expected<TestMenuPhase::Param, String> {
              return TestMenuPhase::Param{};
-           })},
+           }
+       )},
       {U"animation_viewer",
        MakeLoader<AnimationViewerPhase>(
-           [](const TOMLValue& step)
-               -> std::expected<AnimationViewerPhase::Param, String> {
+           [](const TOMLValue& step
+           ) -> std::expected<AnimationViewerPhase::Param, String> {
              const auto dataKey = step[U"param"].getOpt<String>();
              if (!dataKey) {
                return std::unexpected{
                    U"ScenarioData::ParseStep: animation_viewer に param があ"
-                   U"りません"};
+                   U"りません"
+               };
              }
              return AnimationViewerPhase::Param{.dataKey = *dataKey};
-           })},
+           }
+       )},
       {U"scenario",
        MakeLoader<ScenarioPhase>(
-           [](const TOMLValue& step)
-               -> std::expected<ScenarioPhase::Param, String> {
+           [](const TOMLValue& step
+           ) -> std::expected<ScenarioPhase::Param, String> {
              const auto sectionName = step[U"param"].getOpt<String>();
              if (!sectionName) {
                return std::unexpected{
-                   U"ScenarioData::ParseStep: scenario に param がありません"};
+                   U"ScenarioData::ParseStep: scenario に param がありません"
+               };
              }
              return ScenarioPhase::Param{.sectionName = *sectionName};
-           })},
+           }
+       )},
       {U"wait",
-       MakeLoader<WaitPhase>([](const TOMLValue& step)
-                                 -> std::expected<WaitPhase::Param, String> {
-         const auto duration = step[U"duration"].getOpt<double>();
-         if (!duration) {
-           return std::unexpected{
-               U"ScenarioData::ParseStep: wait に duration がありません"};
-         }
-         return WaitPhase::Param{.duration = *duration};
-       })},
+       MakeLoader<WaitPhase>(
+           [](const TOMLValue& step
+           ) -> std::expected<WaitPhase::Param, String> {
+             const auto duration = step[U"duration"].getOpt<double>();
+             if (!duration) {
+               return std::unexpected{
+                   U"ScenarioData::ParseStep: wait に duration がありません"
+               };
+             }
+             return WaitPhase::Param{.duration = *duration};
+           }
+       )},
   };
   return loaders;
 }

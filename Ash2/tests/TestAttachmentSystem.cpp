@@ -15,8 +15,9 @@ TEST_CASE("AttachmentSystem - child follows parent with offset") {
 
   auto child = registry.create();
   registry.emplace<WorldPos>(child);
-  Hierarchy::Attach(registry, parent, child,
-                    WorldPos{.w = 1.0, .h = 0.5, .d = 2.0});
+  Hierarchy::Attach(
+      registry, parent, child, WorldPos{.w = 1.0, .h = 0.5, .d = 2.0}
+  );
 
   AttachmentSystem::UpdateTransform(registry);
 
@@ -118,10 +119,13 @@ TEST_CASE("AttachmentSystem - Detach removes child from linked list") {
 
   Hierarchy::Detach(registry, child);
 
-  REQUIRE(registry.get<const Hierarchy>(parent).firstChild() ==
-          entt::entity{entt::null});
-  REQUIRE(registry.get<const Hierarchy>(child).parent() ==
-          entt::entity{entt::null});
+  REQUIRE(
+      registry.get<const Hierarchy>(parent).firstChild() ==
+      entt::entity{entt::null}
+  );
+  REQUIRE(
+      registry.get<const Hierarchy>(child).parent() == entt::entity{entt::null}
+  );
   REQUIRE_FALSE(registry.all_of<LocalOffset>(child));
 }
 
@@ -138,18 +142,24 @@ TEST_CASE("AttachmentSystem - re-attaching child to different parent") {
   Hierarchy::Attach(registry, parent1, child);
   Hierarchy::Attach(registry, parent2, child);
 
-  REQUIRE(registry.get<const Hierarchy>(parent1).firstChild() ==
-          entt::entity{entt::null});
+  REQUIRE(
+      registry.get<const Hierarchy>(parent1).firstChild() ==
+      entt::entity{entt::null}
+  );
   REQUIRE(registry.get<const Hierarchy>(parent2).firstChild() == child);
   REQUIRE(registry.get<const Hierarchy>(child).parent() == parent2);
-  REQUIRE(registry.get<const Hierarchy>(child).prevSibling() ==
-          entt::entity{entt::null});
-  REQUIRE(registry.get<const Hierarchy>(child).nextSibling() ==
-          entt::entity{entt::null});
+  REQUIRE(
+      registry.get<const Hierarchy>(child).prevSibling() ==
+      entt::entity{entt::null}
+  );
+  REQUIRE(
+      registry.get<const Hierarchy>(child).nextSibling() ==
+      entt::entity{entt::null}
+  );
 }
 
-TEST_CASE(
-    "Hierarchy - DestroyWithChildren on already-destroyed entity is safe") {
+TEST_CASE("Hierarchy - DestroyWithChildren on already-destroyed entity is safe"
+) {
   entt::registry registry;
   auto parent = registry.create();
   auto child = registry.create();

@@ -18,13 +18,17 @@ constexpr double KMaxShrinkRatio = 0.2;
 
 }  // namespace
 
-Optional<Motion> Tick(Idle& /*state*/, entt::registry& /*registry*/,
-                      entt::entity /*entity*/, const FrameData& /*frameData*/) {
+Optional<Motion> Tick(
+    Idle& /*state*/, entt::registry& /*registry*/, entt::entity /*entity*/,
+    const FrameData& /*frameData*/
+) {
   return none;
 }
 
-Optional<Motion> Tick(Stagger& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Stagger& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   const auto& cfg = registry.ctx().get<EnemyConfig>();
   state.remaining -= frameData.dt;
 
@@ -49,8 +53,10 @@ Optional<Motion> Tick(Stagger& state, entt::registry& registry,
   return none;
 }
 
-Optional<Motion> Tick(Repel& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Repel& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   state.remaining -= frameData.dt;
 
   if (state.remaining <= 0.0) {
@@ -60,8 +66,10 @@ Optional<Motion> Tick(Repel& state, entt::registry& registry,
   return none;
 }
 
-Optional<Motion> Tick(Knockback& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Knockback& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   state.remaining -= frameData.dt;
 
   // 打ち上げ直後は接地したままこの Tick に入るため、上昇中は止めない。
@@ -77,8 +85,10 @@ Optional<Motion> Tick(Knockback& state, entt::registry& registry,
   return none;
 }
 
-Optional<Motion> Tick(Defeated& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Defeated& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   const auto& cfg = registry.ctx().get<EnemyConfig>();
   state.remaining -= frameData.dt;
 

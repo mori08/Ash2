@@ -15,9 +15,11 @@ struct PhaseSpy {
 
 class MockPhase : public IPhase {
  public:
-  explicit MockPhase(std::shared_ptr<PhaseSpy> spy,
-                     PhaseCommand::Type cmd = PhaseCommand::Type::None,
-                     std::unique_ptr<IPhase> next = nullptr)
+  explicit MockPhase(
+      std::shared_ptr<PhaseSpy> spy,
+      PhaseCommand::Type cmd = PhaseCommand::Type::None,
+      std::unique_ptr<IPhase> next = nullptr
+  )
       : m_spy(std::move(spy)), m_cmd(cmd), m_next(std::move(next)) {}
 
   void onAfterPush(entt::registry&) override { m_spy->afterPushCount++; }
@@ -63,7 +65,8 @@ TEST_CASE("PhaseStack - Pop command calls onBeforePop and removes phase") {
   auto spy = std::make_shared<PhaseSpy>();
   PhaseStack stack{
       std::make_unique<MockPhase>(spy, IPhase::PhaseCommand::Type::Pop),
-      registry};
+      registry
+  };
 
   REQUIRE(spy->beforePopCount == 0);
   stack.update(registry, FrameData{});
@@ -78,9 +81,12 @@ TEST_CASE("PhaseStack - Push command calls onAfterPush on new phase") {
   auto spy1 = std::make_shared<PhaseSpy>();
   auto spy2 = std::make_shared<PhaseSpy>();
   PhaseStack stack{
-      std::make_unique<MockPhase>(spy1, IPhase::PhaseCommand::Type::Push,
-                                  std::make_unique<MockPhase>(spy2)),
-      registry};
+      std::make_unique<MockPhase>(
+          spy1, IPhase::PhaseCommand::Type::Push,
+          std::make_unique<MockPhase>(spy2)
+      ),
+      registry
+  };
 
   REQUIRE(spy1->afterPushCount == 1);
   REQUIRE(spy2->afterPushCount == 0);
@@ -94,9 +100,12 @@ TEST_CASE("PhaseStack - Reset command pops all phases then pushes new phase") {
   auto spy1 = std::make_shared<PhaseSpy>();
   auto spy2 = std::make_shared<PhaseSpy>();
   PhaseStack stack{
-      std::make_unique<MockPhase>(spy1, IPhase::PhaseCommand::Type::Reset,
-                                  std::make_unique<MockPhase>(spy2)),
-      registry};
+      std::make_unique<MockPhase>(
+          spy1, IPhase::PhaseCommand::Type::Reset,
+          std::make_unique<MockPhase>(spy2)
+      ),
+      registry
+  };
 
   stack.update(registry, FrameData{});
   REQUIRE(spy1->beforePopCount == 1);
@@ -108,7 +117,8 @@ TEST_CASE("PhaseStack - update on empty stack does nothing") {
   auto spy = std::make_shared<PhaseSpy>();
   PhaseStack stack{
       std::make_unique<MockPhase>(spy, IPhase::PhaseCommand::Type::Pop),
-      registry};
+      registry
+  };
 
   stack.update(registry, FrameData{});
   REQUIRE(spy->updateCount == 1);
