@@ -12,11 +12,14 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
 
   auto view = registry.view<SpriteAnimation, Drawable>(entt::exclude<Hitstop>);
   for (auto [entity, anim, drawable] : view.each()) {
-    assert(dataRegistry.contains(anim.dataKey) &&
-           "AnimationDataRegistry にキーが存在しない");
+    assert(
+        dataRegistry.contains(anim.dataKey) &&
+        "AnimationDataRegistry にキーが存在しない"
+    );
     const auto& data = dataRegistry.at(anim.dataKey);
-    assert(data.clips.contains(anim.currentClip) &&
-           "clips にクリップが存在しない");
+    assert(
+        data.clips.contains(anim.currentClip) && "clips にクリップが存在しない"
+    );
     const auto& clip = data.clips.at(anim.currentClip);
 
     anim.elapsed += dt;
@@ -27,8 +30,8 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
     anim.elapsed = Math::Fmod(anim.elapsed, cycleDuration);
     const int32 col =
         static_cast<int32>(anim.elapsed * clip.speed) % clip.count;
-    auto region = TextureAsset{data.textureKey}(
-        col * data.size.x, clip.row * data.size.y, data.size.x, data.size.y);
+    const Point cell{col, clip.row};
+    auto region = TextureAsset{data.textureKey}(cell * data.size, data.size);
 
     if (anim.facingRight) {
       region = region.mirrored();

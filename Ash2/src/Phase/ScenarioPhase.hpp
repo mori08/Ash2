@@ -18,8 +18,9 @@ class ScenarioPhase : public IPhase {
   void onAfterPush(entt::registry& registry) override;
 
   /// @brief 毎フレーム 1 ステップを処理する
-  [[nodiscard]] PhaseCommand update(entt::registry& registry,
-                                    const FrameData& frameData) override;
+  [[nodiscard]] PhaseCommand update(
+      entt::registry& registry, const FrameData& frameData
+  ) override;
 
  private:
   String m_sectionName;

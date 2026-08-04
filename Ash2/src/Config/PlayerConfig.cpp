@@ -10,7 +10,8 @@ namespace {
 /// の4キーを持つテーブルであればよく、melee の段テーブルのように
 /// 他のキーを併せ持っていても構わない
 [[nodiscard]] std::expected<MotionTimeline, String> ParseTimeline(
-    const TOMLValue& toml, StringView section) {
+    const TOMLValue& toml, StringView section
+) {
   TomlFields f{toml, U"PlayerConfig::ParseTimeline", String{section}};
   return f.wrap(MotionTimeline{
       .windupSec = f.get<double>(U"windup_sec"),
@@ -22,20 +23,23 @@ namespace {
 
 /// @brief TOML の trajectory 文字列を MeleeTrajectory へ変換する
 [[nodiscard]] std::expected<MeleeTrajectory, String> ParseMeleeTrajectory(
-    const String& value) {
+    const String& value
+) {
   if (value == U"thrust") return MeleeTrajectory::Thrust;
   if (value == U"slash") return MeleeTrajectory::Slash;
   return std::unexpected{
       U"PlayerConfig::ParseMeleeTrajectory: 不明な melee "
       U"trajectory \"" +
-      value + U"\""};
+      value + U"\""
+  };
 }
 
 /// @brief TOML から近接コンボ1段分の MeleeStageConfig を生成する
 /// @param index 段のインデックス（欠落キーのメッセージに `melee.stage[index]`
 /// として前置し、 実運用の複数段のうちどの段が不正かを示す）
 [[nodiscard]] std::expected<MeleeStageConfig, String> ParseMeleeStage(
-    const TOMLValue& stageToml, size_t index) {
+    const TOMLValue& stageToml, size_t index
+) {
   const String prefix = U"melee.stage[" + Format(index) + U"]";
   auto timeline = ParseTimeline(stageToml, prefix);
   if (!timeline) {
@@ -69,8 +73,8 @@ namespace {
 }
 
 /// @brief TOML から近接攻撃の設定値を生成する
-[[nodiscard]] std::expected<MeleeConfig, String> ParseMelee(
-    const TOMLValue& m) {
+[[nodiscard]] std::expected<MeleeConfig, String> ParseMelee(const TOMLValue& m
+) {
   Array<MeleeStageConfig> stages;
   // Why not: m[U"stage"] がテーブル配列として存在しない場合に
   // tableArrayView() を呼ぶと不正アクセスになるため、
@@ -89,8 +93,8 @@ namespace {
   // stages が空だと Tick(Melee&, ...) の stages[state.stage] アクセスが
   // 不正になるため許容しない
   if (stages.isEmpty()) {
-    return std::unexpected{
-        U"PlayerConfig::ParseMelee: melee.stage がありません"};
+    return std::unexpected{U"PlayerConfig::ParseMelee: melee.stage がありません"
+    };
   }
 
   TomlFields f{m, U"PlayerConfig::ParseMelee", U"melee"};
@@ -103,8 +107,8 @@ namespace {
 }
 
 /// @brief TOML から遠距離攻撃の設定値を生成する
-[[nodiscard]] std::expected<RangedConfig, String> ParseRanged(
-    const TOMLValue& r) {
+[[nodiscard]] std::expected<RangedConfig, String> ParseRanged(const TOMLValue& r
+) {
   TomlFields f{r, U"PlayerConfig::ParseRanged", U"ranged"};
   return f.wrap(RangedConfig{
       .reach = f.get<double>(U"reach"),
@@ -133,7 +137,8 @@ namespace {
 
 /// @brief TOML からダッシュ攻撃の設定値を生成する
 [[nodiscard]] std::expected<DashAttackConfig, String> ParseDashAttack(
-    const TOMLValue& da) {
+    const TOMLValue& da
+) {
   auto timeline = ParseTimeline(da, U"dash_attack");
   if (!timeline) {
     return std::unexpected{std::move(timeline).error()};
@@ -152,7 +157,8 @@ namespace {
 
 /// @brief TOML から空中攻撃の設定値を生成する
 [[nodiscard]] std::expected<AirAttackConfig, String> ParseAirAttack(
-    const TOMLValue& aa) {
+    const TOMLValue& aa
+) {
   auto timeline = ParseTimeline(aa, U"air_attack");
   if (!timeline) {
     return std::unexpected{std::move(timeline).error()};
@@ -170,7 +176,8 @@ namespace {
 
 /// @brief TOML からスタミナ回復の設定値を生成する
 [[nodiscard]] std::expected<StaminaConfig, String> ParseStamina(
-    const TOMLValue& s) {
+    const TOMLValue& s
+) {
   TomlFields f{s, U"PlayerConfig::ParseStamina", U"stamina"};
   return f.wrap(StaminaConfig{
       .recoveryDelay = f.get<double>(U"recovery_delay"),
@@ -180,7 +187,8 @@ namespace {
 
 /// @brief TOML から着地硬直の設定値を生成する
 [[nodiscard]] std::expected<LandingConfig, String> ParseLanding(
-    const TOMLValue& l) {
+    const TOMLValue& l
+) {
   TomlFields f{l, U"PlayerConfig::ParseLanding", U"landing"};
   return f.wrap(LandingConfig{
       .recoverySec = f.get<double>(U"recovery_sec"),
@@ -189,7 +197,8 @@ namespace {
 
 /// @brief TOML から攻撃演出共通の設定値を生成する
 [[nodiscard]] std::expected<AttackEffectConfig, String> ParseAttackEffect(
-    const TOMLValue& ae) {
+    const TOMLValue& ae
+) {
   TomlFields f{ae, U"PlayerConfig::ParseAttackEffect", U"attack_effect"};
   return f.wrap(AttackEffectConfig{
       .fadeSec = f.get<double>(U"fade_sec"),

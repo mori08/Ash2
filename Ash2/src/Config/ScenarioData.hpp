@@ -45,6 +45,7 @@ struct ScenarioData {
 
   /// @brief TOML からシナリオデータを生成する
   /// @param loaders フェーズ名 → PhaseLoader のマップ（呼び出し元が用意する）
-  [[nodiscard]] static ScenarioData FromToml(const TOMLValue& toml,
-                                             const PhaseLoaderTable& loaders);
+  [[nodiscard]] static ScenarioData FromToml(
+      const TOMLValue& toml, const PhaseLoaderTable& loaders
+  );
 };

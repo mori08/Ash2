@@ -56,8 +56,9 @@ TEST_CASE("FadeOutSystem - preserves existing RGB while updating alpha") {
   // は白へ戻らない
   entt::registry registry;
   const auto entity = registry.create();
-  registry.emplace<DrawColor>(entity,
-                              DrawColor{.color = ColorF{0.2, 0.5, 0.9}});
+  registry.emplace<DrawColor>(
+      entity, DrawColor{.color = ColorF{0.2, 0.5, 0.9}}
+  );
   registry.emplace<FadeOut>(entity, FadeOut{.duration = 1.0, .remaining = 1.0});
 
   FadeOutSystem::Update(registry, 0.5);

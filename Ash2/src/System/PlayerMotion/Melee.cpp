@@ -15,8 +15,9 @@ namespace {
 
 /// @brief 突き出し軌道（近接1・3段目）の珠オフセット（プレイヤー相対）を返す
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
-Vec3 MeleeThrustOffset(double progress, bool facingRight, double reach,
-                       double capMidH) {
+Vec3 MeleeThrustOffset(
+    double progress, bool facingRight, double reach, double capMidH
+) {
   const double sign = facingRight ? 1.0 : -1.0;
   const double eased = EaseOutQuad(Clamp(progress, 0.0, 1.0));
   return Vec3{sign * reach * eased, capMidH, 0.0};
@@ -27,8 +28,10 @@ Vec3 MeleeThrustOffset(double progress, bool facingRight, double reach,
 // reach / capMidH は隣接する double 引数として渡すと取り違えやすいため
 // （bugprone-easily-swappable-parameters 対策）、両者を保持する MeleeConfig
 // への const 参照で受け取る。
-Vec3 MeleeSlashOffset(double progress, bool facingRight,
-                      const MeleeConfig& melee, double slashRiseHeight) {
+Vec3 MeleeSlashOffset(
+    double progress, bool facingRight, const MeleeConfig& melee,
+    double slashRiseHeight
+) {
   const double sign = facingRight ? 1.0 : -1.0;
   const double eased = EaseOutQuad(Clamp(progress, 0.0, 1.0));
   const double horizontal = sign * melee.reach * eased;
@@ -37,20 +40,22 @@ Vec3 MeleeSlashOffset(double progress, bool facingRight,
 }
 
 /// @brief 段の軌道設定から、進行度→珠オフセットのラムダを作る
-std::function<Vec3(double)> MakeMeleeOffsetFn(const MeleeStageConfig& stage,
-                                              bool facingRight,
-                                              const MeleeConfig& melee) {
+std::function<Vec3(double)> MakeMeleeOffsetFn(
+    const MeleeStageConfig& stage, bool facingRight, const MeleeConfig& melee
+) {
   switch (stage.trajectory) {
     case MeleeTrajectory::Slash:
       return [=, &melee](double progress) {
-        return MeleeSlashOffset(progress, facingRight, melee,
-                                stage.slashRiseHeight);
+        return MeleeSlashOffset(
+            progress, facingRight, melee, stage.slashRiseHeight
+        );
       };
     case MeleeTrajectory::Thrust:
     default:
       return [=, &melee](double progress) {
-        return MeleeThrustOffset(progress, facingRight, melee.reach,
-                                 melee.capMidH);
+        return MeleeThrustOffset(
+            progress, facingRight, melee.reach, melee.capMidH
+        );
       };
   }
 }
@@ -63,8 +68,9 @@ void RestartClip(SpriteAnimation& anim, const String& clip) {
 
 }  // namespace
 
-Melee MakeMelee(SpriteAnimation& anim, size_t stage,
-                entt::entity hitboxEntity) {
+Melee MakeMelee(
+    SpriteAnimation& anim, size_t stage, entt::entity hitboxEntity
+) {
   // 段ごとに専用クリップ（melee_1/melee_2/melee_3）へ切り替わるため、
   // 呼び出し元（初回入場・コンボ継続いずれも）で必ずクリップ名が変わり、
   // RestartClip と SetClip の挙動差は生じない。
@@ -72,14 +78,18 @@ Melee MakeMelee(SpriteAnimation& anim, size_t stage,
   return Melee{.stage = stage, .elapsed = 0.0, .hitboxEntity = hitboxEntity};
 }
 
-Optional<Motion> Tick(Melee& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Melee& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   StopHorizontalMovement(registry, entity);
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& melee = cfg.melee;
-  assert(state.stage < melee.stages.size() &&
-         "state.stage は melee.stages の範囲内でなければならない");
+  assert(
+      state.stage < melee.stages.size() &&
+      "state.stage は melee.stages の範囲内でなければならない"
+  );
   const auto& stageCfg = melee.stages[state.stage];
   const auto& timeline = stageCfg.timeline;
   const auto& input = frameData.input;
@@ -93,13 +103,17 @@ Optional<Motion> Tick(Melee& state, entt::registry& registry,
       hasNextStage ? ReactionLevel::Stagger : ReactionLevel::Blow;
 
   const auto offsetFn = MakeMeleeOffsetFn(stageCfg, anim.facingRight, melee);
-  UpdateAttackHitbox(registry, entity, state.elapsed, timeline,
-                     HitboxSpec{.radius = stageCfg.radius,
-                                .damage = melee.damage,
-                                .reaction = reaction,
-                                .hitstopSec = stageCfg.hitstopSec,
-                                .fadeSec = cfg.attackEffect.fadeSec},
-                     state.hitboxEntity, offsetFn);
+  UpdateAttackHitbox(
+      registry, entity, state.elapsed, timeline,
+      HitboxSpec{
+          .radius = stageCfg.radius,
+          .damage = melee.damage,
+          .reaction = reaction,
+          .hitstopSec = stageCfg.hitstopSec,
+          .fadeSec = cfg.attackEffect.fadeSec
+      },
+      state.hitboxEntity, offsetFn
+  );
 
   if (hasNextStage) {
     // 構え〜後隙A中の攻撃入力は次段への遷移を予約するのみ

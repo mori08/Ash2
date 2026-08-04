@@ -1,7 +1,8 @@
 #include "Phase/PhaseStack.hpp"
 
-PhaseStack::PhaseStack(std::unique_ptr<IPhase>&& initialPhase,
-                       entt::registry& registry) {
+PhaseStack::PhaseStack(
+    std::unique_ptr<IPhase>&& initialPhase, entt::registry& registry
+) {
   push(registry, std::move(initialPhase));
 }
 
@@ -40,8 +41,9 @@ void PhaseStack::pop(entt::registry& registry) {
   m_stack.pop_back();
 }
 
-void PhaseStack::push(entt::registry& registry,
-                      std::unique_ptr<IPhase>&& phase) {
+void PhaseStack::push(
+    entt::registry& registry, std::unique_ptr<IPhase>&& phase
+) {
   assert(phase != nullptr);
   m_stack.push_back(std::move(phase));
   m_stack.back()->onAfterPush(registry);

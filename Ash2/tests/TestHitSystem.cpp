@@ -15,17 +15,27 @@ TEST_CASE("HitSystem - no repeated damage from multi-frame attack") {
   // 攻撃エンティティ（WorldPos 原点、半径10の球コライダー）
   auto attacker = registry.create();
   registry.emplace<WorldPos>(attacker, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(attacker, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                                .segmentEnd = {0.0, 0.0, 0.0},
-                                                .radius = 10.0});
+  registry.emplace<Collider>(
+      attacker,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Attack>(attacker, Attack{.damage = 5});
 
   // 被弾エンティティ（隣接、重なる位置）
   auto target = registry.create();
   registry.emplace<WorldPos>(target, WorldPos{.w = 5.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(target, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                              .segmentEnd = {0.0, 0.0, 0.0},
-                                              .radius = 10.0});
+  registry.emplace<Collider>(
+      target,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
 
   // 1フレーム目：ヒットしてダメージが入り、HitPair が1件返る
@@ -59,25 +69,40 @@ TEST_CASE("HitSystem - multi-collider attack hits target only once") {
   // 子コライダー1（root を参照）
   auto child1 = registry.create();
   registry.emplace<WorldPos>(child1, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(child1, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                              .segmentEnd = {0.0, 0.0, 0.0},
-                                              .radius = 10.0});
+  registry.emplace<Collider>(
+      child1,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Attack>(child1, Attack{.damage = 10, .root = root});
 
   // 子コライダー2（同じ root を参照）
   auto child2 = registry.create();
   registry.emplace<WorldPos>(child2, WorldPos{.w = 3.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(child2, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                              .segmentEnd = {0.0, 0.0, 0.0},
-                                              .radius = 10.0});
+  registry.emplace<Collider>(
+      child2,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Attack>(child2, Attack{.damage = 10, .root = root});
 
   // 被弾エンティティ（両コライダーと重なる位置）
   auto target = registry.create();
   registry.emplace<WorldPos>(target, WorldPos{.w = 5.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(target, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                              .segmentEnd = {0.0, 0.0, 0.0},
-                                              .radius = 10.0});
+  registry.emplace<Collider>(
+      target,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
 
   // 1回の Update で child1 と child2 が両方ヒットしても、ダメージは1回分のみ
@@ -98,17 +123,27 @@ TEST_CASE("HitSystem - collider with destroyed root is skipped") {
   // 攻撃コライダー（無効な root を参照）
   auto attacker = registry.create();
   registry.emplace<WorldPos>(attacker, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(attacker, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                                .segmentEnd = {0.0, 0.0, 0.0},
-                                                .radius = 10.0});
+  registry.emplace<Collider>(
+      attacker,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Attack>(attacker, Attack{.damage = 5, .root = root});
 
   // 被弾エンティティ（重なる位置）
   auto target = registry.create();
   registry.emplace<WorldPos>(target, WorldPos{.w = 5.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(target, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                              .segmentEnd = {0.0, 0.0, 0.0},
-                                              .radius = 10.0});
+  registry.emplace<Collider>(
+      target,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
 
   const auto hits = HitSystem::Update(registry);
@@ -126,17 +161,27 @@ TEST_CASE("HitSystem - collider with root lacking Attack is skipped") {
   // 攻撃コライダー（Attack 非保持の root を参照）
   auto attacker = registry.create();
   registry.emplace<WorldPos>(attacker, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(attacker, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                                .segmentEnd = {0.0, 0.0, 0.0},
-                                                .radius = 10.0});
+  registry.emplace<Collider>(
+      attacker,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Attack>(attacker, Attack{.damage = 5, .root = root});
 
   // 被弾エンティティ（重なる位置）
   auto target = registry.create();
   registry.emplace<WorldPos>(target, WorldPos{.w = 5.0, .h = 0.0, .d = 0.0});
-  registry.emplace<Collider>(target, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                              .segmentEnd = {0.0, 0.0, 0.0},
-                                              .radius = 10.0});
+  registry.emplace<Collider>(
+      target,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 10.0
+      }
+  );
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
 
   const auto hits = HitSystem::Update(registry);

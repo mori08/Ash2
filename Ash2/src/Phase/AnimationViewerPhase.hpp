@@ -18,8 +18,9 @@ class AnimationViewerPhase : public IPhase {
   /// @brief 一時エンティティを生成する
   void onAfterPush(entt::registry& registry) override;
 
-  [[nodiscard]] PhaseCommand update(entt::registry& registry,
-                                    const FrameData& frameData) override;
+  [[nodiscard]] PhaseCommand update(
+      entt::registry& registry, const FrameData& frameData
+  ) override;
 
   /// @brief 一時エンティティを破棄する
   void onBeforePop(entt::registry& registry) override;

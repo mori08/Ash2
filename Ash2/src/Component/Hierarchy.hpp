@@ -22,15 +22,18 @@ class Hierarchy {
   /// 子がすでに別の親を持つ場合は先に Detach してから挿入する。
   /// parent・child が Hierarchy を持たない場合は自動的に追加する。
   /// @param offset 親からの相対座標（省略時はゼロ）
-  static void Attach(entt::registry& registry, entt::entity parent,
-                     entt::entity child, WorldPos offset = {});
+  static void Attach(
+      entt::registry& registry, entt::entity parent, entt::entity child,
+      WorldPos offset = {}
+  );
 
   /// @brief 子を親から切り離す（O(1)）
   static void Detach(entt::registry& registry, entt::entity child);
 
   /// @brief エンティティと全子孫を再帰的に破棄する
-  static void DestroyWithChildren(entt::registry& registry,
-                                  entt::entity entity);
+  static void DestroyWithChildren(
+      entt::registry& registry, entt::entity entity
+  );
 
  private:
   entt::entity m_parent = entt::null;

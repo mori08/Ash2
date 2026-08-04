@@ -25,18 +25,30 @@ constexpr ColorF KMeleeOrbColor = {1.0, 0.9, 0.5};
 /// 珠は体の近くに静止した位置に置く。Collider は珠エンティティ自身の原点からの
 /// オフセット 0 で固定し、珠の現在位置は UpdateAttackHitbox が更新する
 /// LocalOffset のみが担う。
-entt::entity SpawnAttackHitbox(entt::registry& registry, entt::entity owner,
-                               const WorldPos& pos, const HitboxSpec& spec) {
+entt::entity SpawnAttackHitbox(
+    entt::registry& registry, entt::entity owner, const WorldPos& pos,
+    const HitboxSpec& spec
+) {
   const auto hitbox = registry.create();
   registry.emplace<WorldPos>(hitbox, pos);
   registry.emplace<LocalOffset>(hitbox, LocalOffset{});
   Hierarchy::Attach(registry, owner, hitbox);
-  registry.emplace<Collider>(hitbox, Collider{.segmentStart = Vec3::Zero(),
-                                              .segmentEnd = Vec3::Zero(),
-                                              .radius = spec.radius});
-  registry.emplace<Attack>(hitbox, Attack{.damage = spec.damage,
-                                          .hitstopSec = spec.hitstopSec,
-                                          .reaction = spec.reaction});
+  registry.emplace<Collider>(
+      hitbox,
+      Collider{
+          .segmentStart = Vec3::Zero(),
+          .segmentEnd = Vec3::Zero(),
+          .radius = spec.radius
+      }
+  );
+  registry.emplace<Attack>(
+      hitbox,
+      Attack{
+          .damage = spec.damage,
+          .hitstopSec = spec.hitstopSec,
+          .reaction = spec.reaction
+      }
+  );
   registry.emplace<Drawable>(hitbox, CircleDrawable{.radius = spec.radius});
   registry.emplace<DrawColor>(hitbox, DrawColor{.color = KMeleeOrbColor});
   return hitbox;
@@ -57,23 +69,26 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity) {
   vel.d = 0.0;
 }
 
-entt::entity ReleaseAttackHitbox(entt::registry& registry,
-                                 entt::entity hitboxEntity, double fadeSec) {
+entt::entity ReleaseAttackHitbox(
+    entt::registry& registry, entt::entity hitboxEntity, double fadeSec
+) {
   Hierarchy::Detach(registry, hitboxEntity);
   registry.remove<Attack>(hitboxEntity);
   if (fadeSec <= 0.0) {
     registry.destroy(hitboxEntity);
   } else {
     registry.emplace_or_replace<FadeOut>(
-        hitboxEntity, FadeOut{.duration = fadeSec, .remaining = fadeSec});
+        hitboxEntity, FadeOut{.duration = fadeSec, .remaining = fadeSec}
+    );
   }
   return entt::null;
 }
 
-void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
-                        double elapsed, const MotionTimeline& timeline,
-                        const HitboxSpec& spec, entt::entity& hitboxEntity,
-                        const std::function<Vec3(double)>& offsetFn) {
+void UpdateAttackHitbox(
+    entt::registry& registry, entt::entity owner, double elapsed,
+    const MotionTimeline& timeline, const HitboxSpec& spec,
+    entt::entity& hitboxEntity, const std::function<Vec3(double)>& offsetFn
+) {
   // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
   // 補間で移動させる
   if (timeline.isActive(elapsed)) {

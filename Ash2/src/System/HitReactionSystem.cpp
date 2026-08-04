@@ -15,8 +15,9 @@
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
 
-void HitReactionSystem::Apply(entt::registry& registry,
-                              const Array<HitPair>& hits) {
+void HitReactionSystem::Apply(
+    entt::registry& registry, const Array<HitPair>& hits
+) {
   const auto& cfg = registry.ctx().get<EnemyConfig>();
 
   for (const auto& hit : hits) {
@@ -79,7 +80,8 @@ void HitReactionSystem::Apply(entt::registry& registry,
       registry.remove<Collider>(hit.target);
       registry.remove<Hp>(hit.target);
       registry.replace<Motion>(
-          hit.target, EnemyMotion::Defeated{.remaining = cfg.defeatedSec});
+          hit.target, EnemyMotion::Defeated{.remaining = cfg.defeatedSec}
+      );
       continue;
     }
 
@@ -88,18 +90,21 @@ void HitReactionSystem::Apply(entt::registry& registry,
         break;
       case ReactionLevel::Stagger:
         registry.replace<Motion>(
-            hit.target, EnemyMotion::Stagger{.remaining = cfg.staggerSec});
+            hit.target, EnemyMotion::Stagger{.remaining = cfg.staggerSec}
+        );
         break;
       case ReactionLevel::Repel:
         registry.get<Velocity>(hit.target).w = sign * cfg.repelSpeed;
-        registry.replace<Motion>(hit.target,
-                                 EnemyMotion::Repel{.remaining = cfg.repelSec});
+        registry.replace<Motion>(
+            hit.target, EnemyMotion::Repel{.remaining = cfg.repelSec}
+        );
         break;
       case ReactionLevel::Blow:
         registry.get<Velocity>(hit.target).w = sign * cfg.blowSpeedW;
         registry.get<Velocity>(hit.target).h = cfg.blowSpeedH;
         registry.replace<Motion>(
-            hit.target, EnemyMotion::Knockback{.remaining = cfg.knockbackSec});
+            hit.target, EnemyMotion::Knockback{.remaining = cfg.knockbackSec}
+        );
         break;
     }
   }

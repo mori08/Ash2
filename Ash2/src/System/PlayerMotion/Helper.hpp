@@ -39,17 +39,19 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity);
 /// したうえで `FadeOut` を付与する。`fadeSec` が 0 以下の場合はフェードを
 /// 挟まず即座に破棄する。
 /// @return entt::null（呼び出し側の hitboxEntity 変数への代入に使う）
-entt::entity ReleaseAttackHitbox(entt::registry& registry,
-                                 entt::entity hitboxEntity, double fadeSec);
+entt::entity ReleaseAttackHitbox(
+    entt::registry& registry, entt::entity hitboxEntity, double fadeSec
+);
 
 /// @brief 攻撃判定の発生区間に応じてヒットボックスを生成・更新・破棄する
 /// @param timeline 攻撃のタイムライン（active 区間の判定に使用）
 /// @param spec
 /// 生成時に確定させる半径・ダメージ・リアクション・ヒットストップ時間
 /// @param offsetFn 攻撃フレーム内の進行度から珠のオフセットを算出する関数
-void UpdateAttackHitbox(entt::registry& registry, entt::entity owner,
-                        double elapsed, const MotionTimeline& timeline,
-                        const HitboxSpec& spec, entt::entity& hitboxEntity,
-                        const std::function<Vec3(double)>& offsetFn);
+void UpdateAttackHitbox(
+    entt::registry& registry, entt::entity owner, double elapsed,
+    const MotionTimeline& timeline, const HitboxSpec& spec,
+    entt::entity& hitboxEntity, const std::function<Vec3(double)>& offsetFn
+);
 
 }  // namespace PlayerMotion

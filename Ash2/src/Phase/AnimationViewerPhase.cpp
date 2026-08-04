@@ -37,16 +37,21 @@ void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
   m_entity = registry.create();
   registry.emplace<WorldPos>(m_entity);
   registry.emplace<Drawable>(
-      m_entity, TextureDrawable{.anchor = DrawAnchor::BottomCenter});
+      m_entity, TextureDrawable{.anchor = DrawAnchor::BottomCenter}
+  );
   registry.emplace<SpriteAnimation>(
       m_entity,
-      SpriteAnimation{.dataKey = m_dataKey,
-                      .currentClip = m_clips.empty() ? U"" : m_clips[0]});
+      SpriteAnimation{
+          .dataKey = m_dataKey,
+          .currentClip = m_clips.empty() ? U"" : m_clips[0]
+      }
+  );
   AnimationSystem::Update(registry, 0.0);
 }
 
-IPhase::PhaseCommand AnimationViewerPhase::update(entt::registry& registry,
-                                                  const FrameData& frameData) {
+IPhase::PhaseCommand AnimationViewerPhase::update(
+    entt::registry& registry, const FrameData& frameData
+) {
   if (KeyEscape.down()) {
     return PhaseCommand::Pop();
   }
@@ -83,8 +88,9 @@ IPhase::PhaseCommand AnimationViewerPhase::update(entt::registry& registry,
   Scene::SetBackground(ColorF{KBgBrightness});
   m_font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(KTitleX, KTitleY);
   if (!m_clips.empty()) {
-    m_font(U"Clip [{}/{}]: {}"_fmt(m_clipIndex + 1, m_clips.size(),
-                                   m_clips[m_clipIndex]))
+    m_font(U"Clip [{}/{}]: {}"_fmt(
+               m_clipIndex + 1, m_clips.size(), m_clips[m_clipIndex]
+           ))
         .draw(KTitleX, KClipInfoY);
   }
   m_font(U"← → : clip  F : flip  Esc : back")

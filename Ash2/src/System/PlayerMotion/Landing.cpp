@@ -6,8 +6,10 @@
 
 namespace PlayerMotion {
 
-Optional<Motion> Tick(Landing& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Landing& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   StopHorizontalMovement(registry, entity);
 
   auto& anim = registry.get<SpriteAnimation>(entity);

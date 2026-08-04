@@ -20,7 +20,8 @@ void DrawSystem::Draw(const entt::registry& registry) {
     const auto* drawColor = registry.try_get<DrawColor>(entity);
     entries.push_back(
         {std::cref(pos), std::cref(drawable),
-         (drawColor != nullptr) ? drawColor->color : KDefaultDrawColor});
+         (drawColor != nullptr) ? drawColor->color : KDefaultDrawColor}
+    );
   }
 
   std::ranges::sort(entries, [](const DrawEntry& a, const DrawEntry& b) {
@@ -36,12 +37,14 @@ void DrawSystem::Draw(const entt::registry& registry) {
               const RectF rect = [&] {
                 switch (shape.anchor) {
                   case DrawAnchor::BottomCenter:
-                    return RectF{Arg::bottomCenter(screenPos), shape.size.x,
-                                 shape.size.y};
+                    return RectF{
+                        Arg::bottomCenter(screenPos), shape.size.x, shape.size.y
+                    };
                   case DrawAnchor::Center:
                   default:
-                    return RectF{Arg::center(screenPos), shape.size.x,
-                                 shape.size.y};
+                    return RectF{
+                        Arg::center(screenPos), shape.size.x, shape.size.y
+                    };
                 }
               }();
               rect.draw(color);
@@ -61,13 +64,15 @@ void DrawSystem::Draw(const entt::registry& registry) {
               circle.drawPie(shape.startAngle, shape.angle, color);
               if (shape.border) {
                 const auto& b = *shape.border;
-                circle.drawArc(shape.startAngle, shape.angle, 0.0, b.thickness,
-                               b.color);
+                circle.drawArc(
+                    shape.startAngle, shape.angle, 0.0, b.thickness, b.color
+                );
                 const Vec2 p1 =
                     screenPos + Vec2{Circular{shape.radius, shape.startAngle}};
                 const Vec2 p2 =
-                    screenPos + Vec2{Circular{shape.radius,
-                                              shape.startAngle + shape.angle}};
+                    screenPos +
+                    Vec2{Circular{shape.radius, shape.startAngle + shape.angle}
+                    };
                 Line{screenPos, p1}.draw(b.thickness, b.color);
                 Line{screenPos, p2}.draw(b.thickness, b.color);
               }
@@ -85,6 +90,7 @@ void DrawSystem::Draw(const entt::registry& registry) {
               }
             },
         },
-        entry.drawable.get());
+        entry.drawable.get()
+    );
   }
 }

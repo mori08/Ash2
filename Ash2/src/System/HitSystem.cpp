@@ -91,8 +91,10 @@ Array<HitPair> HitSystem::Update(entt::registry& registry) {
       const Vec3 tp2 = worldT + tCol.segmentEnd;
 
       const double sumR = aCol.radius + tCol.radius;
-      if (SegmentDistSq(Segment{.start = ap1, .end = ap2},
-                        Segment{.start = tp1, .end = tp2}) >= sumR * sumR)
+      if (SegmentDistSq(
+              Segment{.start = ap1, .end = ap2},
+              Segment{.start = tp1, .end = tp2}
+          ) >= sumR * sumR)
         continue;
 
       rootAtk.hitTargets.emplace(target);

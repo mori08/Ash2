@@ -43,7 +43,8 @@ void InitializeRegistry(entt::registry& registry) {
 
   const TOMLReader scenarioToml(AssetPath(U"assets/config/scenario.toml"));
   registry.ctx().emplace<ScenarioData>(
-      ScenarioData::FromToml(scenarioToml, GetPhaseLoaders()));
+      ScenarioData::FromToml(scenarioToml, GetPhaseLoaders())
+  );
 }
 
 void ReloadConfig(entt::registry& registry) {

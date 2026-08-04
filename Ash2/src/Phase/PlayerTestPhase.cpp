@@ -48,15 +48,19 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<Gravity>(m_playerRoot, Gravity{.accel = cfg.gravity});
   registry.emplace<Name>(m_playerRoot, Name{U"player"});
   registry.emplace<Drawable>(
-      m_playerRoot, TextureDrawable{.anchor = DrawAnchor::BottomCenter});
+      m_playerRoot, TextureDrawable{.anchor = DrawAnchor::BottomCenter}
+  );
   registry.emplace<SpriteAnimation>(
       m_playerRoot,
-      SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"});
-  registry.emplace<Hp>(m_playerRoot,
-                       Hp{.max = KPlayerMaxHp, .current = KPlayerMaxHp});
+      SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"}
+  );
+  registry.emplace<Hp>(
+      m_playerRoot, Hp{.max = KPlayerMaxHp, .current = KPlayerMaxHp}
+  );
   registry.emplace<Stamina>(
       m_playerRoot,
-      Stamina{.max = KPlayerMaxStamina, .current = KPlayerMaxStamina});
+      Stamina{.max = KPlayerMaxStamina, .current = KPlayerMaxStamina}
+  );
   registry.emplace<Motion>(m_playerRoot, PlayerMotion::Neutral{});
   AnimationSystem::Update(registry, 0.0);
 
@@ -77,19 +81,26 @@ entt::entity PlayerTestPhase::spawnEnemy(entt::registry& registry) {
   registry.emplace<Motion>(enemy, EnemyMotion::Idle{});
   registry.emplace<Drawable>(
       enemy,
-      RectDrawable{.size = enemyCfg.size, .anchor = DrawAnchor::BottomCenter});
+      RectDrawable{.size = enemyCfg.size, .anchor = DrawAnchor::BottomCenter}
+  );
   registry.emplace<DrawColor>(enemy, DrawColor{.color = KDummyColor});
   registry.emplace<Collider>(
-      enemy, Collider{.segmentStart = Vec3{0.0, 0.0, 0.0},
-                      .segmentEnd = Vec3{0.0, enemyCfg.capsuleHeight, 0.0},
-                      .radius = enemyCfg.capsuleRadius});
-  registry.emplace<Hp>(enemy,
-                       Hp{.max = enemyCfg.maxHp, .current = enemyCfg.maxHp});
+      enemy,
+      Collider{
+          .segmentStart = Vec3{0.0, 0.0, 0.0},
+          .segmentEnd = Vec3{0.0, enemyCfg.capsuleHeight, 0.0},
+          .radius = enemyCfg.capsuleRadius
+      }
+  );
+  registry.emplace<Hp>(
+      enemy, Hp{.max = enemyCfg.maxHp, .current = enemyCfg.maxHp}
+  );
   return enemy;
 }
 
-IPhase::PhaseCommand PlayerTestPhase::update(entt::registry& registry,
-                                             const FrameData& frameData) {
+IPhase::PhaseCommand PlayerTestPhase::update(
+    entt::registry& registry, const FrameData& frameData
+) {
   const double dt = frameData.dt;
 
   HitstopSystem::Update(registry, dt);

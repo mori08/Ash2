@@ -7,8 +7,9 @@
 #include "System/EnemyMotionSystem.hpp"
 #include "System/PlayerMotionSystem.hpp"
 
-void MotionSystem::Update(entt::registry& registry,
-                          const FrameData& frameData) {
+void MotionSystem::Update(
+    entt::registry& registry, const FrameData& frameData
+) {
   // ヒットストップ中も Tick は呼ぶ（dt = 0 で時間だけ凍結する）。
   // 除外すると停止中の入力が Tick に届かず、コンボ予約を取りこぼす
   FrameData frozen = frameData;
@@ -22,7 +23,8 @@ void MotionSystem::Update(entt::registry& registry,
         [&](MotionState auto& state) {
           return Tick(state, registry, entity, fd);
         },
-        motion);
+        motion
+    );
     if (next.has_value()) {
       registry.replace<Motion>(entity, *next);
     }

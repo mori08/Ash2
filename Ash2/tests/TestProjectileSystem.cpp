@@ -16,30 +16,37 @@ namespace {
 /// @param pos 初期ワールド座標
 /// @param vel 速度
 /// @return 生成した弾エンティティ
-entt::entity MakeBullet(entt::registry& registry, const WorldPos& pos,
-                        const Velocity& vel) {
+entt::entity MakeBullet(
+    entt::registry& registry, const WorldPos& pos, const Velocity& vel
+) {
   const auto bullet = registry.create();
   registry.emplace<Projectile>(bullet);
   registry.emplace<WorldPos>(bullet, pos);
   registry.emplace<Velocity>(bullet, vel);
-  registry.emplace<Collider>(bullet, Collider{.segmentStart = {0.0, 0.0, 0.0},
-                                              .segmentEnd = {0.0, 0.0, 0.0},
-                                              .radius = 5.0});
+  registry.emplace<Collider>(
+      bullet,
+      Collider{
+          .segmentStart = {0.0, 0.0, 0.0},
+          .segmentEnd = {0.0, 0.0, 0.0},
+          .radius = 5.0
+      }
+  );
   registry.emplace<Attack>(bullet, Attack{.damage = 10});
   return bullet;
 }
 
 }  // namespace
 
-TEST_CASE(
-    "ProjectileSystem - destroys bullet on impact (hitTargets non-empty)") {
+TEST_CASE("ProjectileSystem - destroys bullet on impact (hitTargets non-empty)"
+) {
   // Attack.hitTargets が空でなくなった（HitSystem
   // がヒットを記録した）場合は破棄される
   entt::registry registry;
 
-  const auto bullet =
-      MakeBullet(registry, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0},
-                 Velocity{.w = 100.0, .h = 0.0, .d = 0.0});
+  const auto bullet = MakeBullet(
+      registry, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0},
+      Velocity{.w = 100.0, .h = 0.0, .d = 0.0}
+  );
 
   // HitSystem が記録したことを模してダミーのターゲットを hitTargets に追加
   const auto dummyTarget = registry.create();
@@ -57,9 +64,10 @@ TEST_CASE("ProjectileSystem - destroys bullet when off-screen") {
 
   // 実行環境の画面サイズに依存しないよう、十分に遠い座標を使う
   constexpr double KFarAway = 1.0e9;
-  const auto bullet =
-      MakeBullet(registry, WorldPos{.w = KFarAway, .h = 0.0, .d = 0.0},
-                 Velocity{.w = 0.0, .h = 0.0, .d = 0.0});
+  const auto bullet = MakeBullet(
+      registry, WorldPos{.w = KFarAway, .h = 0.0, .d = 0.0},
+      Velocity{.w = 0.0, .h = 0.0, .d = 0.0}
+  );
 
   ProjectileSystem::Update(registry);
 

@@ -11,16 +11,20 @@
 
 namespace PlayerMotion {
 
-Dash MakeDash(entt::registry& registry, entt::entity entity,
-              const PlayerConfig& cfg, SpriteAnimation& anim, bool air) {
+Dash MakeDash(
+    entt::registry& registry, entt::entity entity, const PlayerConfig& cfg,
+    SpriteAnimation& anim, bool air
+) {
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
   SetClip(anim, U"dash");
   return Dash{.air = air};
 }
 
-Optional<Motion> Tick(Dash& state, entt::registry& registry,
-                      entt::entity entity, const FrameData& frameData) {
+Optional<Motion> Tick(
+    Dash& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& dash = cfg.dash;
   const auto& timeline = dash.timeline;

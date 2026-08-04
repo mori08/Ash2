@@ -43,8 +43,9 @@ class IPhase {
   /// @brief スタックに積まれた直後に呼ばれる
   virtual void onAfterPush(entt::registry&) {}
 
-  [[nodiscard]] virtual PhaseCommand update(entt::registry& registry,
-                                            const FrameData& frameData) = 0;
+  [[nodiscard]] virtual PhaseCommand update(
+      entt::registry& registry, const FrameData& frameData
+  ) = 0;
 
   /// @brief スタックから取り出される直前に呼ばれる
   virtual void onBeforePop(entt::registry&) {}
@@ -59,13 +60,15 @@ inline IPhase::PhaseCommand IPhase::PhaseCommand::Pop() {
 }
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::Push(
-    std::unique_ptr<IPhase>&& phase) {
+    std::unique_ptr<IPhase>&& phase
+) {
   assert(phase != nullptr);
   return {.type = Type::Push, .nextPhase = std::move(phase)};
 }
 
 inline IPhase::PhaseCommand IPhase::PhaseCommand::Reset(
-    std::unique_ptr<IPhase>&& phase) {
+    std::unique_ptr<IPhase>&& phase
+) {
   assert(phase != nullptr);
   return {.type = Type::Reset, .nextPhase = std::move(phase)};
 }
