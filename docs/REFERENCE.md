@@ -39,17 +39,15 @@
 ## 描画データ型
 
 [`Component/Drawable.hpp`](../Ash2/src/Component/Drawable.hpp) が定義する。
-`Drawable` は `variant<RectDrawable, CircleDrawable, PieDrawable, TextureDrawable>`。
+`Drawable` は `variant<RectDrawable, CircleDrawable, TextureDrawable>`。
 色は形状側ではなく [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) が一括で持つ
 （上記「コンポーネント一覧」参照）。
 
 | 名前 | 役割 |
 |---|---|
-| `RectDrawable` | 矩形描画（サイズ・枠線・`DrawAnchor`） |
-| `CircleDrawable` | 円描画（半径・枠線） |
-| `PieDrawable` | 扇形描画（半径・開始角・角度・枠線）。角度は12時方向から時計回りのラジアン |
+| `RectDrawable` | 矩形描画（サイズ・`DrawAnchor`） |
+| `CircleDrawable` | 円描画（半径） |
 | `TextureDrawable` | テクスチャ描画（`TextureRegion`・描画オフセット・`DrawAnchor`） |
-| `BorderStyle` | 枠線スタイル（色・太さ）。各形状の `border` が `none` なら枠線なし。`DrawColor` の影響は受けず常に不透明で描画される（構築箇所ゼロの未使用コード、整理は #251） |
 | `DrawAnchor` | `WorldPos` を形状のどこに合わせるか（`Center` / `BottomCenter`）。`RectDrawable` と `TextureDrawable` のみが持ち、既定は `Center` |
 
 ---
