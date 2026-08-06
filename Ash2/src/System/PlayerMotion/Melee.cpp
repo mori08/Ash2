@@ -25,17 +25,22 @@ Vec3 MeleeThrustOffset(
 
 /// @brief 斬り上げ軌道（近接2段目）の珠オフセットを返す
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
-// reach / capMidH は隣接する double 引数として渡すと取り違えやすいため
-// （bugprone-easily-swappable-parameters 対策）、両者を保持する MeleeConfig
-// への const 参照で受け取る。
+// reach / capMidH や各種の調整値は隣接する double 引数として渡すと取り違え
+// やすいため（bugprone-easily-swappable-parameters 対策）、それぞれを保持する
+// MeleeConfig / MeleeStageConfig への const 参照で受け取る。
 Vec3 MeleeSlashOffset(
     double progress, bool facingRight, const MeleeConfig& melee,
-    double slashRiseHeight
+    const MeleeStageConfig& stage
 ) {
   const double sign = facingRight ? 1.0 : -1.0;
   const double eased = EaseOutQuad(Clamp(progress, 0.0, 1.0));
   const double horizontal = sign * melee.reach * eased;
-  const double vertical = melee.capMidH + (eased - 0.5) * slashRiseHeight;
+  // 水平と同じ進行度で上下させると軌跡が直線になってしまうため、垂直だけ
+  // 進行を遅らせて「前へ出てから跳ね上がる」弧を描かせる。始点・終点は
+  // 変えないので、slashCurve が 0 なら従来どおりの直線に戻る。
+  const double verticalT = Math::Lerp(eased, eased * eased, stage.slashCurve);
+  const double vertical =
+      melee.capMidH + (verticalT - 0.5) * stage.slashRiseHeight;
   return Vec3{horizontal, vertical, 0.0};
 }
 
@@ -45,10 +50,8 @@ std::function<Vec3(double)> MakeMeleeOffsetFn(
 ) {
   switch (stage.trajectory) {
     case MeleeTrajectory::Slash:
-      return [=, &melee](double progress) {
-        return MeleeSlashOffset(
-            progress, facingRight, melee, stage.slashRiseHeight
-        );
+      return [=, &melee, &stage](double progress) {
+        return MeleeSlashOffset(progress, facingRight, melee, stage);
       };
     case MeleeTrajectory::Thrust:
     default:

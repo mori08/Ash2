@@ -277,8 +277,8 @@
 | 名前 | 役割 |
 |---|---|
 | `MotionTimeline` | 攻撃・ダッシュ系共通の4区間タイムライン（windup / active / 後隙A＝キャンセル不可 / 後隙B＝キャンセル可）。`activeStart`/`activeEnd`/`recoveryAEnd`/`recoveryBEnd` と `isActive`/`isCancelable`/`isFinished`/`activeProgress` を提供する。`DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeStageConfig` が共通で持つ |
-| `MeleeTrajectory` | 近接攻撃の軌道パターン（`Thrust` 突き出し / `Slash` 斬り上げ） |
-| `MeleeStageConfig` | コンボ段ごとの設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`hitstopSec`） |
+| `MeleeTrajectory` | 近接攻撃の軌道パターン（`Thrust` 突き出し / `Slash` 斬り上げ。`Slash` は `slashCurve` で弧の曲がり具合を指定し、0 なら直線になる） |
+| `MeleeStageConfig` | コンボ段ごとの設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`） |
 | `MeleeConfig` | 段共通のパラメータ（`capMidH`/`reach`/`damage`）とコンボ段配列 `stages`（先頭が1段目） |
 | `RangedConfig` | リーチ・半径・ダメージ・弾速・発射高さ・スタミナ消費 |
 | `DashConfig` | 速度・タイムライン・スタミナ消費 |
