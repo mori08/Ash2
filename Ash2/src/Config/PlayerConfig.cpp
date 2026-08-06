@@ -50,6 +50,7 @@ namespace {
   const auto radius = f.get<double>(U"radius");
   const auto trajectoryStr = f.get<String>(U"trajectory");
   const auto slashRiseHeight = f.get<double>(U"slash_rise_height");
+  const auto slashCurve = f.get<double>(U"slash_curve");
   const auto hitstopSec = f.get<double>(U"hitstop_sec");
   // Why not: trajectory の変換前に check() で欠落を確定させる。変換を先に
   // 行うと、欠落時の既定値 String{}（空文字列）が「不明な trajectory」と
@@ -68,6 +69,7 @@ namespace {
       .radius = radius,
       .trajectory = *trajectory,
       .slashRiseHeight = slashRiseHeight,
+      .slashCurve = slashCurve,
       .hitstopSec = hitstopSec,
   };
 }

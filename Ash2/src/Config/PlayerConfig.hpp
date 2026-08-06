@@ -68,6 +68,9 @@ struct MeleeStageConfig {
   /// Slash 軌道時の斬り上げの振り幅（capMidH を中心とした上下の幅）。
   /// Thrust では未使用
   double slashRiseHeight = 0.0;
+  /// Slash 軌道の曲がり具合。0.0 で始点と終点を結ぶ直線、大きいほど
+  /// 前に出てから跳ね上がる弧を描く。Thrust では未使用
+  double slashCurve = 0.0;
   /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
   double hitstopSec = 0.0;
 };

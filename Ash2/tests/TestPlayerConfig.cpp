@@ -24,6 +24,7 @@ constexpr std::string_view KFullToml =
     "radius = 20.0\n"
     "trajectory = \"thrust\"\n"
     "slash_rise_height = 0.0\n"
+    "slash_curve = 0.0\n"
     "hitstop_sec = 0.05\n"
     "[ranged]\n"
     "reach = 200.0\n"
