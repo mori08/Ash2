@@ -24,7 +24,7 @@ inline InputState InputDeviceSelector::update() {
     m_activeDevice = Device::Keyboard;
   }
   // 最後に入力があったデバイスへ切り替える
-  const Vec2 stickAxis = XInputAction::KLeftThumbDeadZone(
+  const Vec2 stickAxis = XInputAction::kLeftThumbDeadZone(
       Vec2{XInput(0).leftThumbX, XInput(0).leftThumbY}
   );
   if (XInput(0).isConnected() &&

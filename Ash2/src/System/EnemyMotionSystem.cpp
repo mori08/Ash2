@@ -14,7 +14,7 @@ namespace EnemyMotion {
 namespace {
 
 /// @brief ひるみ表現の最大縮小率（縦方向）
-constexpr double KMaxShrinkRatio = 0.2;
+constexpr double kMaxShrinkRatio = 0.2;
 
 }  // namespace
 
@@ -41,7 +41,7 @@ Optional<Motion> Tick(
         // duration の中間で最も縮み、両端（開始・終了）で原寸に近づく
         const double progress = state.remaining / cfg.staggerSec;
         const double shrink =
-            (1.0 - Abs(progress * 2.0 - 1.0)) * KMaxShrinkRatio;
+            (1.0 - Abs(progress * 2.0 - 1.0)) * kMaxShrinkRatio;
         rect->size.y = cfg.size.y * (1.0 - shrink);
       }
     }
