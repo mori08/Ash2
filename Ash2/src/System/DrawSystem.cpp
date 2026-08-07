@@ -20,7 +20,7 @@ void DrawSystem::Draw(const entt::registry& registry) {
     const auto* drawColor = registry.try_get<DrawColor>(entity);
     entries.push_back(
         {std::cref(pos), std::cref(drawable),
-         (drawColor != nullptr) ? drawColor->color : KDefaultDrawColor}
+         (drawColor != nullptr) ? drawColor->color : kDefaultDrawColor}
     );
   }
 

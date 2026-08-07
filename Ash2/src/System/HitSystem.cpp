@@ -16,7 +16,7 @@ struct Segment {
 /// @brief 2線分間の最近接距離の二乗を返す
 [[nodiscard]] double SegmentDistSq(Segment segA, Segment segB) {
   // 線分の長さの二乗がこの値以下のとき点とみなす
-  constexpr double KDegenerateThreshold = 1e-10;
+  constexpr double kDegenerateThreshold = 1e-10;
 
   const Vec3 d1 = segA.end - segA.start;
   const Vec3 d2 = segB.end - segB.start;
@@ -28,14 +28,14 @@ struct Segment {
   double s = 0.0;
   double t = 0.0;
 
-  if (a <= KDegenerateThreshold && e <= KDegenerateThreshold) {
+  if (a <= kDegenerateThreshold && e <= kDegenerateThreshold) {
     return r.dot(r);
   }
-  if (a <= KDegenerateThreshold) {
+  if (a <= kDegenerateThreshold) {
     t = Clamp(f / e, 0.0, 1.0);
   } else {
     const double c = d1.dot(r);
-    if (e <= KDegenerateThreshold) {
+    if (e <= kDegenerateThreshold) {
       s = Clamp(-c / a, 0.0, 1.0);
     } else {
       const double b = d1.dot(d2);

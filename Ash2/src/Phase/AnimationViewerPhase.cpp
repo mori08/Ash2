@@ -9,11 +9,11 @@
 #include "System/AnimationSystem.hpp"
 
 namespace {
-constexpr double KBgBrightness = 0.15;
-constexpr int32 KTitleX = 20;
-constexpr int32 KTitleY = 20;
-constexpr int32 KClipInfoY = 50;
-constexpr int32 KHintY = 80;
+constexpr double kBgBrightness = 0.15;
+constexpr int32 kTitleX = 20;
+constexpr int32 kTitleY = 20;
+constexpr int32 kClipInfoY = 50;
+constexpr int32 kHintY = 80;
 }  // namespace
 
 AnimationViewerPhase::AnimationViewerPhase(const Param& param)
@@ -85,16 +85,16 @@ IPhase::PhaseCommand AnimationViewerPhase::update(
 
   AnimationSystem::Update(registry, frameData.dt);
 
-  Scene::SetBackground(ColorF{KBgBrightness});
-  m_font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(KTitleX, KTitleY);
+  Scene::SetBackground(ColorF{kBgBrightness});
+  m_font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(kTitleX, kTitleY);
   if (!m_clips.empty()) {
     m_font(U"Clip [{}/{}]: {}"_fmt(
                m_clipIndex + 1, m_clips.size(), m_clips[m_clipIndex]
            ))
-        .draw(KTitleX, KClipInfoY);
+        .draw(kTitleX, kClipInfoY);
   }
   m_font(U"← → : clip  F : flip  Esc : back")
-      .draw(KTitleX, KHintY, Palette::Gray);
+      .draw(kTitleX, kHintY, Palette::Gray);
 
   return PhaseCommand::None();
 }

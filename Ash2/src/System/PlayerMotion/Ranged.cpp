@@ -19,7 +19,7 @@ namespace PlayerMotion {
 
 namespace {
 
-constexpr ColorF KBulletColor = {0.9, 0.9, 0.3};
+constexpr ColorF kBulletColor = {0.9, 0.9, 0.3};
 
 /// @brief 指定クリップの再生時間（秒）を返す
 /// @return クリップが見つからない場合は 0.0
@@ -56,7 +56,7 @@ void SpawnProjectile(
   registry.emplace<Drawable>(
       bullet, CircleDrawable{.radius = cfg.ranged.radius}
   );
-  registry.emplace<DrawColor>(bullet, DrawColor{.color = KBulletColor});
+  registry.emplace<DrawColor>(bullet, DrawColor{.color = kBulletColor});
   registry.emplace<Projectile>(bullet);
 }
 

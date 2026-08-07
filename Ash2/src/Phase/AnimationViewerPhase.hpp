@@ -26,7 +26,7 @@ class AnimationViewerPhase : public IPhase {
   void onBeforePop(entt::registry& registry) override;
 
  private:
-  static constexpr int32 KFontSize = 20;
+  static constexpr int32 kFontSize = 20;
 
   /// AnimationDataRegistry のキー
   String m_dataKey;
@@ -35,5 +35,5 @@ class AnimationViewerPhase : public IPhase {
   /// クリップ名の配列（ソート済み）
   Array<String> m_clips;
   size_t m_clipIndex = 0;
-  Font m_font{KFontSize};
+  Font m_font{kFontSize};
 };

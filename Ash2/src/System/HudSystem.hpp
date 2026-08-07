@@ -13,30 +13,30 @@ class HudSystem {
   /// @brief Player + Hp + Stamina を持つエンティティの HP /
   /// スタミナゲージを画面左上に描画する
   static void Draw(const entt::registry& registry) {
-    constexpr double KBarX = 16.0;
-    constexpr double KHpBarY = 16.0;
-    constexpr double KStaminaBarY = 40.0;
-    constexpr double KBarWidth = 200.0;
-    constexpr double KBarHeight = 18.0;
-    constexpr ColorF KBgColor{0.2, 0.2, 0.2, 0.7};
-    constexpr ColorF KHpColor{0.2, 0.8, 0.2};
-    constexpr ColorF KStaminaColor{0.9, 0.8, 0.1};
+    constexpr double kBarX = 16.0;
+    constexpr double kHpBarY = 16.0;
+    constexpr double kStaminaBarY = 40.0;
+    constexpr double kBarWidth = 200.0;
+    constexpr double kBarHeight = 18.0;
+    constexpr ColorF kBgColor{0.2, 0.2, 0.2, 0.7};
+    constexpr ColorF kHpColor{0.2, 0.8, 0.2};
+    constexpr ColorF kStaminaColor{0.9, 0.8, 0.1};
 
     auto view = registry.view<const Player, const Hp, const Stamina>();
     for (const auto& [entity, hp, stamina] : view.each()) {
-      RectF{KBarX, KHpBarY, KBarWidth, KBarHeight}.draw(KBgColor);
+      RectF{kBarX, kHpBarY, kBarWidth, kBarHeight}.draw(kBgColor);
       if (hp.max > 0) {
         const double hpRatio =
             Clamp(static_cast<double>(hp.current) / hp.max, 0.0, 1.0);
-        RectF{KBarX, KHpBarY, KBarWidth * hpRatio, KBarHeight}.draw(KHpColor);
+        RectF{kBarX, kHpBarY, kBarWidth * hpRatio, kBarHeight}.draw(kHpColor);
       }
 
-      RectF{KBarX, KStaminaBarY, KBarWidth, KBarHeight}.draw(KBgColor);
+      RectF{kBarX, kStaminaBarY, kBarWidth, kBarHeight}.draw(kBgColor);
       if (stamina.max > 0) {
         const double staminaRatio =
             Clamp(static_cast<double>(stamina.current) / stamina.max, 0.0, 1.0);
-        RectF{KBarX, KStaminaBarY, KBarWidth * staminaRatio, KBarHeight}.draw(
-            KStaminaColor
+        RectF{kBarX, kStaminaBarY, kBarWidth * staminaRatio, kBarHeight}.draw(
+            kStaminaColor
         );
       }
 

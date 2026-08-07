@@ -16,7 +16,7 @@ namespace PlayerMotion {
 
 namespace {
 
-constexpr ColorF KMeleeOrbColor = {1.0, 0.9, 0.5};
+constexpr ColorF kMeleeOrbColor = {1.0, 0.9, 0.5};
 
 /// @brief 攻撃判定エンティティ（光の珠）を生成する
 ///
@@ -50,7 +50,7 @@ entt::entity SpawnAttackHitbox(
       }
   );
   registry.emplace<Drawable>(hitbox, CircleDrawable{.radius = spec.radius});
-  registry.emplace<DrawColor>(hitbox, DrawColor{.color = KMeleeOrbColor});
+  registry.emplace<DrawColor>(hitbox, DrawColor{.color = kMeleeOrbColor});
   return hitbox;
 }
 

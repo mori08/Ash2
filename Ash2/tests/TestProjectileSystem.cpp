@@ -63,9 +63,9 @@ TEST_CASE("ProjectileSystem - destroys bullet when off-screen") {
   entt::registry registry;
 
   // 実行環境の画面サイズに依存しないよう、十分に遠い座標を使う
-  constexpr double KFarAway = 1.0e9;
+  constexpr double kFarAway = 1.0e9;
   const auto bullet = MakeBullet(
-      registry, WorldPos{.w = KFarAway, .h = 0.0, .d = 0.0},
+      registry, WorldPos{.w = kFarAway, .h = 0.0, .d = 0.0},
       Velocity{.w = 0.0, .h = 0.0, .d = 0.0}
   );
 

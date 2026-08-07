@@ -8,7 +8,7 @@
 
 namespace {
 // 99% 以上を満タンとみなして丸める閾値（浮動小数点誤差が残り続けるのを防ぐ）
-constexpr double KFullThreshold = 0.99;
+constexpr double kFullThreshold = 0.99;
 }  // namespace
 
 void StaminaSystem::Update(entt::registry& registry, double dt) {
@@ -42,7 +42,7 @@ void StaminaSystem::Update(entt::registry& registry, double dt) {
     }
 
     // 満タンに近い残量を丸めて微小な誤差が残り続けるのを防ぐ
-    if (stamina.current >= static_cast<int32>(stamina.max * KFullThreshold)) {
+    if (stamina.current >= static_cast<int32>(stamina.max * kFullThreshold)) {
       stamina.current = stamina.max;
     }
   }
