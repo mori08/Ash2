@@ -35,6 +35,7 @@ void Main() {
 
   try {
     RegisterAssets();
+    Scene::SetTextureFilter(TextureFilter::Nearest);
 
     entt::registry registry;
     InitializeRegistry(registry);

@@ -6,6 +6,8 @@
 #include "Util/Overloaded.hpp"
 
 void DrawSystem::Draw(const entt::registry& registry) {
+  // HUD・フォント描画へ波及させないため、この関数のスコープに閉じる
+  const ScopedRenderStates2D sampler{SamplerState::ClampNearest};
   const Vec2 cameraOffset = Scene::Center();
 
   struct DrawEntry {
@@ -54,7 +56,8 @@ void DrawSystem::Draw(const entt::registry& registry) {
               circle.draw(color);
             },
             [&screenPos, &color](const TextureDrawable& shape) {
-              const Vec2 anchorPos = screenPos + shape.drawOffset;
+              // 図形は AA が効くので丸めない。テクスチャのみ整数化する
+              const Vec2 anchorPos = Math::Round(screenPos + shape.drawOffset);
               switch (shape.anchor) {
                 case DrawAnchor::BottomCenter:
                   shape.region.draw(Arg::bottomCenter(anchorPos), color);
