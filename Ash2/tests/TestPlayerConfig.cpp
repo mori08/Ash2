@@ -16,7 +16,7 @@ constexpr std::string_view kFullToml =
     "cap_mid_h = 30.0\n"
     "reach = 60.0\n"
     "damage = 20\n"
-    "[[melee.stage]]\n"
+    "[[melee.chain]]\n"
     "windup_sec = 0.1\n"
     "active_sec = 0.1\n"
     "recovery_a_sec = 0.1\n"
@@ -26,6 +26,18 @@ constexpr std::string_view kFullToml =
     "slash_rise_height = 0.0\n"
     "slash_curve = 0.0\n"
     "hitstop_sec = 0.05\n"
+    "[melee.finisher]\n"
+    "windup_sec = 0.2\n"
+    "active_sec = 0.2\n"
+    "recovery_a_sec = 0.2\n"
+    "recovery_b_sec = 0.0\n"
+    "radius = 25.0\n"
+    "trajectory = \"thrust\"\n"
+    "slash_rise_height = 0.0\n"
+    "slash_curve = 0.0\n"
+    "hitstop_sec = 0.1\n"
+    "light_count = 2\n"
+    "light_gap = 36.0\n"
     "[ranged]\n"
     "reach = 200.0\n"
     "radius = 15.0\n"
@@ -78,9 +90,13 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg.melee.capMidH == 30.0);
   REQUIRE(cfg.melee.reach == 60.0);
   REQUIRE(cfg.melee.damage == 20);
-  REQUIRE(cfg.melee.stages.size() == 1);
-  REQUIRE(cfg.melee.stages[0].trajectory == MeleeTrajectory::Thrust);
-  REQUIRE(cfg.melee.stages[0].radius == 20.0);
+  REQUIRE(cfg.melee.chain.size() == 1);
+  REQUIRE(cfg.melee.chain[0].trajectory == MeleeTrajectory::Thrust);
+  REQUIRE(cfg.melee.chain[0].radius == 20.0);
+  REQUIRE(cfg.melee.finisher.swing.trajectory == MeleeTrajectory::Thrust);
+  REQUIRE(cfg.melee.finisher.swing.radius == 25.0);
+  REQUIRE(cfg.melee.finisher.lightCount == 2);
+  REQUIRE(cfg.melee.finisher.lightGap == 36.0);
   REQUIRE(cfg.ranged.damage == 15);
   REQUIRE(cfg.dash.speed == 600.0);
   REQUIRE(cfg.dashAttack.damage == 25);
@@ -90,7 +106,7 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg.attackEffect.fadeSec == 0.30);
 }
 
-TEST_CASE("PlayerConfig::FromToml - missing melee.stage throws Error") {
+TEST_CASE("PlayerConfig::FromToml - missing melee.chain throws Error") {
   constexpr std::string_view kToml =
       "speed = 150.0\n"
       "jump_speed = 400.0\n"
@@ -109,7 +125,7 @@ TEST_CASE("PlayerConfig::FromToml - missing speed throws Error") {
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - missing melee.stage trajectory throws Error "
+    "PlayerConfig::FromToml - missing melee.chain trajectory throws Error "
     "(not \"unknown value\")"
 ) {
   std::string toml{kFullToml};
@@ -128,7 +144,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - unknown melee.stage trajectory value throws "
+    "PlayerConfig::FromToml - unknown melee.chain trajectory value throws "
     "Error"
 ) {
   std::string toml{kFullToml};
@@ -137,6 +153,20 @@ TEST_CASE(
   toml.replace(
       pos, std::string_view{"trajectory = \"thrust\"\n"}.size(),
       "trajectory = \"spin\"\n"
+  );
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
+}
+
+TEST_CASE(
+    "PlayerConfig::FromToml - melee.finisher light_count below 2 throws "
+    "Error"
+) {
+  std::string toml{kFullToml};
+  const auto pos = toml.find("light_count = 2\n");
+  REQUIRE(pos != std::string::npos);
+  toml.replace(
+      pos, std::string_view{"light_count = 2\n"}.size(), "light_count = 1\n"
   );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);

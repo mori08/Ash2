@@ -9,16 +9,28 @@ namespace PlayerMotion {
 /// @brief 通常状態（待機・移動・ジャンプ可能）
 struct Neutral {};
 
-/// @brief 近接攻撃中（コンボ段は stage で参照する）
-struct Melee {
-  /// コンボ段のインデックス（0始まり、cfg.melee.stages を参照する）
+/// @brief 近接コンボの継続段（次段を持つ段）
+struct MeleeChain {
+  /// コンボ段のインデックス（0始まり、cfg.melee.chain を参照する）
   size_t stage = 0;
   /// モーション開始からの経過時間（秒）
   double elapsed = 0.0;
-  /// 攻撃判定の子エンティティ
+  /// 攻撃判定の子エンティティ（不可視）
   entt::entity hitboxEntity = entt::null;
-  /// 後隙中の次段への遷移予約（windup/active中の入力で立つ、最終段では不使用）
+  /// 見た目だけを担う光の子エンティティ
+  Array<entt::entity> lightEntities;
+  /// 後隙中の次段への遷移予約（windup/active中の入力で立つ）
   bool comboQueued = false;
+};
+
+/// @brief 近接コンボの締め段（コンボ継続・キャンセルを受け付けない）
+struct MeleeFinisher {
+  /// モーション開始からの経過時間（秒）
+  double elapsed = 0.0;
+  /// 攻撃判定の子エンティティ（不可視）
+  entt::entity hitboxEntity = entt::null;
+  /// 見た目だけを担う光の子エンティティ
+  Array<entt::entity> lightEntities;
 };
 
 /// @brief 遠距離攻撃中

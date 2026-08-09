@@ -7,7 +7,7 @@ cap_mid_h = 24.0
 reach     = 60.0
 damage    = 20
 
-[[melee.stage]]
+[[melee.chain]]
 trajectory        = "thrust"
 windup_sec        = 0.05
 active_sec        = 0.10
@@ -18,7 +18,7 @@ slash_rise_height = 0.0
 slash_curve       = 0.0
 hitstop_sec       = 0.05
 
-[[melee.stage]]
+[[melee.chain]]
 trajectory        = "slash"
 windup_sec        = 0.05
 active_sec        = 0.15
@@ -29,7 +29,7 @@ slash_rise_height = 48.0
 slash_curve       = 1.0
 hitstop_sec       = 0.05
 
-[[melee.stage]]
+[melee.finisher]
 trajectory        = "thrust"
 windup_sec        = 0.10
 active_sec        = 0.20
@@ -39,6 +39,8 @@ radius            = 32.0
 slash_rise_height = 0.0
 slash_curve       = 0.0
 hitstop_sec       = 0.13
+light_count       = 2
+light_gap         = 36.0
 
 [ranged]
 reach        = 200.0

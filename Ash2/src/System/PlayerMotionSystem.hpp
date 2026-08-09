@@ -8,19 +8,27 @@ struct FrameData;
 
 namespace PlayerMotion {
 
-/// @brief Neutral 状態の更新（移動・ジャンプ・向き・クリップ決定、Melee/Ranged/
-/// Dash への入場判定）
+/// @brief Neutral 状態の更新（移動・ジャンプ・向き・クリップ決定、
+/// MeleeChain/Ranged/Dash への入場判定）
 /// @return 遷移先がある場合はその Motion、なければ none
 [[nodiscard]] Optional<Motion> Tick(
     Neutral& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 );
 
-/// @brief Melee 状態の更新（横移動停止・タイマー減算・ヒットボックス管理・
-/// コンボ予約判定。段の設定は cfg.melee.stages[state.stage] を参照する）
+/// @brief MeleeChain 状態の更新（横移動停止・タイマー減算・判定/光の管理・
+/// コンボ予約判定。段の設定は cfg.melee.chain[state.stage] を参照する）
 /// @return 遷移先がある場合はその Motion、なければ none
 [[nodiscard]] Optional<Motion> Tick(
-    Melee& state, entt::registry& registry, entt::entity entity,
+    MeleeChain& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief MeleeFinisher 状態の更新（横移動停止・タイマー減算・判定/光の管理。
+/// コンボ継続・キャンセルは受け付けない）
+/// @return 遷移先がある場合はその Motion、なければ none
+[[nodiscard]] Optional<Motion> Tick(
+    MeleeFinisher& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 );
 

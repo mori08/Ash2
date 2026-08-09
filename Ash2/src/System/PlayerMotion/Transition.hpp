@@ -10,12 +10,12 @@
 
 namespace PlayerMotion {
 
-/// @brief 指定段の Melee へ移行する（攻撃クリップを先頭から再生）
+/// @brief 指定段の MeleeChain へ移行する（攻撃クリップを先頭から再生）
 /// @param stage 移行先のコンボ段インデックス
-/// @param hitboxEntity 引き継ぐ攻撃判定エンティティ（通常は entt::null）
-Melee MakeMelee(
-    SpriteAnimation& anim, size_t stage, entt::entity hitboxEntity = entt::null
-);
+MeleeChain MakeMeleeChain(SpriteAnimation& anim, size_t stage);
+
+/// @brief MeleeFinisher へ移行する（締め技クリップを先頭から再生）
+MeleeFinisher MakeMeleeFinisher(SpriteAnimation& anim);
 
 /// @brief Ranged へ移行する（スタミナ消費、遠距離攻撃クリップの設定と timer
 /// の算出）
