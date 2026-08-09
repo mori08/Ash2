@@ -57,9 +57,9 @@ enum class MeleeTrajectory : uint8 {
   Slash,
 };
 
-/// @brief 近接コンボの段ごとの設定値
-struct MeleeStageConfig {
-  /// この段のタイムライン
+/// @brief 近接1振り分の共通設定
+struct MeleeSwingConfig {
+  /// この振りのタイムライン
   MotionTimeline timeline;
   /// 攻撃カプセルの半径
   double radius = 0.0;
@@ -75,6 +75,16 @@ struct MeleeStageConfig {
   double hitstopSec = 0.0;
 };
 
+/// @brief 近接コンボの締め段の設定値
+struct MeleeFinisherConfig {
+  /// 共通の振り設定
+  MeleeSwingConfig swing;
+  /// 見た目を担う光の数（2以上、parse 時に検証する）
+  int32 lightCount = 2;
+  /// 光どうしの間隔（h 方向）。攻撃開始時が最大で終了時に 0 へ閉じる
+  double lightGap = 0.0;
+};
+
 /// @brief 近距離攻撃の設定値
 struct MeleeConfig {
   /// 攻撃カプセルの高さ中点（WorldPos.h 方向オフセット）
@@ -83,8 +93,10 @@ struct MeleeConfig {
   double reach;
   /// 与えるダメージ量（全段共通）
   int32 damage;
-  /// コンボ段ごとの設定（先頭が1段目）
-  Array<MeleeStageConfig> stages;
+  /// 継続段の設定（1つ以上、先頭が1段目）
+  Array<MeleeSwingConfig> chain;
+  /// 締め段の設定
+  MeleeFinisherConfig finisher;
 };
 
 /// @brief ダッシュの設定値

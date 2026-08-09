@@ -34,19 +34,17 @@ namespace {
   };
 }
 
-/// @brief TOML から近接コンボ1段分の MeleeStageConfig を生成する
-/// @param index 段のインデックス（欠落キーのメッセージに `melee.stage[index]`
-/// として前置し、 実運用の複数段のうちどの段が不正かを示す）
-[[nodiscard]] std::expected<MeleeStageConfig, String> ParseMeleeStage(
-    const TOMLValue& stageToml, size_t index
+/// @brief TOML から近接1振り分の MeleeSwingConfig を生成する
+/// @param section 欠落キーのメッセージに前置するテーブル名
+[[nodiscard]] std::expected<MeleeSwingConfig, String> ParseMeleeSwing(
+    const TOMLValue& swingToml, StringView section
 ) {
-  const String prefix = U"melee.stage[" + Format(index) + U"]";
-  auto timeline = ParseTimeline(stageToml, prefix);
+  auto timeline = ParseTimeline(swingToml, section);
   if (!timeline) {
     return std::unexpected{std::move(timeline).error()};
   }
 
-  TomlFields f{stageToml, U"PlayerConfig::ParseMeleeStage", prefix};
+  TomlFields f{swingToml, U"PlayerConfig::ParseMeleeSwing", String{section}};
   const auto radius = f.get<double>(U"radius");
   const auto trajectoryStr = f.get<String>(U"trajectory");
   const auto slashRiseHeight = f.get<double>(U"slash_rise_height");
@@ -64,7 +62,7 @@ namespace {
     return std::unexpected{std::move(trajectory).error()};
   }
 
-  return MeleeStageConfig{
+  return MeleeSwingConfig{
       .timeline = *std::move(timeline),
       .radius = radius,
       .trajectory = *trajectory,
@@ -74,29 +72,68 @@ namespace {
   };
 }
 
+/// @brief TOML から締め段の MeleeFinisherConfig を生成する
+[[nodiscard]] std::expected<MeleeFinisherConfig, String> ParseMeleeFinisher(
+    const TOMLValue& finisherToml
+) {
+  auto swing = ParseMeleeSwing(finisherToml, U"melee.finisher");
+  if (!swing) {
+    return std::unexpected{std::move(swing).error()};
+  }
+
+  TomlFields f{
+      finisherToml, U"PlayerConfig::ParseMeleeFinisher", U"melee.finisher"
+  };
+  auto finisher = f.wrap(MeleeFinisherConfig{
+      .swing = *std::move(swing),
+      .lightCount = f.get<int32>(U"light_count"),
+      .lightGap = f.get<double>(U"light_gap"),
+  });
+  if (!finisher) {
+    return std::unexpected{std::move(finisher).error()};
+  }
+
+  // parse 時に不変条件（光は2つ以上）を確定させ、MeleeLightSpread
+  // 側では assert のみで済むようにする
+  if (finisher->lightCount < 2) {
+    return std::unexpected{
+        U"PlayerConfig::ParseMeleeFinisher: melee.finisher.light_count は "
+        U"2以上でなければなりません"
+    };
+  }
+
+  return finisher;
+}
+
 /// @brief TOML から近接攻撃の設定値を生成する
 [[nodiscard]] std::expected<MeleeConfig, String> ParseMelee(const TOMLValue& m
 ) {
-  Array<MeleeStageConfig> stages;
-  // Why not: m[U"stage"] がテーブル配列として存在しない場合に
+  Array<MeleeSwingConfig> chain;
+  // Why not: m[U"chain"] がテーブル配列として存在しない場合に
   // tableArrayView() を呼ぶと不正アクセスになるため、
   // 事前に isTableArray() で存在確認する。
-  if (const auto& stageValue = m[U"stage"]; stageValue.isTableArray()) {
+  if (const auto& chainValue = m[U"chain"]; chainValue.isTableArray()) {
     size_t index = 0;
-    for (const auto& stageToml : stageValue.tableArrayView()) {
-      auto stage = ParseMeleeStage(stageToml, index);
-      if (!stage) {
-        return std::unexpected{std::move(stage).error()};
+    for (const auto& chainToml : chainValue.tableArrayView()) {
+      auto swing =
+          ParseMeleeSwing(chainToml, U"melee.chain[" + Format(index) + U"]");
+      if (!swing) {
+        return std::unexpected{std::move(swing).error()};
       }
-      stages.push_back(*std::move(stage));
+      chain.push_back(*std::move(swing));
       ++index;
     }
   }
-  // stages が空だと Tick(Melee&, ...) の stages[state.stage] アクセスが
+  // chain が空だと Tick(MeleeChain&, ...) の chain[state.stage] アクセスが
   // 不正になるため許容しない
-  if (stages.isEmpty()) {
-    return std::unexpected{U"PlayerConfig::ParseMelee: melee.stage がありません"
+  if (chain.isEmpty()) {
+    return std::unexpected{U"PlayerConfig::ParseMelee: melee.chain がありません"
     };
+  }
+
+  auto finisher = ParseMeleeFinisher(m[U"finisher"]);
+  if (!finisher) {
+    return std::unexpected{std::move(finisher).error()};
   }
 
   TomlFields f{m, U"PlayerConfig::ParseMelee", U"melee"};
@@ -104,7 +141,8 @@ namespace {
       .capMidH = f.get<double>(U"cap_mid_h"),
       .reach = f.get<double>(U"reach"),
       .damage = f.get<int32>(U"damage"),
-      .stages = std::move(stages),
+      .chain = std::move(chain),
+      .finisher = *std::move(finisher),
   });
 }
 

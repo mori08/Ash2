@@ -107,7 +107,7 @@ Debug ビルドでは `Console.open()` で起動し、環境変数 `ASH2_RUN_TES
 プレイヤーと敵の行動状態は `Motion`（`std::variant`）1つのコンポーネントで表す。
 
 状態は排他的（同時に2つは成立しない）で、種類は有限かつコンパイル時に確定している。
-variant なら状態ごとに必要なデータ（`Melee::stage`、`Dash::lastDashDir` 等）をそのまま持てて、
+variant なら状態ごとに必要なデータ（`MeleeChain::stage`、`Dash::lastDashDir` 等）をそのまま持てて、
 動的確保も仮想関数も要らない。プレイヤーと敵で variant を共有しているため、ディスパッチを
 `MotionSystem` 1つに集約できる。
 

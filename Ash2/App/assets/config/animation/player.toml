@@ -38,7 +38,7 @@ row = 6
 count = 2
 speed = 5.0
 
-[melee_3]
+[melee_finish]
 row = 7
 count = 2
 speed = 4.0

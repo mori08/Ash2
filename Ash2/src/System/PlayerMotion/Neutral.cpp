@@ -29,14 +29,15 @@ Optional<Motion> Tick(
     anim.facingRight = false;
   }
 
-  // Melee/Ranged への入場（接地中のみ）
+  // MeleeChain/Ranged への入場（接地中のみ）
   if (pos.isOnGround()) {
     if (input.attackDown) {
       // 直前で設定した横方向速度を打ち消す（持ち越すと1フレーム分滑る）
       vel.w = 0.0;
       vel.d = 0.0;
-      // ヒットボックス（光の珠）は攻撃フレーム開始時に Melee::Tick が生成する
-      return MakeMelee(anim, 0);
+      // ヒットボックス・光は攻撃フレーム開始時に Tick(MeleeChain&, ...)
+      // が生成する
+      return MakeMeleeChain(anim, 0);
     }
     if (input.rangedAttackDown &&
         registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost) {

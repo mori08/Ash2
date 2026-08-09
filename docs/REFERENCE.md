@@ -66,7 +66,7 @@
 
 ## モーション状態型
 
-`Motion` は `std::variant<PlayerMotion::Neutral, Melee, Ranged, Dash, DashAttack, AirAttack, Landing, EnemyMotion::Idle, Stagger, Repel, Knockback, Defeated>`。
+`Motion` は `std::variant<PlayerMotion::Neutral, MeleeChain, MeleeFinisher, Ranged, Dash, DashAttack, AirAttack, Landing, EnemyMotion::Idle, Stagger, Repel, Knockback, Defeated>`。
 
 遷移を `Tick()` の戻り値でのみ表現する理由は [ARCHITECTURE.md](ARCHITECTURE.md) の
 「Motion — variant による排他的な行動状態」を参照。
@@ -84,8 +84,9 @@
 
 | 状態 | 主な遷移先 | 実装 |
 |---|---|---|
-| `Neutral` | 接地中の入力で `Melee`/`Ranged`/`Dash`、空中の入力で `AirAttack`/`Ranged`/`Dash` | [`Neutral.cpp`](../Ash2/src/System/PlayerMotion/Neutral.cpp) |
-| `Melee` | 後隙Bの攻撃入力・予約で次段の `Melee`、後隙Bのダッシュ入力で `Dash`、満了で `Neutral` | [`Melee.cpp`](../Ash2/src/System/PlayerMotion/Melee.cpp) |
+| `Neutral` | 接地中の入力で `MeleeChain`/`Ranged`/`Dash`、空中の入力で `AirAttack`/`Ranged`/`Dash` | [`Neutral.cpp`](../Ash2/src/System/PlayerMotion/Neutral.cpp) |
+| `MeleeChain` | 後隙Bの攻撃入力・予約で次段の `MeleeChain`（残っていれば）または `MeleeFinisher`、後隙Bのダッシュ入力で `Dash`、満了で `Neutral` | [`Melee.cpp`](../Ash2/src/System/PlayerMotion/Melee.cpp) |
+| `MeleeFinisher` | コンボ継続・キャンセルは受け付けない。満了で `Neutral` | [`Melee.cpp`](../Ash2/src/System/PlayerMotion/Melee.cpp) |
 | `Ranged` | 満了で `Neutral`（空中発動時も着地処理を挟まず地上と同一） | [`Ranged.cpp`](../Ash2/src/System/PlayerMotion/Ranged.cpp) |
 | `Dash` | 後隙Bの予約で `DashAttack`（`air` を引き継ぐ）／再ダッシュの `Dash`、満了で `Neutral`、接地で `Landing`（`air=true` のみ） | [`Dash.cpp`](../Ash2/src/System/PlayerMotion/Dash.cpp) |
 | `DashAttack` | 満了で `Neutral`、接地で `Landing`（`air=true` のみ） | [`DashAttack.cpp`](../Ash2/src/System/PlayerMotion/DashAttack.cpp) |
@@ -110,7 +111,7 @@
 - `air=true` の `Dash`/`DashAttack` と `AirAttack` は、後隙中も含め毎フレーム接地を検出して
   `Landing` へ強制遷移する（タイマー満了より先に評価する）
 - `Dash` は構え・ダッシュ中のみ `Invincible` を毎フレーム付与し、後隙入りで除去する
-- `Melee` の後隙A/Bの配分は段ごとに異なる（次段を持つ段はキャンセル可、締め技はキャンセル不可）
+- 近接の後隙A/Bの配分は段ごとに異なる（`MeleeChain` はキャンセル可、`MeleeFinisher` はキャンセル不可）
 - 敵の状態遷移は `Tick()` の戻り値ではなく `HitReactionSystem` が直接行う
   （[ARCHITECTURE.md](ARCHITECTURE.md) の「例外：外部要因による強制遷移」）
 
@@ -147,9 +148,9 @@
 | `Attack.reaction` | 割り当て元 | 遷移先 |
 |---|---|---|
 | `None`（既定） | `Ranged` の弾 | 遷移しない（無反応） |
-| `Stagger` | `Melee`（次段を持つ段） | `EnemyMotion::Stagger` |
+| `Stagger` | `MeleeChain` | `EnemyMotion::Stagger` |
 | `Repel` | `DashAttack` / `AirAttack` | `EnemyMotion::Repel` |
-| `Blow` | `Melee`（最終段） | `EnemyMotion::Knockback` |
+| `Blow` | `MeleeFinisher` | `EnemyMotion::Knockback` |
 
 `Hp` 枯渇時は `reaction` によらず `Collider`/`Hp` を除去して `EnemyMotion::Defeated` へ遷移する。
 `Repel`/`Knockback` の `Velocity` は攻撃側本体との `WorldPos.w` 比較で向きを決める。
@@ -186,12 +187,15 @@
 
 | 名前 | 役割 | 定義 |
 |---|---|---|
-| `HitboxSpec` | 攻撃判定エンティティの生成仕様（半径・ダメージ・リアクション・ヒットストップ時間・フェード時間）をまとめた構造体 | `Helper.hpp` |
+| `HitboxSpec` | 攻撃判定エンティティの生成仕様（半径・ダメージ・リアクション・ヒットストップ時間・フェード時間・描画有無 `drawOrb`）をまとめた構造体。近接だけ `drawOrb = false` を渡し、見た目を光エンティティ側に分離する | `Helper.hpp` |
+| `LightSpec` | 見た目だけを担う光エンティティ群の生成仕様（数・半径・フェード時間） | `Helper.hpp` |
 | `SetClip` | クリップが変化していれば差し替え、再生位置をリセットする | `Helper.hpp`/`.cpp` |
 | `StopHorizontalMovement` | 横方向（w・d）の速度を 0 にする | `Helper.hpp`/`.cpp` |
-| `ReleaseAttackHitbox` | ヒットボックスを `Hierarchy::Detach` → `Attack` 除去 → `FadeOut` 付与の順で解放する。`fadeSec` が 0 以下なら即座に破棄する | `Helper.hpp`/`.cpp` |
-| `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティ（光の珠）を生成・`LocalOffset` 更新し、後隙入りで `ReleaseAttackHitbox` を呼ぶ。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
-| `MakeMelee` | 指定段の `Melee` を生成（`melee_{stage+1}` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
+| `ReleaseAttackHitbox` | ヒットボックス（判定・光いずれも）を `Hierarchy::Detach` → `Attack` 除去 → `FadeOut` 付与の順で解放する。`fadeSec` が 0 以下なら即座に破棄する。光は元々 `Attack` を持たないため切り離しとフェード付与だけが働く | `Helper.hpp`/`.cpp` |
+| `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティを生成・`LocalOffset` 更新し、後隙入りで `ReleaseAttackHitbox` を呼ぶ。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
+| `UpdateAttackLights` | active 区間に応じて光エンティティ群を生成・`LocalOffset` 更新し、後隙入りで解放する。オフセットは `offsetFn(progress, index)` で決まる | `Helper.hpp`/`.cpp` |
+| `MakeMeleeChain` | 指定段の `MeleeChain` を生成（`melee_{stage+1}` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
+| `MakeMeleeFinisher` | `MeleeFinisher` を生成（`melee_finish` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
 | `MakeRanged` | `Ranged` を生成（スタミナ消費、`timer` はクリップ再生時間から算出） | `Transition.hpp` / `Ranged.cpp` |
 | `MakeDash` | `Dash` を生成（スタミナ消費、`air` フラグ設定） | `Transition.hpp` / `Dash.cpp` |
 | `MakeDashAttack` | `DashAttack` を生成（`air`・`dashDir` を引き継ぐ） | `Transition.hpp` / `DashAttack.cpp` |
@@ -276,10 +280,11 @@
 
 | 名前 | 役割 |
 |---|---|
-| `MotionTimeline` | 攻撃・ダッシュ系共通の4区間タイムライン（windup / active / 後隙A＝キャンセル不可 / 後隙B＝キャンセル可）。`activeStart`/`activeEnd`/`recoveryAEnd`/`recoveryBEnd` と `isActive`/`isCancelable`/`isFinished`/`activeProgress` を提供する。`DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeStageConfig` が共通で持つ |
+| `MotionTimeline` | 攻撃・ダッシュ系共通の4区間タイムライン（windup / active / 後隙A＝キャンセル不可 / 後隙B＝キャンセル可）。`activeStart`/`activeEnd`/`recoveryAEnd`/`recoveryBEnd` と `isActive`/`isCancelable`/`isFinished`/`activeProgress` を提供する。`DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeSwingConfig` が共通で持つ |
 | `MeleeTrajectory` | 近接攻撃の軌道パターン（`Thrust` 突き出し / `Slash` 斬り上げ。`Slash` は `slashCurve` で弧の曲がり具合を指定し、0 なら直線になる） |
-| `MeleeStageConfig` | コンボ段ごとの設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`） |
-| `MeleeConfig` | 段共通のパラメータ（`capMidH`/`reach`/`damage`）とコンボ段配列 `stages`（先頭が1段目） |
+| `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`）。継続段・締め段の両方が持つ |
+| `MeleeFinisherConfig` | 締め段の設定。`MeleeSwingConfig swing` を集約し、見た目の光の数 `lightCount`（2以上、parse 時に検証）と間隔 `lightGap` を足す |
+| `MeleeConfig` | 段共通のパラメータ（`capMidH`/`reach`/`damage`）と継続段配列 `chain`（先頭が1段目）・締め段 `finisher` |
 | `RangedConfig` | リーチ・半径・ダメージ・弾速・発射高さ・スタミナ消費 |
 | `DashConfig` | 速度・タイムライン・スタミナ消費 |
 | `DashAttackConfig` | タイムライン・突進速度・軌道半径（w-d 平面）・カプセル半径・ダメージ・ヒットストップ時間 |
@@ -288,12 +293,12 @@
 | `LandingConfig` | 着地硬直時間 `recoverySec` |
 | `AttackEffectConfig` | ヒットボックス解放後のフェードアウト時間 `fadeSec`（全攻撃共通の1値。`HitboxSpec::fadeSec` として渡される） |
 
-- `hitstopSec`（`MeleeStageConfig`/`DashAttackConfig`/`AirAttackConfig` が個別に持つ）はヒット成立時に
+- `hitstopSec`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` が個別に持つ）はヒット成立時に
   `Attack.hitstopSec` へ渡す停止時間で、段・アクションごとに調整できる（`RangedConfig` は持たない。
   弾は `reaction` が `None` で無反応の仕様のため）
 - 近接攻撃はスタミナを消費しない（`MeleeConfig` は `staminaCost` を持たない）
-- `[[melee.stage]]` が0件（欠落含む）の場合、`FromToml` は `Error` を投げる
-  （`Tick(Melee&, ...)` の `stages[state.stage]` アクセスを不正にしないため）
+- `[[melee.chain]]` が0件（欠落含む）の場合、`FromToml` は `Error` を投げる
+  （`Tick(MeleeChain&, ...)` の `chain[state.stage]` アクセスを不正にしないため）
 
 ### [`EnemyConfig`](../Ash2/src/Config/EnemyConfig.hpp)
 
@@ -397,7 +402,8 @@
 | `idle` | `Neutral`（静止時） |
 | `move` | `Neutral`（移動時） |
 | `jump_rise` / `jump_fall` | `Neutral`（上昇中／落下中） |
-| `melee_1` / `melee_2` / `melee_3` | `MakeMelee`（段番号 +1 で決まる） |
+| `melee_1` / `melee_2` | `MakeMeleeChain`（段番号 +1 で決まる） |
+| `melee_finish` | `MakeMeleeFinisher` |
 | `ranged_attack` | `MakeRanged`（`Ranged::timer` の算出元にもなる） |
 | `dash` | `MakeDash` |
 | `dash_attack` | `MakeDashAttack` |

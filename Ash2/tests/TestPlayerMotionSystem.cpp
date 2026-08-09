@@ -4,6 +4,7 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/Drawable.hpp"
 #include "Component/FadeOut.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hitstop.hpp"
@@ -37,10 +38,10 @@ void SetupContext(entt::registry& registry) {
               .capMidH = 40.0,
               .reach = 50.0,
               .damage = 10,
-              .stages =
+              .chain =
                   {
                       // 1段目相当（突き出し）
-                      MeleeStageConfig{
+                      MeleeSwingConfig{
                           .timeline =
                               {.windupSec = 0.05,
                                .activeSec = 0.10,
@@ -51,7 +52,7 @@ void SetupContext(entt::registry& registry) {
                           .hitstopSec = 0.05,
                       },
                       // 2段目相当（斬り上げ）
-                      MeleeStageConfig{
+                      MeleeSwingConfig{
                           .timeline =
                               {.windupSec = 0.05,
                                .activeSec = 0.15,
@@ -62,17 +63,22 @@ void SetupContext(entt::registry& registry) {
                           .slashRiseHeight = 40.0,
                           .hitstopSec = 0.05,
                       },
-                      // 3段目相当（締め技、突き出し）
-                      MeleeStageConfig{
-                          .timeline =
-                              {.windupSec = 0.10,
-                               .activeSec = 0.20,
-                               .recoveryASec = 0.0,
-                               .recoveryBSec = 0.20},
-                          .radius = 25.0,
-                          .trajectory = MeleeTrajectory::Thrust,
-                          .hitstopSec = 0.13,
-                      },
+                  },
+              .finisher =
+                  {
+                      // 締め段相当（突き出し、光2つ）
+                      .swing =
+                          MeleeSwingConfig{
+                              .timeline =
+                                  {.windupSec = 0.10,
+                                   .activeSec = 0.20,
+                                   .recoveryASec = 0.0,
+                                   .recoveryBSec = 0.20},
+                              .radius = 25.0,
+                              .trajectory = MeleeTrajectory::Thrust,
+                              .hitstopSec = 0.13,
+                          },
+                      .lightGap = 36.0,
                   },
           },
       .ranged =
@@ -151,10 +157,10 @@ entt::entity MakePlayer(entt::registry& registry) {
 }  // namespace
 
 TEST_CASE(
-    "PlayerMotionSystem - melee attack input transitions Neutral to Melee "
-    "stage 0"
+    "PlayerMotionSystem - melee attack input transitions Neutral to "
+    "MeleeChain stage 0"
 ) {
-  // 近接攻撃入力で Neutral から Melee（1段目）へ遷移する
+  // 近接攻撃入力で Neutral から MeleeChain（1段目）へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -165,14 +171,14 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
 
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.stage == 0);
-  REQUIRE(melee.elapsed == Approx(0.0));
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.stage == 0);
+  REQUIRE(chain.elapsed == Approx(0.0));
   // 構え中（windupSec 未満）はヒットボックス未生成
-  REQUIRE(melee.hitboxEntity == entt::entity{entt::null});
-  REQUIRE_FALSE(melee.comboQueued);
+  REQUIRE(chain.hitboxEntity == entt::entity{entt::null});
+  REQUIRE_FALSE(chain.comboQueued);
 
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_1");
 }
@@ -328,7 +334,7 @@ TEST_CASE(
       PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null}
   );
 
-  // windupSec(0.05) ちょうどまで進め、progress 0.0（w = -orbitRadius）にする
+  // windupSec(0.05) ちょうどまで進め、progress 0.0(w = -orbitRadius) にする
   const FrameData frameData{.dt = 0.05};
   MotionSystem::Update(registry, frameData);
 
@@ -421,9 +427,9 @@ TEST_CASE(
 
 TEST_CASE(
     "PlayerMotionSystem - simultaneous jump and melee attack input "
-    "transitions to Melee without vertical velocity"
+    "transitions to MeleeChain without vertical velocity"
 ) {
-  // 同一フレームのジャンプ＋近接攻撃入力は Melee へ遷移し、上昇しない
+  // 同一フレームのジャンプ＋近接攻撃入力は MeleeChain へ遷移し、上昇しない
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -435,7 +441,7 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
   REQUIRE(registry.get<Velocity>(player).h == Approx(0.0));
 }
 
@@ -479,19 +485,23 @@ TEST_CASE(
   REQUIRE(registry.get<Velocity>(player).h == Approx(0.0));
 }
 
-TEST_CASE("PlayerMotionSystem - elapsed expiry transitions Melee to Neutral") {
+TEST_CASE(
+    "PlayerMotionSystem - elapsed expiry transitions MeleeChain to Neutral"
+) {
   // elapsed が windupSec+activeSec+recoveryBSec を超え、comboQueued
-  // が立っていない場合は Melee から Neutral
+  // が立っていない場合は MeleeChain から Neutral
   // へ遷移し、ヒットボックスが残っていれば解放する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  // ヒットボックスエンティティ（Melee.hitboxEntity 用のダミー）
+  // ヒットボックスエンティティ（MeleeChain.hitboxEntity 用のダミー）
   const auto hitbox = registry.create();
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{.stage = 0, .elapsed = 0.34, .hitboxEntity = hitbox}
+      PlayerMotion::MeleeChain{
+          .stage = 0, .elapsed = 0.34, .hitboxEntity = hitbox
+      }
   );
 
   const FrameData frameData{.dt = 0.5};
@@ -523,17 +533,17 @@ TEST_CASE("PlayerMotionSystem - timer expiry transitions Ranged to Neutral") {
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 elapsed increases but stays in "
-    "Melee"
+    "PlayerMotionSystem - MeleeChain stage 0 elapsed increases but stays "
+    "in MeleeChain"
 ) {
-  // recoveryEnd 未満の間は Melee のまま、elapsed が加算される
+  // recoveryEnd 未満の間は MeleeChain のまま、elapsed が加算される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -542,22 +552,22 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).elapsed == Approx(0.1));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).elapsed == Approx(0.1));
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 spawns hitbox when entering active "
-    "frame"
+    "PlayerMotionSystem - MeleeChain stage 0 spawns hitbox when entering "
+    "active frame"
 ) {
-  // 構え時間（windupSec）を超えた瞬間にヒットボックス（光の珠）が生成される
+  // 構え時間（windupSec）を超えた瞬間にヒットボックス（不可視）が生成される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -567,17 +577,17 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(melee.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(melee.hitboxEntity));
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(registry.valid(chain.hitboxEntity));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(chain.hitboxEntity));
 
-  const auto& attack = registry.get<Attack>(melee.hitboxEntity);
+  const auto& attack = registry.get<Attack>(chain.hitboxEntity);
   REQUIRE(attack.hitstopSec > 0.0);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 destroys hitbox when entering "
+    "PlayerMotionSystem - MeleeChain stage 0 destroys hitbox when entering "
     "recovery"
 ) {
   // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが解放される
@@ -590,7 +600,9 @@ TEST_CASE(
   registry.emplace<Collider>(hitbox);
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{.stage = 0, .elapsed = 0.10, .hitboxEntity = hitbox}
+      PlayerMotion::MeleeChain{
+          .stage = 0, .elapsed = 0.10, .hitboxEntity = hitbox
+      }
   );
 
   // windupSec+activeSec(0.15) を跨ぐ dt
@@ -598,8 +610,8 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.hitboxEntity == entt::entity{entt::null});
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.hitboxEntity == entt::entity{entt::null});
   // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
   // へ引き渡す（親からも切り離される）
   REQUIRE(registry.valid(hitbox));
@@ -608,15 +620,15 @@ TEST_CASE(
   REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 }
 
-TEST_CASE("PlayerMotionSystem - Melee stage 0 stops horizontal movement") {
-  // Melee 中は移動入力があっても横移動が止まる
+TEST_CASE("PlayerMotionSystem - MeleeChain stage 0 stops horizontal movement") {
+  // MeleeChain 中は移動入力があっても横移動が止まる
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -631,8 +643,8 @@ TEST_CASE("PlayerMotionSystem - Melee stage 0 stops horizontal movement") {
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 attack input during windup only "
-    "sets comboQueued"
+    "PlayerMotionSystem - MeleeChain stage 0 attack input during windup "
+    "only sets comboQueued"
 ) {
   // windup中（elapsed < activeStart）の攻撃入力では即時遷移せず、
   // comboQueued が立つのみ
@@ -642,7 +654,7 @@ TEST_CASE(
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -652,13 +664,13 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).comboQueued);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 attack input during active only "
-    "sets comboQueued"
+    "PlayerMotionSystem - MeleeChain stage 0 attack input during active "
+    "only sets comboQueued"
 ) {
   // active中（activeStart <= elapsed < activeEnd）の攻撃入力でも
   // 即時遷移せず、comboQueued が立つのみ
@@ -669,7 +681,7 @@ TEST_CASE(
   // windupSec(0.05) を超え activeEnd(0.15) 未満
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.10, .hitboxEntity = entt::null
       }
   );
@@ -679,13 +691,13 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).comboQueued);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 transitions to stage 1 immediately "
-    "when comboQueued at activeEnd"
+    "PlayerMotionSystem - MeleeChain stage 0 transitions to stage 1 "
+    "immediately when comboQueued at activeEnd"
 ) {
   // activeEnd 到達時に comboQueued が立っていれば即座に次段へ遷移する
   entt::registry registry;
@@ -695,7 +707,7 @@ TEST_CASE(
   // activeEnd は windupSec+activeSec = 0.15
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0,
           .elapsed = 0.14,
           .hitboxEntity = entt::null,
@@ -707,13 +719,13 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 1);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 transitions to stage 1 immediately "
-    "on new attack input during recovery"
+    "PlayerMotionSystem - MeleeChain stage 0 transitions to stage 1 "
+    "immediately on new attack input during recovery"
 ) {
   // recovery中（elapsed >= activeEnd）の新規攻撃入力で即座に次段へ遷移する
   entt::registry registry;
@@ -723,7 +735,7 @@ TEST_CASE(
   // activeEnd(0.15) を既に過ぎている状態（comboQueued は未予約）
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.16, .hitboxEntity = entt::null
       }
   );
@@ -733,13 +745,13 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 1);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 attack input during recoveryA only "
-    "sets comboQueued and fires after entering recoveryB"
+    "PlayerMotionSystem - MeleeChain stage 0 attack input during recoveryA "
+    "only sets comboQueued and fires after entering recoveryB"
 ) {
   // 後隙A中（activeEnd <= elapsed < recoveryAEnd）の攻撃入力では即時遷移せず
   // 予約のみ行い、後隙Bに入ってから次段へ遷移する
@@ -748,12 +760,12 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   // 1段目に後隙Aを設定する（activeEnd=0.15、recoveryAEnd=0.25）
-  registry.ctx().get<PlayerConfig>().melee.stages[0].timeline.recoveryASec =
+  registry.ctx().get<PlayerConfig>().melee.chain[0].timeline.recoveryASec =
       0.10;
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.16, .hitboxEntity = entt::null
       }
   );
@@ -765,9 +777,9 @@ TEST_CASE(
 
   {
     const auto& motion = registry.get<Motion>(player);
-    REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-    REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 0);
-    REQUIRE(std::get<PlayerMotion::Melee>(motion).comboQueued);
+    REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+    REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 0);
+    REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
   }
 
   // 後隙Bへ入るまで進める（elapsed 0.17 → 0.27）：予約が発動して次段へ
@@ -776,13 +788,13 @@ TEST_CASE(
 
   {
     const auto& motion = registry.get<Motion>(player);
-    REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-    REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 1);
+    REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+    REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
   }
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 transitions to Neutral when "
+    "PlayerMotionSystem - MeleeChain stage 0 transitions to Neutral when "
     "recoveryEnd exceeded without comboQueued"
 ) {
   // comboQueued が立っていない状態で recoveryEnd を超えたら Neutral へ遷移する
@@ -793,7 +805,7 @@ TEST_CASE(
   // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.35
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.34, .hitboxEntity = entt::null
       }
   );
@@ -806,8 +818,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 comboQueued accumulates across "
-    "frames"
+    "PlayerMotionSystem - MeleeChain stage 0 comboQueued accumulates "
+    "across frames"
 ) {
   // comboQueued は一度立ったら立ったまま（OR的に蓄積）
   entt::registry registry;
@@ -816,7 +828,7 @@ TEST_CASE(
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -826,31 +838,30 @@ TEST_CASE(
   frameData1.input.attackDown = true;
   MotionSystem::Update(registry, frameData1);
 
-  REQUIRE(
-      std::get<PlayerMotion::Melee>(registry.get<Motion>(player)).comboQueued
-  );
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(registry.get<Motion>(player))
+              .comboQueued);
 
   // 2フレーム目：攻撃入力なし、comboQueued は立ったまま
   const FrameData frameData2{.dt = 0.01};
   MotionSystem::Update(registry, frameData2);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).comboQueued);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 elapsed increases but stays in "
-    "Melee"
+    "PlayerMotionSystem - MeleeChain stage 1 elapsed increases but stays "
+    "in MeleeChain"
 ) {
-  // recoveryEnd 未満の間は Melee のまま、elapsed が加算される
+  // recoveryEnd 未満の間は MeleeChain のまま、elapsed が加算される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -859,22 +870,22 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).elapsed == Approx(0.1));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).elapsed == Approx(0.1));
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 spawns hitbox when entering active "
-    "frame"
+    "PlayerMotionSystem - MeleeChain stage 1 spawns hitbox when entering "
+    "active frame"
 ) {
-  // 構え時間（windupSec）を超えた瞬間にヒットボックス（光の珠）が生成される
+  // 構え時間（windupSec）を超えた瞬間にヒットボックス（不可視）が生成される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -884,14 +895,14 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(melee.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(melee.hitboxEntity));
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(registry.valid(chain.hitboxEntity));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(chain.hitboxEntity));
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 destroys hitbox when entering "
+    "PlayerMotionSystem - MeleeChain stage 1 destroys hitbox when entering "
     "recovery"
 ) {
   // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが解放される
@@ -904,7 +915,9 @@ TEST_CASE(
   registry.emplace<Collider>(hitbox);
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{.stage = 1, .elapsed = 0.15, .hitboxEntity = hitbox}
+      PlayerMotion::MeleeChain{
+          .stage = 1, .elapsed = 0.15, .hitboxEntity = hitbox
+      }
   );
 
   // windupSec+activeSec(0.20) を跨ぐ dt
@@ -912,8 +925,8 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.hitboxEntity == entt::entity{entt::null});
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.hitboxEntity == entt::entity{entt::null});
   // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
   // へ引き渡す（親からも切り離される）
   REQUIRE(registry.valid(hitbox));
@@ -923,7 +936,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 transitions to Neutral when "
+    "PlayerMotionSystem - MeleeChain stage 1 transitions to Neutral when "
     "recoveryEnd exceeded"
 ) {
   // recoveryEnd を超えたら Neutral へ遷移する
@@ -934,7 +947,7 @@ TEST_CASE(
   // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.40
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1, .elapsed = 0.39, .hitboxEntity = entt::null
       }
   );
@@ -947,8 +960,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 attack input during windup only "
-    "sets comboQueued"
+    "PlayerMotionSystem - MeleeChain stage 1 attack input during windup "
+    "only sets comboQueued"
 ) {
   // windup中（elapsed < activeStart）の攻撃入力では即時遷移せず、
   // comboQueued が立つのみ
@@ -958,7 +971,7 @@ TEST_CASE(
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
@@ -968,15 +981,15 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).comboQueued);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 transitions to stage 2 immediately "
-    "when comboQueued at activeEnd"
+    "PlayerMotionSystem - MeleeChain stage 1 transitions to MeleeFinisher "
+    "immediately when comboQueued at activeEnd"
 ) {
-  // activeEnd 到達時に comboQueued が立っていれば即座に次段へ遷移する
+  // activeEnd 到達時に comboQueued が立っていれば即座に締め段へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -984,7 +997,7 @@ TEST_CASE(
   // activeEnd は windupSec+activeSec = 0.20
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1,
           .elapsed = 0.19,
           .hitboxEntity = entt::null,
@@ -996,15 +1009,15 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 2);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_finish");
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 transitions to stage 2 immediately "
-    "on new attack input during recovery"
+    "PlayerMotionSystem - MeleeChain stage 1 transitions to MeleeFinisher "
+    "immediately on new attack input during recovery"
 ) {
-  // recovery中（elapsed >= activeEnd）の新規攻撃入力で即座に次段へ遷移する
+  // recovery中（elapsed >= activeEnd）の新規攻撃入力で即座に締め段へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1012,7 +1025,7 @@ TEST_CASE(
   // activeEnd(0.20) を既に過ぎている状態（comboQueued は未予約）
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1, .elapsed = 0.21, .hitboxEntity = entt::null
       }
   );
@@ -1022,12 +1035,12 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 2);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_finish");
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 transitions to Neutral when "
+    "PlayerMotionSystem - MeleeChain stage 1 transitions to Neutral when "
     "recoveryEnd exceeded without comboQueued"
 ) {
   // comboQueued が立っていない状態で recoveryEnd を超えたら Neutral へ遷移する
@@ -1038,7 +1051,7 @@ TEST_CASE(
   // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.40
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1, .elapsed = 0.39, .hitboxEntity = entt::null
       }
   );
@@ -1051,56 +1064,47 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 2 elapsed increases but stays in "
-    "Melee"
+    "PlayerMotionSystem - MeleeFinisher elapsed increases but stays in "
+    "MeleeFinisher"
 ) {
-  // recoveryEnd 未満の間は Melee のまま、elapsed が加算される
+  // recoveryEnd 未満の間は MeleeFinisher のまま、elapsed が加算される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  registry.replace<Motion>(
-      player,
-      PlayerMotion::Melee{
-          .stage = 2, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
-  );
+  registry.replace<Motion>(player, PlayerMotion::MeleeFinisher{.elapsed = 0.0});
 
   const FrameData frameData{.dt = 0.1};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).elapsed == Approx(0.1));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeFinisher>(motion).elapsed == Approx(0.1));
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 2 spawns hitbox when entering active "
+    "PlayerMotionSystem - MeleeFinisher spawns hitbox when entering active "
     "frame"
 ) {
-  // 構え時間（windupSec）を超えた瞬間にヒットボックス（光の珠）が生成される
+  // 構え時間（windupSec）を超えた瞬間にヒットボックス（不可視）が生成される
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  registry.replace<Motion>(
-      player,
-      PlayerMotion::Melee{
-          .stage = 2, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
-  );
+  registry.replace<Motion>(player, PlayerMotion::MeleeFinisher{.elapsed = 0.0});
 
   // windupSec(0.10) を跨ぐ dt
   const FrameData frameData{.dt = 0.11};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(melee.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(melee.hitboxEntity));
+  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
+  REQUIRE(finisher.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(registry.valid(finisher.hitboxEntity));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
+  );
 
-  const auto& attack = registry.get<Attack>(melee.hitboxEntity);
+  const auto& attack = registry.get<Attack>(finisher.hitboxEntity);
   REQUIRE(attack.hitstopSec > 0.0);
 }
 
@@ -1108,42 +1112,40 @@ TEST_CASE(
     "PlayerMotionSystem - Melee hitstopSec differs per stage, following "
     "config"
 ) {
-  // 締め技（3段目）は1段目より長いヒットストップ時間を持つ（コンボ段との連動）
+  // 締め段は継続段より長いヒットストップ時間を持つ（コンボ段との連動）
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
       }
   );
   // windupSec(0.05) を跨ぐ dt
   MotionSystem::Update(registry, FrameData{.dt = 0.06});
   const auto stage0Hitbox =
-      std::get<PlayerMotion::Melee>(registry.get<Motion>(player)).hitboxEntity;
+      std::get<PlayerMotion::MeleeChain>(registry.get<Motion>(player))
+          .hitboxEntity;
   const double stage0HitstopSec = registry.get<Attack>(stage0Hitbox).hitstopSec;
 
-  registry.replace<Motion>(
-      player,
-      PlayerMotion::Melee{
-          .stage = 2, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
-  );
+  registry.replace<Motion>(player, PlayerMotion::MeleeFinisher{.elapsed = 0.0});
   // windupSec(0.10) を跨ぐ dt
   MotionSystem::Update(registry, FrameData{.dt = 0.11});
-  const auto stage2Hitbox =
-      std::get<PlayerMotion::Melee>(registry.get<Motion>(player)).hitboxEntity;
-  const double stage2HitstopSec = registry.get<Attack>(stage2Hitbox).hitstopSec;
+  const auto finisherHitbox =
+      std::get<PlayerMotion::MeleeFinisher>(registry.get<Motion>(player))
+          .hitboxEntity;
+  const double finisherHitstopSec =
+      registry.get<Attack>(finisherHitbox).hitstopSec;
 
   REQUIRE(stage0HitstopSec == Approx(0.05));
-  REQUIRE(stage2HitstopSec == Approx(0.13));
-  REQUIRE(stage2HitstopSec > stage0HitstopSec);
+  REQUIRE(finisherHitstopSec == Approx(0.13));
+  REQUIRE(finisherHitstopSec > stage0HitstopSec);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 2 destroys hitbox when entering "
+    "PlayerMotionSystem - MeleeFinisher destroys hitbox when entering "
     "recovery"
 ) {
   // 攻撃判定終了（windupSec+activeSec）を過ぎたらヒットボックスが解放される
@@ -1156,7 +1158,7 @@ TEST_CASE(
   registry.emplace<Collider>(hitbox);
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{.stage = 2, .elapsed = 0.29, .hitboxEntity = hitbox}
+      PlayerMotion::MeleeFinisher{.elapsed = 0.29, .hitboxEntity = hitbox}
   );
 
   // windupSec+activeSec(0.30) を跨ぐ dt
@@ -1164,8 +1166,8 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.hitboxEntity == entt::entity{entt::null});
+  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
+  REQUIRE(finisher.hitboxEntity == entt::entity{entt::null});
   // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
   // へ引き渡す（親からも切り離される）
   REQUIRE(registry.valid(hitbox));
@@ -1175,7 +1177,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 2 transitions to Neutral when "
+    "PlayerMotionSystem - MeleeFinisher transitions to Neutral when "
     "recoveryEnd exceeded"
 ) {
   // recoveryEnd を超えたら Neutral へ遷移する
@@ -1185,10 +1187,7 @@ TEST_CASE(
 
   // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.50
   registry.replace<Motion>(
-      player,
-      PlayerMotion::Melee{
-          .stage = 2, .elapsed = 0.49, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeFinisher{.elapsed = 0.49}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -1198,45 +1197,34 @@ TEST_CASE(
   REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
 }
 
-TEST_CASE("PlayerMotionSystem - Melee stage 2 (finisher) ignores attack input"
-) {
-  // 最終段（次段を持たない）は締め技のため攻撃入力を無視し、
-  // recoveryEnd 未満では Melee のまま
+TEST_CASE("PlayerMotionSystem - MeleeFinisher ignores attack input") {
+  // 締め段はコンボ継続を受け付けないため攻撃入力を無視し、
+  // recoveryEnd 未満では MeleeFinisher のまま
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  registry.replace<Motion>(
-      player,
-      PlayerMotion::Melee{
-          .stage = 2, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
-  );
+  registry.replace<Motion>(player, PlayerMotion::MeleeFinisher{.elapsed = 0.0});
 
   FrameData frameData{.dt = 0.01};
   frameData.input.attackDown = true;
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 2);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 2 (finisher) ignores dash input "
-    "during recovery"
+    "PlayerMotionSystem - MeleeFinisher ignores dash input during recovery"
 ) {
-  // 最終段はキャンセル不可のため、後隙中のダッシュ入力を無視する
+  // 締め段はキャンセル不可のため、後隙中のダッシュ入力を無視する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
   // activeEnd(0.30) を既に過ぎている状態
   registry.replace<Motion>(
-      player,
-      PlayerMotion::Melee{
-          .stage = 2, .elapsed = 0.31, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeFinisher{.elapsed = 0.31}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -1244,22 +1232,17 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
   REQUIRE(registry.get<Stamina>(player).current == 100);
 }
 
-TEST_CASE("PlayerMotionSystem - Melee stage 2 stops horizontal movement") {
-  // Melee 中は移動入力があっても横移動が止まる
+TEST_CASE("PlayerMotionSystem - MeleeFinisher stops horizontal movement") {
+  // MeleeFinisher 中は移動入力があっても横移動が止まる
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  registry.replace<Motion>(
-      player,
-      PlayerMotion::Melee{
-          .stage = 2, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
-  );
+  registry.replace<Motion>(player, PlayerMotion::MeleeFinisher{.elapsed = 0.0});
 
   FrameData frameData{.dt = 0.1};
   frameData.input.moveAxis = Vec2{1.0, 0.0};
@@ -1268,6 +1251,158 @@ TEST_CASE("PlayerMotionSystem - Melee stage 2 stops horizontal movement") {
   const auto& vel = registry.get<Velocity>(player);
   REQUIRE(vel.w == Approx(0.0));
   REQUIRE(vel.d == Approx(0.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - MeleeChain hitbox is invisible while its light "
+    "carries the visual"
+) {
+  // 継続段の判定は不可視（Drawable なし）、見た目は光1つが担う
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::MeleeChain{
+          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
+      }
+  );
+
+  // windupSec(0.05) を跨ぐ dt
+  const FrameData frameData{.dt = 0.06};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(chain.hitboxEntity));
+  REQUIRE_FALSE(registry.all_of<Drawable>(chain.hitboxEntity));
+
+  REQUIRE(chain.lightEntities.size() == 1);
+  const auto light = chain.lightEntities[0];
+  REQUIRE(registry.all_of<Drawable, LocalOffset>(light));
+  REQUIRE_FALSE(registry.all_of<Attack>(light));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - MeleeFinisher spawns one hitbox and two lights, "
+    "spread by half lightGap at progress 0.0"
+) {
+  // 締め段は判定1つ・光2つを持ち、光は Attack を持たない。進行度0.0では
+  // lightGap の半分ずつ上下へ開く
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<Motion>(player, PlayerMotion::MeleeFinisher{.elapsed = 0.0});
+
+  // windupSec(0.10) ちょうどまで進め、progress 0.0 にする
+  const FrameData frameData{.dt = 0.10};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
+  REQUIRE(finisher.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
+  );
+  REQUIRE_FALSE(registry.all_of<Drawable>(finisher.hitboxEntity));
+
+  REQUIRE(finisher.lightEntities.size() == 2);
+  for (const auto light : finisher.lightEntities) {
+    REQUIRE(registry.all_of<Drawable, LocalOffset>(light));
+    REQUIRE_FALSE(registry.all_of<Attack>(light));
+  }
+
+  // capMidH(40.0)、lightGap(36.0) の半分ずつ上下に開く
+  constexpr double kCapMidH = 40.0;
+  constexpr double kHalfLightGap = 36.0 / 2.0;
+  const auto& offset0 = registry.get<LocalOffset>(finisher.lightEntities[0]);
+  const auto& offset1 = registry.get<LocalOffset>(finisher.lightEntities[1]);
+  REQUIRE(offset0.value.h == Approx(kCapMidH - kHalfLightGap));
+  REQUIRE(offset1.value.h == Approx(kCapMidH + kHalfLightGap));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - MeleeChain hands its light over to FadeOut when "
+    "leaving active frame"
+) {
+  // 攻撃判定終了後、光エンティティも Attack を外され親から切り離されて
+  // FadeOut へ引き渡される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  const auto light = registry.create();
+  registry.emplace<LocalOffset>(light);
+  registry.emplace<Drawable>(light, CircleDrawable{.radius = 20.0});
+  Hierarchy::Attach(registry, player, light);
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::MeleeChain{
+          .stage = 0, .elapsed = 0.10, .lightEntities = {light}
+      }
+  );
+
+  // windupSec+activeSec(0.15) を跨ぐ dt
+  const FrameData frameData{.dt = 0.06};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.lightEntities.isEmpty());
+  REQUIRE(registry.valid(light));
+  REQUIRE(registry.all_of<FadeOut>(light));
+  // Hierarchy::Detach は Hierarchy 自体は残し、親子のリンクと LocalOffset
+  // を外す
+  REQUIRE(registry.get<Hierarchy>(light).parent() == entt::entity{entt::null});
+  REQUIRE_FALSE(registry.all_of<LocalOffset>(light));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - MeleeFinisher hands both lights over to FadeOut "
+    "when leaving active frame"
+) {
+  // 締め段も光すべてが FadeOut へ引き渡される
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  const auto light0 = registry.create();
+  registry.emplace<LocalOffset>(light0);
+  registry.emplace<Drawable>(light0, CircleDrawable{.radius = 25.0});
+  Hierarchy::Attach(registry, player, light0);
+
+  const auto light1 = registry.create();
+  registry.emplace<LocalOffset>(light1);
+  registry.emplace<Drawable>(light1, CircleDrawable{.radius = 25.0});
+  Hierarchy::Attach(registry, player, light1);
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::MeleeFinisher{
+          .elapsed = 0.29, .lightEntities = {light0, light1}
+      }
+  );
+
+  // windupSec+activeSec(0.30) を跨ぐ dt
+  const FrameData frameData{.dt = 0.06};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<Motion>(player);
+  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
+  REQUIRE(finisher.lightEntities.isEmpty());
+  for (const auto light : {light0, light1}) {
+    REQUIRE(registry.valid(light));
+    REQUIRE(registry.all_of<FadeOut>(light));
+    // Hierarchy::Detach は Hierarchy 自体は残し、親子のリンクと LocalOffset
+    // を外す
+    REQUIRE(
+        registry.get<Hierarchy>(light).parent() == entt::entity{entt::null}
+    );
+    REQUIRE_FALSE(registry.all_of<LocalOffset>(light));
+  }
 }
 
 TEST_CASE("PlayerMotionSystem - dash input transitions Neutral to Dash") {
@@ -1473,10 +1608,10 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 recovery dash input cancels into "
-    "Dash"
+    "PlayerMotionSystem - MeleeChain stage 0 recovery dash input cancels "
+    "into Dash"
 ) {
-  // Melee（1段目）の後隙中にダッシュ入力があるとダッシュへキャンセルする
+  // MeleeChain（1段目）の後隙中にダッシュ入力があるとダッシュへキャンセルする
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1484,7 +1619,7 @@ TEST_CASE(
   // activeEnd(0.15) を既に過ぎている状態
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.16, .hitboxEntity = entt::null
       }
   );
@@ -1500,10 +1635,10 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 1 recovery dash input cancels into "
-    "Dash"
+    "PlayerMotionSystem - MeleeChain stage 1 recovery dash input cancels "
+    "into Dash"
 ) {
-  // Melee（2段目）の後隙中にダッシュ入力があるとダッシュへキャンセルする
+  // MeleeChain（2段目）の後隙中にダッシュ入力があるとダッシュへキャンセルする
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1511,7 +1646,7 @@ TEST_CASE(
   // activeEnd(0.20) を既に過ぎている状態
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 1, .elapsed = 0.21, .hitboxEntity = entt::null
       }
   );
@@ -1526,10 +1661,10 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee stage 0 recovery dash input is ignored "
-    "without leftover hitbox"
+    "PlayerMotionSystem - MeleeChain stage 0 recovery dash input is "
+    "ignored without leftover hitbox"
 ) {
-  // Melee 後隙からダッシュへキャンセルする際、ヒットボックスは既に解放済み
+  // MeleeChain 後隙からダッシュへキャンセルする際、ヒットボックスは既に解放済み
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1540,7 +1675,9 @@ TEST_CASE(
   // activeEnd(0.15) を跨ぐ dt でヒットボックスが解放される
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{.stage = 0, .elapsed = 0.14, .hitboxEntity = hitbox}
+      PlayerMotion::MeleeChain{
+          .stage = 0, .elapsed = 0.14, .hitboxEntity = hitbox
+      }
   );
 
   FrameData frameData{.dt = 0.02};
@@ -1963,8 +2100,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Hitstop freezes Melee elapsed and keeps the same "
-    "hitboxEntity"
+    "PlayerMotionSystem - Hitstop freezes MeleeChain elapsed and keeps the "
+    "same hitboxEntity"
 ) {
   // Hitstop 中は dt = 0 で Tick されるため、elapsed もヒットボックスの再生成も
   // 起きない
@@ -1978,16 +2115,18 @@ TEST_CASE(
   registry.emplace<Collider>(hitbox);
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{.stage = 0, .elapsed = 0.06, .hitboxEntity = hitbox}
+      PlayerMotion::MeleeChain{
+          .stage = 0, .elapsed = 0.06, .hitboxEntity = hitbox
+      }
   );
 
   const FrameData frameData{.dt = 0.1};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
-  REQUIRE(melee.elapsed == Approx(0.06));
-  REQUIRE(melee.hitboxEntity == hitbox);
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+  REQUIRE(chain.elapsed == Approx(0.06));
+  REQUIRE(chain.hitboxEntity == hitbox);
   REQUIRE(registry.valid(hitbox));
 }
 
@@ -2004,7 +2143,7 @@ TEST_CASE(
   // windupSec(0.05) を超え activeEnd(0.15) 未満（active区間）
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0, .elapsed = 0.10, .hitboxEntity = entt::null
       }
   );
@@ -2014,15 +2153,15 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
-  const auto& melee = std::get<PlayerMotion::Melee>(motion);
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
   // elapsed は凍結されたまま
-  REQUIRE(melee.elapsed == Approx(0.10));
-  REQUIRE(melee.comboQueued);
+  REQUIRE(chain.elapsed == Approx(0.10));
+  REQUIRE(chain.comboQueued);
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Melee resumes and transitions to next stage once "
-    "Hitstop clears"
+    "PlayerMotionSystem - MeleeChain resumes and transitions to next stage "
+    "once Hitstop clears"
 ) {
   // 停止中は次段への遷移が起きず、Hitstop 除去後の後隙Bで初めて遷移する
   entt::registry registry;
@@ -2033,7 +2172,7 @@ TEST_CASE(
   // activeEnd(0.15) 手前、次段への予約は既に立っている
   registry.replace<Motion>(
       player,
-      PlayerMotion::Melee{
+      PlayerMotion::MeleeChain{
           .stage = 0,
           .elapsed = 0.14,
           .hitboxEntity = entt::null,
@@ -2041,13 +2180,13 @@ TEST_CASE(
       }
   );
 
-  // 停止中：dt を与えても elapsed は凍結されたまま、まだ Melee stage 0
+  // 停止中：dt を与えても elapsed は凍結されたまま、まだ MeleeChain stage 0
   MotionSystem::Update(registry, FrameData{.dt = 0.1});
   {
     const auto& motion = registry.get<Motion>(player);
-    const auto& melee = std::get<PlayerMotion::Melee>(motion);
-    REQUIRE(melee.stage == 0);
-    REQUIRE(melee.elapsed == Approx(0.14));
+    const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
+    REQUIRE(chain.stage == 0);
+    REQUIRE(chain.elapsed == Approx(0.14));
   }
 
   // 停止解除後：activeEnd を跨いで後隙Bへ入り、予約済みの次段へ遷移する
@@ -2055,8 +2194,8 @@ TEST_CASE(
   MotionSystem::Update(registry, FrameData{.dt = 0.02});
 
   const auto& motion = registry.get<Motion>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Melee>(motion));
-  REQUIRE(std::get<PlayerMotion::Melee>(motion).stage == 1);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
 }
 
 #endif

@@ -25,6 +25,18 @@ struct HitboxSpec {
   double hitstopSec = 0.0;
   /// 解放時のフェードアウト時間（秒）。0 以下なら即座に破棄する
   double fadeSec = 0.0;
+  /// 珠を描画するか（false: 見た目を別の光エンティティに分離する近接攻撃用）
+  bool drawOrb = true;
+};
+
+/// @brief 見た目だけを担う光エンティティ群の生成仕様をまとめた構造体
+struct LightSpec {
+  /// 生成する光の数
+  int32 count = 1;
+  /// 光の半径（CircleDrawable の表示半径）
+  double radius = 0.0;
+  /// 解放時のフェードアウト時間（秒）。0 以下なら即座に破棄する
+  double fadeSec = 0.0;
 };
 
 /// @brief クリップが変化していれば差し替え、再生位置をリセットする
@@ -52,6 +64,19 @@ void UpdateAttackHitbox(
     entt::registry& registry, entt::entity owner, double elapsed,
     const MotionTimeline& timeline, const HitboxSpec& spec,
     entt::entity& hitboxEntity, const std::function<Vec3(double)>& offsetFn
+);
+
+/// @brief 攻撃判定の発生区間に応じて見た目専用の光エンティティ群を
+/// 生成・更新・破棄する
+/// @param timeline 攻撃のタイムライン（active 区間の判定に使用）
+/// @param spec 生成時に確定させる光の数・半径・フェード時間
+/// @param offsetFn 攻撃フレーム内の進行度と光のインデックス（0始まり）から
+/// オフセットを算出する関数
+void UpdateAttackLights(
+    entt::registry& registry, entt::entity owner, double elapsed,
+    const MotionTimeline& timeline, const LightSpec& spec,
+    Array<entt::entity>& lightEntities,
+    const std::function<Vec3(double, int32)>& offsetFn
 );
 
 }  // namespace PlayerMotion
