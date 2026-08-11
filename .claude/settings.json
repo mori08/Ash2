@@ -6,10 +6,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/no-compound-commands.py"
-          },
-          {
-            "type": "command",
             "if": "Bash(git push*)",
             "command": "python .claude/hooks/check-commit-count.py",
             "statusMessage": "コミット数を確認中..."
@@ -21,39 +17,12 @@
   "permissions": {
     "deny": [],
     "allow": [
-      "Bash(git status*)",
-      "Bash(git diff*)",
-      "Bash(git log*)",
-      "Bash(git show *)",
-      "Bash(git branch*)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git checkout *)",
-      "Bash(git pull*)",
-      "Bash(git fetch*)",
-      "Bash(git remote prune*)",
-      "Bash(git rev-parse *)",
-      "Bash(gh issue *)",
-      "Bash(gh pr *)",
-      "Bash(gh label *)",
-      "Bash(gh api repos/mori08/Ash2/milestones*)",
-      "Bash(ls*)",
-      "Bash(cat *)",
-      "Bash(head *)",
-      "Bash(tail *)",
-      "Bash(wc *)",
-      "Bash(grep *)",
-      "Bash(find *)",
-      "Bash(echo *)",
-      "Bash(pwd)",
-      "Bash(date*)",
       "Bash(./tools/run-format.sh *)",
       "Bash(./tools/run-tidy.sh *)",
-      "Bash(./tools/build.sh*)",
-      "Bash(./tools/run-tests.sh*)",
-      "Bash(./tools/run.sh*)",
+      "Bash(./tools/build.sh *)",
+      "Bash(./tools/run-tests.sh *)",
+      "Bash(./tools/run.sh *)",
       "Edit(tmp/*)",
-      "Bash(mkdir -p tmp*)",
       "Bash(rm tmp/*)"
     ]
   }
