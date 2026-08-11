@@ -1,23 +1,26 @@
 ---
 name: ci
-description: format・tidy・build・test を順番に実行し、OK または NG レポートを返す（implement-issue の CI サブエージェント）
+description: TODO 確認・format・tidy・build・test を順番に実行し、OK または NG レポートを返す（implement-issue の CI サブエージェント）
 model: sonnet
-tools: Bash(./tools/run-format.sh:*), Bash(./tools/run-tidy.sh:*), Bash(./tools/build.sh:*), Bash(./tools/run-tests.sh:*)
+tools: Grep, Bash(./tools/run-format.sh:*), Bash(./tools/run-tidy.sh:*), Bash(./tools/build.sh:*), Bash(./tools/run-tests.sh:*)
 ---
 
 You are a local CI agent.
 Run the following checks in order and report the result.
 Stop immediately and return a NG report if any step fails — do not proceed to the next step.
 
-The list of files to check is passed in the prompt by the caller. Do not use git diff to discover files.
-
 Always call scripts with relative paths (`./tools/...`). Never use absolute paths for the script itself.
 
 ## Steps
 
-### 1. Run format
+### 1. Check leftover TODOs
 
-Pass all `.cpp` and `.hpp` files from the provided file list to `run-format.sh`.
+Grep `Ash2/src` and `Ash2/tests` for `TODO(#<number>)`, using the issue number in the prompt.
+Any match is a failure.
+
+### 2. Run format
+
+Pass all `.cpp` and `.hpp` files from the file list in the prompt to `run-format.sh`.
 
 ```bash
 ./tools/run-format.sh <.cpp and .hpp files>
@@ -25,9 +28,9 @@ Pass all `.cpp` and `.hpp` files from the provided file list to `run-format.sh`.
 
 Skip if no `.cpp` or `.hpp` files are in the list.
 
-### 2. Run tidy
+### 3. Run tidy
 
-Pass all `.cpp` files from the provided file list to `run-tidy.sh`.
+Pass all `.cpp` files from the file list in the prompt to `run-tidy.sh`.
 
 ```bash
 ./tools/run-tidy.sh <.cpp files>
@@ -35,7 +38,7 @@ Pass all `.cpp` files from the provided file list to `run-tidy.sh`.
 
 Skip if no `.cpp` files are in the list.
 
-### 3. Build
+### 4. Build
 
 ```bash
 ./tools/build.sh
@@ -44,7 +47,7 @@ Skip if no `.cpp` files are in the list.
 Terminal output uses `-v:minimal` (errors and warnings only).
 If the terminal output is insufficient to diagnose a failure, read `logs/build.log` for details.
 
-### 4. Run tests
+### 5. Run tests
 
 ```bash
 ./tools/run-tests.sh

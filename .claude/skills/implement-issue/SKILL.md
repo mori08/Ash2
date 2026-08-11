@@ -21,7 +21,7 @@ git checkout -b <branch-name>
 
 ### 2. 実装ループ
 
-a〜f を順番に実行する。NG が出た時点で g へ進み、a に戻る。
+a〜e を順番に実行する。NG が出た時点で f へ進み、a に戻る。
 
 #### a. Implement サブエージェント
 
@@ -29,8 +29,7 @@ Agent ツール（`subagent_type: implement`）を起動し、プランファイ
 
 #### b. CI サブエージェント
 
-Implement エージェントの出力から変更ファイル一覧を取り出し、それをプロンプトに含めて Agent ツール（`subagent_type: ci`）を起動する。
-問題なければ OK を、問題があれば NG レポートを返す。
+Implement エージェントの出力から変更ファイル一覧を取り出し、Issue 番号とともにプロンプトに含めて Agent ツール（`subagent_type: ci`）を起動する。
 
 #### c. Rule-Review サブエージェント（並列）
 
@@ -48,15 +47,7 @@ Agent ツール（`subagent_type: review`）× 1 を起動する — 正しさ�
 
 `/run` スキルを使ってゲームを起動し、表示・挙動・操作感を確認する。
 
-#### f. TODO の残存確認
-
-```bash
-grep -rn 'TODO(#<number>)' Ash2/src Ash2/tests
-```
-
-該当が残っていれば NG として扱う。
-
-#### g. NG の処理
+#### f. NG の処理
 
 NG レポートの規模に応じて以下のいずれかを選択する。
 
