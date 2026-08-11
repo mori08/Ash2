@@ -1,10 +1,14 @@
 ---
 name: full-review
-description: Read all source files and report 3-5 findings, then optionally create GitHub Issues
+description: Read all source files, refresh ARCHITECTURE.md / REFERENCE.md, and report up to 5 findings, then optionally create GitHub Issues
 ---
 
 コードベース全体を読んでレビューし、気になるポイントを報告する。
 最終的にユーザーが選択した項目を GitHub Issue として登録する。
+
+> **対象範囲**: コードの品質・バグと、コードから導かれる `docs/ARCHITECTURE.md` /
+> `docs/REFERENCE.md` の内容。この2ファイルはレビューの過程で更新する。
+> スキル・ルール・エージェント・その他ドキュメントの整合性は `meta-review` スキルを使うこと。
 
 ## 手順
 
@@ -14,25 +18,36 @@ description: Read all source files and report 3-5 findings, then optionally crea
 
 - `docs/ARCHITECTURE.md`
 - `docs/REFERENCE.md`
-- `docs/coding_style/DOCUMENTATION.md`
-- `docs/TEST_POLICY.md`
-- `.claude/rules/cpp.md`
+- `.claude/rules/` のうち frontmatter の `paths` が `Ash2/src/` または `Ash2/tests/` 以下に
+  マッチするルールと、その節が「必読」としてリンクするドキュメント
 
-### 2. ソースファイルの走査
+### 2. サブエージェントの起動
 
-`Ash2/src/` 以下の `.hpp` / `.cpp` ファイルを Glob で列挙し、すべて読む。
-ファイル数が多い場合はサブエージェントを並列起動して効率よく走査する。
+以下の2種類を1つのメッセージで同時に起動する。
 
-### 3. ARCHITECTURE.md / REFERENCE.md の更新
-
-サブエージェントを1つ起動し、以下を指示する。
+**ドキュメント生成（1つ）**
 
 - `Ash2/src/` 以下のソースファイルをすべて読む
 - `docs/ARCHITECTURE.md` と `docs/REFERENCE.md` は読まない
 - `docs/coding_style/DOCUMENTATION.md` の分担・記述ルールに従い `docs/ARCHITECTURE.md` と
   `docs/REFERENCE.md` を一から生成する
 
-サブエージェントの生成結果と現在の両ファイルを比較する。
+**ソース走査（複数）**
+
+`Ash2/src/` 以下の `.hpp` / `.cpp` を Glob で列挙し、ディレクトリ単位で分担させる。
+各プロンプトにステップ1で読んだ設計方針・ルールと以下の観点を渡し、
+気づいた点をファイルパス・行番号つきで報告させる。
+
+**観点：**
+- バグ・潜在的な問題（クラッシュ、未定義動作、リソースリーク等）
+- 設計方針との乖離（ECS の使い方、レイヤー違反等）
+- モダン C++ の活用余地（手書き実装を置き換えられる標準機能、不要な生ループ・手動メモリ管理）
+- 改善提案（パフォーマンス、可読性、設計の整理）
+- ルールへの違反
+
+### 3. ARCHITECTURE.md / REFERENCE.md の更新
+
+ドキュメント生成サブエージェントの結果と現在の両ファイルを比較する。
 
 - 新版にあって旧版にない → 追記漏れの可能性
 - 旧版にあって新版にない → 古くなった記述の可能性
@@ -44,23 +59,16 @@ description: Read all source files and report 3-5 findings, then optionally crea
 ### 4. テストの確認
 
 `Ash2/tests/` 以下のファイルを Glob で列挙し、すべて読む。
+`docs/TEST_POLICY.md` に従って既存テストを仕分けし、テスト追加候補を挙げる。
 
-- 既存テストが実装と乖離していないか確認する（テスト対象クラスの変更、古い API の使用等）
-- `Ash2/src/` の中で描画・入力・リソース読み込みに依存しないロジックを持つクラスのうち、
-  対応するテストがないものをテスト追加候補として指摘する
+結果はステップ6のレポートにコードレビューとは別セクションで出力する。
 
-見つかった問題・候補はステップ6のレポートにコードレビューとは別セクションで出力する。
+### 5. レビュー結果の集約
 
-### 5. レビューの実施
+ソース走査サブエージェントの所見を集約し、ステップ3の比較で気づいた点を加える。
 
-以下の観点でレビューし、気になるポイントを **3〜5件** に絞って選ぶ。
-数が多くても絞ること。些細な指摘より重要な問題を優先する。
-
-**観点：**
-- バグ・潜在的な問題（クラッシュ、未定義動作、リソースリーク等）
-- `docs/ARCHITECTURE.md` の設計方針との乖離（ECS の使い方、レイヤー違反等）
-- 改善提案（パフォーマンス、可読性、設計の整理）
-- `.claude/rules/cpp.md` のルール違反（s3d の優先使用、エラー処理の使い分け、Doxygen コメント等）
+各候補を0〜100で評価し（実際に問題である確信度）、80以上のものだけを対象とする。
+そのうえで上位5件までを報告する。該当が5件未満なら、その件数のまま報告する。
 
 ### 6. レポートの出力
 
@@ -102,6 +110,4 @@ Issue 化したい項目があれば番号で教えてください（例: 1 3）
 ```
 
 ユーザーが番号を指定した場合、各項目について `create-issue` スキルを使って GitHub Issue を作成する。
-- ラベルは内容に応じて `bug` / `enhancement` / `chore` / `refactor` から選ぶ
-- タイトルは日本語で（GIT.md の規則に従う）
-- 本文にはレポートの「内容」と「提案」を含める
+本文にはレポートの「内容」と「提案」を含める。

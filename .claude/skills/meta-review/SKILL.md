@@ -80,10 +80,11 @@ Ash2/src/ 以下の .hpp / .cpp を Glob で列挙してすべて読む。
 
 #### docs のチェック
 
-- コードと矛盾する記述がないか（`ARCHITECTURE.md`・`REFERENCE.md` を含む全ドキュメント）
+`docs/ARCHITECTURE.md` / `docs/REFERENCE.md` とコードの整合は `full-review` が持つ。ここでは扱わない。
+
+- コードと矛盾する記述がないか
 - 存在しないファイル・クラス・コマンドを参照していないか
 - 明らかに陳腐化していると判断できる記述がないか
-- `ARCHITECTURE.md` が200行を超えていないか、部品ごとの詳細説明が紛れ込んでいないか（本来 `REFERENCE.md` に置くべき内容）
 
 #### CLAUDE.md のチェック
 
