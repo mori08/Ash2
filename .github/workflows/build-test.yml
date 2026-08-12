@@ -30,6 +30,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # asset_list / Resource.rc は sync-assets.sh の生成物。
+      # 生成物のコミット漏れは Release 実行時まで表面化しない（埋め込み漏れが throw になる）ため、
+      # ビルドより前に検出する。--ignore-cr-at-eol は autocrlf による改行差での誤検知を避けるもの。
+      - name: Check generated assets are in sync
+        shell: bash
+        run: |
+          ./tools/sync-assets.sh
+          git diff --exit-code --ignore-cr-at-eol -- Ash2/App/assets/asset_list Ash2/App/Resource.rc \
+            || { echo "::error::生成物が最新ではありません。tools/sync-assets.sh を実行してコミットしてください。"; exit 1; }
+
       - name: Download Siv3D SDK
         shell: pwsh
         run: |
@@ -72,3 +82,17 @@ jobs:
         shell: bash
         timeout-minutes: 10
         run: ./tools/run-tests.sh
+
+      # 出荷されるのは Release だが、Debug ビルドでは `_DEBUG` の #else 側
+      # （Asset.hpp の埋め込みリソース経路・Debug.hpp の no-op な APP_LOG）が
+      # 一度もコンパイルされない。その経路とリソースコンパイル・Release リンクを検証する。
+      # テストは `_DEBUG` ガード内にあり Release には含まれないため、実行はしない。
+      - name: Build (Release)
+        shell: pwsh
+        run: |
+          msbuild Ash2\Ash2.sln `
+            -p:Configuration=Release `
+            -p:Platform=x64 `
+            -m `
+            -v:minimal `
+            -nologo
