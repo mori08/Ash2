@@ -13,12 +13,14 @@ namespace {
 constexpr double kAccel = 1000.0;
 
 /// @brief 重力を受けるエンティティを生成する
-/// @param h 初期の高さ（0 が地面）
-/// @param velH 初期の垂直速度
-entt::entity MakeFaller(entt::registry& registry, double h, double velH = 0.0) {
+/// @param pos 初期位置（h が 0 で接地）
+/// @param vel 初期速度
+entt::entity MakeFaller(
+    entt::registry& registry, const WorldPos& pos, const Velocity& vel = {}
+) {
   const auto entity = registry.create();
-  registry.emplace<WorldPos>(entity, WorldPos{.h = h});
-  registry.emplace<Velocity>(entity, Velocity{.h = velH});
+  registry.emplace<WorldPos>(entity, pos);
+  registry.emplace<Velocity>(entity, vel);
   registry.emplace<Gravity>(entity, Gravity{.accel = kAccel});
   return entity;
 }
@@ -28,7 +30,7 @@ entt::entity MakeFaller(entt::registry& registry, double h, double velH = 0.0) {
 TEST_CASE("GravitySystem - accelerates downward while airborne") {
   // 加速は速度にのみ効く。位置の更新は MovementSystem の担当
   entt::registry registry;
-  const auto entity = MakeFaller(registry, 100.0);
+  const auto entity = MakeFaller(registry, WorldPos{.h = 100.0});
 
   GravitySystem::Update(registry, 0.5);
 
@@ -43,7 +45,8 @@ TEST_CASE("GravitySystem - accelerates downward while airborne") {
 TEST_CASE("GravitySystem - clamps a sunken entity onto the ground") {
   // 地面を割り込んだ位置は 0 に戻し、垂直速度も落とす
   entt::registry registry;
-  const auto entity = MakeFaller(registry, -5.0, -300.0);
+  const auto entity =
+      MakeFaller(registry, WorldPos{.h = -5.0}, Velocity{.h = -300.0});
 
   GravitySystem::Update(registry, 0.1);
 
@@ -56,7 +59,8 @@ TEST_CASE("GravitySystem - keeps upward velocity at ground level") {
   // ジャンプした瞬間は接地したまま上向きの速度を持つ。ここで速度を
   // 打ち消すとジャンプが成立しなくなる（クランプ条件が h < 0 である理由）
   entt::registry registry;
-  const auto entity = MakeFaller(registry, 0.0, 300.0);
+  const auto entity =
+      MakeFaller(registry, WorldPos{.h = 0.0}, Velocity{.h = 300.0});
 
   GravitySystem::Update(registry, 0.1);
 
@@ -66,7 +70,8 @@ TEST_CASE("GravitySystem - keeps upward velocity at ground level") {
 
 TEST_CASE("GravitySystem - skips entities in hitstop") {
   entt::registry registry;
-  const auto entity = MakeFaller(registry, 100.0, -50.0);
+  const auto entity =
+      MakeFaller(registry, WorldPos{.h = 100.0}, Velocity{.h = -50.0});
   registry.emplace<Hitstop>(entity, Hitstop{.remaining = 0.1});
 
   GravitySystem::Update(registry, 0.1);

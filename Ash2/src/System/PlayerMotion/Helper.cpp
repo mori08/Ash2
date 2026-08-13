@@ -146,8 +146,10 @@ void UpdateAttackLights(
     }
 
     const double progress = timeline.activeProgress(elapsed);
-    for (int32 i = 0; i < static_cast<int32>(lightEntities.size()); ++i) {
-      SetOrbOffset(registry, lightEntities[i], offsetFn(progress, i));
+    for (size_t i = 0; i < lightEntities.size(); ++i) {
+      SetOrbOffset(
+          registry, lightEntities[i], offsetFn(progress, static_cast<int32>(i))
+      );
     }
   }
 
