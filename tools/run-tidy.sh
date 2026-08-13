@@ -79,7 +79,6 @@ run_tidy_one() {
         -D_SILENCE_CXX20_CISO646_REMOVED_WARNING \
         -D_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS \
         -D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS \
-        -DUSE_TEST \
         "-I${TIDY_WIN}" "-I${PROJECT_WIN}\\src" "-I${PROJECT_WIN}" \
         -imsvc "${SIV3D_WIN}\\include" \
         -imsvc "${SIV3D_WIN}\\include\\ThirdParty" \

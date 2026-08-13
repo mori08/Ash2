@@ -70,7 +70,6 @@ jobs:
             "-D_SILENCE_CXX20_CISO646_REMOVED_WARNING",
             "-D_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS",
             "-D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS",
-            "-DUSE_TEST",
             "-I$projectDir\src",
             "-I$projectDir",
             "-imsvc", "$sdkRoot\include",
