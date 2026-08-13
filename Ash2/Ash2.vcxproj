@@ -165,6 +165,7 @@
     <ClCompile Include="tests\TestEnemyConfig.cpp" />
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
     <ClCompile Include="tests\TestFadeOutSystem.cpp" />
+    <ClCompile Include="tests\TestGravitySystem.cpp" />
     <ClCompile Include="tests\TestHierarchy.cpp" />
     <ClCompile Include="tests\TestHitReactionSystem.cpp" />
     <ClCompile Include="tests\TestHitstopSystem.cpp" />
