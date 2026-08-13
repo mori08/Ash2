@@ -1,6 +1,7 @@
 name: clang-tidy
 
 on:
+  # 実行に約1時間かかるため push / pull_request では走らせず、週次のみとする
   schedule:
     - cron: '0 3 * * 3'  # 毎週水曜 12:00 JST
   workflow_dispatch:
