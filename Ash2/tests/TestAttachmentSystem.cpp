@@ -3,7 +3,6 @@
 #include <entt/entt.hpp>
 
 #include "Component/Hierarchy.hpp"
-#include "Component/LocalOffset.hpp"
 #include "Component/WorldPos.hpp"
 #include "System/AttachmentSystem.hpp"
 
@@ -63,115 +62,6 @@ TEST_CASE("AttachmentSystem - zero offset child is at parent position") {
   REQUIRE(pos.w == 5.0);
   REQUIRE(pos.h == 3.0);
   REQUIRE(pos.d == 2.0);
-}
-
-TEST_CASE("AttachmentSystem - DestroyWithChildren destroys entire subtree") {
-  entt::registry registry;
-
-  auto parent = registry.create();
-  registry.emplace<WorldPos>(parent);
-
-  auto child = registry.create();
-  registry.emplace<WorldPos>(child);
-  Hierarchy::Attach(registry, parent, child);
-
-  auto grandchild = registry.create();
-  registry.emplace<WorldPos>(grandchild);
-  Hierarchy::Attach(registry, child, grandchild);
-
-  Hierarchy::DestroyWithChildren(registry, parent);
-
-  REQUIRE_FALSE(registry.valid(parent));
-  REQUIRE_FALSE(registry.valid(child));
-  REQUIRE_FALSE(registry.valid(grandchild));
-}
-
-TEST_CASE("AttachmentSystem - Attach sets up linked list correctly") {
-  entt::registry registry;
-
-  auto parent = registry.create();
-  registry.emplace<WorldPos>(parent);
-
-  auto child1 = registry.create();
-  registry.emplace<WorldPos>(child1);
-  Hierarchy::Attach(registry, parent, child1);
-
-  auto child2 = registry.create();
-  registry.emplace<WorldPos>(child2);
-  Hierarchy::Attach(registry, parent, child2);
-
-  // child2 は先頭挿入なので firstChild == child2
-  const auto& parentNode = registry.get<const Hierarchy>(parent);
-  REQUIRE(parentNode.firstChild() == child2);
-  REQUIRE(registry.get<const Hierarchy>(child2).nextSibling() == child1);
-  REQUIRE(registry.get<const Hierarchy>(child1).prevSibling() == child2);
-}
-
-TEST_CASE("AttachmentSystem - Detach removes child from linked list") {
-  entt::registry registry;
-
-  auto parent = registry.create();
-  registry.emplace<WorldPos>(parent);
-
-  auto child = registry.create();
-  registry.emplace<WorldPos>(child);
-  Hierarchy::Attach(registry, parent, child);
-
-  Hierarchy::Detach(registry, child);
-
-  REQUIRE(
-      registry.get<const Hierarchy>(parent).firstChild() ==
-      entt::entity{entt::null}
-  );
-  REQUIRE(
-      registry.get<const Hierarchy>(child).parent() == entt::entity{entt::null}
-  );
-  REQUIRE_FALSE(registry.all_of<LocalOffset>(child));
-}
-
-TEST_CASE("AttachmentSystem - re-attaching child to different parent") {
-  entt::registry registry;
-
-  auto parent1 = registry.create();
-  registry.emplace<WorldPos>(parent1);
-  auto parent2 = registry.create();
-  registry.emplace<WorldPos>(parent2);
-  auto child = registry.create();
-  registry.emplace<WorldPos>(child);
-
-  Hierarchy::Attach(registry, parent1, child);
-  Hierarchy::Attach(registry, parent2, child);
-
-  REQUIRE(
-      registry.get<const Hierarchy>(parent1).firstChild() ==
-      entt::entity{entt::null}
-  );
-  REQUIRE(registry.get<const Hierarchy>(parent2).firstChild() == child);
-  REQUIRE(registry.get<const Hierarchy>(child).parent() == parent2);
-  REQUIRE(
-      registry.get<const Hierarchy>(child).prevSibling() ==
-      entt::entity{entt::null}
-  );
-  REQUIRE(
-      registry.get<const Hierarchy>(child).nextSibling() ==
-      entt::entity{entt::null}
-  );
-}
-
-TEST_CASE("Hierarchy - DestroyWithChildren on already-destroyed entity is safe"
-) {
-  entt::registry registry;
-  auto parent = registry.create();
-  auto child = registry.create();
-  Hierarchy::Attach(registry, parent, child);
-
-  // 親を破棄（子も巻き込まれる）
-  Hierarchy::DestroyWithChildren(registry, parent);
-  // 破棄済みエンティティを再度呼んでもクラッシュしない
-  Hierarchy::DestroyWithChildren(registry, parent);
-  Hierarchy::DestroyWithChildren(registry, child);
-  REQUIRE_FALSE(registry.valid(parent));
-  REQUIRE_FALSE(registry.valid(child));
 }
 
 #endif

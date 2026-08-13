@@ -165,12 +165,16 @@
     <ClCompile Include="tests\TestEnemyConfig.cpp" />
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
     <ClCompile Include="tests\TestFadeOutSystem.cpp" />
+    <ClCompile Include="tests\TestGravitySystem.cpp" />
+    <ClCompile Include="tests\TestHierarchy.cpp" />
     <ClCompile Include="tests\TestHitReactionSystem.cpp" />
     <ClCompile Include="tests\TestHitstopSystem.cpp" />
     <ClCompile Include="tests\TestHitSystem.cpp" />
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
+    <ClCompile Include="tests\TestMotionTimeline.cpp" />
     <ClCompile Include="tests\TestMovementSystem.cpp" />
+    <ClCompile Include="tests\TestStaminaSystem.cpp" />
     <ClCompile Include="tests\TestNameLookup.cpp" />
     <ClCompile Include="tests\TestPhaseStack.cpp" />
     <ClCompile Include="tests\TestPlayerConfig.cpp" />

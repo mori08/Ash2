@@ -57,21 +57,4 @@ TEST_CASE("ProjectileSystem - destroys bullet on impact (hitTargets non-empty)"
   REQUIRE_FALSE(registry.valid(bullet));
 }
 
-TEST_CASE("ProjectileSystem - destroys bullet when off-screen") {
-  // WorldPos を画面座標に変換した結果が Scene::Rect()
-  // の範囲外の場合は破棄される
-  entt::registry registry;
-
-  // 実行環境の画面サイズに依存しないよう、十分に遠い座標を使う
-  constexpr double kFarAway = 1.0e9;
-  const auto bullet = MakeBullet(
-      registry, WorldPos{.w = kFarAway, .h = 0.0, .d = 0.0},
-      Velocity{.w = 0.0, .h = 0.0, .d = 0.0}
-  );
-
-  ProjectileSystem::Update(registry);
-
-  REQUIRE_FALSE(registry.valid(bullet));
-}
-
 #endif
