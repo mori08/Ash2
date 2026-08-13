@@ -172,6 +172,7 @@
     <ClCompile Include="tests\TestHitSystem.cpp" />
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
+    <ClCompile Include="tests\TestMotionTimeline.cpp" />
     <ClCompile Include="tests\TestMovementSystem.cpp" />
     <ClCompile Include="tests\TestStaminaSystem.cpp" />
     <ClCompile Include="tests\TestNameLookup.cpp" />
