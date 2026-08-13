@@ -176,6 +176,7 @@ Debug ビルドでは F5（`InputState::reloadConfig`）で再読込でき、`Pl
 
 アセットは `Ash2/App/assets/asset_list` を単一の入り口として扱い、Debug はファイルから・Release は
 埋め込みリソースから読む差異を `Asset.hpp` に閉じ込める。パス解決は必ず `AssetPath()` を通す。
+`asset_list` と `Ash2/App/Resource.rc` は `tools/sync-assets.sh` の生成物で、手書きしない。
 
 ---
 
