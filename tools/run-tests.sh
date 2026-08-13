@@ -10,6 +10,17 @@ if [[ ! -f "$EXE" ]]; then
   exit 1
 fi
 
+# このスクリプトはビルドを行わないため、古い exe を黙って実行してしまわないよう
+# ソースとのタイムスタンプを比較する
+STALE=$(find "$REPO_ROOT/Ash2/src" "$REPO_ROOT/Ash2/tests" "$REPO_ROOT/Ash2/Ash2.vcxproj" \
+  -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.vcxproj' \) \
+  -newer "$EXE" -print -quit)
+if [[ -n "$STALE" ]]; then
+  echo "ERROR: 実行ファイルがソースより古いです: $STALE"
+  echo "先にビルドを実行してください: ./tools/build.sh"
+  exit 1
+fi
+
 mkdir -p "$REPO_ROOT/logs"
 LOG="$REPO_ROOT/logs/test.log"
 
