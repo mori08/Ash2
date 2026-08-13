@@ -59,13 +59,13 @@ TEST_CASE("MotionTimeline - activeProgress spans 0 to 1 across the section") {
 TEST_CASE("MotionTimeline - a zero-length active section is never active") {
   // isActive が常に false になることで、activeProgress の 0 除算を
   // 呼び出し側が踏まないようになっている
-  constexpr MotionTimeline noActive{
+  constexpr MotionTimeline kNoActive{
       .windupSec = 0.10, .activeSec = 0.0, .recoveryBSec = 0.20
   };
 
-  REQUIRE_FALSE(noActive.isActive(0.09));
-  REQUIRE_FALSE(noActive.isActive(0.10));
-  REQUIRE_FALSE(noActive.isActive(0.11));
+  REQUIRE_FALSE(kNoActive.isActive(0.09));
+  REQUIRE_FALSE(kNoActive.isActive(0.10));
+  REQUIRE_FALSE(kNoActive.isActive(0.11));
 }
 
 #endif
