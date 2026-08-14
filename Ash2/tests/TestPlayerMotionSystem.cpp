@@ -838,8 +838,10 @@ TEST_CASE(
   frameData1.input.attackDown = true;
   MotionSystem::Update(registry, frameData1);
 
-  REQUIRE(std::get<PlayerMotion::MeleeChain>(registry.get<Motion>(player))
-              .comboQueued);
+  REQUIRE(
+      std::get<PlayerMotion::MeleeChain>(registry.get<Motion>(player))
+          .comboQueued
+  );
 
   // 2フレーム目：攻撃入力なし、comboQueued は立ったまま
   const FrameData frameData2{.dt = 0.01};
@@ -1101,7 +1103,8 @@ TEST_CASE(
   const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
   REQUIRE(finisher.hitboxEntity != entt::entity{entt::null});
   REQUIRE(registry.valid(finisher.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
+  REQUIRE(
+      registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
   );
 
   const auto& attack = registry.get<Attack>(finisher.hitboxEntity);
@@ -1304,7 +1307,8 @@ TEST_CASE(
   const auto& motion = registry.get<Motion>(player);
   const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
   REQUIRE(finisher.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
+  REQUIRE(
+      registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
   );
   REQUIRE_FALSE(registry.all_of<Drawable>(finisher.hitboxEntity));
 
@@ -1446,7 +1450,8 @@ TEST_CASE(
   REQUIRE(registry.get<Stamina>(player).current == 10);
 }
 
-TEST_CASE("PlayerMotionSystem - Dash grants Invincible during windup and dash"
+TEST_CASE(
+    "PlayerMotionSystem - Dash grants Invincible during windup and dash"
 ) {
   // 構え・ダッシュ中（elapsed < activeEnd）は Invincible が付与される
   entt::registry registry;
@@ -1460,11 +1465,13 @@ TEST_CASE("PlayerMotionSystem - Dash grants Invincible during windup and dash"
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.all_of<Invincible>(player));
-  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(registry.get<Motion>(player
-  )));
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(registry.get<Motion>(player))
+  );
 }
 
-TEST_CASE("PlayerMotionSystem - Dash removes Invincible when entering recovery"
+TEST_CASE(
+    "PlayerMotionSystem - Dash removes Invincible when entering recovery"
 ) {
   // activeEnd(0.15) を超えた時点で Invincible が除去される
   entt::registry registry;
@@ -1501,7 +1508,8 @@ TEST_CASE(
   REQUIRE(vel.d == Approx(0.0));
 }
 
-TEST_CASE("PlayerMotionSystem - Dash moves in free direction when input given"
+TEST_CASE(
+    "PlayerMotionSystem - Dash moves in free direction when input given"
 ) {
   // ダッシュ中にフリー方向の移動入力があればその方向へ移動する
   entt::registry registry;
@@ -1760,8 +1768,9 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.all_of<Invincible>(player));
-  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(registry.get<Motion>(player
-  )));
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(registry.get<Motion>(player))
+  );
 }
 
 TEST_CASE(
@@ -1996,8 +2005,9 @@ TEST_CASE(
   const auto& dashAttack = std::get<PlayerMotion::DashAttack>(motion);
   REQUIRE(dashAttack.hitboxEntity != entt::entity{entt::null});
   REQUIRE(registry.valid(dashAttack.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(dashAttack.hitboxEntity
-  ));
+  REQUIRE(
+      registry.all_of<Collider, Attack, LocalOffset>(dashAttack.hitboxEntity)
+  );
 
   // 進行度0.25 → 円上の点（w=0、h=capMidH(40.0)、d=orbitRadius(30.0)）
   const auto& localOffset = registry.get<LocalOffset>(dashAttack.hitboxEntity);

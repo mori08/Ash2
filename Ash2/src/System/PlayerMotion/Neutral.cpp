@@ -55,8 +55,10 @@ Optional<Motion> Tick(
     vel.w = 0.0;
     vel.d = 0.0;
     return MakeAirAttack(anim);
-  } else if (input.rangedAttackDown &&
-             registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost) {
+  } else if (
+      input.rangedAttackDown &&
+      registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost
+  ) {
     // 空中遠距離攻撃への入場。Ranged は地上・空中で共有するため、
     // 着地しても Landing を挟まずタイマー満了で Neutral
     // に戻る（地上と同一挙動）。
@@ -64,8 +66,10 @@ Optional<Motion> Tick(
     vel.d = 0.0;
     SpawnProjectile(registry, pos, anim.facingRight, cfg);
     return MakeRanged(registry, entity, cfg, anim);
-  } else if (input.dashDown &&
-             registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
+  } else if (
+      input.dashDown &&
+      registry.get<Stamina>(entity).current >= cfg.dash.staminaCost
+  ) {
     // 空中ダッシュへの入場（Dash::Tick が air フラグにより接地検出で Landing
     // へ遷移させる）
     return MakeDash(registry, entity, cfg, anim, /*air=*/true);

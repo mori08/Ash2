@@ -160,8 +160,7 @@ Optional<Motion> Tick(
           .radius = swing.radius,
           .fadeSec = cfg.attackEffect.fadeSec
       },
-      state.lightEntities,
-      [&offsetFn](double progress, int32 /*index*/) {
+      state.lightEntities, [&offsetFn](double progress, int32 /*index*/) {
         return offsetFn(progress);
       }
   );

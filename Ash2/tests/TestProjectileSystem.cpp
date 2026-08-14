@@ -37,7 +37,8 @@ entt::entity MakeBullet(
 
 }  // namespace
 
-TEST_CASE("ProjectileSystem - destroys bullet on impact (hitTargets non-empty)"
+TEST_CASE(
+    "ProjectileSystem - destroys bullet on impact (hitTargets non-empty)"
 ) {
   // Attack.hitTargets が空でなくなった（HitSystem
   // がヒットを記録した）場合は破棄される

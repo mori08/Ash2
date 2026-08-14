@@ -14,14 +14,19 @@ on:
       - '**/*.cpp'
       - '**/*.hpp'
 
+env:
+  LLVM_VERSION: 22.1.8
+
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - name: Install clang-format
-        run: sudo apt-get install -y clang-format-19
+        run: pipx install clang-format==${{ env.LLVM_VERSION }}
       - name: Check formatting
         run: |
+          CLANG_FORMAT="$(pipx environment --value PIPX_BIN_DIR)/clang-format"
+          "$CLANG_FORMAT" --version
           find Ash2/src Ash2/tests -name '*.cpp' -o -name '*.hpp' | \
-          xargs clang-format-19 --dry-run --Werror
+          xargs "$CLANG_FORMAT" --dry-run --Werror

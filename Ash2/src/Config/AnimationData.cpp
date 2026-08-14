@@ -10,15 +10,18 @@ namespace {
     const TOMLValue& clip, StringView name
 ) {
   TomlFields f{clip, U"AnimationData::ParseClip", String{name}};
-  return f.wrap(AnimationClip{
-      .row = f.get<int32>(U"row"),
-      .count = f.get<int32>(U"count"),
-      .speed = f.get<double>(U"speed"),
-  });
+  return f.wrap(
+      AnimationClip{
+          .row = f.get<int32>(U"row"),
+          .count = f.get<int32>(U"count"),
+          .speed = f.get<double>(U"speed"),
+      }
+  );
 }
 
 /// @brief TOML からアニメーション共有データを生成する
-[[nodiscard]] std::expected<AnimationData, String> Parse(const TOMLValue& toml
+[[nodiscard]] std::expected<AnimationData, String> Parse(
+    const TOMLValue& toml
 ) {
   TomlFields f{toml, U"AnimationData::Parse"};
   const auto textureKey = f.get<String>(U"texture");
@@ -35,11 +38,13 @@ namespace {
     return std::unexpected{std::move(result).error()};
   }
 
-  auto wrapped = f.wrap(AnimationData{
-      .textureKey = textureKey,
-      .size = size,
-      .drawOffset = drawOffset,
-  });
+  auto wrapped = f.wrap(
+      AnimationData{
+          .textureKey = textureKey,
+          .size = size,
+          .drawOffset = drawOffset,
+      }
+  );
   if (!wrapped) {
     return std::unexpected{std::move(wrapped).error()};
   }

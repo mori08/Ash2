@@ -100,7 +100,8 @@ TEST_CASE(
   REQUIRE(registry.get<const WorldPos>(child).w == Approx(501.0));
 }
 
-TEST_CASE("Hierarchy::Detach - detached child stops following and loses offset"
+TEST_CASE(
+    "Hierarchy::Detach - detached child stops following and loses offset"
 ) {
   entt::registry registry;
   HierarchySystem::Connect(registry);

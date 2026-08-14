@@ -88,9 +88,11 @@ IPhase::PhaseCommand AnimationViewerPhase::update(
   Scene::SetBackground(ColorF{kBgBrightness});
   m_font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(kTitleX, kTitleY);
   if (!m_clips.empty()) {
-    m_font(U"Clip [{}/{}]: {}"_fmt(
-               m_clipIndex + 1, m_clips.size(), m_clips[m_clipIndex]
-           ))
+    m_font(
+        U"Clip [{}/{}]: {}"_fmt(
+            m_clipIndex + 1, m_clips.size(), m_clips[m_clipIndex]
+        )
+    )
         .draw(kTitleX, kClipInfoY);
   }
   m_font(U"← → : clip  F : flip  Esc : back")

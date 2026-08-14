@@ -1,5 +1,8 @@
 BasedOnStyle: Google
 AlignAfterOpenBracket: BlockIndent
+# 開き括弧への揃えより、スコープからのブロックインデントを優先させる。
+# 有効域は 6〜9（5 以下ではぶら下がり字下げが残り、10 以上では返り値の型が分断される）
+PenaltyIndentedWhitespace: 8
 PenaltyBreakScopeResolution: 1000000
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup

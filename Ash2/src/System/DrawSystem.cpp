@@ -21,8 +21,9 @@ void DrawSystem::Draw(const entt::registry& registry) {
        registry.view<const WorldPos, const Drawable>().each()) {
     const auto* drawColor = registry.try_get<DrawColor>(entity);
     entries.push_back(
-        {std::cref(pos), std::cref(drawable),
-         (drawColor != nullptr) ? drawColor->color : kDefaultDrawColor}
+        {.pos = std::cref(pos),
+         .drawable = std::cref(drawable),
+         .color = (drawColor != nullptr) ? drawColor->color : kDefaultDrawColor}
     );
   }
 

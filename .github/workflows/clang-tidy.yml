@@ -11,6 +11,7 @@ permissions:
 
 env:
   SIV3D_VERSION: 0.6.16
+  LLVM_VERSION: 22.1.8
 
 jobs:
   clang-tidy:
@@ -47,12 +48,18 @@ jobs:
         shell: pwsh
         run: cargo install clang-tidy-sarif --version 0.8.0 --locked
 
+      - name: Install clang-tidy
+        shell: pwsh
+        run: pip install clang-tidy==${{ env.LLVM_VERSION }}
+
       - name: Run clang-tidy
         id: tidy
         shell: pwsh
         run: |
           $sdkRoot    = "C:\OpenSiv3D_SDK_${{ env.SIV3D_VERSION }}"
           $projectDir = "$env:GITHUB_WORKSPACE\Ash2"
+          $clangTidy  = python -c "import clang_tidy; print(clang_tidy.get_executable('clang-tidy'))"
+          & $clangTidy --version
 
           $tidyOpts = @(
             "--header-filter=.*Ash2[\\/](src|tests)[\\/].*"
@@ -85,7 +92,7 @@ jobs:
             Where-Object { $_.Name -ne "stdafx.cpp" } |
             ForEach-Object {
               Write-Host "Checking: $($_.Name)"
-              $output = clang-tidy @tidyOpts $_.FullName '--' @compileFlags 2>&1
+              $output = & $clangTidy @tidyOpts $_.FullName '--' @compileFlags 2>&1
               $output | Write-Host
               $output | Out-File -FilePath $rawLog -Append -Encoding utf8
               if ($LASTEXITCODE -ne 0) { $hasWarnings = $true }

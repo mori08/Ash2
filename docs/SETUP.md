@@ -14,7 +14,7 @@
 | Siv3D v0.6.16 | ゲームエンジン SDK | [公式サイト](https://siv3d.github.io/ja-jp/)のインストーラ |
 | vcpkg | C++ パッケージ管理（entt を manifest モードで取得） | 下記参照 |
 | Python 3 | `tools/sync-assets.sh` が使用（ビルド時に自動実行） | `winget install Python.Python.3.12` |
-| clang-format / clang-tidy | 整形・静的解析 | Visual Studio に同梱（下記参照） |
+| clang-format / clang-tidy | 整形・静的解析 | `pip install`（下記参照） |
 | GitHub CLI（gh） | PR・issue 操作 | `winget install GitHub.cli` |
 | Claude Code | 開発フローの中心（`.claude/` のスキル・エージェントを実行） | 下記参照 |
 
@@ -61,22 +61,28 @@ winget install Python.Python.3.12
 
 ### 5. clang-format / clang-tidy
 
-Visual Studio の C++ ワークロードに同梱されているものを使う。
-**LLVM 19 系を前提とする**（CI が clang-format-19 を使うため。
-VS 2022 17.14 の同梱バージョンは 19.1.x。18 系以前だった場合は VS が 17.14 より古いので、
-Visual Studio Installer から VS 本体を更新する）。
-
-`~/.bashrc` に環境変数を設定する（パスはエディションに合わせて読み替える）:
+CI と同じバージョンに固定するため、pip でインストールする。
 
 ```bash
-export CLANG_FORMAT="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clang-format.exe"
-export CLANG_TIDY="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clang-tidy.exe"
+pip install clang-format==22.1.8 clang-tidy==22.1.8
 ```
+
+`~/.bashrc` に環境変数を設定する。パスは `get_executable` で解決する
+（Python のインストール形態に依存しない）:
+
+```bash
+export CLANG_FORMAT="$(python -c "import clang_format; print(clang_format.get_executable('clang-format'))")"
+export CLANG_TIDY="$(python -c "import clang_tidy; print(clang_tidy.get_executable('clang-tidy'))")"
+```
+
+注意: Visual Studio 同梱の clang-format / clang-tidy を指す旧い export が
+残っていると、そちらが優先されて 19.1.1 を使い続けてしまう。上記の内容で上書きする。
 
 バージョン確認:
 
 ```bash
-"$CLANG_FORMAT" --version   # 19.x であること
+"$CLANG_FORMAT" --version   # 22.1.8 であること
+"$CLANG_TIDY" --version     # 22.1.8 であること
 ```
 
 ### 6. GitHub CLI
