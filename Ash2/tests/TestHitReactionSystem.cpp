@@ -99,8 +99,9 @@ TEST_CASE(
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(target
-  )));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(target))
+  );
   REQUIRE(registry.get<Velocity>(target).w == Approx(250.0));
 }
 
@@ -117,9 +118,11 @@ TEST_CASE(
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Knockback>(
-      registry.get<Motion>(target)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Knockback>(
+          registry.get<Motion>(target)
+      )
+  );
   REQUIRE(registry.get<Velocity>(target).w == Approx(300.0));
   REQUIRE(registry.get<Velocity>(target).h == Approx(300.0));
 }
@@ -134,8 +137,9 @@ TEST_CASE("HitReactionSystem - None reaction leaves Enemy in Idle") {
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(target)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(target))
+  );
 }
 
 TEST_CASE(
@@ -152,9 +156,11 @@ TEST_CASE(
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Defeated>(
-      registry.get<Motion>(target)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Defeated>(
+          registry.get<Motion>(target)
+      )
+  );
   REQUIRE_FALSE(registry.all_of<Collider>(target));
   REQUIRE_FALSE(registry.all_of<Hp>(target));
 }
@@ -208,9 +214,11 @@ TEST_CASE(
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Knockback>(
-      registry.get<Motion>(target)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Knockback>(
+          registry.get<Motion>(target)
+      )
+  );
   REQUIRE_FALSE(registry.all_of<Hitstop>(target));
 }
 
@@ -229,9 +237,11 @@ TEST_CASE(
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Defeated>(
-      registry.get<Motion>(target)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Defeated>(
+          registry.get<Motion>(target)
+      )
+  );
   REQUIRE_FALSE(registry.all_of<Hitstop>(target));
 }
 
@@ -271,9 +281,11 @@ TEST_CASE(
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Knockback>(
-      registry.get<Motion>(target)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Knockback>(
+          registry.get<Motion>(target)
+      )
+  );
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(target));
   REQUIRE(rect.size.y == Approx(80.0));
 }
@@ -296,9 +308,11 @@ TEST_CASE(
       registry, {HitPair{.attacker = attacker, .target = target}}
   );
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Knockback>(
-      registry.get<Motion>(target)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Knockback>(
+          registry.get<Motion>(target)
+      )
+  );
   REQUIRE(registry.get<Velocity>(target).w == Approx(300.0));
   REQUIRE(registry.get<Velocity>(target).h == Approx(300.0));
 }

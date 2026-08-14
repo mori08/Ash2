@@ -36,11 +36,11 @@ void HitReactionSystem::Apply(
     if (attack.hitstopSec > 0.0) {
       // 長い停止中に別ヒットの短い停止で上書きされないよう、
       // 既に付与済みなら長い方を残す
-      const auto grantHitstop = [&registry,
-                                 sec = attack.hitstopSec](entt::entity e) {
-        auto& hitstop = registry.get_or_emplace<Hitstop>(e);
-        hitstop.remaining = Max(hitstop.remaining, sec);
-      };
+      const auto grantHitstop =
+          [&registry, sec = attack.hitstopSec](entt::entity e) {
+            auto& hitstop = registry.get_or_emplace<Hitstop>(e);
+            hitstop.remaining = Max(hitstop.remaining, sec);
+          };
       grantHitstop(attackerOwner);
       grantHitstop(hit.target);
     }

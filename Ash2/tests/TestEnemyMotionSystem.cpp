@@ -82,7 +82,8 @@ TEST_CASE(
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(enemy));
   REQUIRE(rect.size.x == Approx(60.0));
   REQUIRE(rect.size.y == Approx(80.0));
-  REQUIRE(std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
   );
 }
 
@@ -99,7 +100,8 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
-  REQUIRE(std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
   );
 }
 
@@ -113,8 +115,9 @@ TEST_CASE("EnemyMotionSystem - Repel keeps velocity while remaining") {
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(-250.0));
-  REQUIRE(std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(enemy)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(enemy))
+  );
 }
 
 TEST_CASE(
@@ -136,7 +139,8 @@ TEST_CASE(
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(300.0));
 }
 
-TEST_CASE("EnemyMotionSystem - Knockback zeroes horizontal velocity on landing"
+TEST_CASE(
+    "EnemyMotionSystem - Knockback zeroes horizontal velocity on landing"
 ) {
   entt::registry registry;
   SetupContext(registry);
@@ -150,9 +154,11 @@ TEST_CASE("EnemyMotionSystem - Knockback zeroes horizontal velocity on landing"
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
-  REQUIRE(std::holds_alternative<EnemyMotion::Knockback>(
-      registry.get<Motion>(enemy)
-  ));
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Knockback>(
+          registry.get<Motion>(enemy)
+      )
+  );
 }
 
 TEST_CASE(
@@ -181,7 +187,8 @@ TEST_CASE("EnemyMotionSystem - Knockback transitions to Idle on expiry") {
   const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);
 
-  REQUIRE(std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
   );
 }
 
@@ -228,7 +235,8 @@ TEST_CASE("EnemySystem - destroys entity when Defeated has expired") {
   REQUIRE_FALSE(registry.valid(enemy));
 }
 
-TEST_CASE("EnemySystem - keeps entity while Defeated still has remaining time"
+TEST_CASE(
+    "EnemySystem - keeps entity while Defeated still has remaining time"
 ) {
   entt::registry registry;
   SetupContext(registry);

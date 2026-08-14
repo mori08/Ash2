@@ -34,11 +34,13 @@ inline InputState InputDeviceSelector::update() {
        XInput(0).buttonX.down() || XInput(0).buttonY.down() ||
        !stickAxis.isZero())) {
     m_activeDevice = Device::Gamepad;
-  } else if (!Keyboard::GetAllInputs().isEmpty() ||
-             !Mouse::GetAllInputs().isEmpty()) {
+  } else if (
+      !Keyboard::GetAllInputs().isEmpty() || !Mouse::GetAllInputs().isEmpty()
+  ) {
     m_activeDevice = Device::Keyboard;
   }
 
-  return (m_activeDevice == Device::Gamepad) ? XInputAction::ToInputState()
-                                             : m_keyboardAction.toInputState();
+  return (m_activeDevice == Device::Gamepad)
+             ? XInputAction::ToInputState()
+             : m_keyboardAction.toInputState();
 }

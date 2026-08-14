@@ -13,12 +13,14 @@ namespace {
     const TOMLValue& toml, StringView section
 ) {
   TomlFields f{toml, U"PlayerConfig::ParseTimeline", String{section}};
-  return f.wrap(MotionTimeline{
-      .windupSec = f.get<double>(U"windup_sec"),
-      .activeSec = f.get<double>(U"active_sec"),
-      .recoveryASec = f.get<double>(U"recovery_a_sec"),
-      .recoveryBSec = f.get<double>(U"recovery_b_sec"),
-  });
+  return f.wrap(
+      MotionTimeline{
+          .windupSec = f.get<double>(U"windup_sec"),
+          .activeSec = f.get<double>(U"active_sec"),
+          .recoveryASec = f.get<double>(U"recovery_a_sec"),
+          .recoveryBSec = f.get<double>(U"recovery_b_sec"),
+      }
+  );
 }
 
 /// @brief TOML の trajectory 文字列を MeleeTrajectory へ変換する
@@ -84,11 +86,13 @@ namespace {
   TomlFields f{
       finisherToml, U"PlayerConfig::ParseMeleeFinisher", U"melee.finisher"
   };
-  auto finisher = f.wrap(MeleeFinisherConfig{
-      .swing = *std::move(swing),
-      .lightCount = f.get<int32>(U"light_count"),
-      .lightGap = f.get<double>(U"light_gap"),
-  });
+  auto finisher = f.wrap(
+      MeleeFinisherConfig{
+          .swing = *std::move(swing),
+          .lightCount = f.get<int32>(U"light_count"),
+          .lightGap = f.get<double>(U"light_gap"),
+      }
+  );
   if (!finisher) {
     return std::unexpected{std::move(finisher).error()};
   }
@@ -106,7 +110,8 @@ namespace {
 }
 
 /// @brief TOML から近接攻撃の設定値を生成する
-[[nodiscard]] std::expected<MeleeConfig, String> ParseMelee(const TOMLValue& m
+[[nodiscard]] std::expected<MeleeConfig, String> ParseMelee(
+    const TOMLValue& m
 ) {
   Array<MeleeSwingConfig> chain;
   // Why not: m[U"chain"] がテーブル配列として存在しない場合に
@@ -127,7 +132,8 @@ namespace {
   // chain が空だと Tick(MeleeChain&, ...) の chain[state.stage] アクセスが
   // 不正になるため許容しない
   if (chain.isEmpty()) {
-    return std::unexpected{U"PlayerConfig::ParseMelee: melee.chain がありません"
+    return std::unexpected{
+        U"PlayerConfig::ParseMelee: melee.chain がありません"
     };
   }
 
@@ -137,27 +143,32 @@ namespace {
   }
 
   TomlFields f{m, U"PlayerConfig::ParseMelee", U"melee"};
-  return f.wrap(MeleeConfig{
-      .capMidH = f.get<double>(U"cap_mid_h"),
-      .reach = f.get<double>(U"reach"),
-      .damage = f.get<int32>(U"damage"),
-      .chain = std::move(chain),
-      .finisher = *std::move(finisher),
-  });
+  return f.wrap(
+      MeleeConfig{
+          .capMidH = f.get<double>(U"cap_mid_h"),
+          .reach = f.get<double>(U"reach"),
+          .damage = f.get<int32>(U"damage"),
+          .chain = std::move(chain),
+          .finisher = *std::move(finisher),
+      }
+  );
 }
 
 /// @brief TOML から遠距離攻撃の設定値を生成する
-[[nodiscard]] std::expected<RangedConfig, String> ParseRanged(const TOMLValue& r
+[[nodiscard]] std::expected<RangedConfig, String> ParseRanged(
+    const TOMLValue& r
 ) {
   TomlFields f{r, U"PlayerConfig::ParseRanged", U"ranged"};
-  return f.wrap(RangedConfig{
-      .reach = f.get<double>(U"reach"),
-      .radius = f.get<double>(U"radius"),
-      .damage = f.get<int32>(U"damage"),
-      .bulletSpeed = f.get<double>(U"bullet_speed"),
-      .spawnHeight = f.get<double>(U"spawn_height"),
-      .staminaCost = f.get<int32>(U"stamina_cost"),
-  });
+  return f.wrap(
+      RangedConfig{
+          .reach = f.get<double>(U"reach"),
+          .radius = f.get<double>(U"radius"),
+          .damage = f.get<int32>(U"damage"),
+          .bulletSpeed = f.get<double>(U"bullet_speed"),
+          .spawnHeight = f.get<double>(U"spawn_height"),
+          .staminaCost = f.get<int32>(U"stamina_cost"),
+      }
+  );
 }
 
 /// @brief TOML からダッシュの設定値を生成する
@@ -168,11 +179,13 @@ namespace {
   }
 
   TomlFields f{d, U"PlayerConfig::ParseDash", U"dash"};
-  return f.wrap(DashConfig{
-      .speed = f.get<double>(U"speed"),
-      .timeline = *std::move(timeline),
-      .staminaCost = f.get<int32>(U"stamina_cost"),
-  });
+  return f.wrap(
+      DashConfig{
+          .speed = f.get<double>(U"speed"),
+          .timeline = *std::move(timeline),
+          .staminaCost = f.get<int32>(U"stamina_cost"),
+      }
+  );
 }
 
 /// @brief TOML からダッシュ攻撃の設定値を生成する
@@ -185,14 +198,16 @@ namespace {
   }
 
   TomlFields f{da, U"PlayerConfig::ParseDashAttack", U"dash_attack"};
-  return f.wrap(DashAttackConfig{
-      .timeline = *std::move(timeline),
-      .speed = f.get<double>(U"speed"),
-      .orbitRadius = f.get<double>(U"orbit_radius"),
-      .radius = f.get<double>(U"radius"),
-      .damage = f.get<int32>(U"damage"),
-      .hitstopSec = f.get<double>(U"hitstop_sec"),
-  });
+  return f.wrap(
+      DashAttackConfig{
+          .timeline = *std::move(timeline),
+          .speed = f.get<double>(U"speed"),
+          .orbitRadius = f.get<double>(U"orbit_radius"),
+          .radius = f.get<double>(U"radius"),
+          .damage = f.get<int32>(U"damage"),
+          .hitstopSec = f.get<double>(U"hitstop_sec"),
+      }
+  );
 }
 
 /// @brief TOML から空中攻撃の設定値を生成する
@@ -205,13 +220,15 @@ namespace {
   }
 
   TomlFields f{aa, U"PlayerConfig::ParseAirAttack", U"air_attack"};
-  return f.wrap(AirAttackConfig{
-      .timeline = *std::move(timeline),
-      .orbitRadius = f.get<double>(U"orbit_radius"),
-      .radius = f.get<double>(U"radius"),
-      .damage = f.get<int32>(U"damage"),
-      .hitstopSec = f.get<double>(U"hitstop_sec"),
-  });
+  return f.wrap(
+      AirAttackConfig{
+          .timeline = *std::move(timeline),
+          .orbitRadius = f.get<double>(U"orbit_radius"),
+          .radius = f.get<double>(U"radius"),
+          .damage = f.get<int32>(U"damage"),
+          .hitstopSec = f.get<double>(U"hitstop_sec"),
+      }
+  );
 }
 
 /// @brief TOML からスタミナ回復の設定値を生成する
@@ -219,10 +236,12 @@ namespace {
     const TOMLValue& s
 ) {
   TomlFields f{s, U"PlayerConfig::ParseStamina", U"stamina"};
-  return f.wrap(StaminaConfig{
-      .recoveryDelay = f.get<double>(U"recovery_delay"),
-      .recoveryRate = f.get<double>(U"recovery_rate"),
-  });
+  return f.wrap(
+      StaminaConfig{
+          .recoveryDelay = f.get<double>(U"recovery_delay"),
+          .recoveryRate = f.get<double>(U"recovery_rate"),
+      }
+  );
 }
 
 /// @brief TOML から着地硬直の設定値を生成する
@@ -230,9 +249,11 @@ namespace {
     const TOMLValue& l
 ) {
   TomlFields f{l, U"PlayerConfig::ParseLanding", U"landing"};
-  return f.wrap(LandingConfig{
-      .recoverySec = f.get<double>(U"recovery_sec"),
-  });
+  return f.wrap(
+      LandingConfig{
+          .recoverySec = f.get<double>(U"recovery_sec"),
+      }
+  );
 }
 
 /// @brief TOML から攻撃演出共通の設定値を生成する
@@ -240,9 +261,11 @@ namespace {
     const TOMLValue& ae
 ) {
   TomlFields f{ae, U"PlayerConfig::ParseAttackEffect", U"attack_effect"};
-  return f.wrap(AttackEffectConfig{
-      .fadeSec = f.get<double>(U"fade_sec"),
-  });
+  return f.wrap(
+      AttackEffectConfig{
+          .fadeSec = f.get<double>(U"fade_sec"),
+      }
+  );
 }
 
 /// @brief TOML からプレイヤー設定を生成する
@@ -281,19 +304,21 @@ namespace {
   }
 
   TomlFields f{toml, U"PlayerConfig::Parse"};
-  return f.wrap(PlayerConfig{
-      .speed = f.get<double>(U"speed"),
-      .jumpSpeed = f.get<double>(U"jump_speed"),
-      .gravity = f.get<double>(U"gravity"),
-      .melee = *std::move(melee),
-      .ranged = *std::move(ranged),
-      .dash = *std::move(dash),
-      .dashAttack = *std::move(dashAttack),
-      .airAttack = *std::move(airAttack),
-      .stamina = *std::move(stamina),
-      .landing = *std::move(landing),
-      .attackEffect = *std::move(attackEffect),
-  });
+  return f.wrap(
+      PlayerConfig{
+          .speed = f.get<double>(U"speed"),
+          .jumpSpeed = f.get<double>(U"jump_speed"),
+          .gravity = f.get<double>(U"gravity"),
+          .melee = *std::move(melee),
+          .ranged = *std::move(ranged),
+          .dash = *std::move(dash),
+          .dashAttack = *std::move(dashAttack),
+          .airAttack = *std::move(airAttack),
+          .stamina = *std::move(stamina),
+          .landing = *std::move(landing),
+          .attackEffect = *std::move(attackEffect),
+      }
+  );
 }
 
 }  // namespace

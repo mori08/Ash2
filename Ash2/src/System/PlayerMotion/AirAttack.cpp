@@ -24,8 +24,9 @@ Vec3 AirAttackOrbOffset(
     double progress, const AirAttackConfig& aa, double capMidH, bool facingRight
 ) {
   const double angle = Math::TwoPi * progress;
-  const double w = facingRight ? aa.orbitRadius * Math::Cos(angle)
-                               : -aa.orbitRadius * Math::Cos(angle);
+  const double w =
+      facingRight ? aa.orbitRadius * Math::Cos(angle)
+                  : -aa.orbitRadius * Math::Cos(angle);
   return Vec3{w, capMidH - aa.orbitRadius * Math::Sin(angle), 0.0};
 }
 
