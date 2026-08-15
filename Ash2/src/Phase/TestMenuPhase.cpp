@@ -32,7 +32,7 @@ void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
   m_selectedIndex = 0;
 }
 
-IPhase::PhaseCommand TestMenuPhase::update(
+PhaseCommand TestMenuPhase::update(
     entt::registry& registry, const FrameData& /*frameData*/
 ) {
   if (KeyUp.down()) {
@@ -44,7 +44,7 @@ IPhase::PhaseCommand TestMenuPhase::update(
 
   if (KeyEnter.down() && !m_items.empty()) {
     auto phase = m_items[m_selectedIndex].create(registry);
-    return PhaseCommand::Push(std::move(phase));
+    return PhaseCommand::Push{.nextPhase = std::move(phase)};
   }
 
   Scene::SetBackground(ColorF{kBgBrightness});
@@ -59,5 +59,5 @@ IPhase::PhaseCommand TestMenuPhase::update(
         );
   }
 
-  return PhaseCommand::None();
+  return PhaseCommand::None{};
 }

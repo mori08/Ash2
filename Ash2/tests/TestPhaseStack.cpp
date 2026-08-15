@@ -13,11 +13,18 @@ struct PhaseSpy {
   int32 updateCount = 0;
 };
 
+/// @brief MockPhase が update() で返すコマンドの種類
+enum class MockCommand : uint8 {
+  None,
+  Pop,
+  Push,
+  Reset,
+};
+
 class MockPhase : public IPhase {
  public:
   explicit MockPhase(
-      std::shared_ptr<PhaseSpy> spy,
-      PhaseCommand::Type cmd = PhaseCommand::Type::None,
+      std::shared_ptr<PhaseSpy> spy, MockCommand cmd = MockCommand::None,
       std::unique_ptr<IPhase> next = nullptr
   )
       : m_spy(std::move(spy)), m_cmd(cmd), m_next(std::move(next)) {}
@@ -28,21 +35,21 @@ class MockPhase : public IPhase {
   PhaseCommand update(entt::registry&, const FrameData&) override {
     m_spy->updateCount++;
     switch (m_cmd) {
-      case PhaseCommand::Type::None:
-        return PhaseCommand::None();
-      case PhaseCommand::Type::Pop:
-        return PhaseCommand::Pop();
-      case PhaseCommand::Type::Push:
-        return PhaseCommand::Push(std::move(m_next));
-      case PhaseCommand::Type::Reset:
-        return PhaseCommand::Reset(std::move(m_next));
+      case MockCommand::None:
+        return PhaseCommand::None{};
+      case MockCommand::Pop:
+        return PhaseCommand::Pop{};
+      case MockCommand::Push:
+        return PhaseCommand::Push{.nextPhase = std::move(m_next)};
+      case MockCommand::Reset:
+        return PhaseCommand::Reset{.nextPhase = std::move(m_next)};
     }
-    return PhaseCommand::None();
+    return PhaseCommand::None{};
   }
 
  private:
   std::shared_ptr<PhaseSpy> m_spy;
-  PhaseCommand::Type m_cmd;
+  MockCommand m_cmd;
   std::unique_ptr<IPhase> m_next;
 };
 
@@ -64,8 +71,7 @@ TEST_CASE("PhaseStack - Pop command calls onBeforePop and removes phase") {
   entt::registry registry;
   auto spy = std::make_shared<PhaseSpy>();
   PhaseStack stack{
-      std::make_unique<MockPhase>(spy, IPhase::PhaseCommand::Type::Pop),
-      registry
+      std::make_unique<MockPhase>(spy, MockCommand::Pop), registry
   };
 
   REQUIRE(spy->beforePopCount == 0);
@@ -82,8 +88,7 @@ TEST_CASE("PhaseStack - Push command calls onAfterPush on new phase") {
   auto spy2 = std::make_shared<PhaseSpy>();
   PhaseStack stack{
       std::make_unique<MockPhase>(
-          spy1, IPhase::PhaseCommand::Type::Push,
-          std::make_unique<MockPhase>(spy2)
+          spy1, MockCommand::Push, std::make_unique<MockPhase>(spy2)
       ),
       registry
   };
@@ -101,8 +106,7 @@ TEST_CASE("PhaseStack - Reset command pops all phases then pushes new phase") {
   auto spy2 = std::make_shared<PhaseSpy>();
   PhaseStack stack{
       std::make_unique<MockPhase>(
-          spy1, IPhase::PhaseCommand::Type::Reset,
-          std::make_unique<MockPhase>(spy2)
+          spy1, MockCommand::Reset, std::make_unique<MockPhase>(spy2)
       ),
       registry
   };
@@ -116,8 +120,7 @@ TEST_CASE("PhaseStack - update on empty stack does nothing") {
   entt::registry registry;
   auto spy = std::make_shared<PhaseSpy>();
   PhaseStack stack{
-      std::make_unique<MockPhase>(spy, IPhase::PhaseCommand::Type::Pop),
-      registry
+      std::make_unique<MockPhase>(spy, MockCommand::Pop), registry
   };
 
   stack.update(registry, FrameData{});
