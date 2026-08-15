@@ -49,11 +49,11 @@ void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
   AnimationSystem::Update(registry, 0.0);
 }
 
-IPhase::PhaseCommand AnimationViewerPhase::update(
+PhaseCommand AnimationViewerPhase::update(
     entt::registry& registry, const FrameData& frameData
 ) {
   if (KeyEscape.down()) {
-    return PhaseCommand::Pop();
+    return PhaseCommand::Pop{};
   }
 
   if (!m_clips.empty()) {
@@ -98,7 +98,7 @@ IPhase::PhaseCommand AnimationViewerPhase::update(
   m_font(U"← → : clip  F : flip  Esc : back")
       .draw(kTitleX, kHintY, Palette::Gray);
 
-  return PhaseCommand::None();
+  return PhaseCommand::None{};
 }
 
 void AnimationViewerPhase::onBeforePop(entt::registry& registry) {

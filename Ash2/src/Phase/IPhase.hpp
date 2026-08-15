@@ -2,42 +2,52 @@
 
 #include <Siv3D.hpp>
 
+#include <concepts>
 #include <entt/entt.hpp>
+#include <type_traits>
+#include <variant>
 
 #include "Phase/FrameData.hpp"
+
+class IPhase;
+
+/// @brief フェーズスタックへの操作
+class PhaseCommand {
+ public:
+  /// @brief 何もしない
+  struct None {};
+
+  /// @brief スタックから取り出す
+  struct Pop {};
+
+  /// @brief フェーズを積む
+  struct Push {
+    std::unique_ptr<IPhase> nextPhase;
+  };
+
+  /// @brief スタックをクリアして積む
+  struct Reset {
+    std::unique_ptr<IPhase> nextPhase;
+  };
+
+  using Value = std::variant<None, Pop, Push, Reset>;
+
+  /// @brief 要素型（None / Pop / Push / Reset）から暗黙に構築する
+  template <class T>
+    requires(!std::same_as<std::remove_cvref_t<T>, PhaseCommand>) &&
+            std::constructible_from<Value, T>
+  PhaseCommand(T&& command) : m_command(std::forward<T>(command)) {}
+
+  [[nodiscard]] Value& value() { return m_command; }
+  [[nodiscard]] const Value& value() const { return m_command; }
+
+ private:
+  Value m_command;
+};
 
 /// @brief フェーズの基底クラス
 class IPhase {
  public:
-  /// @brief フェーズスタックへの操作を表す構造体
-  struct PhaseCommand {
-    /// @brief 操作の種類
-    enum class Type : uint8 {
-      None,
-      Pop,
-      Push,
-      Reset,
-    };
-
-    Type type;
-    /// 次のフェーズ（Push / Reset 時のみ有効）
-    std::unique_ptr<IPhase> nextPhase;
-
-    /// @brief 何もしないコマンドを返す
-    [[nodiscard]] static PhaseCommand None();
-
-    /// @brief スタックから取り出すコマンドを返す
-    [[nodiscard]] static PhaseCommand Pop();
-
-    /// @brief スタックにフェーズを積むコマンドを返す
-    /// @param phase 次のフェーズ（nullptr 不可）
-    [[nodiscard]] static PhaseCommand Push(std::unique_ptr<IPhase>&& phase);
-
-    /// @brief スタックをクリアしてフェーズを積むコマンドを返す
-    /// @param phase 次のフェーズ（nullptr 不可）
-    [[nodiscard]] static PhaseCommand Reset(std::unique_ptr<IPhase>&& phase);
-  };
-
   virtual ~IPhase() = default;
 
   /// @brief スタックに積まれた直後に呼ばれる
@@ -50,25 +60,3 @@ class IPhase {
   /// @brief スタックから取り出される直前に呼ばれる
   virtual void onBeforePop(entt::registry&) {}
 };
-
-inline IPhase::PhaseCommand IPhase::PhaseCommand::None() {
-  return {.type = Type::None, .nextPhase = nullptr};
-}
-
-inline IPhase::PhaseCommand IPhase::PhaseCommand::Pop() {
-  return {.type = Type::Pop, .nextPhase = nullptr};
-}
-
-inline IPhase::PhaseCommand IPhase::PhaseCommand::Push(
-    std::unique_ptr<IPhase>&& phase
-) {
-  assert(phase != nullptr);
-  return {.type = Type::Push, .nextPhase = std::move(phase)};
-}
-
-inline IPhase::PhaseCommand IPhase::PhaseCommand::Reset(
-    std::unique_ptr<IPhase>&& phase
-) {
-  assert(phase != nullptr);
-  return {.type = Type::Reset, .nextPhase = std::move(phase)};
-}

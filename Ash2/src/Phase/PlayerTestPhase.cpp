@@ -98,7 +98,7 @@ entt::entity PlayerTestPhase::spawnEnemy(entt::registry& registry) {
   return enemy;
 }
 
-IPhase::PhaseCommand PlayerTestPhase::update(
+PhaseCommand PlayerTestPhase::update(
     entt::registry& registry, const FrameData& frameData
 ) {
   const double dt = frameData.dt;
@@ -134,10 +134,10 @@ IPhase::PhaseCommand PlayerTestPhase::update(
   }
 
   if (KeyEscape.down()) {
-    return PhaseCommand::Pop();
+    return PhaseCommand::Pop{};
   }
 
-  return PhaseCommand::None();
+  return PhaseCommand::None{};
 }
 
 void PlayerTestPhase::reloadPlayer(entt::registry& registry) {

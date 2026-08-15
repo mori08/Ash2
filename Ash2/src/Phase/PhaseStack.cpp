@@ -1,5 +1,7 @@
 #include "Phase/PhaseStack.hpp"
 
+#include "Util/Overloaded.hpp"
+
 PhaseStack::PhaseStack(
     std::unique_ptr<IPhase>&& initialPhase, entt::registry& registry
 ) {
@@ -13,27 +15,22 @@ void PhaseStack::update(entt::registry& registry, const FrameData& frameData) {
 
   auto command = m_stack.back()->update(registry, frameData);
 
-  switch (command.type) {
-    case IPhase::PhaseCommand::Type::None:
-      break;
-
-    case IPhase::PhaseCommand::Type::Pop:
-      pop(registry);
-      break;
-
-    case IPhase::PhaseCommand::Type::Push:
-      assert(command.nextPhase != nullptr);
-      push(registry, std::move(command.nextPhase));
-      break;
-
-    case IPhase::PhaseCommand::Type::Reset:
-      assert(command.nextPhase != nullptr);
-      while (not m_stack.empty()) {
-        pop(registry);
-      }
-      push(registry, std::move(command.nextPhase));
-      break;
-  }
+  std::visit(
+      Overloaded{
+          [](const PhaseCommand::None&) {},
+          [&](const PhaseCommand::Pop&) { pop(registry); },
+          [&](PhaseCommand::Push& cmd) {
+            push(registry, std::move(cmd.nextPhase));
+          },
+          [&](PhaseCommand::Reset& cmd) {
+            while (not m_stack.empty()) {
+              pop(registry);
+            }
+            push(registry, std::move(cmd.nextPhase));
+          },
+      },
+      command.value()
+  );
 }
 
 void PhaseStack::pop(entt::registry& registry) {

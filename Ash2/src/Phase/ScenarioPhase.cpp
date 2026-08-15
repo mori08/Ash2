@@ -8,13 +8,13 @@ ScenarioPhase::ScenarioPhase(const Param& param)
 
 void ScenarioPhase::onAfterPush(entt::registry&) { m_currentStep = 0; }
 
-IPhase::PhaseCommand ScenarioPhase::update(
+PhaseCommand ScenarioPhase::update(
     entt::registry& registry, const FrameData& /*frameData*/
 ) {
   const auto& steps =
       registry.ctx().get<ScenarioData>().sections.at(m_sectionName);
   if (m_currentStep >= steps.size()) {
-    return PhaseCommand::Pop();
+    return PhaseCommand::Pop{};
   }
 
   const auto& step = steps[m_currentStep];
@@ -22,11 +22,11 @@ IPhase::PhaseCommand ScenarioPhase::update(
 
   return std::visit(
       Overloaded{
-          [&](const StepPush& s) {
-            return PhaseCommand::Push(s.maker->make());
+          [&](const StepPush& s) -> PhaseCommand {
+            return PhaseCommand::Push{.nextPhase = s.maker->make()};
           },
-          [&](const StepReset& s) {
-            return PhaseCommand::Reset(s.maker->make());
+          [&](const StepReset& s) -> PhaseCommand {
+            return PhaseCommand::Reset{.nextPhase = s.maker->make()};
           },
       },
       step
