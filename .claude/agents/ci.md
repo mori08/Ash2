@@ -1,8 +1,8 @@
 ---
 name: ci
-description: TODO 確認・format・tidy・build・test を順番に実行し、OK または NG レポートを返す（implement-issue の CI サブエージェント）
+description: format・tidy・build・test を実行し、通過後に rule-review と review を起動して結果を集約する（implement-issue の CI サブエージェント）
 model: sonnet
-tools: Grep, Bash(./tools/run-format.sh:*), Bash(./tools/run-tidy.sh:*), Bash(./tools/build.sh:*), Bash(./tools/run-tests.sh:*)
+tools: Read, Glob, Grep, Agent, Bash(./tools/run-format.sh:*), Bash(./tools/run-tidy.sh:*), Bash(./tools/build.sh:*), Bash(./tools/run-tests.sh:*)
 ---
 
 You are a local CI agent.
@@ -55,18 +55,49 @@ If the terminal output is insufficient to diagnose a failure, read `logs/build.l
 
 The script exits with code 0 on pass, non-zero on failure. Determine pass/fail from the exit code.
 
+### 6. Rule compliance
+
+Read the frontmatter of every `.claude/rules/*.md`.
+Target the rules whose `paths` match a file in the prompt's file list and that have a `review` key.
+
+Launch the Agent tool (`subagent_type: rule-review`) once per section listed under `review`,
+all in a single message.
+Each prompt gets the rule file path, the section name, and the paths the section links as 必読.
+
+Wait for every agent. Any NG is a failure — report every NG together.
+
+### 7. Review
+
+Launch the Agent tool (`subagent_type: review`) × 1, passing the issue number and issue body from the
+prompt, which of steps 1–6 ran, and the rule file paths and section names targeted in step 6.
+
+A NG is a failure.
+
 ## Output
 
-**OK:** All steps passed. Output one line: `CI: OK`
+List every step reached, one line each, ending at the step that failed.
 
-**NG:** A step failed. Output a NG report:
+```
+<n>. <step name>: OK | Skip | NG
+```
+
+**OK:** All steps passed.
+
+```
+CI: OK
+
+## Steps
+<step lines>
+```
+
+**NG:** A step failed.
 
 ```
 CI: NG
 
-## Failed step
-<step name>
+## Steps
+<step lines>
 
 ## Output
-<relevant error output — trimmed to essential lines>
+<script output, trimmed to essential lines — or the sub-agent report, quoted verbatim>
 ```

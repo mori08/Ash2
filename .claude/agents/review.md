@@ -1,6 +1,6 @@
 ---
 name: review
-description: ローカルの変更差分をレビューし、OK または NG レポートを返す（implement-issue の Review サブエージェント）
+description: 変更差分を広くレビューし、OK または NG レポートを返す（ci サブエージェントから起動）
 model: opus
 tools: Bash(git diff:*), Bash(git status:*), Read
 ---
@@ -21,21 +21,14 @@ Untracked files do not appear in the diff — Read each `??` file in full and re
 
 ### 2. Review
 
-Focus on what automated tools cannot catch:
+The prompt names the checks that already ran on this diff. Do not report anything they cover.
+For clang-tidy, the covered set is every check enabled in `Ash2/.clang-tidy` (`WarningsAsErrors: '*'`).
 
-**Correctness**
-- Bugs and logic errors
-- Undefined behavior, memory safety issues
-- Resource leaks, lifetime issues
+Report what those leave behind: problems whose criteria no written rule captures.
+Do not narrow the scope to a checklist — design, correctness, and anything else you notice are all in scope.
 
-**Modern C++ (C++latest)**
-- Standard library features that could replace manual implementations
-- Unnecessary raw loops, pointer arithmetic, or manual memory management
-
-**Design**
-- Is there a simpler or more idiomatic way to achieve the same result?
-- Unnecessary copies or allocations (missing `const&`, `std::move`, `std::forward`)
-- Overly complex logic that could be simplified
+The prompt gives the issue this diff is meant to solve. Judge the implementation against it.
+Do not treat the chosen approach as given.
 
 Use `Read` to look up surrounding context if the diff alone is insufficient to judge.
 
