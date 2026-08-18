@@ -19,17 +19,19 @@
 
 ```
 Ash2/src/
-├── Main.cpp             # エントリポイント・ゲームループ
-├── GameSetup.hpp/.cpp   # registry 初期化・設定リロード
-├── Asset.hpp            # アセット登録・パス解決ユーティリティ
-├── Debug.hpp            # APP_LOG マクロ等のデバッグ用ユーティリティ
-├── Component/           # ECS コンポーネント（データのみ）
-├── Config/              # TOML 設定データ（FromToml 付き構造体）
-├── Input/               # 入力抽象化
-├── Phase/               # フェーズ管理（ゲーム状態機械）
-├── System/              # ECS システム（ロジックのみ）
-│   └── PlayerMotion/    # PlayerMotionSystem の状態別 Tick() 実装
-└── Util/                # フレームワーク非依存の汎用ヘルパー
+├── Main.cpp              # エントリポイント・ゲームループ
+├── GameSetup.hpp/.cpp    # registry 初期化・設定リロード
+├── Asset.hpp             # アセット登録・パス解決ユーティリティ
+├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
+├── FatalError.hpp        # 致命エラーの型（分類と詳細）
+├── CrashHandler.hpp/.cpp # 致命エラーの記録・表示・終了
+├── Component/            # ECS コンポーネント（データのみ）
+├── Config/               # TOML 設定データ（FromToml 付き構造体）
+├── Input/                # 入力抽象化
+├── Phase/                # フェーズ管理（ゲーム状態機械）
+├── System/               # ECS システム（ロジックのみ）
+│   └── PlayerMotion/     # PlayerMotionSystem の状態別 Tick() 実装
+└── Util/                 # フレームワーク非依存の汎用ヘルパー
 ```
 
 ---
@@ -59,7 +61,7 @@ Config は最下層で、System からは `registry.ctx()` 経由でのみ読ま
 
 Debug ビルドでは `Console.open()` で起動し、環境変数 `ASH2_RUN_TESTS` が設定されている場合は
 ゲームループに入らず Catch2 のテストランナーを実行して終了する（`tools/run-tests.sh` 経由）。
-未捕捉の `std::exception` は `crash.log` に追記してから再 throw する。
+致命エラーは `crash.log` に記録し、非0の終了コードで終了する。
 
 ### 遷移は「値」として返す
 
@@ -182,8 +184,6 @@ Debug ビルドでは F5（`InputState::reloadConfig`）で再読込でき、`Pl
 
 ## 設計上の原則
 
-- **ビルドは `tools/build.sh`、実行は `tools/run.sh` で行う。** デバッガを使った調査は
-  ユーザーが Visual Studio 2022 で行う
 - **破棄は親から。** `Hierarchy` を持つエンティティは `Hierarchy::DestroyWithChildren` で破棄し、
   子（攻撃判定の珠）が孤児になるのを防ぐ。独立エンティティ（弾、フェード中に親から
   `Detach` された珠）はタグ（`Projectile`/`FadeOut`）で検索して個別に破棄する
@@ -193,7 +193,7 @@ Debug ビルドでは F5（`InputState::reloadConfig`）で再読込でき、`Pl
   後隙A＝キャンセル不可／後隙B＝キャンセル可）の4区間で表し、区間判定をアクションごとに書かない
 - **入力はテストしやすい型に落とす。** `InputState` は `Key` や `TOMLValue` のような実行環境に
   依存する型を持ち込まない。デバイス差は `InputDeviceSelector` で吸収する
-- **エラー処理は層で使い分ける。** ゲームループ内（`Tick` / System）では投げない。設定読み込みは
-  `std::expected` で伝播させ、`GameSetup` が呼ぶ最上位境界でのみ致命として `throw` する
+- **失敗は値で返す。** 下位は `Optional` / `std::expected` で伝播させ、回復しないと決めた側が
+  `FatalError` を投げる。捕捉は `Main()` のみ（[ERROR_HANDLING.md](coding_style/ERROR_HANDLING.md)）
 - **`Name` は構築後不変。** `NameLookup` が構築・破棄シグナルでのみ同期されるため
 - **ファイル追加時は `Ash2.vcxproj` と `.filters` も更新する**
