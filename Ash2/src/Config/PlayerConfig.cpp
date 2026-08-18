@@ -268,8 +268,11 @@ namespace {
   );
 }
 
-/// @brief TOML からプレイヤー設定を生成する
-[[nodiscard]] std::expected<PlayerConfig, String> Parse(const TOMLValue& toml) {
+}  // namespace
+
+std::expected<PlayerConfig, String> PlayerConfig::FromToml(
+    const TOMLValue& toml
+) {
   auto melee = ParseMelee(toml[U"melee"]);
   if (!melee) {
     return std::unexpected{std::move(melee).error()};
@@ -303,7 +306,7 @@ namespace {
     return std::unexpected{std::move(attackEffect).error()};
   }
 
-  TomlFields f{toml, U"PlayerConfig::Parse"};
+  TomlFields f{toml, U"PlayerConfig::FromToml"};
   return f.wrap(
       PlayerConfig{
           .speed = f.get<double>(U"speed"),
@@ -319,17 +322,4 @@ namespace {
           .attackEffect = *std::move(attackEffect),
       }
   );
-}
-
-}  // namespace
-
-PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
-  auto parsed = Parse(toml);
-  if (!parsed) {
-    // Why not: Parse からの失敗は expected で伝播してくるが、ここは設定
-    // 読み込みの最上位境界であり、呼び出し元の GameSetup は expected を
-    // 扱わない設計のため throw で致命として確定させる。
-    throw Error{std::move(parsed).error()};
-  }
-  return *std::move(parsed);
 }

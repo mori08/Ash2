@@ -31,7 +31,12 @@ void Run() {
   Scene::SetTextureFilter(TextureFilter::Nearest);
 
   entt::registry registry;
-  InitializeRegistry(registry);
+  if (auto result = InitializeRegistry(registry); !result) {
+    throw FatalError{
+        .reason = FatalReason::ConfigInvalid,
+        .detail = std::move(result).error(),
+    };
+  }
 
   InputDeviceSelector inputSelector;
 
