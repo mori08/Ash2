@@ -1,6 +1,8 @@
 #pragma once
 #include <Siv3D.hpp>
 
+#include <expected>
+
 /// @brief 攻撃・ダッシュ系アクション共通の4区間タイムライン
 ///
 /// 構え（windup）・攻撃/移動（active）・後隙A（recoveryA、キャンセル不可）・
@@ -193,5 +195,7 @@ struct PlayerConfig {
   AttackEffectConfig attackEffect;
 
   /// @brief TOML からプレイヤー設定を生成する
-  [[nodiscard]] static PlayerConfig FromToml(const TOMLValue& toml);
+  [[nodiscard]] static std::expected<PlayerConfig, String> FromToml(
+      const TOMLValue& toml
+  );
 };

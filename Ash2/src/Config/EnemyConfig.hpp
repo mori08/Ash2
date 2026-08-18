@@ -1,6 +1,8 @@
 #pragma once
 #include <Siv3D.hpp>
 
+#include <expected>
+
 /// @brief 敵の設定値
 struct EnemyConfig {
   /// 最大HP
@@ -35,5 +37,7 @@ struct EnemyConfig {
   double respawnSec;
 
   /// @brief TOML から敵設定を生成する
-  [[nodiscard]] static EnemyConfig FromToml(const TOMLValue& toml);
+  [[nodiscard]] static std::expected<EnemyConfig, String> FromToml(
+      const TOMLValue& toml
+  );
 };

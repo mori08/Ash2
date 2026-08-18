@@ -20,24 +20,25 @@ TEST_CASE("EnemyConfig::FromToml - parses all fields correctly") {
       "defeated_sec = 0.50\n"
       "respawn_sec = 1.00\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  const EnemyConfig cfg = EnemyConfig::FromToml(reader);
-  REQUIRE(cfg.maxHp == 100);
-  REQUIRE(cfg.size.x == 60.0);
-  REQUIRE(cfg.size.y == 80.0);
-  REQUIRE(cfg.capsuleRadius == 30.0);
-  REQUIRE(cfg.capsuleHeight == 80.0);
-  REQUIRE(cfg.spawnW == 150.0);
-  REQUIRE(cfg.staggerSec == 0.15);
-  REQUIRE(cfg.repelSpeed == 250.0);
-  REQUIRE(cfg.repelSec == 0.20);
-  REQUIRE(cfg.blowSpeedW == 300.0);
-  REQUIRE(cfg.blowSpeedH == 300.0);
-  REQUIRE(cfg.knockbackSec == 1.00);
-  REQUIRE(cfg.defeatedSec == 0.50);
-  REQUIRE(cfg.respawnSec == 1.00);
+  const auto cfg = EnemyConfig::FromToml(reader);
+  REQUIRE(cfg.has_value());
+  REQUIRE(cfg->maxHp == 100);
+  REQUIRE(cfg->size.x == 60.0);
+  REQUIRE(cfg->size.y == 80.0);
+  REQUIRE(cfg->capsuleRadius == 30.0);
+  REQUIRE(cfg->capsuleHeight == 80.0);
+  REQUIRE(cfg->spawnW == 150.0);
+  REQUIRE(cfg->staggerSec == 0.15);
+  REQUIRE(cfg->repelSpeed == 250.0);
+  REQUIRE(cfg->repelSec == 0.20);
+  REQUIRE(cfg->blowSpeedW == 300.0);
+  REQUIRE(cfg->blowSpeedH == 300.0);
+  REQUIRE(cfg->knockbackSec == 1.00);
+  REQUIRE(cfg->defeatedSec == 0.50);
+  REQUIRE(cfg->respawnSec == 1.00);
 }
 
-TEST_CASE("EnemyConfig::FromToml - missing max_hp throws Error") {
+TEST_CASE("EnemyConfig::FromToml - missing max_hp returns unexpected") {
   constexpr std::string_view kToml =
       "size_w = 60.0\n"
       "size_h = 80.0\n"
@@ -53,7 +54,7 @@ TEST_CASE("EnemyConfig::FromToml - missing max_hp throws Error") {
       "defeated_sec = 0.50\n"
       "respawn_sec = 1.00\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_THROWS_AS(EnemyConfig::FromToml(reader), Error);
+  REQUIRE_FALSE(EnemyConfig::FromToml(reader).has_value());
 }
 
 #endif

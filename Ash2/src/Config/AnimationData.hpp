@@ -1,6 +1,8 @@
 #pragma once
 #include <Siv3D.hpp>
 
+#include <expected>
+
 /// @brief スプライトシート上の1アニメーションクリップ
 struct AnimationClip {
   /// スプライトシート上の行番号（0始まり）
@@ -21,7 +23,9 @@ struct AnimationData {
   HashTable<String, AnimationClip> clips;
 
   /// @brief TOML からアニメーションデータを生成する
-  [[nodiscard]] static AnimationData FromToml(const TOMLValue& toml);
+  [[nodiscard]] static std::expected<AnimationData, String> FromToml(
+      const TOMLValue& toml
+  );
 };
 
 /// @brief アニメーションデータレジストリ（registry.ctx() に格納）

@@ -47,7 +47,7 @@ namespace {
 
 }  // namespace
 
-ScenarioData ScenarioData::FromToml(
+std::expected<ScenarioData, String> ScenarioData::FromToml(
     const TOMLValue& toml, const PhaseLoaderTable& loaders
 ) {
   ScenarioData data;
@@ -57,11 +57,7 @@ ScenarioData ScenarioData::FromToml(
     for (const auto& step : member.value.tableArrayView()) {
       auto parsed = ParseStep(step, loaders);
       if (!parsed) {
-        // Why not: ParseStep からの失敗は expected で伝播してくるが、
-        // ここは設定読み込みの最上位境界であり、呼び出し元の
-        // GameSetup は expected を扱わない設計のため throw
-        // で致命として確定させる。
-        throw Error{std::move(parsed).error()};
+        return std::unexpected{std::move(parsed).error()};
       }
       steps.push_back(*std::move(parsed));
     }

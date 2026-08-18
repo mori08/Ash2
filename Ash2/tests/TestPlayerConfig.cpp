@@ -1,7 +1,6 @@
 #ifdef _DEBUG
 #include <ThirdParty/Catch2/catch.hpp>
 #include <string>
-#include <tuple>
 
 #include "Config/PlayerConfig.hpp"
 
@@ -83,69 +82,66 @@ constexpr std::string_view kFullToml =
 
 TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   const TOMLReader reader{MemoryViewReader{kFullToml.data(), kFullToml.size()}};
-  const PlayerConfig cfg = PlayerConfig::FromToml(reader);
-  REQUIRE(cfg.speed == 150.0);
-  REQUIRE(cfg.jumpSpeed == 400.0);
-  REQUIRE(cfg.gravity == 900.0);
-  REQUIRE(cfg.melee.capMidH == 30.0);
-  REQUIRE(cfg.melee.reach == 60.0);
-  REQUIRE(cfg.melee.damage == 20);
-  REQUIRE(cfg.melee.chain.size() == 1);
-  REQUIRE(cfg.melee.chain[0].trajectory == MeleeTrajectory::Thrust);
-  REQUIRE(cfg.melee.chain[0].radius == 20.0);
-  REQUIRE(cfg.melee.finisher.swing.trajectory == MeleeTrajectory::Thrust);
-  REQUIRE(cfg.melee.finisher.swing.radius == 25.0);
-  REQUIRE(cfg.melee.finisher.lightCount == 2);
-  REQUIRE(cfg.melee.finisher.lightGap == 36.0);
-  REQUIRE(cfg.ranged.damage == 15);
-  REQUIRE(cfg.dash.speed == 600.0);
-  REQUIRE(cfg.dashAttack.damage == 25);
-  REQUIRE(cfg.airAttack.damage == 25);
-  REQUIRE(cfg.stamina.recoveryRate == 0.5);
-  REQUIRE(cfg.landing.recoverySec == 0.20);
-  REQUIRE(cfg.attackEffect.fadeSec == 0.30);
+  const auto cfg = PlayerConfig::FromToml(reader);
+  REQUIRE(cfg.has_value());
+  REQUIRE(cfg->speed == 150.0);
+  REQUIRE(cfg->jumpSpeed == 400.0);
+  REQUIRE(cfg->gravity == 900.0);
+  REQUIRE(cfg->melee.capMidH == 30.0);
+  REQUIRE(cfg->melee.reach == 60.0);
+  REQUIRE(cfg->melee.damage == 20);
+  REQUIRE(cfg->melee.chain.size() == 1);
+  REQUIRE(cfg->melee.chain[0].trajectory == MeleeTrajectory::Thrust);
+  REQUIRE(cfg->melee.chain[0].radius == 20.0);
+  REQUIRE(cfg->melee.finisher.swing.trajectory == MeleeTrajectory::Thrust);
+  REQUIRE(cfg->melee.finisher.swing.radius == 25.0);
+  REQUIRE(cfg->melee.finisher.lightCount == 2);
+  REQUIRE(cfg->melee.finisher.lightGap == 36.0);
+  REQUIRE(cfg->ranged.damage == 15);
+  REQUIRE(cfg->dash.speed == 600.0);
+  REQUIRE(cfg->dashAttack.damage == 25);
+  REQUIRE(cfg->airAttack.damage == 25);
+  REQUIRE(cfg->stamina.recoveryRate == 0.5);
+  REQUIRE(cfg->landing.recoverySec == 0.20);
+  REQUIRE(cfg->attackEffect.fadeSec == 0.30);
 }
 
-TEST_CASE("PlayerConfig::FromToml - missing melee.chain throws Error") {
+TEST_CASE("PlayerConfig::FromToml - missing melee.chain returns unexpected") {
   constexpr std::string_view kToml =
       "speed = 150.0\n"
       "jump_speed = 400.0\n"
       "gravity = 900.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
 }
 
-TEST_CASE("PlayerConfig::FromToml - missing speed throws Error") {
+TEST_CASE("PlayerConfig::FromToml - missing speed returns unexpected") {
   std::string toml{kFullToml};
   const auto pos = toml.find("speed = 150.0\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"speed = 150.0\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - missing melee.chain trajectory throws Error "
-    "(not \"unknown value\")"
+    "PlayerConfig::FromToml - missing melee.chain trajectory returns "
+    "unexpected (not \"unknown value\")"
 ) {
   std::string toml{kFullToml};
   const auto pos = toml.find("trajectory = \"thrust\"\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"trajectory = \"thrust\"\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  try {
-    std::ignore = PlayerConfig::FromToml(reader);
-    FAIL("PlayerConfig::FromToml should throw when trajectory is missing");
-  } catch (const Error& e) {
-    const String& message = e.what();
-    REQUIRE(message.contains(U"キーがありません"));
-    REQUIRE_FALSE(message.contains(U"不明な"));
-  }
+  const auto result = PlayerConfig::FromToml(reader);
+  REQUIRE_FALSE(result.has_value());
+  REQUIRE(result.error().contains(U"キーがありません"));
+  REQUIRE_FALSE(result.error().contains(U"不明な"));
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - unknown melee.chain trajectory value throws "
-    "Error"
+    "PlayerConfig::FromToml - unknown melee.chain trajectory value returns "
+    "unexpected"
 ) {
   std::string toml{kFullToml};
   const auto pos = toml.find("trajectory = \"thrust\"\n");
@@ -155,12 +151,12 @@ TEST_CASE(
       "trajectory = \"spin\"\n"
   );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - melee.finisher light_count below 2 throws "
-    "Error"
+    "PlayerConfig::FromToml - melee.finisher light_count below 2 returns "
+    "unexpected"
 ) {
   std::string toml{kFullToml};
   const auto pos = toml.find("light_count = 2\n");
@@ -169,7 +165,7 @@ TEST_CASE(
       pos, std::string_view{"light_count = 2\n"}.size(), "light_count = 1\n"
   );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
 }
 
 #endif
