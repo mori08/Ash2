@@ -36,17 +36,17 @@ s3d に相当がないものは `std` をそのまま使う（例: `std::expecte
 ## エラー処理
 
 - 条件：エラーを扱うコードを書く・レビューする前
-- 必読：[docs/coding_style/ERROR_HANDLING.md](../../docs/coding_style/ERROR_HANDLING.md)（使い分けの判断手順）
+- 必読：[docs/coding_style/ERROR_HANDLING.md](../../docs/coding_style/ERROR_HANDLING.md)（手段の選び方と終了の決め方）
 
 | 状況 | 手段 |
 |------|------|
-| プログラマのバグ（不変条件・契約違反） | `assert(条件 && "日本語メッセージ")` |
-| 「値がない」ことが正常系の一部 | `Optional<T>`（関数は `[[nodiscard]]`） |
-| それ以外の失敗（第一候補） | `std::expected<T, E>`（関数は `[[nodiscard]]`） |
-| 初期化経路の最上位層で失敗を致命として確定させる（最後の手段） | `throw Error{...}` |
+| コードが正しければ起きない（不変条件・契約違反） | `assert(条件 && "日本語メッセージ")` |
+| 「値がない」ことが正常系 | `Optional<T>` |
+| それ以外の失敗 | `std::expected<T, E>` |
+| 受け取った失敗に対して終了を決める | `throw FatalError{...}` |
 
-例外はゲームループ内（毎フレーム実行される `Phase::update` / System）では投げない。
-新たに throw を書くときは、`Optional` / `expected` で表現しない理由を Why not コメントで添える。
+`Optional` / `expected` を返す関数には `[[nodiscard]]` を付ける。
+`Optional` / `expected` を返せる関数の中では終了を決めない。
 
 ## コメント
 

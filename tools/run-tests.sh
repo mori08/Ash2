@@ -25,13 +25,10 @@ mkdir -p "$REPO_ROOT/logs"
 LOG="$REPO_ROOT/logs/test.log"
 
 echo "Running tests: $EXE"
-# Siv3D の Main() は void で Catch2 の結果をプロセスの exit code に反映できないため、
-# exe の exit code は無視し、Catch2 の出力から合否を判定する
-ASH2_RUN_TESTS=1 "$EXE" 2>&1 | tee "$LOG" || true
+STATUS=0
+ASH2_RUN_TESTS=1 "$EXE" 2>&1 | tee "$LOG" || STATUS=$?
 
-if grep -q "All tests passed" "$LOG"; then
-  exit 0
+if [[ $STATUS -ne 0 ]]; then
+  echo "ERROR: テストが失敗しました（終了コード: $STATUS、詳細は上記出力を参照）"
+  exit 1
 fi
-
-echo "ERROR: テストが失敗しました（詳細は上記出力を参照）"
-exit 1
