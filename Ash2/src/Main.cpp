@@ -27,7 +27,12 @@ namespace {
 
 /// @brief アセットの登録からゲームループの終了までを行う
 void Run() {
-  RegisterAssets();
+  if (auto result = RegisterAssets(); !result) {
+    throw FatalError{
+        .reason = FatalReason::AssetMissing,
+        .detail = std::move(result).error(),
+    };
+  }
   Scene::SetTextureFilter(TextureFilter::Nearest);
 
   entt::registry registry;
