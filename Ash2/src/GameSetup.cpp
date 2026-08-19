@@ -17,8 +17,12 @@ namespace {
 /// @brief アニメーション設定 TOML を全件読み込む
 /// @return 失敗時は toml のパスを前置したメッセージ
 [[nodiscard]] std::expected<AnimationDataRegistry, String> LoadAnimations() {
+  auto list = GetAssetList();
+  if (!list) {
+    return std::unexpected{std::move(list).error()};
+  }
   AnimationDataRegistry animReg;
-  for (const auto& path : GetAssetList()) {
+  for (const auto& path : *list) {
     if (FileSystem::Extension(path) != U"toml") continue;
     if (!path.starts_with(U"assets/config/animation/")) continue;
     auto data = AnimationData::FromToml(TOMLReader{AssetPath(path)});
