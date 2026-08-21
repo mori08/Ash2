@@ -8,7 +8,7 @@ description: |
 
 # resolve-issue
 
-Issueを受け取り、全フェーズをTaskとして登録した上で順番に実行する起点となるフロー。
+Issueを受け取り、全フェーズを順番に実行する起点となるフロー。
 
 ## 起動時の処理
 
@@ -19,21 +19,12 @@ Issue のラベルを取得する。ラベルが `chore` の場合は「chore �
 Issue のタイトルをユーザーに提示し、対応する Issue に間違いないか確認を取る。
 確認が取れた場合のみ以降の手順に進む。
 
-TaskList で未完了タスクを確認する（未完了タスクがある場合は該当フェーズから再開する）。
-
-### 新規の場合
-
-TaskCreate で以下の全タスクを登録する。
-
-```
-[ ] Phase 1: plan-issue      - 調査・実装計画の策定
-[ ] Phase 2: implement-issue - ブランチ作成・実装ループ・確認・ビジュアルチェック
-[ ] Phase 3: commit-push     - コミットとpush
-[ ] Phase 4: create-pr       - PRの作成
-[ ] Phase 5: cleanup         - マージ後の片付け（マージ報告待ち）
-```
-
 ## フェーズの実行
 
-Phase 1 以降は対応するSkillを順番に呼び出す。
-各Skillの完了後、TaskUpdate で `completed` に更新してから次のフェーズへ進む。
+以下の Skill を順番に呼び出す。
+
+- plan-issue
+- implement-issue
+- commit-push
+- create-pr
+- cleanup
