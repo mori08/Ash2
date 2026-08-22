@@ -418,6 +418,7 @@
     <ClInclude Include="src\Phase\PhaseLoaders.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Asset.hpp" />
+    <ClInclude Include="src\UiFonts.hpp" />
     <ClInclude Include="src\Debug.hpp" />
     <ClInclude Include="src\CrashHandler.hpp" />
     <ClInclude Include="src\FatalError.hpp" />

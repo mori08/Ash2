@@ -31,6 +31,12 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
     const int32 col =
         static_cast<int32>(anim.elapsed * clip.speed) % clip.count;
     const Point cell{col, clip.row};
+    // data.textureKey の登録・読み込み済みは LoadAnimations（GameSetup.cpp）
+    // がロード時に保証する
+    assert(
+        TextureAsset::IsRegistered(data.textureKey) &&
+        "TextureAsset にキーが登録されていない"
+    );
     auto region = TextureAsset{data.textureKey}(cell * data.size, data.size);
 
     if (anim.facingRight) {

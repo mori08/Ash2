@@ -336,6 +336,7 @@
 | 型 | 用途 |
 |---|---|
 | `NameLookup` | 名前 → エンティティの逆引きテーブル |
+| [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画用フォント一式（`large`/`small`） |
 | `PlayerConfig` | プレイヤー設定 |
 | `EnemyConfig` | 敵設定 |
 | `AnimationDataRegistry` | アニメーション共有データ |
@@ -375,6 +376,13 @@
 - アニメーション設定: `Ash2/App/assets/config/animation/*.toml`（起動時に全ファイルをスキャン）
 - `asset_list` を開けない場合は起動しない（`GetAssetList` が `std::expected` で失敗を返し、
   `Run()` が `FatalError{FatalReason::AssetMissing, ...}` に変えて投げる）
+- TOML の読み込みは `OpenToml` を単一の入口とする。開けない場合はパスを含むメッセージの
+  `std::expected` で失敗を返す（中身が空の TOML は「開けている」として扱い、キー欠落は
+  各 `FromToml` 側の失敗として区別する）
+- アニメーション設定の `texture` キーはロード時（`LoadAnimations`）に
+  `TextureAsset::IsRegistered`（未登録の検出）と `TextureAsset::Load`（実体読み込みの確定）で
+  検証する。タイプミスや `asset_list` の漏れを起動時に検出するため、`AnimationSystem::Update`
+  側では毎フレームの確認をしない
 
 ---
 
@@ -385,11 +393,13 @@
 | [`Main`](../Ash2/src/Main.cpp) | アプリの入口。アセット登録 → `Scene::SetTextureFilter(TextureFilter::Nearest)` → registry 初期化 → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `AttachmentSystem` → `DrawSystem` → `HudSystem` を回す。`RegisterAssets` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
 | [`FatalError`](../Ash2/src/FatalError.hpp) | 続行できない失敗を表す型。分類（`FatalReason`）と開発者向けの `detail` を持つ |
 | [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
-| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
+| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / `UiFonts` / 各 Config / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`ReloadConfig`](../Ash2/src/GameSetup.hpp) | Debug ビルド専用。`PlayerConfig` / `EnemyConfig` / アニメーションデータを再読込する。3つとも成功したときのみ `registry.ctx()` を差し替え、途中で失敗したら旧データを維持したまま `APP_LOG` に出して戻る |
 | [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。`std::expected<Array<FilePath>, String>` を返し、開けなければ失敗を返す |
 | [`AssetPath`](../Ash2/src/Asset.hpp) | Debug では `FilePath`、Release では `Resource` パスを返す |
 | [`RegisterAssets`](../Ash2/src/Asset.hpp) | `.png`/`.mp3` をアセットシステムに登録する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
+| [`OpenToml`](../Ash2/src/Asset.hpp) | `AssetPath()` を通してアセット配下の TOML を開く。`std::expected<TOMLReader, String>` を返し、開けなければパスを含むメッセージを返す |
+| [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画に使うフォント一式（`large`/`small`）。`Create()` が `std::expected<UiFonts, String>` を返し、`InitializeRegistry` が `registry.ctx()` に登録する |
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
 | [`AppDebug::testMode`](../Ash2/src/Debug.hpp) | テスト実行中フラグ。true の間 `APP_LOG` を無効化する |
 | [`Overloaded`](../Ash2/src/Util/Overloaded.hpp) | 複数のラムダを1つの visitor にまとめる `std::visit` 用ヘルパー |
