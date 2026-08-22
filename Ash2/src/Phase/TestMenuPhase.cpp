@@ -2,6 +2,7 @@
 
 #include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/PlayerTestPhase.hpp"
+#include "UiFonts.hpp"
 
 namespace {
 constexpr double kBgBrightness = 0.1;
@@ -47,13 +48,15 @@ PhaseCommand TestMenuPhase::update(
     return PhaseCommand::Push{.nextPhase = std::move(phase)};
   }
 
+  const auto& font = registry.ctx().get<UiFonts>().large;
+
   Scene::SetBackground(ColorF{kBgBrightness});
-  m_font(U"Test Menu").draw(kTitleX, kTitleY);
+  font(U"Test Menu").draw(kTitleX, kTitleY);
 
   for (size_t i = 0; i < m_items.size(); ++i) {
     const ColorF color =
         (i == m_selectedIndex) ? Palette::Yellow : Palette::White;
-    m_font(m_items[i].label)
+    font(m_items[i].label)
         .draw(
             kItemX, kItemBaseY + static_cast<double>(i) * kItemSpacing, color
         );

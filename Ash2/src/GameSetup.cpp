@@ -11,6 +11,7 @@
 #include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
+#include "UiFonts.hpp"
 
 namespace {
 
@@ -25,9 +26,27 @@ namespace {
   for (const auto& path : *list) {
     if (FileSystem::Extension(path) != U"toml") continue;
     if (!path.starts_with(U"assets/config/animation/")) continue;
-    auto data = AnimationData::FromToml(TOMLReader{AssetPath(path)});
+    auto toml = OpenToml(path);
+    if (!toml) {
+      return std::unexpected{std::move(toml).error()};
+    }
+    auto data = AnimationData::FromToml(*toml);
     if (!data) {
       return std::unexpected{path + U": " + std::move(data).error()};
+    }
+    if (!TextureAsset::IsRegistered(data->textureKey)) {
+      return std::unexpected{
+          U"LoadAnimations: {} の texture '{}' が未登録です"_fmt(
+              path, data->textureKey
+          )
+      };
+    }
+    if (!TextureAsset::Load(data->textureKey)) {
+      return std::unexpected{
+          U"LoadAnimations: {} の texture '{}' を読み込めません"_fmt(
+              path, data->textureKey
+          )
+      };
     }
     animReg[FileSystem::BaseName(path)] = *std::move(data);
   }
@@ -41,15 +60,27 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   NameLookupSystem::Connect(registry);
   HierarchySystem::Connect(registry);
 
-  const TOMLReader playerToml(AssetPath(U"assets/config/player.toml"));
-  auto player = PlayerConfig::FromToml(playerToml);
+  auto fonts = UiFonts::Create();
+  if (!fonts) {
+    return std::unexpected{std::move(fonts).error()};
+  }
+  registry.ctx().emplace<UiFonts>(*std::move(fonts));
+
+  auto playerToml = OpenToml(U"assets/config/player.toml");
+  if (!playerToml) {
+    return std::unexpected{std::move(playerToml).error()};
+  }
+  auto player = PlayerConfig::FromToml(*playerToml);
   if (!player) {
     return std::unexpected{std::move(player).error()};
   }
   registry.ctx().emplace<PlayerConfig>(*std::move(player));
 
-  const TOMLReader enemyToml(AssetPath(U"assets/config/enemy.toml"));
-  auto enemy = EnemyConfig::FromToml(enemyToml);
+  auto enemyToml = OpenToml(U"assets/config/enemy.toml");
+  if (!enemyToml) {
+    return std::unexpected{std::move(enemyToml).error()};
+  }
+  auto enemy = EnemyConfig::FromToml(*enemyToml);
   if (!enemy) {
     return std::unexpected{std::move(enemy).error()};
   }
@@ -61,8 +92,11 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   }
   registry.ctx().emplace<AnimationDataRegistry>(*std::move(anims));
 
-  const TOMLReader scenarioToml(AssetPath(U"assets/config/scenario.toml"));
-  auto scenario = ScenarioData::FromToml(scenarioToml, GetPhaseLoaders());
+  auto scenarioToml = OpenToml(U"assets/config/scenario.toml");
+  if (!scenarioToml) {
+    return std::unexpected{std::move(scenarioToml).error()};
+  }
+  auto scenario = ScenarioData::FromToml(*scenarioToml, GetPhaseLoaders());
   if (!scenario) {
     return std::unexpected{std::move(scenario).error()};
   }
@@ -72,15 +106,23 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
 }
 
 void ReloadConfig(entt::registry& registry) {
-  const TOMLReader playerToml(AssetPath(U"assets/config/player.toml"));
-  auto player = PlayerConfig::FromToml(playerToml);
+  auto playerToml = OpenToml(U"assets/config/player.toml");
+  if (!playerToml) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + playerToml.error());
+    return;
+  }
+  auto player = PlayerConfig::FromToml(*playerToml);
   if (!player) {
     APP_LOG(U"ReloadConfig: 旧データを維持 / " + player.error());
     return;
   }
 
-  const TOMLReader enemyToml(AssetPath(U"assets/config/enemy.toml"));
-  auto enemy = EnemyConfig::FromToml(enemyToml);
+  auto enemyToml = OpenToml(U"assets/config/enemy.toml");
+  if (!enemyToml) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + enemyToml.error());
+    return;
+  }
+  auto enemy = EnemyConfig::FromToml(*enemyToml);
   if (!enemy) {
     APP_LOG(U"ReloadConfig: 旧データを維持 / " + enemy.error());
     return;

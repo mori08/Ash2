@@ -7,6 +7,7 @@
 #include "Config/AnimationData.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/AnimationSystem.hpp"
+#include "UiFonts.hpp"
 
 namespace {
 constexpr double kBgBrightness = 0.15;
@@ -85,17 +86,19 @@ PhaseCommand AnimationViewerPhase::update(
 
   AnimationSystem::Update(registry, frameData.dt);
 
+  const auto& font = registry.ctx().get<UiFonts>().small;
+
   Scene::SetBackground(ColorF{kBgBrightness});
-  m_font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(kTitleX, kTitleY);
+  font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(kTitleX, kTitleY);
   if (!m_clips.empty()) {
-    m_font(
+    font(
         U"Clip [{}/{}]: {}"_fmt(
             m_clipIndex + 1, m_clips.size(), m_clips[m_clipIndex]
         )
     )
         .draw(kTitleX, kClipInfoY);
   }
-  m_font(U"← → : clip  F : flip  Esc : back")
+  font(U"← → : clip  F : flip  Esc : back")
       .draw(kTitleX, kHintY, Palette::Gray);
 
   return PhaseCommand::None{};

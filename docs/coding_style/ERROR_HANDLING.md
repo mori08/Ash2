@@ -45,7 +45,7 @@ throw FatalError{
 |--------|-----|------|
 | 例外を投げる | `Parse<T>()`、`JSON::get<T>()` | 非例外版（`ParseOpt<T>()`、`getOpt<T>()`）を使う |
 | 既定値を返す | `TOMLValue::get<T>()` | 使わない。既定値を使うなら `getOr()` で明示する |
-| 空のオブジェクトを返す | `Texture`、`Audio` の生成 | `isEmpty()` で確認する |
+| 空のオブジェクトを返す | `Texture`、`Audio`、`TOMLReader` の生成 | `isEmpty()` で確認する（`TOMLReader` は開けたかどうかに直接答える `isOpen()` を使う） |
 
 非例外版のない API に限り、`try-catch` で包んで `expected` に変換する関数を書く。
 その関数の `try` には、その API の呼び出しだけを置く。

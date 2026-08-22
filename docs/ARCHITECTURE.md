@@ -22,6 +22,7 @@ Ash2/src/
 ├── Main.cpp              # エントリポイント・ゲームループ
 ├── GameSetup.hpp/.cpp    # registry 初期化・設定リロード
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
+├── UiFonts.hpp           # UI 描画用フォント一式（registry.ctx() に格納）
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── FatalError.hpp        # 致命エラーの型（分類と詳細）
 ├── CrashHandler.hpp/.cpp # 致命エラーの記録・表示・終了

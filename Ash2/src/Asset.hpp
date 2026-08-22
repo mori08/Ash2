@@ -34,6 +34,18 @@
   return list;
 }
 
+/// @brief アセット配下の TOML を開く
+/// @return 開けない場合はパスを含むメッセージ
+[[nodiscard]] inline std::expected<TOMLReader, String> OpenToml(
+    StringView path
+) {
+  TOMLReader toml{AssetPath(path)};
+  if (not toml.isOpen()) {
+    return std::unexpected{U"OpenToml: {} を読み込めません"_fmt(path)};
+  }
+  return toml;
+}
+
 /// @brief アセットをアセットシステムに登録する
 ///
 /// `.png` を TextureAsset、`.mp3` を AudioAsset として登録する。
