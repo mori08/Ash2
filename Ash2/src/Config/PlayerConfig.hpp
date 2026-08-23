@@ -147,6 +147,8 @@ struct DashAttackConfig {
 struct AirAttackConfig {
   /// 構え・攻撃・後隙A・後隙Bのタイムライン（recoveryBSec は 0 相当）
   MotionTimeline timeline;
+  /// 地上ニュートラル速度（PlayerConfig::speed）に対するドリフト移動速度の倍率
+  double driftRatio;
   /// ヒットボックスの軌道半径（w-h 平面上の円）
   double orbitRadius;
   /// 攻撃カプセルの半径

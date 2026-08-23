@@ -112,6 +112,7 @@ void SetupContext(entt::registry& registry) {
                 .activeSec = 0.25,
                 .recoveryASec = 0.20,
                 .recoveryBSec = 0.0},
+           .driftRatio = 0.5,
            .orbitRadius = 50.0,
            .radius = 20.0,
            .damage = 15,
@@ -366,7 +367,9 @@ TEST_CASE(
       player, PlayerMotion::AirAttack{.elapsed = 0.1, .hitboxEntity = hitbox}
   );
 
-  const FrameData frameData{.dt = 0.01};
+  FrameData frameData{.dt = 0.01};
+  // 接地フレームは移動入力があってもドリフトさせず速度を 0 に戻す
+  frameData.input.moveAxis = Vec2{1.0, 1.0};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
@@ -380,6 +383,10 @@ TEST_CASE(
 
   const auto& landing = std::get<PlayerMotion::Landing>(motion);
   REQUIRE(landing.timer == Approx(0.20));
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(0.0));
+  REQUIRE(vel.d == Approx(0.0));
 }
 
 TEST_CASE(
@@ -404,6 +411,104 @@ TEST_CASE(
 
   const auto& motion = registry.get<Motion>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack drifts horizontally with move input "
+    "during windup"
+) {
+  // 構え中も移動入力に応じてドリフトする（driftSpeed = speed(100.0) *
+  // driftRatio(0.5) = 50.0）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null}
+  );
+
+  FrameData frameData{.dt = 0.01};  // windupSec(0.05) 未満に留まる
+  frameData.input.moveAxis = Vec2{1.0, -0.5};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(50.0));
+  REQUIRE(vel.d == Approx(-25.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack drifts horizontally with move input "
+    "during active frame"
+) {
+  // 攻撃判定発生中も移動入力に応じてドリフトする
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
+
+  // activeStart(0.05) を超え activeEnd(0.30) 未満
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirAttack{.elapsed = 0.10, .hitboxEntity = entt::null}
+  );
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.moveAxis = Vec2{1.0, -0.5};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(50.0));
+  REQUIRE(vel.d == Approx(-25.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack drifts horizontally with move input "
+    "during recovery"
+) {
+  // 後隙中も移動入力に応じてドリフトする（recoveryBSec=0 のため
+  // activeEnd(0.30) 以降 recoveryBEnd(0.50) までが後隙A）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirAttack{.elapsed = 0.35, .hitboxEntity = entt::null}
+  );
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.moveAxis = Vec2{1.0, -0.5};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(50.0));
+  REQUIRE(vel.d == Approx(-25.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - AirAttack drift does not change facing direction"
+) {
+  // ドリフト中に facingRight を更新すると珠の軌道が左右へ飛ぶため、
+  // 移動入力の向きにかかわらず facingRight は変わらない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
+  registry.get<SpriteAnimation>(player).facingRight = false;
+
+  registry.replace<Motion>(
+      player,
+      PlayerMotion::AirAttack{.elapsed = 0.10, .hitboxEntity = entt::null}
+  );
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.moveAxis = Vec2{1.0, 0.0};  // 右入力（左向きと逆方向）
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE_FALSE(registry.get<SpriteAnimation>(player).facingRight);
 }
 
 TEST_CASE(
