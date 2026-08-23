@@ -223,6 +223,7 @@ namespace {
   return f.wrap(
       AirAttackConfig{
           .timeline = *std::move(timeline),
+          .driftRatio = f.get<double>(U"drift_ratio"),
           .orbitRadius = f.get<double>(U"orbit_radius"),
           .radius = f.get<double>(U"radius"),
           .damage = f.get<int32>(U"damage"),

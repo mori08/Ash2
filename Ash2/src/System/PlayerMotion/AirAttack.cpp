@@ -1,6 +1,7 @@
 #include <Siv3D.hpp>
 
 #include "Component/ReactionLevel.hpp"
+#include "Component/Velocity.hpp"
 #include "Phase/FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
@@ -41,8 +42,6 @@ Optional<Motion> Tick(
     AirAttack& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {
-  StopHorizontalMovement(registry, entity);
-
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& aa = cfg.airAttack;
   const auto& timeline = aa.timeline;
@@ -52,6 +51,7 @@ Optional<Motion> Tick(
 
   // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先）
   if (pos.isOnGround()) {
+    StopHorizontalMovement(registry, entity);
     if (state.hitboxEntity != entt::null) {
       state.hitboxEntity = ReleaseAttackHitbox(
           registry, state.hitboxEntity, cfg.attackEffect.fadeSec
@@ -59,6 +59,13 @@ Optional<Motion> Tick(
     }
     return Landing{.timer = cfg.landing.recoverySec};
   }
+
+  // ドリフト：構え・攻撃・後隙の全区間で移動入力に応じて水平移動する。
+  // 珠の軌道が facingRight で左右反転するため、向きはここでは変えない
+  auto& vel = registry.get<Velocity>(entity);
+  const double driftSpeed = cfg.speed * aa.driftRatio;
+  vel.w = frameData.input.moveAxis.x * driftSpeed;
+  vel.d = frameData.input.moveAxis.y * driftSpeed;
 
   const auto& anim = registry.get<SpriteAnimation>(entity);
   const bool facingRight = anim.facingRight;

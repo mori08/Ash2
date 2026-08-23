@@ -66,6 +66,7 @@ constexpr std::string_view kFullToml =
     "active_sec = 0.25\n"
     "recovery_a_sec = 0.20\n"
     "recovery_b_sec = 0.00\n"
+    "drift_ratio = 0.5\n"
     "orbit_radius = 50.0\n"
     "radius = 25.0\n"
     "damage = 25\n"
@@ -101,6 +102,7 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->dash.speed == 600.0);
   REQUIRE(cfg->dashAttack.damage == 25);
   REQUIRE(cfg->airAttack.damage == 25);
+  REQUIRE(cfg->airAttack.driftRatio == 0.5);
   REQUIRE(cfg->stamina.recoveryRate == 0.5);
   REQUIRE(cfg->landing.recoverySec == 0.20);
   REQUIRE(cfg->attackEffect.fadeSec == 0.30);
