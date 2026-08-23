@@ -18,12 +18,22 @@ struct IPhaseMaker {
   [[nodiscard]] virtual std::unique_ptr<IPhase> make() const = 0;
 };
 
-/// @brief TOML 値から IPhaseMaker を生成する関数の型
+/// @brief PhaseLoader の生成結果
+struct LoadedPhase {
+  IPhaseMaker::Ptr maker;
+  /// 別のシナリオセクションを参照する場合のみ設定される
+  Optional<String> referencedSection;
+};
+
+/// @brief TOML 値から LoadedPhase を生成する関数の型
 using PhaseLoader =
-    std::function<std::expected<IPhaseMaker::Ptr, String>(const TOMLValue&)>;
+    std::function<std::expected<LoadedPhase, String>(const TOMLValue&)>;
 
 /// @brief フェーズ名 → PhaseLoader のマップ
 using PhaseLoaderTable = HashTable<String, PhaseLoader>;
+
+/// @brief 起動時に最初に実行されるシナリオセクション名
+inline constexpr StringView kInitSectionName = U"init";
 
 /// @brief シナリオのステップ：フェーズをスタックに積む
 struct StepPush {

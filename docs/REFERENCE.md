@@ -251,9 +251,16 @@
 変換テーブルは [`Phase/PhaseLoaders.cpp`](../Ash2/src/Phase/PhaseLoaders.cpp) の
 `GetPhaseLoaders()` で定義されており、**新フェーズ追加時はここにもエントリを追加する必要がある。**
 `PhaseWithParam` コンセプトと `PhaseMaker<T>` が TOML パラメータを型消去して保持する。
+`PhaseLoader` は `LoadedPhase`（`maker` と、別セクションを参照する場合のみ設定される
+`Optional<String> referencedSection`）を返す。`SectionRefParam` コンセプトを満たす
+`Param`（`sectionName` を持つ、`ScenarioPhase::Param` など）は `MakeLoader` が自動で
+`referencedSection` へ詰める。
 `ScenarioData::FromToml` はこのテーブルを `PhaseLoaderTable` として引数で受け取る
 （Config 層から具象フェーズへの依存を作らないため）。呼び出し元は `GameSetup` が
 `GetPhaseLoaders()` を渡して配線する。
+`FromToml` は全セクションを登録し終えた後、集めた `referencedSection` が実在するセクションを
+指すかまとめて検証する（前方参照を許すため、セクションごとのループの外で行う）。不在なら
+`unexpected` を返し、`ScenarioPhase::update` がゲームループ内で `at()` の例外を投げることはない。
 
 ---
 
@@ -325,8 +332,10 @@
 ### [`ScenarioData`](../Ash2/src/Config/ScenarioData.hpp)
 
 - `Ash2/App/assets/config/scenario.toml` から読み込むシナリオ（セクション名 → ステップ列）
-- 同ヘッダが `IPhaseMaker` / `PhaseLoader` / `PhaseLoaderTable` / `StepPush` / `StepReset` /
-  `ScenarioStep` を定義する
+- 同ヘッダが `IPhaseMaker` / `LoadedPhase` / `PhaseLoader` / `PhaseLoaderTable` / `StepPush` /
+  `StepReset` / `ScenarioStep` / `kInitSectionName` を定義する
+- `kInitSectionName`（`U"init"`）は起動時に最初へ渡すセクション名。`Main.cpp` の起動フェーズ生成と
+  `InitializeRegistry` の存在確認が同じ定数を参照する
 - 詳細は上記「フェーズシステム」を参照
 
 ### `registry.ctx()` の内容一覧
