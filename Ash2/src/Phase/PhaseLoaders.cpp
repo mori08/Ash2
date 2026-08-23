@@ -15,6 +15,13 @@ concept PhaseWithParam =
     std::move_constructible<typename T::Param> &&
     std::constructible_from<T, const typename T::Param&>;
 
+/// @brief 別のシナリオセクションを参照する Param
+/// @note ScenarioPhase::Param の sectionName がこれに該当する
+template <typename P>
+concept SectionRefParam = requires(const P& p) {
+  { p.sectionName } -> std::convertible_to<String>;
+};
+
 /// @brief 型 T のパラメータを保持し、make() で T を生成する IPhaseMaker
 template <PhaseWithParam T>
 class PhaseMaker : public IPhaseMaker {
@@ -35,12 +42,19 @@ class PhaseMaker : public IPhaseMaker {
 template <PhaseWithParam T, typename F>
 PhaseLoader MakeLoader(F&& parse) {
   return [p = std::forward<F>(parse)](const TOMLValue& step)
-             -> std::expected<IPhaseMaker::Ptr, String> {
+             -> std::expected<LoadedPhase, String> {
     auto param = p(step);
     if (!param) {
       return std::unexpected{std::move(param).error()};
     }
-    return std::make_shared<const PhaseMaker<T>>(*std::move(param));
+    Optional<String> ref = none;
+    if constexpr (SectionRefParam<typename T::Param>) {
+      ref = param->sectionName;
+    }
+    return LoadedPhase{
+        .maker = std::make_shared<const PhaseMaker<T>>(*std::move(param)),
+        .referencedSection = std::move(ref),
+    };
   };
 }
 

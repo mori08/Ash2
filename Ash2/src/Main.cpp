@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "Asset.hpp"
+#include "Config/ScenarioData.hpp"
 #include "CrashHandler.hpp"
 #include "Debug.hpp"
 #include "GameSetup.hpp"
@@ -47,7 +48,7 @@ void Run() {
 
   PhaseStack phaseStack(
       std::make_unique<ScenarioPhase>(
-          ScenarioPhase::Param{.sectionName = U"init"}
+          ScenarioPhase::Param{.sectionName = String{kInitSectionName}}
       ),
       registry
   );

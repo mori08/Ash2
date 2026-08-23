@@ -100,6 +100,13 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   if (!scenario) {
     return std::unexpected{std::move(scenario).error()};
   }
+  if (!scenario->sections.contains(String{kInitSectionName})) {
+    return std::unexpected{
+        U"InitializeRegistry: セクション \"{}\" がありません"_fmt(
+            kInitSectionName
+        )
+    };
+  }
   registry.ctx().emplace<ScenarioData>(*std::move(scenario));
 
   return {};
