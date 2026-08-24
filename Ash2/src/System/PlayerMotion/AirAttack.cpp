@@ -16,6 +16,7 @@ namespace {
 /// Vec3 の x が w 軸（横）、y が高さ（capMidH を中心に周回）、z は 0
 /// 固定。DashAttack の w-d 平面軌道に対し、こちらは w-h 平面（垂直面）を
 /// 周回する。回転方向はプレイヤーの向きに応じて左右反転する。
+/// 角度は orbitStartDeg から orbitEndDeg へ線形に振る。
 /// @param progress 攻撃フレーム内の進行度（0.0〜1.0）
 /// @param facingRight プレイヤーの向き（false なら w 成分の符号を反転）
 // progress / orbitRadius は隣接する double 引数として渡すと取り違えやすいため
@@ -24,7 +25,8 @@ namespace {
 Vec3 AirAttackOrbOffset(
     double progress, const AirAttackConfig& aa, double capMidH, bool facingRight
 ) {
-  const double angle = Math::TwoPi * progress;
+  const double angle =
+      Math::ToRadians(Math::Lerp(aa.orbitStartDeg, aa.orbitEndDeg, progress));
   const double w =
       facingRight ? aa.orbitRadius * Math::Cos(angle)
                   : -aa.orbitRadius * Math::Cos(angle);

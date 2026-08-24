@@ -296,7 +296,7 @@
 | `RangedConfig` | リーチ・半径・ダメージ・弾速・発射高さ・スタミナ消費 |
 | `DashConfig` | 速度・タイムライン・スタミナ消費 |
 | `DashAttackConfig` | タイムライン・突進速度・軌道半径（w-d 平面）・カプセル半径・ダメージ・ヒットストップ時間 |
-| `AirAttackConfig` | タイムライン・ドリフト移動速度倍率（地上ニュートラル速度 `speed` に対する `driftRatio`）・軌道半径（w-h 平面）・カプセル半径・ダメージ・ヒットストップ時間 |
+| `AirAttackConfig` | タイムライン・ドリフト移動速度倍率（地上ニュートラル速度 `speed` に対する `driftRatio`）・軌道半径（w-h 平面）・軌道の開始角/終了角（度、`orbitStartDeg`/`orbitEndDeg`。0°が正面・-90°が頭上・90°が真下・180°が真後ろ）・カプセル半径・ダメージ・ヒットストップ時間 |
 | `StaminaConfig` | 回復開始待機秒数 `recoveryDelay`・毎秒の不足分回復割合 `recoveryRate` |
 | `LandingConfig` | 着地硬直時間 `recoverySec` |
 | `AttackEffectConfig` | ヒットボックス解放後のフェードアウト時間 `fadeSec`（全攻撃共通の1値。`HitboxSpec::fadeSec` として渡される） |

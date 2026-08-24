@@ -225,6 +225,8 @@ namespace {
           .timeline = *std::move(timeline),
           .driftRatio = f.get<double>(U"drift_ratio"),
           .orbitRadius = f.get<double>(U"orbit_radius"),
+          .orbitStartDeg = f.get<double>(U"orbit_start_deg"),
+          .orbitEndDeg = f.get<double>(U"orbit_end_deg"),
           .radius = f.get<double>(U"radius"),
           .damage = f.get<int32>(U"damage"),
           .hitstopSec = f.get<double>(U"hitstop_sec"),

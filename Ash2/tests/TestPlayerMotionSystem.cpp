@@ -114,6 +114,8 @@ void SetupContext(entt::registry& registry) {
                 .recoveryBSec = 0.0},
            .driftRatio = 0.5,
            .orbitRadius = 50.0,
+           .orbitStartDeg = -120.0,
+           .orbitEndDeg = 180.0,
            .radius = 20.0,
            .damage = 15,
            .hitstopSec = 0.08},
@@ -298,8 +300,8 @@ TEST_CASE(
       PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null}
   );
 
-  // windupSec(0.05) を跨ぎ、activeSec(0.25) 中の進行度 0.25 地点まで進める
-  const FrameData frameData{.dt = 0.1125};
+  // windupSec(0.05) を跨ぎ、activeSec(0.25) 中の進行度 0.70 地点まで進める
+  const FrameData frameData{.dt = 0.225};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
@@ -308,7 +310,8 @@ TEST_CASE(
   REQUIRE(registry.valid(air.hitboxEntity));
   REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(air.hitboxEntity));
 
-  // 進行度0.25 → 円の頂点（w=0、h=capMidH(40.0)-orbitRadius(50.0)=-10.0）
+  // 進行度0.70 → 角度90°＝真下
+  // （w=0、h=capMidH(40.0)-orbitRadius(50.0)=-10.0）
   const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
   REQUIRE(localOffset.value.w == Approx(0.0).margin(0.001));
   REQUIRE(localOffset.value.h == Approx(-10.0));
@@ -322,8 +325,8 @@ TEST_CASE(
     "PlayerMotionSystem - AirAttack orbit mirrors horizontally when facing "
     "left"
 ) {
-  // 左向きのとき w 成分の符号が反転する（progress 0.25 は cos=0 で符号の
-  // 影響を受けないため、progress 0.0 で検証する）
+  // 左向きのとき w 成分の符号が反転する（真上・真下では cos=0 で符号の
+  // 影響を受けないため、角度0°＝正面になる progress 0.40 で検証する）
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -335,15 +338,15 @@ TEST_CASE(
       PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null}
   );
 
-  // windupSec(0.05) ちょうどまで進め、progress 0.0(w = -orbitRadius) にする
-  const FrameData frameData{.dt = 0.05};
+  // 進行度 0.40（角度0°＝正面）まで進め、w = -orbitRadius にする
+  const FrameData frameData{.dt = 0.15};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<Motion>(player);
   const auto& air = std::get<PlayerMotion::AirAttack>(motion);
   REQUIRE(air.hitboxEntity != entt::entity{entt::null});
 
-  // 進行度0.0 → w = -orbitRadius(50.0)、h = capMidH(40.0)
+  // 進行度0.40 → 角度0°＝正面。w = -orbitRadius(50.0)、h = capMidH(40.0)
   const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
   REQUIRE(localOffset.value.w == Approx(-50.0));
   REQUIRE(localOffset.value.h == Approx(40.0));
