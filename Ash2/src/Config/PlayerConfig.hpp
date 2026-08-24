@@ -151,6 +151,10 @@ struct AirAttackConfig {
   double driftRatio;
   /// ヒットボックスの軌道半径（w-h 平面上の円）
   double orbitRadius;
+  /// 軌道の開始角（度）。0°が正面・-90°が頭上・90°が真下・180°が真後ろ
+  double orbitStartDeg;
+  /// 軌道の終了角（度）。開始角との差が 360 未満なら1周に満たない掃引になる
+  double orbitEndDeg;
   /// 攻撃カプセルの半径
   double radius;
   /// 与えるダメージ量
