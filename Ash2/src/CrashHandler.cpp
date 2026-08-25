@@ -57,9 +57,13 @@ void ExitWithFatal(const FatalError& error) {
   );
 #endif
 
+  ExitImmediately(EXIT_FAILURE);
+}
+
+void ExitImmediately(const int32 exitCode) {
   // std::exit() は s3d のスレッドと噛み合って終了しない
   // _Exit() は出力を流さないため、先に明示的に流す
   // TODO(#278): 終了コードを設定する手段がなく _Exit に頼っている
   std::cout.flush();
-  std::_Exit(EXIT_FAILURE);
+  std::_Exit(exitCode);
 }
