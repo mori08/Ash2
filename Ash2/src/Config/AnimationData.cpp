@@ -15,6 +15,7 @@ namespace {
           .row = f.get<int32>(U"row"),
           .count = f.get<int32>(U"count"),
           .speed = f.get<double>(U"speed"),
+          .loop = f.getOr<bool>(U"loop", false),
       }
   );
 }
