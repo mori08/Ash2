@@ -134,7 +134,7 @@
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（PlayerTestPhase、HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | フェーズ内（PlayerTestPhase、ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外でまとめて破棄する |
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | フェーズ内（PlayerTestPhase、EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
-| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転） |
+| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
@@ -230,7 +230,7 @@
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
 | [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。`EnemyConfig` から敵（`Enemy`+`Motion`+`Collider`+`Hp` 等）を1体生成し、`HitReactionSystem`/`EnemySystem` に被弾リアクション・撃破後の破棄を委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に再生成する。F5 でプレイヤー・設定再生成、Esc で Pop |
-| [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Esc で Pop） |
+| [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop） |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
 
 ### シナリオ TOML から生成できるフェーズ名
@@ -324,7 +324,9 @@
 
 - スプライトシート単位のアニメーション共有データ（テクスチャキー・コマサイズ・描画オフセット・
   クリップ表）
-- `AnimationClip` は行番号・コマ数・再生速度（コマ/秒）を持つ
+- `AnimationClip` は行番号・コマ数・再生速度（コマ/秒）・ループ有無（`loop`、既定 false）を持ち、
+  位相の更新（`advance`）とコマ算出（`columnAt`）、1周の時間（`cycleDuration`）を自身のメンバ関数で
+  提供する
 - `AnimationDataRegistry`（キー: 設定ファイルのベース名）として
   `Ash2/App/assets/config/animation/*.toml` から一括ロードされる
 - `texture`/`width`/`height`/`draw_offset` は予約キーで、それ以外のテーブルがクリップとして扱われる
@@ -370,7 +372,7 @@
 十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
 
 **フェーズの直接キー入力：** `TestMenuPhase`（↑↓/Enter）・`PlayerTestPhase`（Esc）・
-`AnimationViewerPhase`（Esc/←→/F）は `InputState` を経由せず Siv3D の `Key*` を直接参照している。
+`AnimationViewerPhase`（Esc/←→/F/R）は `InputState` を経由せず Siv3D の `Key*` を直接参照している。
 これらの操作にはゲームパッドの割り当てがない。
 
 ---
@@ -472,3 +474,4 @@
 - `Motion` に新しい状態型を追加したときは、その型に `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。`MotionSystem::Update` の `std::visit` が `MotionState` concept（`MotionSystem.hpp`）で制約されているため。
 - 新フェーズを追加し TOML から `push`/`reset` できるようにするときは、`Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()` にもエントリを追加する。
 - 新しいアニメーションクリップを参照するときは `Ash2/App/assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` の `assert` で落ちる）。
+- アニメーションクリップは既定で一発再生（最終コマで停止）。ループさせたいクリップにのみ `loop = true` を明記する。

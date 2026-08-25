@@ -82,6 +82,13 @@ PhaseCommand AnimationViewerPhase::update(
         anim->facingRight = !anim->facingRight;
       }
     }
+
+    if (KeyR.down() && m_entity != entt::null) {
+      auto* anim = registry.try_get<SpriteAnimation>(m_entity);
+      if (anim) {
+        anim->elapsed = 0.0;
+      }
+    }
   }
 
   AnimationSystem::Update(registry, frameData.dt);
@@ -98,7 +105,7 @@ PhaseCommand AnimationViewerPhase::update(
     )
         .draw(kTitleX, kClipInfoY);
   }
-  font(U"← → : clip  F : flip  Esc : back")
+  font(U"← → : clip  F : flip  R : replay  Esc : back")
       .draw(kTitleX, kHintY, Palette::Gray);
 
   return PhaseCommand::None{};

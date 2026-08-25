@@ -22,14 +22,10 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
     );
     const auto& clip = data.clips.at(anim.currentClip);
 
-    anim.elapsed += dt;
-
     assert(clip.count > 0 && "clip.count は正の値でなければならない");
     assert(clip.speed > 0.0 && "clip.speed は正の値でなければならない");
-    const double cycleDuration = clip.count / clip.speed;
-    anim.elapsed = Math::Fmod(anim.elapsed, cycleDuration);
-    const int32 col =
-        static_cast<int32>(anim.elapsed * clip.speed) % clip.count;
+    anim.elapsed = clip.advance(anim.elapsed, dt);
+    const int32 col = clip.columnAt(anim.elapsed);
     const Point cell{col, clip.row};
     // data.textureKey の登録・読み込み済みは LoadAnimations（GameSetup.cpp）
     // がロード時に保証する

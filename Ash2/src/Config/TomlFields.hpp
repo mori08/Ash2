@@ -3,7 +3,7 @@
 
 #include <expected>
 
-/// @brief TOML テーブルの必須キーを読み、欠落キーをまとめて記録する
+/// @brief TOML テーブルのキーを読み、必須キーの欠落をまとめて記録する
 ///
 /// 1インスタンスが1テーブル・1プレフィックスを担当する。get() は欠落時に
 /// 既定値 T{} を返して読み進め、check()/wrap() でまとめて失敗に畳む。
@@ -27,6 +27,13 @@ class TomlFields {
         m_prefix.isEmpty() ? String{key} : (m_prefix + U"." + String{key})
     );
     return T{};
+  }
+
+  /// @brief 省略可能キーを読む
+  /// @return 欠落時は defaultValue（欠落を記録しない）
+  template <class T>
+  [[nodiscard]] T getOr(StringView key, T defaultValue) const {
+    return m_table[String{key}].getOr<T>(std::move(defaultValue));
   }
 
   /// @brief 記録した欠落を確認する

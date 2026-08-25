@@ -26,7 +26,7 @@ constexpr ColorF kBulletColor = {0.9, 0.9, 0.3};
 double GetClipDuration(const AnimationData& data, const String& clip) {
   const auto it = data.clips.find(clip);
   if (it == data.clips.end()) return 0.0;
-  return static_cast<double>(it->second.count) / it->second.speed;
+  return it->second.cycleDuration();
 }
 
 }  // namespace
