@@ -3,6 +3,9 @@ width = 64
 height = 64
 draw_offset = {x = 0.0, y = 0.0}
 
+# speed（コマ/秒）の決め方は docs/game_design/motion_design.md の
+# 「アニメーションのコマ送り」節を参照。
+
 [idle]
 row = 0
 count = 2
@@ -33,7 +36,7 @@ speed = 5.0
 [melee_1]
 row = 5
 count = 2
-speed = 5.714285714285714
+speed = 7.0
 
 [melee_2]
 row = 6
@@ -43,7 +46,7 @@ speed = 5.0
 [melee_finish]
 row = 7
 count = 2
-speed = 4.0
+speed = 3.0
 
 [ranged_attack]
 row = 8
@@ -53,7 +56,7 @@ speed = 6.0
 [dash]
 row = 9
 count = 3
-speed = 6.666666666666667
+speed = 7.0
 
 [dash_attack]
 row = 10
@@ -63,4 +66,4 @@ speed = 5.0
 [air_attack]
 row = 11
 count = 3
-speed = 6.0
+speed = 7.0
