@@ -195,6 +195,6 @@ Debug ビルドでは F5（`InputState::reloadConfig`）で再読込でき、`Pl
 - **入力はテストしやすい型に落とす。** `InputState` は `Key` や `TOMLValue` のような実行環境に
   依存する型を持ち込まない。デバイス差は `InputDeviceSelector` で吸収する
 - **失敗は値で返す。** 下位は `Optional` / `std::expected` で伝播させ、回復しないと決めた側が
-  `FatalError` を投げる。捕捉は `Main()` のみ（[ERROR_HANDLING.md](coding_style/ERROR_HANDLING.md)）
+  `FatalError` を投げる。捕捉は `Main.cpp` のみ（[ERROR_HANDLING.md](coding_style/ERROR_HANDLING.md)）
 - **`Name` は構築後不変。** `NameLookup` が構築・破棄シグナルでのみ同期されるため
 - **ファイル追加時は `Ash2.vcxproj` と `.filters` も更新する**

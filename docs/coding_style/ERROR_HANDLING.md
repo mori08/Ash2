@@ -6,7 +6,7 @@
 
 - 失敗は値で伝える（`Optional<T>` / `std::expected<T, E>`）
 - 終了を決めるのは、失敗を受け取った側
-- `try-catch` は `Main()` と、外部 API を変換する関数にのみ書く
+- `try-catch` は `Main.cpp` と、外部 API を変換する関数にのみ書く
 
 `Optional` / `expected` を返せる関数の中では終了を決めない。
 判定は「この関数は `Optional` / `expected` を返せるか」で行う。
@@ -72,7 +72,7 @@ struct Config
 
 ## 補足
 
-### Main() の実装で守ること
+### Main.cpp の実装で守ること
 
 - ゲーム本体は別関数に切り出し、`Main()` 直下にデストラクタを持つ変数を置かない
 - 捕捉するのは `FatalError` / `s3d::Error` / `std::exception` / `...` の4つ
@@ -81,7 +81,7 @@ struct Config
 - 記録・表示は失敗しても無視する
 - Debug では画面に出さず、`crash.log` と Console に出す
 
-### Main() の実装の根拠
+### Main.cpp の実装の根拠
 
 ゲーム本体を別関数に切り出す理由。
 
