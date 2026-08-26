@@ -7,12 +7,14 @@ on:
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
+      - 'ideas/**'
       - '.claude/**'
   pull_request:
     branches: [main]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
+      - 'ideas/**'
       - '.claude/**'
   schedule:
     - cron: '0 3 * * 1'  # 毎週月曜 12:00 JST
