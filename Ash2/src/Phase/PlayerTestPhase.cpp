@@ -9,7 +9,6 @@
 #include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
-#include "Component/Motion.hpp"
 #include "Component/Name.hpp"
 #include "Component/Player.hpp"
 #include "Component/PlayerMotion.hpp"
@@ -61,7 +60,9 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
       m_playerRoot,
       Stamina{.max = kPlayerMaxStamina, .current = kPlayerMaxStamina}
   );
-  registry.emplace<Motion>(m_playerRoot, PlayerMotion::Neutral{});
+  registry.emplace<PlayerMotion::Variant>(
+      m_playerRoot, PlayerMotion::Neutral{}
+  );
   AnimationSystem::Update(registry, 0.0);
 
   m_dummyTarget = spawnEnemy(registry);
@@ -78,7 +79,7 @@ entt::entity PlayerTestPhase::spawnEnemy(entt::registry& registry) {
   // Knockback の放物線は GravitySystem に任せるため、プレイヤーと同じ重力
   // 加速度を与える（EnemyConfig は専用の重力値を持たない）
   registry.emplace<Gravity>(enemy, Gravity{.accel = playerCfg.gravity});
-  registry.emplace<Motion>(enemy, EnemyMotion::Idle{});
+  registry.emplace<EnemyMotion::Variant>(enemy, EnemyMotion::Idle{});
   registry.emplace<Drawable>(
       enemy,
       RectDrawable{.size = enemyCfg.size, .anchor = DrawAnchor::BottomCenter}

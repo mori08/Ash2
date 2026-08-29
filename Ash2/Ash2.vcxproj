@@ -435,7 +435,6 @@
     <ClInclude Include="src\Component\Hp.hpp" />
     <ClInclude Include="src\Component\Stamina.hpp" />
     <ClInclude Include="src\Component\PlayerMotion.hpp" />
-    <ClInclude Include="src\Component\Motion.hpp" />
     <ClInclude Include="src\Component\Enemy.hpp" />
     <ClInclude Include="src\Component\EnemyMotion.hpp" />
     <ClInclude Include="src\Component\ReactionLevel.hpp" />

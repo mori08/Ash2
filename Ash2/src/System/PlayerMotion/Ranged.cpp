@@ -82,7 +82,7 @@ Ranged MakeRanged(
   return Ranged{.timer = GetClipDuration(data, U"ranged_attack")};
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Ranged& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

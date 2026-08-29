@@ -18,14 +18,14 @@ constexpr double kMaxShrinkRatio = 0.2;
 
 }  // namespace
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Idle& /*state*/, entt::registry& /*registry*/, entt::entity /*entity*/,
     const FrameData& /*frameData*/
 ) {
   return none;
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Stagger& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {
@@ -53,7 +53,7 @@ Optional<Motion> Tick(
   return none;
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Repel& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {
@@ -66,7 +66,7 @@ Optional<Motion> Tick(
   return none;
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Knockback& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {
@@ -85,7 +85,7 @@ Optional<Motion> Tick(
   return none;
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Defeated& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

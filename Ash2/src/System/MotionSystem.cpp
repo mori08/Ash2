@@ -7,6 +7,38 @@
 #include "System/EnemyMotionSystem.hpp"
 #include "System/PlayerMotionSystem.hpp"
 
+namespace {
+/// @brief variant M を持つエンティティの Tick を回す
+template <typename M>
+void UpdateMotion(
+    entt::registry& registry, const FrameData& frameData,
+    const FrameData& frozen
+) {
+  auto view = registry.view<M>();
+  for (auto&& [entity, motion] : view.each()) {
+    const FrameData& fd = registry.all_of<Hitstop>(entity) ? frozen : frameData;
+    auto next = std::visit(
+        [&](MotionState<M> auto& state) {
+          return Tick(state, registry, entity, fd);
+        },
+        motion
+    );
+    if (next.has_value()) {
+      registry.replace<M>(entity, *next);
+    }
+  }
+}
+
+/// @brief Ms の並び順どおりに各 variant を走査する
+template <typename... Ms>
+void UpdateMotions(
+    entt::registry& registry, const FrameData& frameData,
+    const FrameData& frozen
+) {
+  (UpdateMotion<Ms>(registry, frameData, frozen), ...);
+}
+}  // namespace
+
 void MotionSystem::Update(
     entt::registry& registry, const FrameData& frameData
 ) {
@@ -15,18 +47,7 @@ void MotionSystem::Update(
   FrameData frozen = frameData;
   frozen.dt = 0.0;
 
-  auto view = registry.view<Motion>();
-  for (const auto entity : view) {
-    auto& motion = view.get<Motion>(entity);
-    const FrameData& fd = registry.all_of<Hitstop>(entity) ? frozen : frameData;
-    auto next = std::visit(
-        [&](MotionState auto& state) {
-          return Tick(state, registry, entity, fd);
-        },
-        motion
-    );
-    if (next.has_value()) {
-      registry.replace<Motion>(entity, *next);
-    }
-  }
+  UpdateMotions<PlayerMotion::Variant, EnemyMotion::Variant>(
+      registry, frameData, frozen
+  );
 }

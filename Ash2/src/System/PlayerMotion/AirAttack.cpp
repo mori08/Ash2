@@ -40,7 +40,7 @@ AirAttack MakeAirAttack(SpriteAnimation& anim) {
   return AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null};
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     AirAttack& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

@@ -1,4 +1,5 @@
 #pragma once
+#include <variant>
 
 /// @brief Enemy専用のモーション（行動状態）
 namespace EnemyMotion {
@@ -31,5 +32,8 @@ struct Defeated {
   /// 残り時間（秒）
   double remaining = 0.0;
 };
+
+/// @brief 敵の排他的な行動状態
+using Variant = std::variant<Idle, Stagger, Repel, Knockback, Defeated>;
 
 }  // namespace EnemyMotion

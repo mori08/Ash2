@@ -41,7 +41,7 @@
 | `FrameData` | そのフレームの更新データ（経過時間 `dt` と入力）。`Main` が組み立てる |
 | フェーズ | 「今どの局面か」を表す単位（プレイ中・メニュー・ビューア等）。`IPhase` の実装 |
 | シナリオ | フェーズの進行順を書いた TOML（`assets/config/scenario.toml`） |
-| モーション | エンティティの排他的な行動状態（`Motion` コンポーネント） |
+| モーション | エンティティの排他的な行動状態（`PlayerMotion::Variant` / `EnemyMotion::Variant` コンポーネント） |
 
 ### ディレクトリ構成
 
@@ -168,30 +168,34 @@ Main.cpp ── registry を1つ作る
 
 ## 4. Motion — プレイヤーと敵の行動状態
 
-プレイヤーと敵の行動を、排他的な状態として持つ。同時に2つは成立しない。状態は `Motion`
-（`std::variant`）1つのコンポーネントで表し、その状態でだけ必要なデータは状態の型が自分で持つ。
+プレイヤーと敵の行動を、排他的な状態として持つ。同時に2つは成立しない。種別ごとに状態は
+`PlayerMotion::Variant` / `EnemyMotion::Variant`（いずれも `std::variant`）のコンポーネント
+1つで表し、その状態でだけ必要なデータは状態の型が自分で持つ。種別をまたぐ variant は無く、
+プレイヤーのエンティティに敵の状態を持たせることは型として成立しない。
 
 ### 状態は次を返すだけで、自分を書き換えない
 
-各状態型には `Tick` があり、`Optional<Motion>` を返す。`none` なら継続、値があればその状態へ
-遷移する。`Motion` を書き換えるのは `MotionSystem` 1つだけ。
+各状態型には `Tick` があり、自身の variant 型 `M` に対する `Optional<M>` を返す。`none`
+なら継続、値があればその状態へ遷移する。variant を書き換えるのは `MotionSystem` 1つだけ。
 
 ```
 MotionSystem::Update(registry, frameData)
-  └ std::visit ── 現在の状態型を選ぶ
-       └ Tick(state, registry, entity, frameData) → Optional<Motion>
-            ├ none  ── 継続
-            └ 値あり ── MotionSystem が replace<Motion>
+  └ PlayerMotion::Variant → EnemyMotion::Variant の順に
+       └ std::visit ── 現在の状態型を選ぶ
+            └ Tick(state, registry, entity, frameData) → Optional<M>
+                 ├ none  ── 継続
+                 └ 値あり ── MotionSystem が replace<M>
 ```
 
-`Tick` は ADL で解決される自由関数で、`MotionState` コンセプトが契約を強制する。状態型を足して
-`Tick` を書かないとビルドが通らない。
+`Tick` は ADL で解決される自由関数で、`MotionState<S, M>` コンセプトが契約を強制する。状態型を
+足して `Tick` を書かないとビルドが通らない。走査対象の variant を増やすときは
+`MotionSystem.cpp` の `UpdateMotions` へ型を足すだけで済む。
 
 ### 例外：外部要因による強制遷移
 
-被弾だけは `HitReactionSystem` が直接 `replace<Motion>` する。このとき前の状態が `Tick` の
-満了時に行うはずだった後始末が飛ばされるので、`HitReactionSystem` が上書き前に代わりに行う。
-この例外は増やさない。
+被弾だけは `HitReactionSystem` が直接 `replace<EnemyMotion::Variant>` する。このとき前の状態が
+`Tick` の満了時に行うはずだった後始末が飛ばされるので、`HitReactionSystem` が上書き前に代わりに
+行う。この例外は増やさない。
 
 ---
 

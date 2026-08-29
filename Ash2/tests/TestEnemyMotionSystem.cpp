@@ -6,7 +6,6 @@
 #include "Component/Drawable.hpp"
 #include "Component/EnemyMotion.hpp"
 #include "Component/Hitstop.hpp"
-#include "Component/Motion.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
@@ -35,12 +34,15 @@ void SetupContext(entt::registry& registry) {
   });
 }
 
-/// @brief テスト用の敵エンティティを生成する（WorldPos + Velocity + Motion）
-entt::entity MakeEnemy(entt::registry& registry, const Motion& motion) {
+/// @brief テスト用の敵エンティティを生成する（WorldPos + Velocity +
+/// EnemyMotion::Variant）
+entt::entity MakeEnemy(
+    entt::registry& registry, const EnemyMotion::Variant& motion
+) {
   const auto enemy = registry.create();
   registry.emplace<WorldPos>(enemy, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
   registry.emplace<Velocity>(enemy);
-  registry.emplace<Motion>(enemy, motion);
+  registry.emplace<EnemyMotion::Variant>(enemy, motion);
   return enemy;
 }
 
@@ -60,7 +62,9 @@ TEST_CASE("EnemyMotionSystem - Stagger shrinks RectDrawable vertically") {
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(enemy));
   REQUIRE(rect.size.y < 80.0);
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Stagger>(registry.get<Motion>(enemy))
+      std::holds_alternative<EnemyMotion::Stagger>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
   );
 }
 
@@ -83,7 +87,9 @@ TEST_CASE(
   REQUIRE(rect.size.x == Approx(60.0));
   REQUIRE(rect.size.y == Approx(80.0));
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+      std::holds_alternative<EnemyMotion::Idle>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
   );
 }
 
@@ -101,7 +107,9 @@ TEST_CASE(
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+      std::holds_alternative<EnemyMotion::Idle>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
   );
 }
 
@@ -116,7 +124,9 @@ TEST_CASE("EnemyMotionSystem - Repel keeps velocity while remaining") {
 
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(-250.0));
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(enemy))
+      std::holds_alternative<EnemyMotion::Repel>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
   );
 }
 
@@ -156,7 +166,7 @@ TEST_CASE(
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
   REQUIRE(
       std::holds_alternative<EnemyMotion::Knockback>(
-          registry.get<Motion>(enemy)
+          registry.get<EnemyMotion::Variant>(enemy)
       )
   );
 }
@@ -188,7 +198,9 @@ TEST_CASE("EnemyMotionSystem - Knockback transitions to Idle on expiry") {
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(enemy))
+      std::holds_alternative<EnemyMotion::Idle>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
   );
 }
 
@@ -271,11 +283,13 @@ TEST_CASE("EnemyMotionSystem - Hitstop freezes Stagger remaining and size") {
   MotionSystem::Update(registry, frameData);
 
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Stagger>(registry.get<Motion>(enemy))
+      std::holds_alternative<EnemyMotion::Stagger>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
   );
   REQUIRE(
-      std::get<EnemyMotion::Stagger>(registry.get<Motion>(enemy)).remaining ==
-      Approx(0.15)
+      std::get<EnemyMotion::Stagger>(registry.get<EnemyMotion::Variant>(enemy))
+          .remaining == Approx(0.15)
   );
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(enemy));
   REQUIRE(rect.size.y == Approx(80.0));

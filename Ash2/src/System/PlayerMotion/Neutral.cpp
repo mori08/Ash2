@@ -9,7 +9,7 @@
 
 namespace PlayerMotion {
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Neutral& /*state*/, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

@@ -21,7 +21,7 @@ Dash MakeDash(
   return Dash{.air = air};
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Dash& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

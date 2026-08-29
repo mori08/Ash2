@@ -10,7 +10,6 @@
 #include "Component/Hierarchy.hpp"
 #include "Component/Hitstop.hpp"
 #include "Component/Hp.hpp"
-#include "Component/Motion.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
@@ -60,14 +59,14 @@ void HitReactionSystem::Apply(
     const double targetW = registry.get<WorldPos>(hit.target).w;
     const double sign = (targetW < ownerW) ? -1.0 : 1.0;
 
-    // Motion を差し替えない経路では後始末もしない。後始末だけが走ると
-    // 前の状態が続いたまま Velocity と size を失う
+    // EnemyMotion::Variant を差し替えない経路では後始末もしない。後始末だけが
+    // 走ると前の状態が続いたまま Velocity と size を失う
     if (attack.reaction == ReactionLevel::None && hp->current > 0) continue;
 
-    // Motion は Tick() の返り値を経由せずここで直接 replace する（被弾は
-    // Tick() 側が知らない外部要因による強制遷移のため）。前の状態が
-    // 遺した Velocity・縮んだ size は Tick() 満了時にしか戻らないので、
-    // 上書きする前にここで後始末しておく
+    // EnemyMotion::Variant は Tick() の返り値を経由せずここで直接 replace
+    // する（被弾は Tick() 側が知らない外部要因による強制遷移のため）。
+    // 前の状態が遺した Velocity・縮んだ size は Tick() 満了時にしか戻らない
+    // ので、上書きする前にここで後始末しておく
     registry.get<Velocity>(hit.target) = Velocity{};
     if (auto* drawable = registry.try_get<Drawable>(hit.target);
         drawable != nullptr) {
@@ -79,7 +78,7 @@ void HitReactionSystem::Apply(
     if (hp->current <= 0) {
       registry.remove<Collider>(hit.target);
       registry.remove<Hp>(hit.target);
-      registry.replace<Motion>(
+      registry.replace<EnemyMotion::Variant>(
           hit.target, EnemyMotion::Defeated{.remaining = cfg.defeatedSec}
       );
       continue;
@@ -89,20 +88,20 @@ void HitReactionSystem::Apply(
       case ReactionLevel::None:
         break;
       case ReactionLevel::Stagger:
-        registry.replace<Motion>(
+        registry.replace<EnemyMotion::Variant>(
             hit.target, EnemyMotion::Stagger{.remaining = cfg.staggerSec}
         );
         break;
       case ReactionLevel::Repel:
         registry.get<Velocity>(hit.target).w = sign * cfg.repelSpeed;
-        registry.replace<Motion>(
+        registry.replace<EnemyMotion::Variant>(
             hit.target, EnemyMotion::Repel{.remaining = cfg.repelSec}
         );
         break;
       case ReactionLevel::Blow:
         registry.get<Velocity>(hit.target).w = sign * cfg.blowSpeedW;
         registry.get<Velocity>(hit.target).h = cfg.blowSpeedH;
-        registry.replace<Motion>(
+        registry.replace<EnemyMotion::Variant>(
             hit.target, EnemyMotion::Knockback{.remaining = cfg.knockbackSec}
         );
         break;

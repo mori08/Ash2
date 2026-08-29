@@ -6,7 +6,7 @@
 
 namespace PlayerMotion {
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     Landing& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

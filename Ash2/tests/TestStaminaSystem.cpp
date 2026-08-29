@@ -2,7 +2,6 @@
 #include <ThirdParty/Catch2/catch.hpp>
 #include <entt/entt.hpp>
 
-#include "Component/Motion.hpp"
 #include "Component/Player.hpp"
 #include "Component/PlayerMotion.hpp"
 #include "Component/Stamina.hpp"
@@ -25,7 +24,7 @@ entt::entity MakePlayer(entt::registry& registry, int32 max, int32 current) {
   const auto player = registry.create();
   registry.emplace<Player>(player);
   registry.emplace<Stamina>(player, Stamina{.max = max, .current = current});
-  registry.emplace<Motion>(player, PlayerMotion::Neutral{});
+  registry.emplace<PlayerMotion::Variant>(player, PlayerMotion::Neutral{});
   return player;
 }
 
@@ -57,12 +56,14 @@ TEST_CASE("StaminaSystem - a non-Neutral motion restarts the delay") {
   entt::registry registry;
   SetupContext(registry, /*recoveryDelay=*/0.5, /*recoveryRate=*/1.0);
   const auto player = MakePlayer(registry, 100, 50);
-  registry.replace<Motion>(player, PlayerMotion::MeleeFinisher{});
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::MeleeFinisher{}
+  );
 
   StaminaSystem::Update(registry, 1.0);
   REQUIRE(registry.get<Stamina>(player).current == 50);
 
-  registry.replace<Motion>(player, PlayerMotion::Neutral{});
+  registry.replace<PlayerMotion::Variant>(player, PlayerMotion::Neutral{});
   StaminaSystem::Update(registry, 0.2);
 
   // 行動前の経過時間は持ち越さないため、まだ回復しない

@@ -1157,9 +1157,6 @@
     <ClInclude Include="Component\PlayerMotion.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="Component\Motion.hpp">
-      <Filter>Header Files\Component</Filter>
-    </ClInclude>
     <ClInclude Include="Component\Enemy.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
