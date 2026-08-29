@@ -2,6 +2,7 @@
 #include <Siv3D.hpp>
 
 #include <entt/entt.hpp>
+#include <variant>
 
 /// @brief Player専用のモーション（行動状態）
 namespace PlayerMotion {
@@ -79,5 +80,10 @@ struct Landing {
   /// 残り硬直時間（秒）
   double timer = 0.0;
 };
+
+/// @brief プレイヤーの排他的な行動状態
+using Variant = std::variant<
+    Neutral, MeleeChain, MeleeFinisher, Ranged, Dash, DashAttack, AirAttack,
+    Landing>;
 
 }  // namespace PlayerMotion

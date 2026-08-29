@@ -1,6 +1,5 @@
 #include "System/StaminaSystem.hpp"
 
-#include "Component/Motion.hpp"
 #include "Component/Player.hpp"
 #include "Component/PlayerMotion.hpp"
 #include "Component/Stamina.hpp"
@@ -14,7 +13,7 @@ constexpr double kFullThreshold = 0.99;
 void StaminaSystem::Update(entt::registry& registry, double dt) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
 
-  auto view = registry.view<Player, Stamina, Motion>();
+  auto view = registry.view<Player, Stamina, PlayerMotion::Variant>();
   for (auto&& [entity, stamina, motion] : view.each()) {
     // Neutral 以外の状態はタイマーをリセットして回復しない
     if (!std::holds_alternative<PlayerMotion::Neutral>(motion)) {

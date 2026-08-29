@@ -10,7 +10,6 @@
 #include "Component/Hierarchy.hpp"
 #include "Component/Hitstop.hpp"
 #include "Component/Hp.hpp"
-#include "Component/Motion.hpp"
 #include "Component/ReactionLevel.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
@@ -65,7 +64,7 @@ entt::entity MakeTarget(entt::registry& registry, double targetW) {
   registry.emplace<Velocity>(target);
   registry.emplace<Collider>(target);
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
-  registry.emplace<Motion>(target, EnemyMotion::Idle{});
+  registry.emplace<EnemyMotion::Variant>(target, EnemyMotion::Idle{});
   return target;
 }
 
@@ -82,7 +81,9 @@ TEST_CASE("HitReactionSystem - Stagger reaction transitions Enemy to Stagger") {
   );
 
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Stagger>(registry.get<Motion>(target))
+      std::holds_alternative<EnemyMotion::Stagger>(
+          registry.get<EnemyMotion::Variant>(target)
+      )
   );
 }
 
@@ -100,7 +101,9 @@ TEST_CASE(
   );
 
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Repel>(registry.get<Motion>(target))
+      std::holds_alternative<EnemyMotion::Repel>(
+          registry.get<EnemyMotion::Variant>(target)
+      )
   );
   REQUIRE(registry.get<Velocity>(target).w == Approx(250.0));
 }
@@ -120,7 +123,7 @@ TEST_CASE(
 
   REQUIRE(
       std::holds_alternative<EnemyMotion::Knockback>(
-          registry.get<Motion>(target)
+          registry.get<EnemyMotion::Variant>(target)
       )
   );
   REQUIRE(registry.get<Velocity>(target).w == Approx(300.0));
@@ -138,7 +141,9 @@ TEST_CASE("HitReactionSystem - None reaction leaves Enemy in Idle") {
   );
 
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Idle>(registry.get<Motion>(target))
+      std::holds_alternative<EnemyMotion::Idle>(
+          registry.get<EnemyMotion::Variant>(target)
+      )
   );
 }
 
@@ -158,7 +163,7 @@ TEST_CASE(
 
   REQUIRE(
       std::holds_alternative<EnemyMotion::Defeated>(
-          registry.get<Motion>(target)
+          registry.get<EnemyMotion::Variant>(target)
       )
   );
   REQUIRE_FALSE(registry.all_of<Collider>(target));
@@ -216,7 +221,7 @@ TEST_CASE(
 
   REQUIRE(
       std::holds_alternative<EnemyMotion::Knockback>(
-          registry.get<Motion>(target)
+          registry.get<EnemyMotion::Variant>(target)
       )
   );
   REQUIRE_FALSE(registry.all_of<Hitstop>(target));
@@ -239,7 +244,7 @@ TEST_CASE(
 
   REQUIRE(
       std::holds_alternative<EnemyMotion::Defeated>(
-          registry.get<Motion>(target)
+          registry.get<EnemyMotion::Variant>(target)
       )
   );
   REQUIRE_FALSE(registry.all_of<Hitstop>(target));
@@ -252,7 +257,9 @@ TEST_CASE(
   entt::registry registry;
   SetupContext(registry);
   const auto target = MakeTarget(registry, 50.0);
-  registry.replace<Motion>(target, EnemyMotion::Repel{.remaining = 0.1});
+  registry.replace<EnemyMotion::Variant>(
+      target, EnemyMotion::Repel{.remaining = 0.1}
+  );
   registry.get<Velocity>(target).w = 250.0;
   const auto attacker = MakeAttacker(registry, 0.0, ReactionLevel::Stagger);
 
@@ -261,7 +268,9 @@ TEST_CASE(
   );
 
   REQUIRE(
-      std::holds_alternative<EnemyMotion::Stagger>(registry.get<Motion>(target))
+      std::holds_alternative<EnemyMotion::Stagger>(
+          registry.get<EnemyMotion::Variant>(target)
+      )
   );
   REQUIRE(registry.get<Velocity>(target).w == Approx(0.0));
 }
@@ -273,7 +282,9 @@ TEST_CASE(
   entt::registry registry;
   SetupContext(registry);
   const auto target = MakeTarget(registry, 50.0);
-  registry.replace<Motion>(target, EnemyMotion::Stagger{.remaining = 0.05});
+  registry.replace<EnemyMotion::Variant>(
+      target, EnemyMotion::Stagger{.remaining = 0.05}
+  );
   registry.emplace<Drawable>(target, RectDrawable{.size = {60.0, 40.0}});
   const auto attacker = MakeAttacker(registry, 0.0, ReactionLevel::Blow);
 
@@ -283,7 +294,7 @@ TEST_CASE(
 
   REQUIRE(
       std::holds_alternative<EnemyMotion::Knockback>(
-          registry.get<Motion>(target)
+          registry.get<EnemyMotion::Variant>(target)
       )
   );
   const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(target));
@@ -298,7 +309,9 @@ TEST_CASE(
   entt::registry registry;
   SetupContext(registry);
   const auto target = MakeTarget(registry, 50.0);
-  registry.replace<Motion>(target, EnemyMotion::Knockback{.remaining = 0.5});
+  registry.replace<EnemyMotion::Variant>(
+      target, EnemyMotion::Knockback{.remaining = 0.5}
+  );
   registry.get<Velocity>(target).w = 300.0;
   registry.get<Velocity>(target).h = 300.0;
   const auto attacker =
@@ -310,7 +323,7 @@ TEST_CASE(
 
   REQUIRE(
       std::holds_alternative<EnemyMotion::Knockback>(
-          registry.get<Motion>(target)
+          registry.get<EnemyMotion::Variant>(target)
       )
   );
   REQUIRE(registry.get<Velocity>(target).w == Approx(300.0));
@@ -404,7 +417,7 @@ TEST_CASE(
   );
 
   REQUIRE(registry.all_of<Hitstop>(target));
-  REQUIRE_FALSE(registry.all_of<Motion>(target));
+  REQUIRE_FALSE(registry.all_of<EnemyMotion::Variant>(target));
 }
 
 #endif

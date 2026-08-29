@@ -39,7 +39,7 @@ DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir) {
   };
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     DashAttack& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

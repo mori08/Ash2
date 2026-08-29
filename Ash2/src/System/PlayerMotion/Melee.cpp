@@ -128,7 +128,7 @@ MeleeFinisher MakeMeleeFinisher(SpriteAnimation& anim) {
   return MeleeFinisher{};
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     MeleeChain& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {
@@ -174,8 +174,8 @@ Optional<Motion> Tick(
   if (timeline.isCancelable(state.elapsed) &&
       (state.comboQueued || input.attackDown)) {
     return state.stage + 1 < melee.chain.size()
-               ? Motion{MakeMeleeChain(anim, state.stage + 1)}
-               : Motion{MakeMeleeFinisher(anim)};
+               ? Variant{MakeMeleeChain(anim, state.stage + 1)}
+               : Variant{MakeMeleeFinisher(anim)};
   }
 
   // 後隙中のダッシュ入力でダッシュへキャンセル（ST不足時は無視）
@@ -191,7 +191,7 @@ Optional<Motion> Tick(
   return none;
 }
 
-Optional<Motion> Tick(
+Optional<Variant> Tick(
     MeleeFinisher& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 ) {

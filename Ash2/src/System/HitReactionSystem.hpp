@@ -13,7 +13,7 @@ class HitReactionSystem {
   ///
   /// `Hp` が枯渇した被弾側は `Attack::reaction` によらず `Defeated`
   /// へ強制遷移し（`Collider`/`Hp` を外す）、それ以外は `reaction`
-  /// に応じた `Motion` 遷移と、攻撃側本体との位置関係から決めた向きの
-  /// `Velocity` を適用する。
+  /// に応じた `EnemyMotion::Variant` 遷移と、攻撃側本体との位置関係から
+  /// 決めた向きの `Velocity` を適用する。
   static void Apply(entt::registry& registry, const Array<HitPair>& hits);
 };
