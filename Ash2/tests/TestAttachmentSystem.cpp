@@ -15,7 +15,7 @@ TEST_CASE("AttachmentSystem - child follows parent with offset") {
   auto child = registry.create();
   registry.emplace<WorldPos>(child);
   Hierarchy::Attach(
-      registry, parent, child, WorldPos{.w = 1.0, .h = 0.5, .d = 2.0}
+      registry, parent, child, LocalOffset{.w = 1.0, .h = 0.5, .d = 2.0}
   );
 
   AttachmentSystem::UpdateTransform(registry);
@@ -34,11 +34,11 @@ TEST_CASE("AttachmentSystem - grandchild is updated correctly") {
 
   auto child = registry.create();
   registry.emplace<WorldPos>(child);
-  Hierarchy::Attach(registry, parent, child, WorldPos{.w = 1.0});
+  Hierarchy::Attach(registry, parent, child, LocalOffset{.w = 1.0});
 
   auto grandchild = registry.create();
   registry.emplace<WorldPos>(grandchild);
-  Hierarchy::Attach(registry, child, grandchild, WorldPos{.w = 1.0});
+  Hierarchy::Attach(registry, child, grandchild, LocalOffset{.w = 1.0});
 
   AttachmentSystem::UpdateTransform(registry);
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <entt/entt.hpp>
 
-#include "Component/WorldPos.hpp"
+#include "Component/LocalOffset.hpp"
 
 /// @brief 親子関係を双方向連結リストで管理するコンポーネント
 ///
@@ -24,7 +24,7 @@ class Hierarchy {
   /// @param offset 親からの相対座標（省略時はゼロ）
   static void Attach(
       entt::registry& registry, entt::entity parent, entt::entity child,
-      WorldPos offset = {}
+      LocalOffset offset = {}
   );
 
   /// @brief 子を親から切り離す（O(1)）

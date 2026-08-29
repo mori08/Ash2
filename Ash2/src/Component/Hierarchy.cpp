@@ -4,7 +4,7 @@
 
 void Hierarchy::Attach(
     entt::registry& registry, entt::entity parent, entt::entity child,
-    WorldPos offset
+    LocalOffset offset
 ) {
   if (!registry.all_of<Hierarchy>(parent)) {
     registry.emplace<Hierarchy>(parent);

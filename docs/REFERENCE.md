@@ -1,6 +1,6 @@
 # REFERENCE.md
 
-「沼に焚べ」の部品一覧。設計意図・レイヤー構成・座標系などは [ARCHITECTURE.md](ARCHITECTURE.md) を参照。
+「沼に焚べ」の部品一覧。設計の全体像は [ARCHITECTURE.md](ARCHITECTURE.md) を参照。
 ゲームデザイン上の仕様（モーションの区間秒数・キャンセル可否・リアクション Lv など）は
 [docs/game_design/](game_design/) 配下（[motion_design.md](game_design/motion_design.md) ほか）を参照。
 
@@ -15,7 +15,7 @@
 | [`WorldPos`](../Ash2/src/Component/WorldPos.hpp) | ワールド絶対座標（w/h/d）。`toScreen()`・`isOnGround()` を持つ |
 | [`Velocity`](../Ash2/src/Component/Velocity.hpp) | 速度ベクトル（w/h/d、ピクセル/秒） |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
-| [`LocalOffset`](../Ash2/src/Component/LocalOffset.hpp) | 親からの相対座標（Hierarchy 付きエンティティのみ） |
+| [`LocalOffset`](../Ash2/src/Component/LocalOffset.hpp) | 親からの相対座標（w/h/d、Hierarchy 付きエンティティのみ）。`WorldPos` とは別の型で、`toScreen()`・`isOnGround()` は持たない |
 | [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作） |
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画形状の variant。詳細は下記「描画データ型」参照 |
 | [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`kDefaultDrawColor`）として扱われる |
@@ -68,8 +68,8 @@
 
 `Motion` は `std::variant<PlayerMotion::Neutral, MeleeChain, MeleeFinisher, Ranged, Dash, DashAttack, AirAttack, Landing, EnemyMotion::Idle, Stagger, Repel, Knockback, Defeated>`。
 
-遷移を `Tick()` の戻り値でのみ表現する理由は [ARCHITECTURE.md](ARCHITECTURE.md) の
-「Motion — variant による排他的な行動状態」を参照。
+`Tick()` と `MotionSystem` の関係は [ARCHITECTURE.md](ARCHITECTURE.md) の
+「4. Motion」を参照。
 
 4区間タイムライン（構え/攻撃/後隙A/後隙B）を持つ状態は
 [`Config/PlayerConfig.hpp`](../Ash2/src/Config/PlayerConfig.hpp) の `MotionTimeline`
@@ -124,7 +124,7 @@
 | システム | タイミング | 処理 |
 |---|---|---|
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Motion` の状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<Motion>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（理由は [ARCHITECTURE.md](ARCHITECTURE.md) の「ヒットストップの実現方法」） |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `Motion` の状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<Motion>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（停止中も入力の受付を続けるため） |
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + Motion` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
@@ -135,10 +135,20 @@
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | フェーズ内（PlayerTestPhase、ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外でまとめて破棄する |
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | フェーズ内（PlayerTestPhase、EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
-| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
+| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。カメラは `Scene::Center()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
+
+### 呼び出し順の制約
+
+入れ替えると壊れる組み合わせ。フェーズの `update` に並べるときはこれを守る。
+
+| 制約 | 理由 |
+|---|---|
+| `AttachmentSystem` は `MotionSystem`（子の `LocalOffset` 更新）より後、`HitSystem` より前 | 子の絶対座標が確定していないと判定がずれる |
+| `ProjectileSystem` は `MovementSystem` と `HitSystem` の後 | 着弾判定を `Attack::hitTargets` の中身で行うため |
+| `GravitySystem` の「加速」と「地面クランプ」は1つの関数に留める | 時間軸が違う（次フレーム用／今フレーム確定）。分割すると跳ね方が変わる |
 
 ### リアクションの対応
 
@@ -214,7 +224,6 @@
 |---|---|
 | [`IPhase`](../Ash2/src/Phase/IPhase.hpp) | フェーズ基底クラス。`onAfterPush` / `update` / `onBeforePop` と `PhaseCommand` を定義する |
 | [`PhaseStack`](../Ash2/src/Phase/PhaseStack.hpp) | フェーズのスタック管理。最前面のみ更新し、`PhaseCommand` に従い操作する |
-| [`FrameData`](../Ash2/src/Phase/FrameData.hpp) | フレームごとの更新データ（`dt` + `InputState`） |
 
 | PhaseCommand | 動作 |
 |---|---|
@@ -255,9 +264,8 @@
 `Optional<String> referencedSection`）を返す。`SectionRefParam` コンセプトを満たす
 `Param`（`sectionName` を持つ、`ScenarioPhase::Param` など）は `MakeLoader` が自動で
 `referencedSection` へ詰める。
-`ScenarioData::FromToml` はこのテーブルを `PhaseLoaderTable` として引数で受け取る
-（Config 層から具象フェーズへの依存を作らないため）。呼び出し元は `GameSetup` が
-`GetPhaseLoaders()` を渡して配線する。
+`ScenarioData::FromToml` はこのテーブルを `PhaseLoaderTable` として引数で受け取る。
+呼び出し元は `GameSetup` が `GetPhaseLoaders()` を渡して配線する。
 `FromToml` は全セクションを登録し終えた後、集めた `referencedSection` が実在するセクションを
 指すかまとめて検証する（前方参照を許すため、セクションごとのループの外で行う）。不在なら
 `unexpected` を返し、`ScenarioPhase::update` がゲームループ内で `at()` の例外を投げることはない。
@@ -413,6 +421,7 @@
 | [`OpenToml`](../Ash2/src/Asset.hpp) | `AssetPath()` を通してアセット配下の TOML を開く。`std::expected<TOMLReader, String>` を返し、開けなければパスを含むメッセージを返す |
 | [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画に使うフォント一式（`large`/`small`）。`Create()` が `std::expected<UiFonts, String>` を返し、`InitializeRegistry` が `registry.ctx()` に登録する |
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
+| [`FrameData`](../Ash2/src/FrameData.hpp) | フレームごとの更新データ（`dt` + `InputState`）。`Main` が組み立て、フェーズとシステムの双方が受け取る |
 | [`AppDebug::testMode`](../Ash2/src/Debug.hpp) | テスト実行中フラグ。true の間 `APP_LOG` を無効化する |
 | [`Overloaded`](../Ash2/src/Util/Overloaded.hpp) | 複数のラムダを1つの visitor にまとめる `std::visit` 用ヘルパー |
 
@@ -473,6 +482,9 @@
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。
 - `Motion` に新しい状態型を追加したときは、その型に `Tick(state, registry, entity, frameData) -> Optional<Motion>`（ADL で解決される非修飾 `Tick`）を実装する必要がある。`MotionSystem::Update` の `std::visit` が `MotionState` concept（`MotionSystem.hpp`）で制約されているため。
+- `Tick` の満了時に後始末（`Velocity` のクリア等）をする状態を追加したときは、`HitReactionSystem` 側の代替処理も確認する。被弾による強制遷移では満了時の後始末が飛ばされる。
+- 新しい Config を追加し F5 で差し替えたいときは、`GameSetup::InitializeRegistry` だけでなく `GameSetup::ReloadConfig` にも追加する。
+- アセットファイルを追加・削除したときは `tools/sync-assets.sh` を実行する。`Ash2/App/assets/asset_list` と `Ash2/App/Resource.rc` はその生成物で、手書きしない。
 - 新フェーズを追加し TOML から `push`/`reset` できるようにするときは、`Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()` にもエントリを追加する。
 - 新しいアニメーションクリップを参照するときは `Ash2/App/assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` の `assert` で落ちる）。
 - アニメーションクリップは既定で一発再生（最終コマで停止）。ループさせたいクリップにのみ `loop = true` を明記する。

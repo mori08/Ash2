@@ -1,10 +1,30 @@
 # ARCHITECTURE.md
 
-「沼に焚べ」の設計意図をまとめたドキュメント。個々のコンポーネント・システム・フェーズ等の一覧は [REFERENCE.md](REFERENCE.md) を参照。
+「沼に焚べ」の設計の全体像。何がどう組み合わさって動いているかを説明する。
+コンポーネント・システム・フェーズ等の一覧は [REFERENCE.md](REFERENCE.md) を参照。
 
-## プロジェクト概要
+## 全体の構成
 
-「沼に焚べ」— 疑似3D視点のベルトアクションゲーム。
+1. **座標系** — 疑似3D。位置を持つものすべての前提
+2. **ECS** — エンティティとデータと処理の分け方
+3. **フェーズ** — 起動と遷移
+4. **Motion** — プレイヤーと敵の行動状態
+5. **Config** — 数値と資産の外部化
+6. **入力** — デバイス差の吸収
+7. **描画** — ワールドを画面へ
+
+コードの入口は `Main.cpp`。ゲームループの全体が1ファイルに収まっている。
+
+---
+
+## 前提
+
+### ゲーム
+
+疑似3D視点のベルトアクションゲーム。奥行きを持つ平面をプレイヤーが移動し、敵と戦う。
+ゲームデザイン上の仕様は [docs/game_design/](game_design/) を参照。
+
+### 技術構成
 
 | 技術 | バージョン | 役割 |
 |------|-----------|------|
@@ -13,15 +33,24 @@
 | EnTT | v3.16.0 | ECS（Entity Component System） |
 | Catch2 | Siv3D 同梱版 | ユニットテスト |
 
----
+### 用語
 
-## ディレクトリ構成
+| 語 | 意味 |
+|---|---|
+| w / h / d | 座標の3軸。横／高さ／奥行き。`WorldPos` コンポーネントのメンバ名 |
+| `FrameData` | そのフレームの更新データ（経過時間 `dt` と入力）。`Main` が組み立てる |
+| フェーズ | 「今どの局面か」を表す単位（プレイ中・メニュー・ビューア等）。`IPhase` の実装 |
+| シナリオ | フェーズの進行順を書いた TOML（`assets/config/scenario.toml`） |
+| モーション | エンティティの排他的な行動状態（`Motion` コンポーネント） |
+
+### ディレクトリ構成
 
 ```
 Ash2/src/
 ├── Main.cpp              # エントリポイント・ゲームループ
 ├── GameSetup.hpp/.cpp    # registry 初期化・設定リロード
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
+├── FrameData.hpp         # フレームごとの更新データ（dt + InputState）
 ├── UiFonts.hpp           # UI 描画用フォント一式（registry.ctx() に格納）
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── FatalError.hpp        # 致命エラーの型（分類と詳細）
@@ -35,166 +64,177 @@ Ash2/src/
 └── Util/                 # フレームワーク非依存の汎用ヘルパー
 ```
 
----
-
-## 全体構造
-
-```
-Main.cpp ── registry を1つ作り、PhaseStack を回すだけ
-  ├─ GameSetup ── registry.ctx() に設定を積む（起動時／F5 リロード時）
-  ├─ Input ─────→ InputState（デバイス非依存の入力スナップショット）
-  ├─ Phase ────── 「今どの局面か」を決め、局面ごとに System を呼ぶ順序を持つ
-  │                 └─ System ── Component を読み書きする関数群（状態を持たない）
-  └─ 常駐 System ── AttachmentSystem → DrawSystem → HudSystem
-```
-
-依存の向きは上から下への一方向。System は Phase を知らず、Component は System を知らない。
-Config は最下層で、System からは `registry.ctx()` 経由でのみ読まれる。
-
-### ゲームループを Phase が持つ
-
-`Main.cpp` のループは「入力を取る → PhaseStack を1回回す → 描画する」しかしない。
-どのシステムをどの順で呼ぶかは各 Phase の `update` が決める。
-
-局面（プレイ中・メニュー・ビューア）ごとに必要なシステムは違う。`Main.cpp` に全システムを
-並べると、メニュー中に当たり判定が走るような「その局面では意味のない更新」を条件分岐で
-抑える羽目になる。例外は座標伝播・描画・HUD の3つで、局面に依らず必要なため常駐させる。
-
-Debug ビルドでは `Console.open()` で起動し、環境変数 `ASH2_RUN_TESTS` が設定されている場合は
-ゲームループに入らず Catch2 のテストランナーを実行して終了する（`tools/run-tests.sh` 経由）。
-致命エラーは `crash.log` に記録し、非0の終了コードで終了する。
-
-### 遷移は「値」として返す
-
-`IPhase::update` は `PhaseCommand`（None / Pop / Push / Reset）を返し、スタックの実際の操作は
-`PhaseStack` だけが行う。Phase が自分でスタックを触ると、`update` の途中で自分自身が破棄される
-危険がある。戻り値で意図だけを伝え、操作は呼び出し元に任せることでこれを構造的に防ぐ。
-
-同じ考えが Motion にも適用されている（後述）。
+依存の向きは `Component` / `Config` → `System` → `Phase` の一方向。System は Phase を知らず、
+Component は System を知らない。Config は最下層で、他のどのディレクトリも include しない。
+System が Config を読むのは `registry.ctx()` 経由のみ。
 
 ---
 
-## ECS（EnTT）の使い方
-
-**コンポーネントはデータのみ。** `Component/` の型はすべてデータ構造で、振る舞いを持たない。
-例外は `Hierarchy` と `WorldPos` で、前者は不変条件（双方向連結リストの整合性）を守るため
-更新を static メンバ関数に限定し、後者は座標変換という純粋関数だけを持つ。
-
-**システムは状態を持たない静的関数。** 入力は `registry` と `dt`／`FrameData` のみ。
-フレーム間で持ち越したい状態は必ずコンポーネントか `registry.ctx()` に置く。
-呼び出し順以外の暗黙の前提を持たないため、単体テストしやすい。
-
-**能力はコンポーネントの組み合わせで表現し、種別ごとの分岐を作らない。**
-
-- `Attack` + `Collider` を持てば攻撃判定になる
-- `Hp` + `Collider` を持てば被弾判定の対象になる
-- `Invincible` を足すと被弾対象から外れる
-
-`Player` / `Enemy` / `Projectile` は種別の識別、`Invincible` / `Hitstop` はシステムのビューから
-除外するためのスイッチとして使う。「フラグを見て if する」のではなく「ビューに入らない」形に
-することで、除外の意図がシステム側のクエリに現れる。
-
-**派生データはシグナルで同期する。** `NameLookup`（名前 → エンティティ）は
-`on_construct<Name>` / `on_destroy<Name>` で、`Hierarchy` の連結リスト整合は
-`on_destroy<Hierarchy>` で自動更新される。呼び出し側に「登録を忘れない」責任を負わせない
-ための選択であり、その代償として `Name::value` は `const`（構築後の変更を禁止）にしてある。
-
-**`registry.ctx()` はグローバルな読み取り専用データの置き場。** シングルトンを作らず registry に
-相乗りさせることで、システムの引数が `registry` 1つで済み、テスト時は registry を作り直すだけで
-隔離できる。格納物は [REFERENCE.md](REFERENCE.md) の「`registry.ctx()` の内容一覧」を参照。
-
----
-
-## Motion — variant による排他的な行動状態
-
-プレイヤーと敵の行動状態は `Motion`（`std::variant`）1つのコンポーネントで表す。
-
-状態は排他的（同時に2つは成立しない）で、種類は有限かつコンパイル時に確定している。
-variant なら状態ごとに必要なデータ（`MeleeChain::stage`、`Dash::lastDashDir` 等）をそのまま持てて、
-動的確保も仮想関数も要らない。プレイヤーと敵で variant を共有しているため、ディスパッチを
-`MotionSystem` 1つに集約できる。
-
-**遷移は Tick の戻り値でのみ表現する。** 各状態型には ADL で解決される
-`Tick(state, registry, entity, frameData)` があり、`Optional<Motion>` を返す。`none` なら継続、
-値があれば遷移。`MotionSystem` だけが `registry.replace<Motion>` を呼ぶ。
-`MotionState` コンセプトがこの契約をコンパイル時に強制するため、状態型を追加したら `Tick` を
-書かないとビルドが通らない。Tick が自分で状態を書き換えないのは、処理中に自分自身
-（`state` の参照先）が破壊されるのを避けるため。`PhaseCommand` と同じ理由・同じ形をとっている。
-
-**例外：外部要因による強制遷移。** 被弾は「その状態が自分で決める遷移」ではないため、
-`HitReactionSystem` が直接 `replace<Motion>` する唯一の例外になっている。このとき前の状態が
-`Tick` の満了時に行うはずだった後始末（`Velocity` のクリア、縮んだ `RectDrawable::size` の復元）が
-飛ばされるので、`HitReactionSystem` が上書き前に代わりに行う。この例外は増やさない。
-
----
-
-## 座標系 — 疑似3D
+## 1. 座標系 — 疑似3D
 
 `WorldPos { w, h, d }` の3軸を使う。`w` は横位置（右が正）、`h` は高さ（地面=0、上が正）、
 `d` は奥行き（大きいほど奥 = 画面上方）。
 
 - 画面座標は `toScreen()` で `Vec2{ w, -(d + h) }`。描画順は `d` の降順（奥から手前）
-- 高さと奥行きは同じ画面軸に潰れるが、当たり判定は3軸を保ったカプセル（線分＋半径）どうしの
-  最近接距離で行う。描画では潰れる `h` と `d` を、判定では区別する
-- カメラは `Scene::Center()` の固定オフセットのみ（スクロールなし）
-- 接地判定は `h <= 0`（`WorldPos::isOnGround()`）で、`GravitySystem` が沈み込みを 0 にクランプする
+- 高さと奥行きは同じ画面軸に潰れるが、当たり判定は3軸を保ったまま行う。描画では潰れる
+  `h` と `d` を、判定では区別する
 
-**基準点：** `WorldPos` は `Drawable`（`DrawAnchor`）と `Collider`（オフセット）の共通基準点だが、
-「中心」か「接地点」かはエンティティごとに異なる。`DrawAnchor` のデフォルトは `Center`、
-接地キャラクター（プレイヤー等）は生成時に `BottomCenter` を明示する。`Collider` の `Vec3` は
-x=w、y=h、z=d に対応する。
+**基準点：** `WorldPos` は描画と当たり判定の共通基準点だが、「中心」か「接地点」かは
+エンティティごとに異なる。`DrawAnchor` のデフォルトは `Center`、接地キャラクターは生成時に
+`BottomCenter` を明示する。位置や範囲を `Vec3` で表すときは x=w、y=h、z=d に対応させる。
 
-**制約：** `WorldPos` は常に絶対座標。相対座標は `LocalOffset` に置き、`AttachmentSystem` が
-毎フレーム親の絶対座標 + `LocalOffset` で子を上書きする。
+**位置とずれは別の型で表す。** 絶対座標は `WorldPos`、親からの相対位置は `LocalOffset` に置く。
 
 ---
 
-## 1フレームのデータフロー
+## 2. ECS — 能力は組み合わせで表現する
 
-`PlayerTestPhase::update` が代表例。各システムの呼び出し順と処理内容は
-[REFERENCE.md](REFERENCE.md) の「システム一覧」を参照。順序には以下の意味がある。
+EnTT を使用し、実体（Entity）とデータ（Component）、処理（System）を分けて管理する。
 
-- `AttachmentSystem` は `MotionSystem`（珠の `LocalOffset` 更新）より後、`HitSystem` より前。
-  子の絶対座標が確定していないと判定がずれる
-- `ProjectileSystem` は `MovementSystem` と `HitSystem` の後。着弾判定を `Attack::hitTargets` の
-  中身で行うため
-- `GravitySystem` の「加速」と「地面クランプ」は時間軸が違う（次フレーム用／今フレーム確定）。
-  分割すると跳ね方が変わるため1つの関数に留める
-
-### ヒットストップの実現方法
-
-`Hitstop` を持つエンティティは `MovementSystem` / `GravitySystem` / `AnimationSystem` のビューから
-`entt::exclude` で除外される。一方 `MotionSystem` は除外せず、`dt = 0` の `FrameData` で `Tick` を
-呼ぶ。除外すると停止中の入力が `Tick` に届かず、コンボの先行入力を取りこぼすため。
-「時間だけを凍結し、入力の受付は続ける」という区別が必要だった。
-時間依存のシステムを追加するときは、同様の対応が必要か検討すること。
+- **レジストリ**（`entt::registry`）
+  - 1つだけ作成し、エンティティとコンポーネント、コンテキストを保持する
+- **エンティティ**（`entt::entity`）
+  - 純粋な ID。`registry.create()` で作成する
+- **コンポーネント**（`Component/` に型を配置）
+  - 振る舞いを持たない構造体
+  - `registry.emplace<C>(entity)` で持たせ、その組み合わせでオブジェクトを表現する
+  - 整合性を保つ必要がある場合のみ、`const` 化やメンバ関数への限定を行う
+- **システム**（`System/` に関数を配置）
+  - 状態を持たない静的関数
+  - 引数は `registry` と `FrameData`
+- **コンテキスト**（`registry.ctx()`）
+  - グローバルな読み取り専用データの置き場
+  - システムの引数が `registry` 1つで済み、テストは registry を作り直すだけで隔離できる
 
 ---
 
-## 設定の外部化
+## 3. フェーズ — 起動と遷移
+
+プレイ中・メニュー・ビューアといったフェーズを、スタック（`PhaseStack`）で持つ。フェーズを
+積むと前のフェーズは下に残り、取り出すとそこへ戻る。会話が始まったら会話のフェーズを積み、
+終われば元のフェーズが続きから動く、という入れ子がそのまま書ける。
+
+### フェーズは自分の終わりだけを知る
+
+先頭のフェーズ（`IPhase`）の `update` だけが毎フレーム呼ばれ、`PhaseCommand`（`None` / `Pop` /
+`Push` / `Reset`）を返す。スタックを実際に操作するのは `PhaseStack` だけで、フェーズは意図を
+返すに留まる。
+
+この形のため、フェーズは**次に何が動くかを知らない**。自分が終わったら `Pop` を返すだけで、
+次に動くのは下に残っていたフェーズになる。`WaitPhase` のような汎用のフェーズが、呼び出し元
+ごとの遷移先を持たずに済む。
+
+### ScenarioPhase だけが進行順を知る
+
+画面の流れは C++ ではなく `assets/config/scenario.toml` にある。`Main.cpp` が最初に積むのは、
+その `init` セクションを指す `ScenarioPhase` 1つだけ。
+
+`ScenarioPhase` は毎フレーム1ステップ進み、`push` のステップなら次のフェーズを積む。
+**自身はスタックの下に残る。** 積まれたフェーズが `Pop` すると `ScenarioPhase` が再び先頭に
+なり、次のステップから再開する。進行順を知っているのは `ScenarioPhase` だけで、積まれた側は
+知らない。
+
+```
+ScenarioPhase          ← 下に残り続ける
+  └ push → TestMenuPhase   ← Pop すると ScenarioPhase の続きへ戻る
+       └ push → PlayerTestPhase
+```
+
+TOML を読むのは Config 層で、具象フェーズを知らない。
+
+- `ScenarioData`（`Config/ScenarioData.hpp`）— セクション名 → ステップ列（`ScenarioStep` は
+  `StepPush` / `StepReset` の variant）
+- `PhaseLoaderTable`（同上。実体は `Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()`）—
+  TOML のフェーズ名を生成子に変換する表。`ScenarioData::FromToml` が引数で受け取り、
+  配線は `GameSetup` が行う
+
+参照先セクションの実在は、全セクションを登録し終えた後にまとめて検証する。前方参照でき、
+不在なら起動時に失敗するので、ゲームループ内で例外は飛ばない。
+
+### ECS との連携
+
+`PhaseStack` が持つのはフェーズの積み重ねだけで、ゲームの状態は持たない。エンティティと
+コンポーネントはすべて registry の側にある。両者は、`Main.cpp` が作った registry を毎フレーム
+渡すことで噛み合う。
+
+```
+Main.cpp ── registry を1つ作る
+  └ PhaseStack::update(registry, frameData)
+       └ IPhase::update(registry, frameData)    ← 先頭のフェーズだけ
+            └ 各 System::Update(registry, ...)  ← そのフェーズに必要なものを順に
+```
+
+---
+
+## 4. Motion — プレイヤーと敵の行動状態
+
+プレイヤーと敵の行動を、排他的な状態として持つ。同時に2つは成立しない。状態は `Motion`
+（`std::variant`）1つのコンポーネントで表し、その状態でだけ必要なデータは状態の型が自分で持つ。
+
+### 状態は次を返すだけで、自分を書き換えない
+
+各状態型には `Tick` があり、`Optional<Motion>` を返す。`none` なら継続、値があればその状態へ
+遷移する。`Motion` を書き換えるのは `MotionSystem` 1つだけ。
+
+```
+MotionSystem::Update(registry, frameData)
+  └ std::visit ── 現在の状態型を選ぶ
+       └ Tick(state, registry, entity, frameData) → Optional<Motion>
+            ├ none  ── 継続
+            └ 値あり ── MotionSystem が replace<Motion>
+```
+
+`Tick` は ADL で解決される自由関数で、`MotionState` コンセプトが契約を強制する。状態型を足して
+`Tick` を書かないとビルドが通らない。
+
+### 例外：外部要因による強制遷移
+
+被弾だけは `HitReactionSystem` が直接 `replace<Motion>` する。このとき前の状態が `Tick` の
+満了時に行うはずだった後始末が飛ばされるので、`HitReactionSystem` が上書き前に代わりに行う。
+この例外は増やさない。
+
+---
+
+## 5. Config — 数値と資産の外部化
 
 数値はコードに埋めず TOML に置き、`FromToml` で構造体に変換して `registry.ctx()` に載せる。
-Debug ビルドでは F5（`InputState::reloadConfig`）で再読込でき、`PlayerTestPhase` は自分自身を
-エンティティごと作り直して即座に反映する。
+`FromToml` は `std::expected` を返し、キー欠落や型不一致は起動時の失敗になる。
+
+Debug ビルドでは F5（`InputState::reloadConfig`）で再読込できる。読み込みに失敗した場合は
+旧データを維持するため、調整中に書き損じてもゲームは落ちない。
 
 アセットは `Ash2/App/assets/asset_list` を単一の入り口として扱い、Debug はファイルから・Release は
 埋め込みリソースから読む差異を `Asset.hpp` に閉じ込める。パス解決は必ず `AssetPath()` を通す。
-`asset_list` と `Ash2/App/Resource.rc` は `tools/sync-assets.sh` の生成物で、手書きしない。
 
 ---
 
-## 設計上の原則
+## 6. 入力 — デバイス差の吸収
 
-- **破棄は親から。** `Hierarchy` を持つエンティティは `Hierarchy::DestroyWithChildren` で破棄し、
-  子（攻撃判定の珠）が孤児になるのを防ぐ。独立エンティティ（弾、フェード中に親から
-  `Detach` された珠）はタグ（`Projectile`/`FadeOut`）で検索して個別に破棄する
-- **ビューの走査中に `destroy` しない。** 破棄対象は配列に集めてループの外でまとめて破棄する
-  （`EnemySystem` / `ProjectileSystem`）
-- **タイムラインは共通化する。** 攻撃・ダッシュ系はすべて `MotionTimeline`（構え／有効／
-  後隙A＝キャンセル不可／後隙B＝キャンセル可）の4区間で表し、区間判定をアクションごとに書かない
-- **入力はテストしやすい型に落とす。** `InputState` は `Key` や `TOMLValue` のような実行環境に
-  依存する型を持ち込まない。デバイス差は `InputDeviceSelector` で吸収する
-- **失敗は値で返す。** 下位は `Optional` / `std::expected` で伝播させ、回復しないと決めた側が
-  `FatalError` を投げる。捕捉は `Main.cpp` のみ（[ERROR_HANDLING.md](coding_style/ERROR_HANDLING.md)）
-- **`Name` は構築後不変。** `NameLookup` が構築・破棄シグナルでのみ同期されるため
-- **ファイル追加時は `Ash2.vcxproj` と `.filters` も更新する**
+キーボードとゲームパッドの違いは `InputDeviceSelector` が吸収し、以降は `InputState`
+（そのフレームの論理入力）だけを扱う。`Main.cpp` が毎フレーム作り、`FrameData` に載せて
+フェーズとシステムへ渡す。
+
+```
+KeyboardInputAction ─┐
+XInputAction ────────┴→ InputDeviceSelector ── InputState → FrameData
+                        （最後に操作されたデバイスを選ぶ）
+```
+
+`InputState` は `Key` のような実行環境に依存する型を持たない。値を組み立てるだけで、
+入力を伴うシステムのテストが書ける。
+
+---
+
+## 7. 描画 — ワールドを画面へ
+
+画面を描くシステムは `DrawSystem` と `HudSystem` の2つだけ。見た目の話はここに閉じている。
+
+`DrawSystem` は `WorldPos` と `Drawable` を持つエンティティをまとめて描く。種別ごとの描画
+コードはない。`Drawable` は形状の variant（矩形・円・テクスチャ）で、色は `DrawColor` が別に
+持つ。持たないエンティティは白・不透明として扱う。
+
+`HudSystem` はワールドを通らず、画面座標へ直接描く。
+
+アニメーションは `TextureDrawable` の中身の差し替えとして表す。`AnimationSystem` が
+`SpriteAnimation` の経過時間を進め、切り出した `TextureRegion` を書き込む。`DrawSystem` は
+それが動いているかどうかを知らない。

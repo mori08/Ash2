@@ -3,7 +3,7 @@
 #include "System/MotionSystem.hpp"
 
 #include "Component/Hitstop.hpp"
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 #include "System/EnemyMotionSystem.hpp"
 #include "System/PlayerMotionSystem.hpp"
 

@@ -7,7 +7,7 @@
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 
 namespace EnemyMotion {
 

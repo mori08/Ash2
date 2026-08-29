@@ -20,7 +20,7 @@
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 #include "System/AttachmentSystem.hpp"
 #include "System/EnemySystem.hpp"

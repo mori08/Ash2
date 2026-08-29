@@ -5,7 +5,7 @@
 #include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/AnimationData.hpp"
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 #include "UiFonts.hpp"
 

@@ -13,7 +13,7 @@ void Propagate(
     if (registry.all_of<WorldPos>(child)) {
       auto& pos = registry.get<WorldPos>(child);
       if (registry.all_of<LocalOffset>(child)) {
-        const auto& off = registry.get<const LocalOffset>(child).value;
+        const auto& off = registry.get<const LocalOffset>(child);
         pos = {
             .w = parentPos.w + off.w,
             .h = parentPos.h + off.h,

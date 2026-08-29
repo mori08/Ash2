@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 
 class IPhase;
 

@@ -1,6 +1,6 @@
 #include <Siv3D.hpp>
 
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotionSystem.hpp"
 
