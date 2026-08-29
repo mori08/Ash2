@@ -1,7 +1,7 @@
 #pragma once
 
+#include "FrameData.hpp"
 #include "IPhase.hpp"
-#include "Phase/FrameData.hpp"
 
 /// @brief フェーズをスタックで管理するクラス
 class PhaseStack {

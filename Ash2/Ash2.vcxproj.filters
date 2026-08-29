@@ -1025,8 +1025,8 @@
     <ClInclude Include="Input\XInputAction.hpp">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Phase\FrameData.hpp">
-      <Filter>Header Files\Phase</Filter>
+    <ClInclude Include="FrameData.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Component\Drawable.hpp">
       <Filter>Header Files\Component</Filter>

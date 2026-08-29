@@ -20,7 +20,7 @@
 #include "Component/WorldPos.hpp"
 #include "Config/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 #include "System/MotionSystem.hpp"
 #include "System/PlayerMotionSystem.hpp"
 
@@ -313,9 +313,9 @@ TEST_CASE(
   // 進行度0.70 → 角度90°＝真下
   // （w=0、h=capMidH(40.0)-orbitRadius(50.0)=-10.0）
   const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
-  REQUIRE(localOffset.value.w == Approx(0.0).margin(0.001));
-  REQUIRE(localOffset.value.h == Approx(-10.0));
-  REQUIRE(localOffset.value.d == Approx(0.0));
+  REQUIRE(localOffset.w == Approx(0.0).margin(0.001));
+  REQUIRE(localOffset.h == Approx(-10.0));
+  REQUIRE(localOffset.d == Approx(0.0));
 
   const auto& attack = registry.get<Attack>(air.hitboxEntity);
   REQUIRE(attack.damage == 15);
@@ -348,9 +348,9 @@ TEST_CASE(
 
   // 進行度0.40 → 角度0°＝正面。w = -orbitRadius(50.0)、h = capMidH(40.0)
   const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
-  REQUIRE(localOffset.value.w == Approx(-50.0));
-  REQUIRE(localOffset.value.h == Approx(40.0));
-  REQUIRE(localOffset.value.d == Approx(0.0));
+  REQUIRE(localOffset.w == Approx(-50.0));
+  REQUIRE(localOffset.h == Approx(40.0));
+  REQUIRE(localOffset.d == Approx(0.0));
 }
 
 TEST_CASE(
@@ -1431,8 +1431,8 @@ TEST_CASE(
   constexpr double kHalfLightGap = 36.0 / 2.0;
   const auto& offset0 = registry.get<LocalOffset>(finisher.lightEntities[0]);
   const auto& offset1 = registry.get<LocalOffset>(finisher.lightEntities[1]);
-  REQUIRE(offset0.value.h == Approx(kCapMidH - kHalfLightGap));
-  REQUIRE(offset1.value.h == Approx(kCapMidH + kHalfLightGap));
+  REQUIRE(offset0.h == Approx(kCapMidH - kHalfLightGap));
+  REQUIRE(offset1.h == Approx(kCapMidH + kHalfLightGap));
 }
 
 TEST_CASE(
@@ -2119,9 +2119,9 @@ TEST_CASE(
 
   // 進行度0.25 → 円上の点（w=0、h=capMidH(40.0)、d=orbitRadius(30.0)）
   const auto& localOffset = registry.get<LocalOffset>(dashAttack.hitboxEntity);
-  REQUIRE(localOffset.value.w == Approx(0.0).margin(0.001));
-  REQUIRE(localOffset.value.h == Approx(40.0));
-  REQUIRE(localOffset.value.d == Approx(30.0));
+  REQUIRE(localOffset.w == Approx(0.0).margin(0.001));
+  REQUIRE(localOffset.h == Approx(40.0));
+  REQUIRE(localOffset.d == Approx(30.0));
 
   const auto& attack = registry.get<Attack>(dashAttack.hitboxEntity);
   REQUIRE(attack.damage == 20);

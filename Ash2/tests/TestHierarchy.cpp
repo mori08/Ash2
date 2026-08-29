@@ -38,11 +38,11 @@ TEST_CASE("Hierarchy::Attach - records the given offset as LocalOffset") {
   const auto child = MakeNode(registry);
 
   Hierarchy::Attach(
-      registry, parent, child, WorldPos{.w = 1.0, .h = 2.0, .d = 3.0}
+      registry, parent, child, LocalOffset{.w = 1.0, .h = 2.0, .d = 3.0}
   );
 
   REQUIRE(registry.all_of<LocalOffset>(child));
-  const auto& offset = registry.get<const LocalOffset>(child).value;
+  const auto& offset = registry.get<const LocalOffset>(child);
   REQUIRE(offset.w == Approx(1.0));
   REQUIRE(offset.h == Approx(2.0));
   REQUIRE(offset.d == Approx(3.0));
@@ -55,7 +55,7 @@ TEST_CASE("Hierarchy::Attach - child follows a parent that had no Hierarchy") {
   const auto parent = MakeNode(registry);
   const auto child = MakeNode(registry);
 
-  Hierarchy::Attach(registry, parent, child, WorldPos{.w = 1.0});
+  Hierarchy::Attach(registry, parent, child, LocalOffset{.w = 1.0});
   MoveParent(registry, parent, 100.0);
 
   REQUIRE(registry.get<const WorldPos>(child).w == Approx(101.0));
@@ -70,9 +70,9 @@ TEST_CASE("Hierarchy::Attach - every attached child follows the parent") {
   const auto child2 = MakeNode(registry);
   const auto child3 = MakeNode(registry);
 
-  Hierarchy::Attach(registry, parent, child1, WorldPos{.w = 1.0});
-  Hierarchy::Attach(registry, parent, child2, WorldPos{.w = 2.0});
-  Hierarchy::Attach(registry, parent, child3, WorldPos{.w = 3.0});
+  Hierarchy::Attach(registry, parent, child1, LocalOffset{.w = 1.0});
+  Hierarchy::Attach(registry, parent, child2, LocalOffset{.w = 2.0});
+  Hierarchy::Attach(registry, parent, child3, LocalOffset{.w = 3.0});
 
   MoveParent(registry, parent, 100.0);
 
@@ -90,8 +90,8 @@ TEST_CASE(
   const auto parent2 = MakeNode(registry);
   const auto child = MakeNode(registry);
 
-  Hierarchy::Attach(registry, parent1, child, WorldPos{.w = 1.0});
-  Hierarchy::Attach(registry, parent2, child, WorldPos{.w = 1.0});
+  Hierarchy::Attach(registry, parent1, child, LocalOffset{.w = 1.0});
+  Hierarchy::Attach(registry, parent2, child, LocalOffset{.w = 1.0});
 
   registry.get<WorldPos>(parent1).w = 100.0;
   MoveParent(registry, parent2, 500.0);
@@ -108,7 +108,7 @@ TEST_CASE(
   const auto parent = MakeNode(registry);
   const auto child = MakeNode(registry);
 
-  Hierarchy::Attach(registry, parent, child, WorldPos{.w = 1.0});
+  Hierarchy::Attach(registry, parent, child, LocalOffset{.w = 1.0});
   MoveParent(registry, parent, 100.0);
 
   Hierarchy::Detach(registry, child);
@@ -129,9 +129,9 @@ TEST_CASE("Hierarchy::Detach - the remaining children keep following") {
   const auto child2 = MakeNode(registry);
   const auto child3 = MakeNode(registry);
 
-  Hierarchy::Attach(registry, parent, child1, WorldPos{.w = 1.0});
-  Hierarchy::Attach(registry, parent, child2, WorldPos{.w = 2.0});
-  Hierarchy::Attach(registry, parent, child3, WorldPos{.w = 3.0});
+  Hierarchy::Attach(registry, parent, child1, LocalOffset{.w = 1.0});
+  Hierarchy::Attach(registry, parent, child2, LocalOffset{.w = 2.0});
+  Hierarchy::Attach(registry, parent, child3, LocalOffset{.w = 3.0});
 
   Hierarchy::Detach(registry, child2);
   MoveParent(registry, parent, 100.0);
@@ -166,7 +166,7 @@ TEST_CASE("Hierarchy::DestroyWithChildren - leaves siblings of the subtree") {
   const auto survivor = MakeNode(registry);
 
   Hierarchy::Attach(registry, parent, doomed);
-  Hierarchy::Attach(registry, parent, survivor, WorldPos{.w = 3.0});
+  Hierarchy::Attach(registry, parent, survivor, LocalOffset{.w = 3.0});
 
   Hierarchy::DestroyWithChildren(registry, doomed);
 

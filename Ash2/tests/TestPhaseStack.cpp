@@ -2,7 +2,7 @@
 #include <ThirdParty/Catch2/catch.hpp>
 #include <entt/entt.hpp>
 
-#include "Phase/FrameData.hpp"
+#include "FrameData.hpp"
 #include "Phase/PhaseStack.hpp"
 
 namespace {

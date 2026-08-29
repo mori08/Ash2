@@ -71,7 +71,7 @@ entt::entity SpawnAttackHitbox(
 /// @brief 珠の LocalOffset をワールド相対オフセットへ更新する
 void SetOrbOffset(entt::registry& registry, entt::entity orb, Vec3 offset) {
   auto& localOffset = registry.get<LocalOffset>(orb);
-  localOffset.value = WorldPos{.w = offset.x, .h = offset.y, .d = offset.z};
+  localOffset = LocalOffset{.w = offset.x, .h = offset.y, .d = offset.z};
 }
 
 }  // namespace
