@@ -91,7 +91,8 @@ void SetupContext(entt::registry& registry) {
            .radius = 5.0,
            .damage = 5,
            .bulletSpeed = 300.0,
-           .spawnHeight = 40.0},
+           .spawnHeight = 40.0,
+           .recoverySec = 0.15},
       .dash =
           {.speed = 500.0,
            .timeline =
@@ -217,7 +218,7 @@ TEST_CASE(
   REQUIRE(std::holds_alternative<PlayerMotion::Ranged>(motion));
 
   const auto& ranged = std::get<PlayerMotion::Ranged>(motion);
-  REQUIRE(ranged.timer == Approx(4.0 / 8.0));
+  REQUIRE(ranged.timer == Approx(0.15));
 
   REQUIRE(
       registry.get<SpriteAnimation>(player).currentClip == U"ranged_attack"
@@ -333,7 +334,7 @@ TEST_CASE(
   REQUIRE(std::holds_alternative<PlayerMotion::Ranged>(motion));
 
   const auto& ranged = std::get<PlayerMotion::Ranged>(motion);
-  REQUIRE(ranged.timer == Approx(4.0 / 8.0));
+  REQUIRE(ranged.timer == Approx(0.15));
 
   REQUIRE(
       registry.get<SpriteAnimation>(player).currentClip == U"ranged_attack"

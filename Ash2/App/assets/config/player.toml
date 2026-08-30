@@ -51,6 +51,7 @@ damage       = 15
 bullet_speed = 300.0
 spawn_height = 0.0
 stamina_cost = 30
+recovery_sec = 0.15
 
 [dash]
 speed           = 600.0

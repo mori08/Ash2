@@ -125,6 +125,8 @@ struct RangedConfig {
   double spawnHeight;
   /// 1回の発生に必要なスタミナ消費量
   int32 staminaCost;
+  /// 発射後の硬直時間（秒）
+  double recoverySec;
 };
 
 /// @brief ダッシュ攻撃の設定値
