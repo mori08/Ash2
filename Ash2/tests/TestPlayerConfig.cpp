@@ -46,6 +46,7 @@ constexpr std::string_view kFullToml =
     "bullet_speed = 300.0\n"
     "spawn_height = 0.0\n"
     "stamina_cost = 30\n"
+    "recovery_sec = 0.15\n"
     "[dash]\n"
     "speed = 600.0\n"
     "windup_sec = 0.0\n"
@@ -111,6 +112,7 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->melee.finisher.lightCount == 2);
   REQUIRE(cfg->melee.finisher.lightGap == 36.0);
   REQUIRE(cfg->ranged.damage == 15);
+  REQUIRE(cfg->ranged.recoverySec == 0.15);
   REQUIRE(cfg->dash.speed == 600.0);
   REQUIRE(cfg->dashAttack.damage == 25);
   REQUIRE(cfg->airAttack.damage == 25);

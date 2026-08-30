@@ -1,7 +1,5 @@
 #include <Siv3D.hpp>
 
-#include <cassert>
-
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/DrawColor.hpp"
@@ -10,7 +8,6 @@
 #include "Component/Stamina.hpp"
 #include "Component/Team.hpp"
 #include "Component/Velocity.hpp"
-#include "Config/AnimationData.hpp"
 #include "FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
@@ -21,14 +18,6 @@ namespace PlayerMotion {
 namespace {
 
 constexpr ColorF kBulletColor = {0.9, 0.9, 0.3};
-
-/// @brief 指定クリップの再生時間（秒）を返す
-/// @return クリップが見つからない場合は 0.0
-double GetClipDuration(const AnimationData& data, const String& clip) {
-  const auto it = data.clips.find(clip);
-  if (it == data.clips.end()) return 0.0;
-  return it->second.cycleDuration();
-}
 
 }  // namespace
 
@@ -69,19 +58,8 @@ Ranged MakeRanged(
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.ranged.staminaCost);
 
-  const auto& dataRegistry = registry.ctx().get<AnimationDataRegistry>();
-  assert(
-      dataRegistry.contains(anim.dataKey) &&
-      "AnimationDataRegistry にキーが存在しない"
-  );
-  const auto& data = dataRegistry.at(anim.dataKey);
-  assert(
-      data.clips.contains(U"ranged_attack") &&
-      "clips に ranged_attack が存在しない"
-  );
-
   SetClip(anim, U"ranged_attack");
-  return Ranged{.timer = GetClipDuration(data, U"ranged_attack")};
+  return Ranged{.timer = cfg.ranged.recoverySec};
 }
 
 Optional<Variant> Tick(

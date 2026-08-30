@@ -167,6 +167,7 @@ namespace {
           .bulletSpeed = f.get<double>(U"bullet_speed"),
           .spawnHeight = f.get<double>(U"spawn_height"),
           .staminaCost = f.get<int32>(U"stamina_cost"),
+          .recoverySec = f.get<double>(U"recovery_sec"),
       }
   );
 }

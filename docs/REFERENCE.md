@@ -240,7 +240,7 @@
 | `ReleaseMotionEntities` | 状態が `hitboxEntity`/`lightEntities` を持つ場合のみ `ReleaseAttackHitbox` で解放する（`requires` で有無を判定するテンプレート、`Variant` を受ける `std::visit` 版も持つ）。被弾による強制遷移の後始末に使う | `Helper.hpp`/`.cpp` |
 | `MakeMeleeChain` | 指定段の `MeleeChain` を生成（`melee_{stage+1}` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
 | `MakeMeleeFinisher` | `MeleeFinisher` を生成（`melee_finish` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
-| `MakeRanged` | `Ranged` を生成（スタミナ消費、`timer` はクリップ再生時間から算出） | `Transition.hpp` / `Ranged.cpp` |
+| `MakeRanged` | `Ranged` を生成（スタミナ消費、`timer` は `RangedConfig::recoverySec`） | `Transition.hpp` / `Ranged.cpp` |
 | `MakeDash` | `Dash` を生成（スタミナ消費、`air` フラグ設定） | `Transition.hpp` / `Dash.cpp` |
 | `MakeDashAttack` | `DashAttack` を生成（`air`・`dashDir` を引き継ぐ） | `Transition.hpp` / `DashAttack.cpp` |
 | `MakeAirAttack` | `AirAttack` を生成 | `Transition.hpp` / `AirAttack.cpp` |
@@ -337,7 +337,7 @@
 | `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`）。継続段・締め段の両方が持つ |
 | `MeleeFinisherConfig` | 締め段の設定。`MeleeSwingConfig swing` を集約し、見た目の光の数 `lightCount`（2以上、parse 時に検証）と間隔 `lightGap` を足す |
 | `MeleeConfig` | 段共通のパラメータ（`capMidH`/`reach`/`damage`）と継続段配列 `chain`（先頭が1段目）・締め段 `finisher` |
-| `RangedConfig` | リーチ・半径・ダメージ・弾速・発射高さ・スタミナ消費 |
+| `RangedConfig` | リーチ・半径・ダメージ・弾速・発射高さ・スタミナ消費・発射後の硬直時間 `recoverySec` |
 | `DashConfig` | 速度・タイムライン・スタミナ消費 |
 | `DashAttackConfig` | タイムライン・突進速度・軌道半径（w-d 平面）・カプセル半径・ダメージ・ヒットストップ時間 |
 | `AirAttackConfig` | タイムライン・ドリフト移動速度倍率（地上ニュートラル速度 `speed` に対する `driftRatio`）・軌道半径（w-h 平面）・軌道の開始角/終了角（度、`orbitStartDeg`/`orbitEndDeg`。0°が正面・-90°が頭上・90°が真下・180°が真後ろ）・カプセル半径・ダメージ・ヒットストップ時間 |
@@ -467,8 +467,7 @@
 ## アニメーションクリップ名
 
 `Ash2/App/assets/config/animation/player.toml` のクリップ名としてコードから参照されるもの。
-クリップ名の欠落は `AnimationSystem` の `assert` で検出される（`ranged_attack` は
-`MakeRanged` でも同様の assert で検出する）。
+クリップ名の欠落は `AnimationSystem` の `assert` で検出される。
 
 | クリップ名 | 使用箇所 |
 |---|---|
@@ -477,7 +476,7 @@
 | `jump_rise` / `jump_fall` | `Neutral`（上昇中／落下中） |
 | `melee_1` / `melee_2` | `MakeMeleeChain`（段番号 +1 で決まる） |
 | `melee_finish` | `MakeMeleeFinisher` |
-| `ranged_attack` | `MakeRanged`（`Ranged::timer` の算出元にもなる） |
+| `ranged_attack` | `MakeRanged` |
 | `dash` | `MakeDash` |
 | `dash_attack` | `MakeDashAttack` |
 | `air_attack` | `MakeAirAttack` |
