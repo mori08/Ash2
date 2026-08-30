@@ -2,8 +2,10 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
 #include "Component/Invincible.hpp"
+#include "Component/Team.hpp"
 #include "Component/WorldPos.hpp"
 
 namespace {
@@ -12,6 +14,13 @@ struct Segment {
   Vec3 start;
   Vec3 end;
 };
+
+/// @brief 双方が Team を持ち、値が等しいか
+///
+/// 片方でも Team を持たない場合は false（陣営の判定に参加しない）
+[[nodiscard]] bool IsSameTeam(const Team* a, const Team* b) {
+  return a != nullptr && b != nullptr && *a == *b;
+}
 
 /// @brief 2線分間の最近接距離の二乗を返す
 [[nodiscard]] double SegmentDistSq(Segment segA, Segment segB) {
@@ -58,8 +67,8 @@ struct Segment {
 }
 }  // namespace
 
-Array<HitPair> HitSystem::Update(entt::registry& registry) {
-  Array<HitPair> hits;
+Array<HitEvent> HitSystem::Update(entt::registry& registry) {
+  Array<HitEvent> hits;
 
   auto attackers = registry.view<WorldPos, Collider, Attack>();
   auto targets =
@@ -76,6 +85,17 @@ Array<HitPair> HitSystem::Update(entt::registry& registry) {
     if (!registry.valid(rootEntity) || !registry.all_of<Attack>(rootEntity))
       continue;
     auto& rootAtk = registry.get<Attack>(rootEntity);
+    const auto* attackerTeam = registry.try_get<Team>(attacker);
+
+    // 攻撃側本体（ヒットボックスの Hierarchy 親）を解決する。ヒットストップ
+    // 付与と被弾側リアクションの位置判定の両方で使うため、HitEvent
+    // に写しを持たせてヒット成立時点で確定させる（被弾処理の途中で攻撃側の
+    // Attack が外れても、後続の反復で引き直さずに済む）
+    entt::entity attackerOwner = rootEntity;
+    if (const auto* hierarchy = registry.try_get<Hierarchy>(rootEntity);
+        hierarchy != nullptr && hierarchy->parent() != entt::null) {
+      attackerOwner = hierarchy->parent();
+    }
 
     const Vec3 worldA{aPos.w, aPos.h, aPos.d};
     const Vec3 ap1 = worldA + aCol.segmentStart;
@@ -84,6 +104,7 @@ Array<HitPair> HitSystem::Update(entt::registry& registry) {
     for (auto&& [target, tPos, tCol, hp] : targets.each()) {
       if (attacker == target) continue;
       if (rootEntity == target) continue;
+      if (IsSameTeam(attackerTeam, registry.try_get<Team>(target))) continue;
       if (rootAtk.hitTargets.contains(target)) continue;
 
       const Vec3 worldT{tPos.w, tPos.h, tPos.d};
@@ -99,7 +120,14 @@ Array<HitPair> HitSystem::Update(entt::registry& registry) {
 
       rootAtk.hitTargets.emplace(target);
       hp.current = Max(0, hp.current - rootAtk.damage);
-      hits.push_back(HitPair{.attacker = rootEntity, .target = target});
+      hits.push_back(
+          HitEvent{
+              .target = target,
+              .attackerOwner = attackerOwner,
+              .hitstopSec = rootAtk.hitstopSec,
+              .reaction = rootAtk.reaction,
+          }
+      );
     }
   }
 

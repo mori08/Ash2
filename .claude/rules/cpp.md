@@ -4,7 +4,6 @@ paths:
   - "Ash2/src/**/*.hpp"
   - "Ash2/tests/**/*.cpp"
 review:
-  - ECS
   - エラー処理
   - コメント
 ---

@@ -71,4 +71,36 @@ namespace PlayerMotion {
     const FrameData& frameData
 );
 
+/// @brief Stagger 状態の更新（タイマー減算・dashDown で Dash
+/// へキャンセル・満了で Neutral へ戻る）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    Stagger& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief Knockback 状態の更新（毎フレーム Invincible 付与・接地かつ
+/// 上昇が止まったら Downed へ遷移）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    Knockback& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief Downed 状態の更新（毎フレーム Invincible 付与・タイマー減算・
+/// 満了で GetUp へ遷移）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    Downed& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief GetUp 状態の更新（タイマー減算・dashDown で Dash
+/// へキャンセル・満了で Neutral へ戻る）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    GetUp& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
 }  // namespace PlayerMotion

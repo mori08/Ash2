@@ -81,9 +81,32 @@ struct Landing {
   double timer = 0.0;
 };
 
+/// @brief 仰け反り中（軽い被弾リアクション。外部要因による強制遷移。
+/// ARCHITECTURE.md の「例外：外部要因による強制遷移」を参照）
+struct Stagger {
+  /// 残り時間（秒）
+  double timer = 0.0;
+};
+
+/// @brief 吹き飛ばし中（重い被弾リアクション。外部要因による強制遷移。
+/// 放物線は Velocity+Gravity による物理に委ね、接地判定で Downed へ遷移する）
+struct Knockback {};
+
+/// @brief ダウン中（地面に倒れている）
+struct Downed {
+  /// 残り時間（秒）
+  double timer = 0.0;
+};
+
+/// @brief 起き上がり中
+struct GetUp {
+  /// 残り時間（秒）
+  double timer = 0.0;
+};
+
 /// @brief プレイヤーの排他的な行動状態
 using Variant = std::variant<
     Neutral, MeleeChain, MeleeFinisher, Ranged, Dash, DashAttack, AirAttack,
-    Landing>;
+    Landing, Stagger, Knockback, Downed, GetUp>;
 
 }  // namespace PlayerMotion

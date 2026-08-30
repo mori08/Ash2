@@ -183,6 +183,20 @@ struct AttackEffectConfig {
   double fadeSec = 0.0;
 };
 
+/// @brief 被弾リアクションの設定値
+struct DamageConfig {
+  /// 仰け反り（Stagger）の持続時間（秒）
+  double staggerSec;
+  /// 吹き飛ばし（Knockback）の横方向初速（ピクセル/秒）
+  double knockbackSpeedW;
+  /// 吹き飛ばし（Knockback）の垂直方向初速（ピクセル/秒）
+  double knockbackSpeedH;
+  /// ダウン（Downed）の持続時間（秒）
+  double downSec;
+  /// 起き上がり（GetUp）の持続時間（秒）
+  double getUpSec;
+};
+
 /// @brief プレイヤーの設定値
 struct PlayerConfig {
   /// 横移動速度（ピクセル/秒）
@@ -191,6 +205,10 @@ struct PlayerConfig {
   double jumpSpeed;
   /// 重力加速度（ピクセル/秒^2）
   double gravity;
+  /// 当たり判定カプセルの半径
+  double capsuleRadius;
+  /// 当たり判定カプセルの高さ（足元からの縦カプセル）
+  double capsuleHeight;
   MeleeConfig melee;
   RangedConfig ranged;
   DashConfig dash;
@@ -199,6 +217,7 @@ struct PlayerConfig {
   StaminaConfig stamina;
   LandingConfig landing;
   AttackEffectConfig attackEffect;
+  DamageConfig damage;
 
   /// @brief TOML からプレイヤー設定を生成する
   [[nodiscard]] static std::expected<PlayerConfig, String> FromToml(

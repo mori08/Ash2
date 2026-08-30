@@ -8,6 +8,7 @@
 #include "Component/FadeOut.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hitstop.hpp"
+#include "Component/Hp.hpp"
 #include "Component/Invincible.hpp"
 #include "Component/LocalOffset.hpp"
 #include "Component/Player.hpp"
@@ -15,11 +16,14 @@
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Stamina.hpp"
+#include "Component/Team.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/AnimationData.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "FrameData.hpp"
+#include "System/AttachmentSystem.hpp"
+#include "System/HitSystem.hpp"
 #include "System/MotionSystem.hpp"
 #include "System/PlayerMotionSystem.hpp"
 
@@ -32,6 +36,8 @@ void SetupContext(entt::registry& registry) {
       .speed = 100.0,
       .jumpSpeed = 300.0,
       .gravity = 800.0,
+      .capsuleRadius = 20.0,
+      .capsuleHeight = 60.0,
       .melee =
           {
               .capMidH = 40.0,
@@ -120,6 +126,13 @@ void SetupContext(entt::registry& registry) {
            .hitstopSec = 0.08},
       .landing = {.recoverySec = 0.20},
       .attackEffect = {.fadeSec = 0.30},
+      .damage = {
+          .staggerSec = 0.20,
+          .knockbackSpeedW = 250.0,
+          .knockbackSpeedH = 300.0,
+          .downSec = 0.50,
+          .getUpSec = 0.30
+      },
   });
 
   AnimationDataRegistry animReg;
@@ -146,6 +159,7 @@ void SetupContext(entt::registry& registry) {
 entt::entity MakePlayer(entt::registry& registry) {
   const auto player = registry.create();
   registry.emplace<Player>(player);
+  registry.emplace<Team>(player, Team::Player);
   registry.emplace<WorldPos>(player, WorldPos{.w = 0.0, .h = 0.0, .d = 0.0});
   registry.emplace<Velocity>(player);
   registry.emplace<SpriteAnimation>(
@@ -212,6 +226,52 @@ TEST_CASE(
   // 弾エンティティが生成されている
   const auto bulletView = registry.view<Projectile>();
   REQUIRE(bulletView.size() == 1);
+  // 弾に Team::Player が付与されている
+  REQUIRE(registry.get<Team>(bulletView.front()) == Team::Player);
+}
+
+TEST_CASE("PlayerMotionSystem - melee hitbox does not hit its owner") {
+  // 近接のヒットボックスは体と重なる位置に生成されるが、同陣営のため
+  // 自分には当たらない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  registry.emplace<Collider>(
+      player,
+      Collider{
+          .segmentStart = Vec3{0.0, 0.0, 0.0},
+          .segmentEnd = Vec3{0.0, cfg.capsuleHeight, 0.0},
+          .radius = cfg.capsuleRadius
+      }
+  );
+  registry.emplace<Hp>(player, Hp{.max = 100, .current = 100});
+
+  FrameData frameData{};
+  frameData.input.attackDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  // 構え（windupSec）を越えさせてヒットボックスを生成する
+  frameData.input.attackDown = false;
+  frameData.dt = 0.06;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& chain = std::get<PlayerMotion::MeleeChain>(
+      registry.get<PlayerMotion::Variant>(player)
+  );
+  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
+
+  AttachmentSystem::UpdateTransform(registry);
+
+  REQUIRE(HitSystem::Update(registry).isEmpty());
+  REQUIRE(registry.get<Hp>(player).current == 100);
+
+  // Team を外すと当たる。上のヒットなしが位置のすれ違いではなく
+  // 同陣営スキップによるものだと示す
+  registry.remove<Team>(chain.hitboxEntity);
+  REQUIRE(HitSystem::Update(registry).size() == 1);
+  REQUIRE(registry.get<Hp>(player).current < 100);
 }
 
 TEST_CASE("PlayerMotionSystem - no attack input keeps Neutral") {
@@ -2349,6 +2409,186 @@ TEST_CASE(
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
   REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
+}
+
+TEST_CASE("PlayerMotionSystem - Stagger timer expiry transitions to Neutral") {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Stagger{.timer = 0.1}
+  );
+
+  const FrameData frameData{.dt = 0.5};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+}
+
+TEST_CASE("PlayerMotionSystem - Stagger cancels into Dash on dash input") {
+  // Stagger は全区間でキャンセルを受ける
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Stagger{.timer = 0.1}
+  );
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Stagger ignores dash input when stamina is "
+    "insufficient"
+) {
+  // ST不足なら無視して硬直を続ける（タイマーは減り続ける）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Stamina>(player).current = 10;
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Stagger{.timer = 0.1}
+  );
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Stagger>(motion));
+  REQUIRE(std::get<PlayerMotion::Stagger>(motion).timer == Approx(0.09));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Knockback transitions to Downed when grounded and "
+    "vertical velocity has stopped rising"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 0.0;
+  registry.get<Velocity>(player).h = -10.0;
+  registry.get<Velocity>(player).w = 100.0;
+
+  registry.replace<PlayerMotion::Variant>(player, PlayerMotion::Knockback{});
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Downed>(motion));
+  // downSec(0.50)
+  REQUIRE(std::get<PlayerMotion::Downed>(motion).timer == Approx(0.50));
+  REQUIRE(registry.get<Velocity>(player).w == Approx(0.0));
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Knockback stays airborne and keeps granting "
+    "Invincible"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;
+
+  registry.replace<PlayerMotion::Variant>(player, PlayerMotion::Knockback{});
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(registry.all_of<Invincible>(player));
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Knockback>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Downed timer expiry transitions to GetUp and "
+    "removes Invincible"
+) {
+  // 起き上がりは無敵ではないため、Downed からの遷移時に Invincible を除去する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.emplace<Invincible>(player);
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Downed{.timer = 0.1}
+  );
+
+  const FrameData frameData{.dt = 0.5};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::GetUp>(motion));
+  // getUpSec(0.30)
+  REQUIRE(std::get<PlayerMotion::GetUp>(motion).timer == Approx(0.30));
+  REQUIRE_FALSE(registry.all_of<Invincible>(player));
+}
+
+TEST_CASE("PlayerMotionSystem - Downed grants Invincible every frame") {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Downed{.timer = 1.0}
+  );
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(registry.all_of<Invincible>(player));
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Downed>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+}
+
+TEST_CASE("PlayerMotionSystem - GetUp timer expiry transitions to Neutral") {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::GetUp{.timer = 0.1}
+  );
+
+  const FrameData frameData{.dt = 0.5};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+}
+
+TEST_CASE("PlayerMotionSystem - GetUp cancels into Dash on dash input") {
+  // GetUp は全区間でキャンセルを受ける
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::GetUp{.timer = 0.1}
+  );
+
+  FrameData frameData{.dt = 0.01};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
 }
 
 #endif

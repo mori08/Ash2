@@ -1,5 +1,6 @@
 #include "Phase/PlayerTestPhase.hpp"
 
+#include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
@@ -15,6 +16,7 @@
 #include "Component/Projectile.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Stamina.hpp"
+#include "Component/Team.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
@@ -36,12 +38,18 @@
 constexpr ColorF kDummyColor = {0.8, 0.2, 0.2};
 constexpr int32 kPlayerMaxHp = 100;
 constexpr int32 kPlayerMaxStamina = 100;
+// TODO(#115): 敵の攻撃モーション・AI が未実装
+// デバッグキー（Key1/Key2/Key3）で敵に攻撃力を仮付与し、被弾確認を代替する。
+// 値は仮値のため config 化しない（kDummyColor と同じ扱い）
+constexpr int32 kDebugAttackDamage = 10;
+constexpr double kDebugAttackHitstopSec = 0.05;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
 
   m_playerRoot = registry.create();
   registry.emplace<Player>(m_playerRoot);
+  registry.emplace<Team>(m_playerRoot, Team::Player);
   registry.emplace<WorldPos>(m_playerRoot);
   registry.emplace<Velocity>(m_playerRoot);
   registry.emplace<Gravity>(m_playerRoot, Gravity{.accel = cfg.gravity});
@@ -55,6 +63,14 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   );
   registry.emplace<Hp>(
       m_playerRoot, Hp{.max = kPlayerMaxHp, .current = kPlayerMaxHp}
+  );
+  registry.emplace<Collider>(
+      m_playerRoot,
+      Collider{
+          .segmentStart = Vec3{0.0, 0.0, 0.0},
+          .segmentEnd = Vec3{0.0, cfg.capsuleHeight, 0.0},
+          .radius = cfg.capsuleRadius
+      }
   );
   registry.emplace<Stamina>(
       m_playerRoot,
@@ -74,6 +90,7 @@ entt::entity PlayerTestPhase::spawnEnemy(entt::registry& registry) {
 
   const auto enemy = registry.create();
   registry.emplace<Enemy>(enemy);
+  registry.emplace<Team>(enemy, Team::Enemy);
   registry.emplace<WorldPos>(enemy, WorldPos{.w = enemyCfg.spawnW});
   registry.emplace<Velocity>(enemy);
   // Knockback の放物線は GravitySystem に任せるため、プレイヤーと同じ重力
@@ -111,8 +128,31 @@ PhaseCommand PlayerTestPhase::update(
   GravitySystem::Update(registry, dt);
   AttachmentSystem::UpdateTransform(registry);
 
+  // TODO(#115): 敵の攻撃モーション・AI が未実装
+  // デバッグキーで敵の体カプセルをそのまま攻撃判定に使い、被弾の4状態
+  // （Stagger/Knockback/Downed/GetUp）を手動で確認できるようにする
+  if (m_dummyTarget != entt::null) {
+    Optional<ReactionLevel> debugReaction;
+    if (Key1.down()) debugReaction = ReactionLevel::Stagger;
+    if (Key2.down()) debugReaction = ReactionLevel::Repel;
+    if (Key3.down()) debugReaction = ReactionLevel::Blow;
+    if (debugReaction) {
+      registry.emplace<Attack>(
+          m_dummyTarget,
+          Attack{
+              .damage = kDebugAttackDamage,
+              .hitstopSec = kDebugAttackHitstopSec,
+              .reaction = *debugReaction
+          }
+      );
+    }
+  }
+
   const auto hits = HitSystem::Update(registry);
   HitReactionSystem::Apply(registry, hits);
+  if (m_dummyTarget != entt::null) {
+    registry.remove<Attack>(m_dummyTarget);
+  }
   ProjectileSystem::Update(registry);
   EnemySystem::Update(registry);
   FadeOutSystem::Update(registry, dt);

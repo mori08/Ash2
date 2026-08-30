@@ -4,6 +4,7 @@
 #include <entt/entt.hpp>
 
 #include "Component/PlayerMotion.hpp"
+#include "Component/ReactionLevel.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
@@ -43,6 +44,18 @@ AirAttack MakeAirAttack(SpriteAnimation& anim);
 void SpawnProjectile(
     entt::registry& registry, const WorldPos& pos, bool facingRight,
     const PlayerConfig& cfg
+);
+
+/// @brief 被弾による強制遷移（Stagger または Knockback）を生成する
+///
+/// 上書き前の Motion が持つ攻撃判定・光エンティティを解放し、Velocity の
+/// リセットと Invincible の除去を行ったうえで、`reaction` と接地状態に応じて
+/// Stagger（地上・Repel 以下）または Knockback（空中・Blow）を返す。
+/// @param knockbackSign 吹き飛ばし方向の符号（攻撃側との位置関係から決める、
+/// +1.0 または -1.0）
+Variant MakeDamaged(
+    entt::registry& registry, entt::entity entity, const PlayerConfig& cfg,
+    SpriteAnimation& anim, ReactionLevel reaction, double knockbackSign
 );
 
 }  // namespace PlayerMotion

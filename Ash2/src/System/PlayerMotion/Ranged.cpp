@@ -8,6 +8,7 @@
 #include "Component/Drawable.hpp"
 #include "Component/Projectile.hpp"
 #include "Component/Stamina.hpp"
+#include "Component/Team.hpp"
 #include "Component/Velocity.hpp"
 #include "Config/AnimationData.hpp"
 #include "FrameData.hpp"
@@ -37,6 +38,7 @@ void SpawnProjectile(
 ) {
   const double sign = facingRight ? 1.0 : -1.0;
   const auto bullet = registry.create();
+  registry.emplace<Team>(bullet, Team::Player);
   registry.emplace<WorldPos>(
       bullet,
       WorldPos{.w = pos.w, .h = pos.h + cfg.ranged.spawnHeight, .d = pos.d}

@@ -193,9 +193,9 @@ MotionSystem::Update(registry, frameData)
 
 ### 例外：外部要因による強制遷移
 
-被弾だけは `HitReactionSystem` が直接 `replace<EnemyMotion::Variant>` する。このとき前の状態が
-`Tick` の満了時に行うはずだった後始末が飛ばされるので、`HitReactionSystem` が上書き前に代わりに
-行う。この例外は増やさない。
+被弾だけは `HitReactionSystem` が Motion の variant を直接 `replace` する。このとき前の状態が
+`Tick` の満了時に行うはずだった後始末が飛ばされるので、上書きする側が代わりに行う。
+この例外は増やさない。
 
 ---
 

@@ -1,6 +1,8 @@
 speed = 200.0
 jump_speed = 400.0
 gravity = 980.0
+capsule_radius = 20.0
+capsule_height = 60.0
 
 [melee]
 cap_mid_h = 24.0
@@ -91,3 +93,10 @@ recovery_sec = 0.20
 
 [attack_effect]
 fade_sec = 0.30
+
+[damage]
+stagger_sec       = 0.25
+knockback_speed_w = 300.0
+knockback_speed_h = 350.0
+down_sec          = 0.60
+get_up_sec        = 0.30

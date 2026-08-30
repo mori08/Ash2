@@ -11,6 +11,8 @@ constexpr std::string_view kFullToml =
     "speed = 150.0\n"
     "jump_speed = 400.0\n"
     "gravity = 900.0\n"
+    "capsule_radius = 20.0\n"
+    "capsule_height = 60.0\n"
     "[melee]\n"
     "cap_mid_h = 30.0\n"
     "reach = 60.0\n"
@@ -79,7 +81,13 @@ constexpr std::string_view kFullToml =
     "[landing]\n"
     "recovery_sec = 0.20\n"
     "[attack_effect]\n"
-    "fade_sec = 0.30\n";
+    "fade_sec = 0.30\n"
+    "[damage]\n"
+    "stagger_sec = 0.25\n"
+    "knockback_speed_w = 300.0\n"
+    "knockback_speed_h = 350.0\n"
+    "down_sec = 0.60\n"
+    "get_up_sec = 0.30\n";
 
 }  // namespace
 
@@ -90,6 +98,8 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->speed == 150.0);
   REQUIRE(cfg->jumpSpeed == 400.0);
   REQUIRE(cfg->gravity == 900.0);
+  REQUIRE(cfg->capsuleRadius == 20.0);
+  REQUIRE(cfg->capsuleHeight == 60.0);
   REQUIRE(cfg->melee.capMidH == 30.0);
   REQUIRE(cfg->melee.reach == 60.0);
   REQUIRE(cfg->melee.damage == 20);
@@ -108,6 +118,11 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->stamina.recoveryRate == 0.5);
   REQUIRE(cfg->landing.recoverySec == 0.20);
   REQUIRE(cfg->attackEffect.fadeSec == 0.30);
+  REQUIRE(cfg->damage.staggerSec == 0.25);
+  REQUIRE(cfg->damage.knockbackSpeedW == 300.0);
+  REQUIRE(cfg->damage.knockbackSpeedH == 350.0);
+  REQUIRE(cfg->damage.downSec == 0.60);
+  REQUIRE(cfg->damage.getUpSec == 0.30);
 }
 
 TEST_CASE("PlayerConfig::FromToml - missing melee.chain returns unexpected") {
@@ -168,6 +183,28 @@ TEST_CASE(
   toml.replace(
       pos, std::string_view{"light_count = 2\n"}.size(), "light_count = 1\n"
   );
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+}
+
+TEST_CASE(
+    "PlayerConfig::FromToml - missing damage.stagger_sec returns unexpected"
+) {
+  std::string toml{kFullToml};
+  const auto pos = toml.find("stagger_sec = 0.25\n");
+  REQUIRE(pos != std::string::npos);
+  toml.erase(pos, std::string_view{"stagger_sec = 0.25\n"}.size());
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+}
+
+TEST_CASE(
+    "PlayerConfig::FromToml - missing capsule_radius returns unexpected"
+) {
+  std::string toml{kFullToml};
+  const auto pos = toml.find("capsule_radius = 20.0\n");
+  REQUIRE(pos != std::string::npos);
+  toml.erase(pos, std::string_view{"capsule_radius = 20.0\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
 }

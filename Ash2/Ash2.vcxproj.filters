@@ -219,6 +219,9 @@
     <ClCompile Include="System\PlayerMotion\Landing.cpp">
       <Filter>Source Files\System\PlayerMotion</Filter>
     </ClCompile>
+    <ClCompile Include="System\PlayerMotion\Damaged.cpp">
+      <Filter>Source Files\System\PlayerMotion</Filter>
+    </ClCompile>
     <ClCompile Include="System\MotionSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -1209,6 +1212,9 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="Component\DrawColor.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Team.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="System\HitstopSystem.hpp">
