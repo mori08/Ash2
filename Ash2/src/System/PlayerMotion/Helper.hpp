@@ -3,7 +3,9 @@
 
 #include <entt/entt.hpp>
 #include <functional>
+#include <variant>
 
+#include "Component/PlayerMotion.hpp"
 #include "Component/ReactionLevel.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Config/PlayerConfig.hpp"
@@ -77,6 +79,34 @@ void UpdateAttackLights(
     const MotionTimeline& timeline, const LightSpec& spec,
     Array<entt::entity>& lightEntities,
     const std::function<Vec3(double, int32)>& offsetFn
+);
+
+/// @brief 状態が hitboxEntity / lightEntities を持つ場合のみ解放する
+///
+/// `requires` で対象フィールドの有無を判定するため、持たない状態型を渡しても
+/// 何もしない。
+template <typename S>
+void ReleaseMotionEntities(
+    entt::registry& registry, const S& state, double fadeSec
+) {
+  if constexpr (requires { state.hitboxEntity; }) {
+    if (state.hitboxEntity != entt::null) {
+      ReleaseAttackHitbox(registry, state.hitboxEntity, fadeSec);
+    }
+  }
+  if constexpr (requires { state.lightEntities; }) {
+    for (const auto light : state.lightEntities) {
+      ReleaseAttackHitbox(registry, light, fadeSec);
+    }
+  }
+}
+
+/// @brief 現在の Motion が持つ攻撃判定・光エンティティを解放する
+///
+/// 外部要因による強制遷移（被弾）で上書きされる前の後始末に使う
+/// （ARCHITECTURE.md の「例外：外部要因による強制遷移」を参照）。
+void ReleaseMotionEntities(
+    entt::registry& registry, const Variant& motion, double fadeSec
 );
 
 }  // namespace PlayerMotion

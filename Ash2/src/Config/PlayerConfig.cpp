@@ -271,6 +271,22 @@ namespace {
   );
 }
 
+/// @brief TOML から被弾リアクションの設定値を生成する
+[[nodiscard]] std::expected<DamageConfig, String> ParseDamage(
+    const TOMLValue& d
+) {
+  TomlFields f{d, U"PlayerConfig::ParseDamage", U"damage"};
+  return f.wrap(
+      DamageConfig{
+          .staggerSec = f.get<double>(U"stagger_sec"),
+          .knockbackSpeedW = f.get<double>(U"knockback_speed_w"),
+          .knockbackSpeedH = f.get<double>(U"knockback_speed_h"),
+          .downSec = f.get<double>(U"down_sec"),
+          .getUpSec = f.get<double>(U"get_up_sec"),
+      }
+  );
+}
+
 }  // namespace
 
 std::expected<PlayerConfig, String> PlayerConfig::FromToml(
@@ -308,6 +324,10 @@ std::expected<PlayerConfig, String> PlayerConfig::FromToml(
   if (!attackEffect) {
     return std::unexpected{std::move(attackEffect).error()};
   }
+  auto damage = ParseDamage(toml[U"damage"]);
+  if (!damage) {
+    return std::unexpected{std::move(damage).error()};
+  }
 
   TomlFields f{toml, U"PlayerConfig::FromToml"};
   return f.wrap(
@@ -315,6 +335,8 @@ std::expected<PlayerConfig, String> PlayerConfig::FromToml(
           .speed = f.get<double>(U"speed"),
           .jumpSpeed = f.get<double>(U"jump_speed"),
           .gravity = f.get<double>(U"gravity"),
+          .capsuleRadius = f.get<double>(U"capsule_radius"),
+          .capsuleHeight = f.get<double>(U"capsule_height"),
           .melee = *std::move(melee),
           .ranged = *std::move(ranged),
           .dash = *std::move(dash),
@@ -323,6 +345,7 @@ std::expected<PlayerConfig, String> PlayerConfig::FromToml(
           .stamina = *std::move(stamina),
           .landing = *std::move(landing),
           .attackEffect = *std::move(attackEffect),
+          .damage = *std::move(damage),
       }
   );
 }

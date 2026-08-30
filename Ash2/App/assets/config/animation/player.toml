@@ -67,3 +67,23 @@ speed = 5.0
 row = 11
 count = 3
 speed = 7.0
+
+[stagger]
+row = 12
+count = 1
+speed = 5.0
+
+[knockback]
+row = 13
+count = 2
+speed = 7.0
+
+[downed]
+row = 14
+count = 1
+speed = 5.0
+
+[get_up]
+row = 15
+count = 2
+speed = 7.0

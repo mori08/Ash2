@@ -143,6 +143,7 @@
     <ClCompile Include="src\System\PlayerMotion\DashAttack.cpp" />
     <ClCompile Include="src\System\PlayerMotion\AirAttack.cpp" />
     <ClCompile Include="src\System\PlayerMotion\Landing.cpp" />
+    <ClCompile Include="src\System\PlayerMotion\Damaged.cpp" />
     <ClCompile Include="src\System\MotionSystem.cpp" />
     <ClCompile Include="src\System\EnemyMotionSystem.cpp" />
     <ClCompile Include="src\System\EnemySystem.cpp" />
@@ -455,6 +456,7 @@
     <ClInclude Include="src\System\StaminaSystem.hpp" />
     <ClInclude Include="src\Component\Invincible.hpp" />
     <ClInclude Include="src\Component\DrawColor.hpp" />
+    <ClInclude Include="src\Component\Team.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

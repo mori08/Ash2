@@ -9,6 +9,7 @@
 #include "Component/FadeOut.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/LocalOffset.hpp"
+#include "Component/Team.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 
@@ -49,6 +50,7 @@ entt::entity SpawnAttackHitbox(
     const HitboxSpec& spec
 ) {
   const auto hitbox = SpawnOrb(registry, owner, pos, spec.radius, spec.drawOrb);
+  registry.emplace<Team>(hitbox, Team::Player);
   registry.emplace<Collider>(
       hitbox,
       Collider{
@@ -160,6 +162,17 @@ void UpdateAttackLights(
     }
     lightEntities.clear();
   }
+}
+
+void ReleaseMotionEntities(
+    entt::registry& registry, const Variant& motion, double fadeSec
+) {
+  std::visit(
+      [&](const auto& state) {
+        ReleaseMotionEntities(registry, state, fadeSec);
+      },
+      motion
+  );
 }
 
 }  // namespace PlayerMotion
