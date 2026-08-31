@@ -255,6 +255,9 @@
     <ClCompile Include="System\DrawSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\DebugDrawSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\HitstopSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -1068,6 +1071,9 @@
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\DrawSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\DebugDrawSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\HierarchySystem.hpp">

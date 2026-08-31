@@ -13,4 +13,6 @@ struct InputState {
   bool attackDown = false;
   bool rangedAttackDown = false;
   bool dashDown = false;
+  /// Collider のデバッグ描画表示切り替え（Debug ビルド専用、キーボードのみ）
+  bool toggleDebugDraw = false;
 };

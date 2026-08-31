@@ -155,6 +155,7 @@
     <ClCompile Include="src\System\GravitySystem.cpp" />
     <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
+    <ClCompile Include="src\System\DebugDrawSystem.cpp" />
     <ClCompile Include="src\System\HitstopSystem.cpp" />
     <ClCompile Include="src\System\StaminaSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
@@ -407,6 +408,7 @@
     <ClInclude Include="src\System\MotionSystem.hpp" />
     <ClInclude Include="src\System\AttachmentSystem.hpp" />
     <ClInclude Include="src\System\DrawSystem.hpp" />
+    <ClInclude Include="src\System\DebugDrawSystem.hpp" />
     <ClInclude Include="src\System\HierarchySystem.hpp" />
     <ClInclude Include="src\System\NameLookup.hpp" />
     <ClInclude Include="src\Config\AnimationData.hpp" />

@@ -14,6 +14,7 @@
 #include "Phase/PhaseStack.hpp"
 #include "Phase/ScenarioPhase.hpp"
 #include "System/AttachmentSystem.hpp"
+#include "System/DebugDrawSystem.hpp"
 #include "System/DrawSystem.hpp"
 #include "System/HudSystem.hpp"
 
@@ -61,11 +62,19 @@ void RunGameLoop(
     if (frameData.input.reloadConfig) {
       ReloadConfig(registry);
     }
+    if (frameData.input.toggleDebugDraw) {
+      AppDebug::drawColliders = !AppDebug::drawColliders;
+    }
 #endif
     phaseStack.update(registry, frameData);
     AttachmentSystem::UpdateTransform(registry);
 
     DrawSystem::Draw(registry);
+#ifdef _DEBUG
+    if (AppDebug::drawColliders) {
+      DebugDrawSystem::DrawColliders(registry);
+    }
+#endif
     HudSystem::Draw(registry);
   }
 }

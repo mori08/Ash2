@@ -150,6 +150,7 @@
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | フェーズ内（PlayerTestPhase、EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。カメラは `Scene::Center()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
+| [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（DrawSystem の後・HudSystem の前、Debug ビルドかつ `AppDebug::drawColliders` が true のときのみ） | `Collider` の輪郭と接地線を、Attack/Hp の有無で3種に分けた色（攻撃判定=赤／被弾判定=緑／いずれも持たない残り=灰）で描く。公開ヘルパー `DrawCapsule`（カプセルの輪郭）・`DrawGroundLine`（中点から接地点への点線）は、#133 が拡大後のコライダーを描く際にも個別に呼べる |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
@@ -404,8 +405,8 @@
 
 | クラス | 役割 |
 |---|---|
-| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（`moveAxis`/`jumpDown`/`attackDown`/`rangedAttackDown`/`dashDown`/`reloadConfig`）。`Key`/`TOMLValue` 等のテストしづらい型は持ち込まないが、`Vec2` 等の単純な数学型は許容する |
-| [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換（デフォルト: 矢印/WASD 移動、Space ジャンプ、左クリック近距離、右クリック遠距離、Shift ダッシュ、F5 設定リロード） |
+| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（`moveAxis`/`jumpDown`/`attackDown`/`rangedAttackDown`/`dashDown`/`reloadConfig`/`toggleDebugDraw`）。`Key`/`TOMLValue` 等のテストしづらい型は持ち込まないが、`Vec2` 等の単純な数学型は許容する |
+| [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換（デフォルト: 矢印/WASD 移動、Space ジャンプ、左クリック近距離、右クリック遠距離、Shift ダッシュ、F5 設定リロード、F2 デバッグ描画切替） |
 | [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー（プレイヤー0）→ InputState 変換（左スティック+十字ボタンで移動、A/B/X/Y でジャンプ/近距離/遠距離/ダッシュ） |
 | [`InputDeviceSelector`](../Ash2/src/Input/InputDeviceSelector.hpp) | 毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える（ボタン入力に加え、左スティックがデッドゾーンを超えて傾いた場合もゲームパッドへの切り替え条件とする）。切断時はキーボードへ自動フォールバック |
 
@@ -446,7 +447,7 @@
 
 | 名前 | 役割 |
 |---|---|
-| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。アセット登録 → `Scene::SetTextureFilter(TextureFilter::Nearest)` → registry 初期化 → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `AttachmentSystem` → `DrawSystem` → `HudSystem` を回す。`RegisterAssets` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
+| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。アセット登録 → `Scene::SetTextureFilter(TextureFilter::Nearest)` → registry 初期化 → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `AttachmentSystem` → `DrawSystem` → `DebugDrawSystem`（Debug ビルドかつ `AppDebug::drawColliders` が true のときのみ）→ `HudSystem` を回す。`RegisterAssets` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
 | [`FatalError`](../Ash2/src/FatalError.hpp) | 続行できない失敗を表す型。分類（`FatalReason`）と開発者向けの `detail` を持つ |
 | [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
@@ -460,6 +461,7 @@
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
 | [`FrameData`](../Ash2/src/FrameData.hpp) | フレームごとの更新データ（`dt` + `InputState`）。`Main` が組み立て、フェーズとシステムの双方が受け取る |
 | [`AppDebug::testMode`](../Ash2/src/Debug.hpp) | テスト実行中フラグ。true の間 `APP_LOG` を無効化する |
+| [`AppDebug::drawColliders`](../Ash2/src/Debug.hpp) | `DebugDrawSystem::DrawColliders` の表示切り替え。既定 false、F2（`InputState::toggleDebugDraw`）で反転する |
 | [`Overloaded`](../Ash2/src/Util/Overloaded.hpp) | 複数のラムダを1つの visitor にまとめる `std::visit` 用ヘルパー |
 
 ---

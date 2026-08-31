@@ -42,5 +42,6 @@ inline InputState XInputAction::ToInputState() {
       .attackDown = pad.buttonB.down(),
       .rangedAttackDown = pad.buttonX.down(),
       .dashDown = pad.buttonY.down(),
+      .toggleDebugDraw = false,
   };
 }

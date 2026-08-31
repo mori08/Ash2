@@ -231,7 +231,10 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 
 ## 7. 描画 — ワールドを画面へ
 
-画面を描くシステムは `DrawSystem` と `HudSystem` の2つだけ。見た目の話はここに閉じている。
+画面を描くシステムは `DrawSystem` と `HudSystem` の2つだけ（Release ビルドの場合）。
+見た目の話はここに閉じている。Debug ビルドはこれに加え `DebugDrawSystem` が
+`Collider` の輪郭を重ねて描く。本番の描画パスへ `_DEBUG` 分岐を持ち込まないよう
+別クラスに分け、呼び出し自体を `Main.cpp` 側の `#ifdef _DEBUG` で囲む。
 
 `DrawSystem` は `WorldPos` と `Drawable` を持つエンティティをまとめて描く。種別ごとの描画
 コードはない。`Drawable` は形状の variant（矩形・円・テクスチャ）で、色は `DrawColor` が別に

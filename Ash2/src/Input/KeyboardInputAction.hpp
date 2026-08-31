@@ -14,6 +14,7 @@ struct KeyboardInputAction {
   InputGroup attack;
   InputGroup rangedAttack;
   InputGroup dash;
+  InputGroup toggleDebugDraw;
 
   /// @brief デフォルトのキー割り当てを返す
   [[nodiscard]] static KeyboardInputAction Default();
@@ -33,6 +34,8 @@ inline KeyboardInputAction KeyboardInputAction::Default() {
       .attack = MouseL,
       .rangedAttack = MouseR,
       .dash = KeyShift,
+      // F1 は Siv3D がライセンス表示に予約しているため使わない
+      .toggleDebugDraw = KeyF2,
   };
 }
 
@@ -51,5 +54,6 @@ inline InputState KeyboardInputAction::toInputState() const {
       .attackDown = attack.down(),
       .rangedAttackDown = rangedAttack.down(),
       .dashDown = dash.down(),
+      .toggleDebugDraw = toggleDebugDraw.down(),
   };
 }
