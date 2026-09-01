@@ -1,13 +1,12 @@
 #include <Siv3D.hpp>
 
-#include <cstdlib>
 #include <entt/entt.hpp>
 #include <exception>
 
 #include "Asset.hpp"
 #include "Config/ScenarioData.hpp"
 #include "CrashHandler.hpp"
-#include "Debug.hpp"
+#include "DebugOnly.hpp"
 #include "FrameData.hpp"
 #include "GameSetup.hpp"
 #include "Input/InputDeviceSelector.hpp"
@@ -17,35 +16,7 @@
 #include "System/DrawSystem.hpp"
 #include "System/HudSystem.hpp"
 
-#ifdef _DEBUG
-#define CATCH_CONFIG_RUNNER
-#include <ThirdParty/Catch2/catch.hpp>
-#endif
-
 namespace {
-
-/// @brief 環境変数 ASH2_RUN_TESTS が設定されていればテストを実行して終了する
-/// @note リリースビルドでは何もしない
-void RunTestsIfRequested() {
-#ifdef _DEBUG
-  size_t envLen = 0;
-  if (getenv_s(&envLen, nullptr, 0, "ASH2_RUN_TESTS") != 0 || envLen == 0) {
-    return;
-  }
-  AppDebug::testMode = true;
-  const int32 result = Catch::Session().run();
-  ExitImmediately(result == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-#endif
-}
-
-/// @brief デバッグ出力の準備を行う
-/// @note リリースビルドでは何もしない
-void OpenDebugConsole() {
-#ifdef _DEBUG
-  Console.open();
-  APP_LOG(U"=== Debug Build ===");
-#endif
-}
 
 /// @brief ウィンドウが閉じられるまでフレームの更新と描画を繰り返す
 void RunGameLoop(
@@ -57,11 +28,7 @@ void RunGameLoop(
         .dt = Scene::DeltaTime(),
         .input = inputSelector.update(),
     };
-#ifdef _DEBUG
-    if (frameData.input.reloadConfig) {
-      ReloadConfig(registry);
-    }
-#endif
+    DebugOnly::UpdateConfigReload(registry);
     phaseStack.update(registry, frameData);
     AttachmentSystem::UpdateTransform(registry);
 
@@ -130,8 +97,8 @@ void Run() {
 }  // namespace
 
 void Main() {
-  RunTestsIfRequested();
-  OpenDebugConsole();
+  DebugOnly::RunTestsIfRequested();
+  DebugOnly::OpenDebugConsole();
 
   try {
     Run();

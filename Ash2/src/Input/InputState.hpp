@@ -9,7 +9,6 @@ struct InputState {
   /// 常に長さ 1.0 以下に正規化されていることが保証される
   Vec2 moveAxis = Vec2::Zero();
   bool jumpDown = false;
-  bool reloadConfig = false;
   bool attackDown = false;
   bool rangedAttackDown = false;
   bool dashDown = false;

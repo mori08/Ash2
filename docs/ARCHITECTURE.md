@@ -48,11 +48,12 @@
 ```
 Ash2/src/
 ├── Main.cpp              # エントリポイント・ゲームループ
-├── GameSetup.hpp/.cpp    # registry 初期化・設定リロード
+├── GameSetup.hpp/.cpp    # registry 初期化・アニメーション設定読み込み
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
 ├── FrameData.hpp         # フレームごとの更新データ（dt + InputState）
 ├── UiFonts.hpp           # UI 描画用フォント一式（registry.ctx() に格納）
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
+├── DebugOnly.hpp/.cpp    # Debug ビルドにのみ存在する機能とそのキー判定
 ├── FatalError.hpp        # 致命エラーの型（分類と詳細）
 ├── CrashHandler.hpp/.cpp # 致命エラーの記録・表示・終了
 ├── Component/            # ECS コンポーネント（データのみ）
@@ -204,7 +205,7 @@ MotionSystem::Update(registry, frameData)
 数値はコードに埋めず TOML に置き、`FromToml` で構造体に変換して `registry.ctx()` に載せる。
 `FromToml` は `std::expected` を返し、キー欠落や型不一致は起動時の失敗になる。
 
-Debug ビルドでは F5（`InputState::reloadConfig`）で再読込できる。読み込みに失敗した場合は
+Debug ビルドでは F5 で再読込できる（`DebugOnly` が判定・実行を持つ）。読み込みに失敗した場合は
 旧データを維持するため、調整中に書き損じてもゲームは落ちない。
 
 アセットは `Ash2/App/assets/asset_list` を単一の入り口として扱い、Debug はファイルから・Release は

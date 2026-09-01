@@ -86,7 +86,7 @@ Config のように全フィールドの初期化が要るものは、既定値�
 ### `AppDebug::testMode` による自動無効化
 
 `Debug.hpp` は `AppDebug::testMode` フラグを持ち、テスト実行時に `APP_LOG` を
-自動的に無効化する。`Main.cpp` が `ASH2_RUN_TESTS` 環境変数を検出すると
+自動的に無効化する。`DebugOnly.cpp` が `ASH2_RUN_TESTS` 環境変数を検出すると
 `AppDebug::testMode = true` をセットするため、**ゲームコード側に `APP_LOG` が
 残っていてもテスト時にコンソールウィンドウは開かない。**
 

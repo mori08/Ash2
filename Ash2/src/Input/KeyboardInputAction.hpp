@@ -10,7 +10,6 @@ struct KeyboardInputAction {
   InputGroup moveForward;
   InputGroup moveBackward;
   InputGroup jump;
-  InputGroup reloadConfig;
   InputGroup attack;
   InputGroup rangedAttack;
   InputGroup dash;
@@ -29,7 +28,6 @@ inline KeyboardInputAction KeyboardInputAction::Default() {
       .moveForward = KeyUp | KeyW,
       .moveBackward = KeyDown | KeyS,
       .jump = KeySpace,
-      .reloadConfig = KeyF5,
       .attack = MouseL,
       .rangedAttack = MouseR,
       .dash = KeyShift,
@@ -47,7 +45,6 @@ inline InputState KeyboardInputAction::toInputState() const {
   return {
       .moveAxis = moveAxis,
       .jumpDown = jump.down(),
-      .reloadConfig = reloadConfig.down(),
       .attackDown = attack.down(),
       .rangedAttackDown = rangedAttack.down(),
       .dashDown = dash.down(),
