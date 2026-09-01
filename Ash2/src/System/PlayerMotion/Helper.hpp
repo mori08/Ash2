@@ -49,9 +49,9 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity);
 
 /// @brief ヒットボックスを攻撃判定から解放し、消滅演出へ引き渡す
 ///
-/// `Hierarchy::Detach` で親から切り離し、`Attack` を外して当たり判定から除外
-/// したうえで `FadeOut` を付与する。`fadeSec` が 0 以下の場合はフェードを
-/// 挟まず即座に破棄する。
+/// `Hierarchy::Detach` で親から切り離し、`Attack`/`Collider` を外して
+/// 当たり判定から除外したうえで `FadeOut` を付与する。`fadeSec` が 0
+/// 以下の場合はフェードを挟まず即座に破棄する。
 /// @return entt::null（呼び出し側の hitboxEntity 変数への代入に使う）
 entt::entity ReleaseAttackHitbox(
     entt::registry& registry, entt::entity hitboxEntity, double fadeSec

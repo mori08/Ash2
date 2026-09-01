@@ -234,7 +234,7 @@
 | `LightSpec` | 見た目だけを担う光エンティティ群の生成仕様（数・半径・フェード時間） | `Helper.hpp` |
 | `SetClip` | クリップが変化していれば差し替え、再生位置をリセットする | `Helper.hpp`/`.cpp` |
 | `StopHorizontalMovement` | 横方向（w・d）の速度を 0 にする | `Helper.hpp`/`.cpp` |
-| `ReleaseAttackHitbox` | ヒットボックス（判定・光いずれも）を `Hierarchy::Detach` → `Attack` 除去 → `FadeOut` 付与の順で解放する。`fadeSec` が 0 以下なら即座に破棄する。光は元々 `Attack` を持たないため切り離しとフェード付与だけが働く | `Helper.hpp`/`.cpp` |
+| `ReleaseAttackHitbox` | ヒットボックス（判定・光いずれも）を `Hierarchy::Detach` → `Attack`/`Collider` 除去 → `FadeOut` 付与の順で解放する。`fadeSec` が 0 以下なら即座に破棄する。光は元々 `Attack`/`Collider` を持たないため切り離しとフェード付与だけが働く | `Helper.hpp`/`.cpp` |
 | `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティを生成・`LocalOffset` 更新し、後隙入りで `ReleaseAttackHitbox` を呼ぶ。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
 | `UpdateAttackLights` | active 区間に応じて光エンティティ群を生成・`LocalOffset` 更新し、後隙入りで解放する。オフセットは `offsetFn(progress, index)` で決まる | `Helper.hpp`/`.cpp` |
 | `ReleaseMotionEntities` | 状態が `hitboxEntity`/`lightEntities` を持つ場合のみ `ReleaseAttackHitbox` で解放する（`requires` で有無を判定するテンプレート、`Variant` を受ける `std::visit` 版も持つ）。被弾による強制遷移の後始末に使う | `Helper.hpp`/`.cpp` |

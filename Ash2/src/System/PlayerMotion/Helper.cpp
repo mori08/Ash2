@@ -96,6 +96,7 @@ entt::entity ReleaseAttackHitbox(
 ) {
   Hierarchy::Detach(registry, hitboxEntity);
   registry.remove<Attack>(hitboxEntity);
+  registry.remove<Collider>(hitboxEntity);
   if (fadeSec <= 0.0) {
     registry.destroy(hitboxEntity);
   } else {
