@@ -437,10 +437,11 @@ TEST_CASE(
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::Landing>(motion));
-  // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
+  // ヒットボックスは即座に破棄せず、Attack/Collider を外して FadeOut
   // へ引き渡す（親からも切り離される）
   REQUIRE(registry.valid(hitbox));
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Collider>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
   REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
 
