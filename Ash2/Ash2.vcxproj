@@ -125,6 +125,7 @@
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\CrashHandler.cpp" />
+    <ClCompile Include="src\DebugOnly.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
@@ -421,6 +422,7 @@
     <ClInclude Include="src\Asset.hpp" />
     <ClInclude Include="src\UiFonts.hpp" />
     <ClInclude Include="src\Debug.hpp" />
+    <ClInclude Include="src\DebugOnly.hpp" />
     <ClInclude Include="src\CrashHandler.hpp" />
     <ClInclude Include="src\FatalError.hpp" />
     <ClInclude Include="src\GameSetup.hpp" />

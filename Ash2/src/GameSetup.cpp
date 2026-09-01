@@ -3,21 +3,15 @@
 #include "GameSetup.hpp"
 
 #include "Asset.hpp"
-#include "Config/AnimationData.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
-#include "Debug.hpp"
 #include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
 #include "UiFonts.hpp"
 
-namespace {
-
-/// @brief アニメーション設定 TOML を全件読み込む
-/// @return 失敗時は toml のパスを前置したメッセージ
-[[nodiscard]] std::expected<AnimationDataRegistry, String> LoadAnimations() {
+std::expected<AnimationDataRegistry, String> LoadAnimations() {
   auto list = GetAssetList();
   if (!list) {
     return std::unexpected{std::move(list).error()};
@@ -52,8 +46,6 @@ namespace {
   }
   return animReg;
 }
-
-}  // namespace
 
 std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<NameLookup>();
@@ -110,38 +102,4 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<ScenarioData>(*std::move(scenario));
 
   return {};
-}
-
-void ReloadConfig(entt::registry& registry) {
-  auto playerToml = OpenToml(U"assets/config/player.toml");
-  if (!playerToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + playerToml.error());
-    return;
-  }
-  auto player = PlayerConfig::FromToml(*playerToml);
-  if (!player) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + player.error());
-    return;
-  }
-
-  auto enemyToml = OpenToml(U"assets/config/enemy.toml");
-  if (!enemyToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + enemyToml.error());
-    return;
-  }
-  auto enemy = EnemyConfig::FromToml(*enemyToml);
-  if (!enemy) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + enemy.error());
-    return;
-  }
-
-  auto anims = LoadAnimations();
-  if (!anims) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + anims.error());
-    return;
-  }
-
-  registry.ctx().get<PlayerConfig>() = *std::move(player);
-  registry.ctx().get<EnemyConfig>() = *std::move(enemy);
-  registry.ctx().get<AnimationDataRegistry>() = *std::move(anims);
 }
