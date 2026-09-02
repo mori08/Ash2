@@ -26,6 +26,10 @@ void ApplyHitReactionTest(entt::registry& registry, entt::entity target);
 
 /// @brief ApplyHitReactionTest で仮付与した攻撃力を除去する
 void ClearHitReactionTest(entt::registry& registry, entt::entity target);
+
+/// @brief Collider 描画トグルキーが押されていれば表示を切り替え、
+/// 表示中なら DebugDrawSystem::DrawColliders を呼ぶ
+void DrawColliders(const entt::registry& registry);
 #else
 inline void RunTestsIfRequested() {}
 inline void OpenDebugConsole() {}
@@ -33,6 +37,7 @@ inline void UpdateConfigReload(entt::registry&) {}
 [[nodiscard]] inline bool IsConfigReloadRequested() { return false; }
 inline void ApplyHitReactionTest(entt::registry&, entt::entity) {}
 inline void ClearHitReactionTest(entt::registry&, entt::entity) {}
+inline void DrawColliders(const entt::registry&) {}
 #endif
 
 }  // namespace DebugOnly

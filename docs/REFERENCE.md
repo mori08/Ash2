@@ -150,7 +150,8 @@
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | フェーズ内（PlayerTestPhase、EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。カメラは `Scene::Center()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
-| [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
+| [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、#133 が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
+| [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 
@@ -448,13 +449,13 @@
 
 | 名前 | 役割 |
 |---|---|
-| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。アセット登録 → `Scene::SetTextureFilter(TextureFilter::Nearest)` → registry 初期化 → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `AttachmentSystem` → `DrawSystem` → `HudSystem` を回す。`RegisterAssets` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
+| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。アセット登録 → `Scene::SetTextureFilter(TextureFilter::Nearest)` → registry 初期化 → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`RegisterAssets` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
 | [`FatalError`](../Ash2/src/FatalError.hpp) | 続行できない失敗を表す型。分類（`FatalReason`）と開発者向けの `detail` を持つ |
 | [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / `UiFonts` / 各 Config / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
-| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`/`IsConfigReloadRequested`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`ApplyHitReactionTest`/`ClearHitReactionTest`（Key1/2/3 による被弾リアクション仮付与、`PlayerTestPhase` 用）を持つ。Release ビルドでは全関数が空の inline 関数になる |
+| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`/`IsConfigReloadRequested`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`ApplyHitReactionTest`/`ClearHitReactionTest`（Key1/2/3 による被弾リアクション仮付与、`PlayerTestPhase` 用）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
 | [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。`std::expected<Array<FilePath>, String>` を返し、開けなければ失敗を返す |
 | [`AssetPath`](../Ash2/src/Asset.hpp) | Debug では `FilePath`、Release では `Resource` パスを返す |
 | [`RegisterAssets`](../Ash2/src/Asset.hpp) | `.png`/`.mp3` をアセットシステムに登録する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
