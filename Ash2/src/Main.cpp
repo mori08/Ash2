@@ -33,6 +33,7 @@ void RunGameLoop(
     AttachmentSystem::UpdateTransform(registry);
 
     DrawSystem::Draw(registry);
+    DebugOnly::DrawColliders(registry);
     HudSystem::Draw(registry);
   }
 }

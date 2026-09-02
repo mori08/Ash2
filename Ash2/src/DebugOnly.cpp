@@ -13,6 +13,7 @@
 #include "CrashHandler.hpp"
 #include "Debug.hpp"
 #include "GameSetup.hpp"
+#include "System/DebugDrawSystem.hpp"
 
 #define CATCH_CONFIG_RUNNER
 #include <ThirdParty/Catch2/catch.hpp>
@@ -25,6 +26,10 @@ constexpr Input kConfigReloadKey = KeyF5;
 constexpr Input kStaggerKey = Key1;
 constexpr Input kRepelKey = Key2;
 constexpr Input kBlowKey = Key3;
+constexpr Input kColliderDrawKey = KeyF2;
+
+/// Collider のデバッグ描画を表示中か（既定は非表示）
+bool colliderDrawEnabled = false;
 
 // TODO(#115): 敵の攻撃モーション・AI が未実装
 // デバッグキー（Key1/Key2/Key3）で敵に攻撃力を仮付与し、被弾確認を代替する。
@@ -117,6 +122,15 @@ void ApplyHitReactionTest(entt::registry& registry, entt::entity target) {
 void ClearHitReactionTest(entt::registry& registry, entt::entity target) {
   if (target == entt::null) return;
   registry.remove<Attack>(target);
+}
+
+void DrawColliders(const entt::registry& registry) {
+  if (kColliderDrawKey.down()) {
+    colliderDrawEnabled = !colliderDrawEnabled;
+  }
+  if (colliderDrawEnabled) {
+    DebugDrawSystem::DrawColliders(registry);
+  }
 }
 
 }  // namespace DebugOnly
