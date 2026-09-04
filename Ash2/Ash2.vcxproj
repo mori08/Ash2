@@ -424,6 +424,7 @@
     <ClInclude Include="src\Asset.hpp" />
     <ClInclude Include="src\UiFonts.hpp" />
     <ClInclude Include="src\Debug.hpp" />
+    <ClInclude Include="src\Screen.hpp" />
     <ClInclude Include="src\DebugOnly.hpp" />
     <ClInclude Include="src\CrashHandler.hpp" />
     <ClInclude Include="src\FatalError.hpp" />

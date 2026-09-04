@@ -1118,6 +1118,9 @@
     <ClInclude Include="Debug.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Screen.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="DebugOnly.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

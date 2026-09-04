@@ -2,6 +2,7 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Hp.hpp"
+#include "Screen.hpp"
 
 namespace {
 
@@ -28,7 +29,7 @@ constexpr ColorF kNeutralColor = Palette::Gray;
       .h = origin.h + offset.y,
       .d = origin.d + offset.z,
   };
-  return Scene::Center() + world.toScreen();
+  return WorldToScreen(world);
 }
 
 /// @brief カプセルの中点のワールド座標を返す
@@ -92,11 +93,10 @@ void DebugDrawSystem::DrawGroundLine(
     const WorldPos& origin, const Collider& capsule, const ColorF& color
 ) {
   const WorldPos mid = CapsuleCenter(origin, capsule);
-  const Vec2 from = Scene::Center() + mid.toScreen();
+  const Vec2 from = WorldToScreen(mid);
   // h だけを 0 にした点が接地点。toScreen() は {w, -(d+h)} なので、
   // 画面上では from の真下へ h ピクセル降りる線になる
-  const Vec2 to =
-      Scene::Center() + WorldPos{.w = mid.w, .h = 0.0, .d = mid.d}.toScreen();
+  const Vec2 to = WorldToScreen(WorldPos{.w = mid.w, .h = 0.0, .d = mid.d});
   Line{from, to}.draw(
       LineStyle::SquareDot, kGroundThickness, color.withAlpha(kGroundAlpha)
   );
