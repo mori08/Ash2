@@ -113,13 +113,14 @@ struct DashConfig {
 
 /// @brief 遠距離攻撃の設定値
 struct RangedConfig {
-  /// 攻撃リーチ（w 軸方向の距離）
+  /// 弾の最大飛距離（発射位置からの3軸距離、ピクセル）。超えた弾は
+  /// ProjectileSystem が破棄する
   double reach;
   /// 攻撃カプセルの半径（弾コライダーの半径・CircleDrawable の表示半径と兼用）
   double radius;
   /// 与えるダメージ量
   int32 damage;
-  /// 弾の移動速度（横方向、ピクセル/秒）
+  /// 弾の移動速度（狙点方向、ピクセル/秒）
   double bulletSpeed;
   /// 弾の発射高さ（プレイヤーの WorldPos.h からのオフセット）
   double spawnHeight;
@@ -185,6 +186,30 @@ struct AttackEffectConfig {
   double fadeSec = 0.0;
 };
 
+/// @brief ロック（遠距離照準）の設定値
+struct LockConfig {
+  /// マウスのロック判定に使うカプセルの拡大係数（Collider.radius に掛ける）
+  double capsuleScale;
+  /// スティックの方向選択で許容する角度の限界（度）
+  double angleLimitDeg;
+  /// 評点計算での角度の重み（k）
+  double angleWeight;
+  /// スティックを「倒した」とみなす閾値（0.0〜1.0）
+  double stickTilt;
+  /// スティックを「離した」とみなす閾値（0.0〜1.0、stickTilt 未満）
+  double stickRelease;
+  /// ロック確定中のレティクル色
+  ColorF lockedColor;
+  /// ロック確定中のレティクルのアルファ
+  double lockedAlpha;
+  /// 解除予告中（スティックを倒しているが候補がない）のレティクルのアルファ
+  double warningAlpha;
+  /// 半ロック中のレティクル色
+  ColorF halfColor;
+  /// 半ロック中のレティクルのアルファ
+  double halfAlpha;
+};
+
 /// @brief 被弾リアクションの設定値
 struct DamageConfig {
   /// 仰け反り（Stagger）の持続時間（秒）
@@ -220,6 +245,7 @@ struct PlayerConfig {
   LandingConfig landing;
   AttackEffectConfig attackEffect;
   DamageConfig damage;
+  LockConfig lock;
 
   /// @brief TOML からプレイヤー設定を生成する
   [[nodiscard]] static std::expected<PlayerConfig, String> FromToml(

@@ -49,7 +49,7 @@ reach        = 200.0
 radius       = 15.0
 damage       = 15
 bullet_speed = 300.0
-spawn_height = 0.0
+spawn_height = 30.0
 stamina_cost = 30
 recovery_sec = 0.15
 
@@ -101,3 +101,15 @@ knockback_speed_w = 300.0
 knockback_speed_h = 350.0
 down_sec          = 0.60
 get_up_sec        = 0.30
+
+[lock]
+capsule_scale   = 2.0
+angle_limit_deg = 60.0
+angle_weight    = 1.0
+stick_tilt      = 0.5
+stick_release   = 0.24
+locked_color    = "#ff5050"
+locked_alpha    = 1.0
+warning_alpha   = 0.4
+half_color      = "#ffffff"
+half_alpha      = 0.6

@@ -30,6 +30,9 @@ void ClearHitReactionTest(entt::registry& registry, entt::entity target);
 /// @brief Collider 描画トグルキーが押されていれば表示を切り替え、
 /// 表示中なら DebugDrawSystem::DrawColliders を呼ぶ
 void DrawColliders(const entt::registry& registry);
+
+/// @brief 敵追加のデバッグキーが押されたか
+[[nodiscard]] bool IsEnemySpawnRequested();
 #else
 inline void RunTestsIfRequested() {}
 inline void OpenDebugConsole() {}
@@ -38,6 +41,7 @@ inline void UpdateConfigReload(entt::registry&) {}
 inline void ApplyHitReactionTest(entt::registry&, entt::entity) {}
 inline void ClearHitReactionTest(entt::registry&, entt::entity) {}
 inline void DrawColliders(const entt::registry&) {}
+[[nodiscard]] inline bool IsEnemySpawnRequested() { return false; }
 #endif
 
 }  // namespace DebugOnly

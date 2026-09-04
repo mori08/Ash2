@@ -11,6 +11,7 @@
 #include "Component/Hp.hpp"
 #include "Component/Invincible.hpp"
 #include "Component/LocalOffset.hpp"
+#include "Component/LockOn.hpp"
 #include "Component/Player.hpp"
 #include "Component/PlayerMotion.hpp"
 #include "Component/Projectile.hpp"
@@ -229,6 +230,89 @@ TEST_CASE(
   REQUIRE(bulletView.size() == 1);
   // 弾に Team::Player が付与されている
   REQUIRE(registry.get<Team>(bulletView.front()) == Team::Player);
+}
+
+TEST_CASE("PlayerMotionSystem - ranged attack without lock fires straight") {
+  // ロック対象がなければ、弾は正面（facingRight）へ水平に飛ぶ
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  FrameData frameData{};
+  frameData.input.rangedAttackDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto bulletView = registry.view<Projectile>();
+  REQUIRE(bulletView.size() == 1);
+  const auto& vel = registry.get<Velocity>(bulletView.front());
+  // facingRight の既定は false（左向き）
+  REQUIRE(vel.w == Approx(-300.0));
+  REQUIRE(vel.h == Approx(0.0));
+  REQUIRE(vel.d == Approx(0.0));
+  REQUIRE_FALSE(registry.get<SpriteAnimation>(player).facingRight);
+}
+
+TEST_CASE("PlayerMotionSystem - ranged attack aims at the lock target") {
+  // ロック対象があれば、弾は狙点（Collider 線分の中点）へ向かって飛ぶ
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  // 発射点は WorldPos.h + spawnHeight = (0, 40, 0)。
+  // 狙点を (30, 40, 40) に置き、方向を (0.6, 0, 0.8) にする
+  const auto target = registry.create();
+  registry.emplace<WorldPos>(target, WorldPos{.w = 30.0, .h = 40.0, .d = 40.0});
+  registry.emplace<Collider>(
+      target,
+      Collider{
+          .segmentStart = Vec3{0.0, 0.0, 0.0},
+          .segmentEnd = Vec3{0.0, 0.0, 0.0},
+          .radius = 10.0,
+      }
+  );
+  registry.emplace<LockOn>(player, LockOn{.target = target});
+
+  FrameData frameData{};
+  frameData.input.rangedAttackDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto bulletView = registry.view<Projectile>();
+  REQUIRE(bulletView.size() == 1);
+  const auto& vel = registry.get<Velocity>(bulletView.front());
+  REQUIRE(vel.w == Approx(180.0));
+  REQUIRE(vel.h == Approx(0.0));
+  REQUIRE(vel.d == Approx(240.0));
+}
+
+TEST_CASE("PlayerMotionSystem - ranged attack turns to face the lock target") {
+  // 標的が背後にいるとき、プレイヤーは振り向いてから撃つ
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<SpriteAnimation>(player).facingRight = true;
+
+  const auto target = registry.create();
+  registry.emplace<WorldPos>(
+      target, WorldPos{.w = -100.0, .h = 40.0, .d = 0.0}
+  );
+  registry.emplace<Collider>(
+      target,
+      Collider{
+          .segmentStart = Vec3{0.0, 0.0, 0.0},
+          .segmentEnd = Vec3{0.0, 0.0, 0.0},
+          .radius = 10.0,
+      }
+  );
+  registry.emplace<LockOn>(player, LockOn{.target = target});
+
+  FrameData frameData{};
+  frameData.input.rangedAttackDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto bulletView = registry.view<Projectile>();
+  REQUIRE(bulletView.size() == 1);
+  REQUIRE(registry.get<Velocity>(bulletView.front()).w == Approx(-300.0));
+  REQUIRE_FALSE(registry.get<SpriteAnimation>(player).facingRight);
 }
 
 TEST_CASE("PlayerMotionSystem - melee hitbox does not hit its owner") {

@@ -24,15 +24,22 @@ inline InputState InputDeviceSelector::update() {
     m_activeDevice = Device::Keyboard;
   }
   // 最後に入力があったデバイスへ切り替える
-  const Vec2 stickAxis = XInputAction::kLeftThumbDeadZone(
+  const Vec2 leftStickAxis = XInputAction::kLeftThumbDeadZone(
       Vec2{XInput(0).leftThumbX, XInput(0).leftThumbY}
+  );
+  // 右スティックだけを動かした場合もパッドへ切り替える。ゲームプレイ上の
+  // 傾き判定（LockConfig）とは目的が違うため閾値は共有せず、ここでは
+  // デッドゾーンのみ通す（生値のまま isZero() を見るとスティックの
+  // ドリフトで毎フレーム Device::Gamepad に固定されてしまう）
+  const Vec2 rightStickAxis = XInputAction::kLeftThumbDeadZone(
+      Vec2{XInput(0).rightThumbX, XInput(0).rightThumbY}
   );
   if (XInput(0).isConnected() &&
       (XInput(0).buttonUp.down() || XInput(0).buttonDown.down() ||
        XInput(0).buttonLeft.down() || XInput(0).buttonRight.down() ||
        XInput(0).buttonA.down() || XInput(0).buttonB.down() ||
        XInput(0).buttonX.down() || XInput(0).buttonY.down() ||
-       !stickAxis.isZero())) {
+       !leftStickAxis.isZero() || !rightStickAxis.isZero())) {
     m_activeDevice = Device::Gamepad;
   } else if (
       !Keyboard::GetAllInputs().isEmpty() || !Mouse::GetAllInputs().isEmpty()

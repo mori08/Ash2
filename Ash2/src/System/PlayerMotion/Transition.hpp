@@ -6,7 +6,6 @@
 #include "Component/PlayerMotion.hpp"
 #include "Component/ReactionLevel.hpp"
 #include "Component/SpriteAnimation.hpp"
-#include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
 
 namespace PlayerMotion {
@@ -41,9 +40,13 @@ DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir);
 AirAttack MakeAirAttack(SpriteAnimation& anim);
 
 /// @brief 遠距離攻撃の弾エンティティを生成する
+///
+/// `owner` が `LockOn` を持ち `target` が有効なら狙点へ向かう方向で撃ち、
+/// `anim.facingRight` をその方向の w 成分の符号で書き換える。ロックが
+/// なければ従来どおり `anim.facingRight` の正面へ撃つ。
 void SpawnProjectile(
-    entt::registry& registry, const WorldPos& pos, bool facingRight,
-    const PlayerConfig& cfg
+    entt::registry& registry, entt::entity owner, const PlayerConfig& cfg,
+    SpriteAnimation& anim
 );
 
 /// @brief 被弾による強制遷移（Stagger または Knockback）を生成する

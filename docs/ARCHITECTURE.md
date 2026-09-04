@@ -243,3 +243,8 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 アニメーションは `TextureDrawable` の中身の差し替えとして表す。`AnimationSystem` が
 `SpriteAnimation` の経過時間を進め、切り出した `TextureRegion` を書き込む。`DrawSystem` は
 それが動いているかどうかを知らない。
+
+ロックオンのレティクルも専用の描画システムを持たず、`TextureDrawable` を持つ子エンティティを
+`Hierarchy::Attach` でロック対象へぶら下げ、`DrawSystem` にまとめて描かせる（`LockOnSystem` 参照）。
+静止画だが 1 コマのアニメーションとして定義し、テクスチャの解決も `AnimationSystem` に通す。
+テクスチャが `Drawable` へ届く道を `SpriteAnimation` の 1 本に保つため。

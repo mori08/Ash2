@@ -1,5 +1,7 @@
 assets/config/animation/player.toml
+assets/config/animation/reticle.toml
 assets/config/enemy.toml
 assets/config/player.toml
 assets/config/scenario.toml
 assets/images/player.png
+assets/images/reticle.png

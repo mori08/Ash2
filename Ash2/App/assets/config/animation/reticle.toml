@@ -1,0 +1,14 @@
+texture = "assets/images/reticle.png"
+width = 32
+height = 32
+draw_offset = {x = 0.0, y = 0.0}
+
+# ロックオンのレティクルは静止画。1コマのクリップとして定義し、
+# テクスチャの読み込み経路を他のスプライトと揃える。
+# speed は AnimationClip の assert（正の値）を満たすための値で、
+# count = 1 のため再生には影響しない。
+
+[idle]
+row = 0
+count = 1
+speed = 1.0

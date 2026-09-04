@@ -2,6 +2,7 @@
 
 #include "Component/ReactionLevel.hpp"
 #include "Component/Velocity.hpp"
+#include "Component/WorldPos.hpp"
 #include "FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"

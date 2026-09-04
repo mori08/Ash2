@@ -23,7 +23,8 @@
 | [`Name`](../Ash2/src/Component/Name.hpp) | エンティティ名（`const String`、構築後不変。NameLookup と対応） |
 | [`Player`](../Ash2/src/Component/Player.hpp) | プレイヤータグ（データなし） |
 | [`Enemy`](../Ash2/src/Component/Enemy.hpp) | 敵エンティティを示すタグ（データなし）。`HitReactionSystem` がリアクション適用対象を絞り込むのに使う |
-| [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）タグ（データなし）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅を管理する対象を識別する |
+| [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）コンポーネント（発射位置 `origin`・最大射程 `maxRange`、既定は無制限）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅（着弾・画面外・最大射程超）を管理する対象を識別する |
+| [`LockOn`](../Ash2/src/Component/LockOn.hpp) | 遠距離照準のロック状態（プレイヤーへ付与）。確定/半ロック対象 `target`/`halfTarget`、追従レティクル `targetReticle`/`halfReticle`、スティック傾きのヒステリシス用 `stickTilted` を持つ |
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
 | [`ReactionLevel`](../Ash2/src/Component/ReactionLevel.hpp) | 被弾側に生じるリアクションの強さを表す `enum class`（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応） |
 | [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction` の割り当て元と遷移先は下記「リアクションの対応」参照 |
@@ -138,6 +139,7 @@
 | システム | タイミング | 処理 |
 |---|---|---|
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
+| [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは `SpriteAnimation`（`dataKey = reticle`）を持つエンティティとして生成し、テクスチャの解決は `AnimationSystem` に委ねる |
 | [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `PlayerMotion::Variant` → `EnemyMotion::Variant` の順に、状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<M>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（停止中も入力の受付を続けるため） |
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + PlayerMotion::Variant` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
@@ -145,12 +147,12 @@
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋フェーズ内（PlayerTestPhase、GravitySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。PlayerTestPhase では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（PlayerTestPhase、AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる |
-| [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（PlayerTestPhase、HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外での破棄 |
-| [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | フェーズ内（PlayerTestPhase、ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外でまとめて破棄する |
+| [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（PlayerTestPhase、HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外 / 最大射程超（`origin` からの3軸距離が `maxRange` を超えた）での破棄 |
+| [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | フェーズ内（PlayerTestPhase、ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外で `Hierarchy::DestroyWithChildren` によりまとめて破棄する（`LockOn` のレティクルが子として付いていても連動して消える） |
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | フェーズ内（PlayerTestPhase、EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。カメラは `Scene::Center()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
-| [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、#133 が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
+| [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
@@ -163,6 +165,7 @@
 |---|---|
 | `AttachmentSystem` は `MotionSystem`（子の `LocalOffset` 更新）より後、`HitSystem` より前 | 子の絶対座標が確定していないと判定がずれる |
 | `ProjectileSystem` は `MovementSystem` と `HitSystem` の後 | 着弾判定を `Attack::hitTargets` の中身で行うため |
+| `LockOnSystem` は `MotionSystem` より前（`AttachmentSystem` より前でよい） | 同フレームの `Ranged` 発射がその場のロック対象を見るため。レティクルの `WorldPos` と `TextureDrawable::region` は同フレーム内で `AttachmentSystem`・`AnimationSystem` がそれぞれ埋める |
 | `GravitySystem` の「加速」と「地面クランプ」は1つの関数に留める | 時間軸が違う（次フレーム用／今フレーム確定）。分割すると跳ね方が変わる |
 
 ### リアクションの対応
@@ -204,6 +207,7 @@
 | [`MotionState`](../Ash2/src/System/MotionSystem.hpp) | variant `M` の状態型 `S` が満たすべきコンセプト（ADL で解決される `Tick()` が `Optional<M>` を返すこと） |
 | [`DrawOrderLess`](../Ash2/src/System/DrawSystem.hpp) | 描画順の比較関数（`a.d > b.d` で奥が先） |
 | [`NameLookup`](../Ash2/src/System/NameLookup.hpp) | 名前 → エンティティの `HashTable`。`registry.ctx()` に格納 |
+| [`ScreenCapsule`](../Ash2/src/System/LockOnSystem.hpp) | `LockOnSystem::Project` が返す、画面へ投影したカプセル（`start`/`end`/`radius`、カメラオフセットは含まない）。`LockOnSystem::Contains` が判定に使う |
 
 ### 敵モーションの実装ファイル
 
@@ -245,7 +249,7 @@
 | `MakeDash` | `Dash` を生成（スタミナ消費、`air` フラグ設定） | `Transition.hpp` / `Dash.cpp` |
 | `MakeDashAttack` | `DashAttack` を生成（`air`・`dashDir` を引き継ぐ） | `Transition.hpp` / `DashAttack.cpp` |
 | `MakeAirAttack` | `AirAttack` を生成 | `Transition.hpp` / `AirAttack.cpp` |
-| `SpawnProjectile` | 遠距離攻撃の弾エンティティを生成する（`WorldPos`+`Velocity`+`Collider`+`Attack`+`Drawable`+`Projectile`+`Team::Player`） | `Transition.hpp` / `Ranged.cpp` |
+| `SpawnProjectile` | 遠距離攻撃の弾エンティティを生成する（`WorldPos`+`Velocity`+`Collider`+`Attack`+`Drawable`+`Projectile`+`Team::Player`）。`owner` が `LockOn` を持ち `target` が有効なら狙点（`LockOnSystem::AimPoint`）へ向かう方向で撃ち `anim.facingRight` をその w 成分の符号で書き換える。ロックがなければ従来どおり `anim.facingRight` の正面へ撃つ。`Projectile.origin`/`maxRange` は発射位置・`RangedConfig::reach` から設定する | `Transition.hpp` / `Ranged.cpp` |
 | `MakeDamaged` | 被弾による強制遷移を生成する。上書き前の `Motion` を値で取得して `ReleaseMotionEntities` で後始末し、`Velocity` リセットと `Invincible` 除去のうえで `reaction`・接地状態に応じ `Stagger`/`Knockback` を返す | `Transition.hpp` / `Damaged.cpp` |
 
 ---
@@ -274,7 +278,7 @@
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。`EnemyConfig` から敵（`Enemy`+`EnemyMotion::Variant`+`Collider`+`Hp` 等）を1体生成し、`HitReactionSystem`/`EnemySystem` に被弾リアクション・撃破後の破棄を委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に再生成する。F5 でプレイヤー・設定再生成、Esc で Pop |
+| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。プレイヤーに `LockOn` を付与し `LockOnSystem::Update` を呼ぶ。`EnemyConfig` から敵（`Enemy`+`EnemyMotion::Variant`+`Collider`+`Hp` 等）を1体生成し、`HitReactionSystem`/`EnemySystem` に被弾リアクション・撃破後の破棄（`Hierarchy::DestroyWithChildren`）を委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に再生成する。Key4 で固定配置テーブルから敵を追加生成できる（`m_extraEnemies`、撃破されても再生成しない）。F5 でプレイヤー・設定再生成、Esc で Pop |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop） |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
 
@@ -325,7 +329,7 @@
 - 基本値（移動速度 `speed`・ジャンプ初速 `jumpSpeed`・重力 `gravity`・当たり判定カプセルの
   `capsuleRadius`/`capsuleHeight`）と、`MeleeConfig` / `RangedConfig` / `DashConfig` /
   `DashAttackConfig` / `AirAttackConfig` / `StaminaConfig` / `LandingConfig` /
-  `AttackEffectConfig` / `DamageConfig` の各サブ設定を持つ
+  `AttackEffectConfig` / `DamageConfig` / `LockConfig` の各サブ設定を持つ
 - 地上・空中を共有する `Dash`/`DashAttack`（`air` フラグで区別）は、それぞれ単一の
   `DashConfig`/`DashAttackConfig` を共通で参照する（専用設定は持たない）
 
@@ -338,7 +342,7 @@
 | `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`）。継続段・締め段の両方が持つ |
 | `MeleeFinisherConfig` | 締め段の設定。`MeleeSwingConfig swing` を集約し、見た目の光の数 `lightCount`（2以上、parse 時に検証）と間隔 `lightGap` を足す |
 | `MeleeConfig` | 段共通のパラメータ（`capMidH`/`reach`/`damage`）と継続段配列 `chain`（先頭が1段目）・締め段 `finisher` |
-| `RangedConfig` | リーチ・半径・ダメージ・弾速・発射高さ・スタミナ消費・発射後の硬直時間 `recoverySec` |
+| `RangedConfig` | 最大射程（`Projectile.maxRange`）・半径・ダメージ・弾速（狙点方向）・発射高さ・スタミナ消費・発射後の硬直時間 `recoverySec` |
 | `DashConfig` | 速度・タイムライン・スタミナ消費 |
 | `DashAttackConfig` | タイムライン・突進速度・軌道半径（w-d 平面）・カプセル半径・ダメージ・ヒットストップ時間 |
 | `AirAttackConfig` | タイムライン・ドリフト移動速度倍率（地上ニュートラル速度 `speed` に対する `driftRatio`）・軌道半径（w-h 平面）・軌道の開始角/終了角（度、`orbitStartDeg`/`orbitEndDeg`。0°が正面・-90°が頭上・90°が真下・180°が真後ろ）・カプセル半径・ダメージ・ヒットストップ時間 |
@@ -346,6 +350,7 @@
 | `LandingConfig` | 着地硬直時間 `recoverySec` |
 | `AttackEffectConfig` | ヒットボックス解放後のフェードアウト時間 `fadeSec`（全攻撃共通の1値。`HitboxSpec::fadeSec` として渡される） |
 | `DamageConfig` | 被弾リアクションの設定値（仰け反り時間 `staggerSec`、吹き飛ばし初速 `knockbackSpeedW`/`knockbackSpeedH`、ダウン時間 `downSec`、起き上がり時間 `getUpSec`） |
+| `LockConfig` | ロック（遠距離照準）の設定値。マウス判定カプセルの拡大係数 `capsuleScale`、スティック方向選択の角度限界 `angleLimitDeg`・評点の角度重み `angleWeight`、スティックの傾き/離し閾値 `stickTilt`/`stickRelease`、確定/解除予告/半ロックの色とアルファ（`lockedColor`/`lockedAlpha`/`warningAlpha`/`halfColor`/`halfAlpha`） |
 
 - `hitstopSec`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` が個別に持つ）はヒット成立時に
   `Attack.hitstopSec` へ渡す停止時間で、段・アクションごとに調整できる（`RangedConfig` は持たない。
@@ -405,10 +410,10 @@
 
 | クラス | 役割 |
 |---|---|
-| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（`moveAxis`/`jumpDown`/`attackDown`/`rangedAttackDown`/`dashDown`）。`Key`/`TOMLValue` 等のテストしづらい型は持ち込まないが、`Vec2` 等の単純な数学型は許容する |
-| [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換（デフォルト: 矢印/WASD 移動、Space ジャンプ、左クリック近距離、右クリック遠距離、Shift ダッシュ） |
-| [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー（プレイヤー0）→ InputState 変換（左スティック+十字ボタンで移動、A/B/X/Y でジャンプ/近距離/遠距離/ダッシュ） |
-| [`InputDeviceSelector`](../Ash2/src/Input/InputDeviceSelector.hpp) | 毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える（ボタン入力に加え、左スティックがデッドゾーンを超えて傾いた場合もゲームパッドへの切り替え条件とする）。切断時はキーボードへ自動フォールバック |
+| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（`moveAxis`/`jumpDown`/`attackDown`/`rangedAttackDown`/`dashDown`/`lockAxis`/`pointerPos`）。`Key`/`TOMLValue` 等のテストしづらい型は持ち込まないが、`Vec2`/`Optional<Vec2>` 等の単純な数学型は許容する |
+| [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換（デフォルト: 矢印/WASD 移動、Space ジャンプ、左クリック近距離、右クリック遠距離、Shift ダッシュ）。`pointerPos` に `Cursor::PosF()` を詰める |
+| [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー（プレイヤー0）→ InputState 変換（左スティック+十字ボタンで移動、A/B/X/Y でジャンプ/近距離/遠距離/ダッシュ）。`lockAxis` には右スティックを `Vec2{rightThumbX, -rightThumbY}`（画面座標系、y 反転）としてデッドゾーンを掛けずに渡す |
+| [`InputDeviceSelector`](../Ash2/src/Input/InputDeviceSelector.hpp) | 毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える（ボタン入力に加え、左右どちらかのスティックがデッドゾーンを超えて傾いた場合もゲームパッドへの切り替え条件とする）。切断時はキーボードへ自動フォールバック |
 
 **移動入力の正規化方針：** `InputState::moveAxis`（`Vec2`、x=横方向/y=奥行き方向）は「常に長さ 1.0
 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側に
@@ -416,6 +421,12 @@
 （System 側で正規化やクランプを行わない）。`XInputAction` は左スティックのデッドゾーン定数
 （`kLeftThumbDeadZone`、`InputDeviceSelector` も参照する公開 `static constexpr` メンバ）を適用し、
 十字ボタンの軸ベクトルと加算したうえで `limitLength(1.0)` により正規化する。
+
+**ロック入力の方針：** `InputState::lockAxis`（画面座標系、右が正・下が正）は `moveAxis`
+と異なりデッドゾーンも正規化も掛けず生値のまま渡す。0.5（傾き）/0.24（離し）の2段階閾値は
+`LockOnSystem` 側（`LockConfig`）で効かせる。`pointerPos` はマウスカーソルの画面座標
+（`Optional<Vec2>`）で、ゲームパッド操作中は `none`。デバイス切替の判定（`InputDeviceSelector`
+のデッドゾーン）とゲームプレイ上の傾き判定（`LockConfig`）は目的が別のため閾値を共有しない。
 
 **フェーズの直接キー入力：** `TestMenuPhase`（↑↓/Enter）・`PlayerTestPhase`（Esc）・
 `AnimationViewerPhase`（Esc/←→/F/R）は `InputState` を経由せず Siv3D の `Key*` を直接参照している。
@@ -455,7 +466,8 @@
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / `UiFonts` / 各 Config / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
-| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`/`IsConfigReloadRequested`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`ApplyHitReactionTest`/`ClearHitReactionTest`（Key1/2/3 による被弾リアクション仮付与、`PlayerTestPhase` 用）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
+| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`/`IsConfigReloadRequested`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`ApplyHitReactionTest`/`ClearHitReactionTest`（Key1/2/3 による被弾リアクション仮付与、`PlayerTestPhase` 用）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）・`IsEnemySpawnRequested`（Key4。`PlayerTestPhase` が固定配置テーブルから敵を追加する判定のみを持つ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
+| [`WorldToScreen`](../Ash2/src/Screen.hpp) | `WorldPos` をカメラオフセット（`Scene::Center()`）込みの画面座標へ変換するインライン関数。`DrawSystem`・`ProjectileSystem`・`DebugDrawSystem` が参照する |
 | [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。`std::expected<Array<FilePath>, String>` を返し、開けなければ失敗を返す |
 | [`AssetPath`](../Ash2/src/Asset.hpp) | Debug では `FilePath`、Release では `Resource` パスを返す |
 | [`RegisterAssets`](../Ash2/src/Asset.hpp) | `.png`/`.mp3` をアセットシステムに登録する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
@@ -470,8 +482,10 @@
 
 ## アニメーションクリップ名
 
-`Ash2/App/assets/config/animation/player.toml` のクリップ名としてコードから参照されるもの。
+`Ash2/App/assets/config/animation/*.toml` のクリップ名としてコードから参照されるもの。
 クリップ名の欠落は `AnimationSystem` の `assert` で検出される。
+
+`player.toml`（`dataKey = player`）:
 
 | クリップ名 | 使用箇所 |
 |---|---|
@@ -490,6 +504,12 @@
 | `downed` | `Knockback` の `Tick()`（`Downed` へ遷移する瞬間） |
 | `get_up` | `Downed` の `Tick()`（`GetUp` へ遷移する瞬間） |
 
+`reticle.toml`（`dataKey = reticle`）:
+
+| クリップ名 | 使用箇所 |
+|---|---|
+| `idle` | `LockOnSystem` の `SpawnReticle`（静止画を 1 コマのクリップとして持つ） |
+
 ---
 
 ## テスト
@@ -502,12 +522,13 @@
 | `TestMovementSystem.cpp` | `MovementSystem` |
 | `TestAttachmentSystem.cpp` | `AttachmentSystem` の座標伝播、`Hierarchy` の連結リスト操作 |
 | `TestHitSystem.cpp` | `HitSystem` のカプセル交差・重複ヒット防止・root 解決・`Team` による同陣営スキップ |
+| `TestLockOnSystem.cpp` | `LockOnSystem` の `AimPoint`/`Project`/`Contains`/`SelectByDirection`、マウス規則・スティック規則によるロック対象更新とレティクル同期 |
 | `TestHitReactionSystem.cpp` | `HitReactionSystem` のリアクション適用・ヒットストップ付与 |
 | `TestHitstopSystem.cpp` | `HitstopSystem` |
 | `TestPlayerMotionSystem.cpp` | プレイヤー各状態の `Tick()` |
 | `TestEnemyMotionSystem.cpp` | 敵各状態の `Tick()`、`EnemySystem` |
 | `TestFadeOutSystem.cpp` | `FadeOutSystem` の `DrawColor::color.a` 減衰・満了時の破棄 |
-| `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件 |
+| `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件（着弾・画面外・最大射程超） |
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
 | `TestEnemyConfig.cpp` | `EnemyConfig::FromToml` |
