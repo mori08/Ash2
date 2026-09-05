@@ -12,4 +12,9 @@ struct InputState {
   bool attackDown = false;
   bool rangedAttackDown = false;
   bool dashDown = false;
+  /// ロック方向入力（画面座標系。右が正・下が正）。デッドゾーンは掛けない
+  /// @note moveAxis.y は奥行き d（奥が正）で、y の意味が異なる
+  Vec2 lockAxis = Vec2::Zero();
+  /// マウスカーソルの画面座標。ゲームパッド操作中は none
+  Optional<Vec2> pointerPos = none;
 };

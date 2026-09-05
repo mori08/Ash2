@@ -2,6 +2,7 @@
 
 #include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
+#include "Component/WorldPos.hpp"
 #include "FrameData.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
@@ -43,7 +44,7 @@ Optional<Variant> Tick(
         registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost) {
       vel.w = 0.0;
       vel.d = 0.0;
-      SpawnProjectile(registry, pos, anim.facingRight, cfg);
+      SpawnProjectile(registry, entity, cfg, anim);
       return MakeRanged(registry, entity, cfg, anim);
     }
     if (input.dashDown &&
@@ -64,7 +65,7 @@ Optional<Variant> Tick(
     // に戻る（地上と同一挙動）。
     vel.w = 0.0;
     vel.d = 0.0;
-    SpawnProjectile(registry, pos, anim.facingRight, cfg);
+    SpawnProjectile(registry, entity, cfg, anim);
     return MakeRanged(registry, entity, cfg, anim);
   } else if (
       input.dashDown &&

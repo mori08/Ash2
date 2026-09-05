@@ -35,11 +35,17 @@ inline InputState XInputAction::ToInputState() {
   // スティックと十字ボタンの両方を同時に有効として扱い、合成してから正規化する
   const Vec2 moveAxis = (stickAxis + dpadAxis).limitLength(1.0);
 
+  // 右スティックは画面座標系（右が正・下が正）へ合わせるため y を反転する。
+  // 0.5/0.24 の2段階閾値は LockOnSystem 側で効かせるため、ここではデッド
+  // ゾーンを掛けず生値のまま渡す
+  const Vec2 lockAxis{pad.rightThumbX, -pad.rightThumbY};
+
   return {
       .moveAxis = moveAxis,
       .jumpDown = pad.buttonA.down(),
       .attackDown = pad.buttonB.down(),
       .rangedAttackDown = pad.buttonX.down(),
       .dashDown = pad.buttonY.down(),
+      .lockAxis = lockAxis,
   };
 }

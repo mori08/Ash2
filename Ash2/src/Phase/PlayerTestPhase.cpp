@@ -9,6 +9,7 @@
 #include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
+#include "Component/LockOn.hpp"
 #include "Component/Name.hpp"
 #include "Component/Player.hpp"
 #include "Component/PlayerMotion.hpp"
@@ -30,6 +31,7 @@
 #include "System/HitReactionSystem.hpp"
 #include "System/HitSystem.hpp"
 #include "System/HitstopSystem.hpp"
+#include "System/LockOnSystem.hpp"
 #include "System/MotionSystem.hpp"
 #include "System/MovementSystem.hpp"
 #include "System/ProjectileSystem.hpp"
@@ -74,19 +76,24 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   registry.emplace<PlayerMotion::Variant>(
       m_playerRoot, PlayerMotion::Neutral{}
   );
+  registry.emplace<LockOn>(m_playerRoot);
   AnimationSystem::Update(registry, 0.0);
 
-  m_dummyTarget = spawnEnemy(registry);
+  m_dummyTarget = spawnEnemy(
+      registry, WorldPos{.w = registry.ctx().get<EnemyConfig>().spawnW}
+  );
 }
 
-entt::entity PlayerTestPhase::spawnEnemy(entt::registry& registry) {
+entt::entity PlayerTestPhase::spawnEnemy(
+    entt::registry& registry, const WorldPos& pos
+) {
   const auto& enemyCfg = registry.ctx().get<EnemyConfig>();
   const auto& playerCfg = registry.ctx().get<PlayerConfig>();
 
   const auto enemy = registry.create();
   registry.emplace<Enemy>(enemy);
   registry.emplace<Team>(enemy, Team::Enemy);
-  registry.emplace<WorldPos>(enemy, WorldPos{.w = enemyCfg.spawnW});
+  registry.emplace<WorldPos>(enemy, pos);
   registry.emplace<Velocity>(enemy);
   // Knockback の放物線は GravitySystem に任せるため、プレイヤーと同じ重力
   // 加速度を与える（EnemyConfig は専用の重力値を持たない）
@@ -117,6 +124,7 @@ PhaseCommand PlayerTestPhase::update(
   const double dt = frameData.dt;
 
   HitstopSystem::Update(registry, dt);
+  LockOnSystem::Update(registry, frameData);
   MotionSystem::Update(registry, frameData);
   StaminaSystem::Update(registry, dt);
   MovementSystem::Update(registry, dt);
@@ -141,7 +149,25 @@ PhaseCommand PlayerTestPhase::update(
   } else if (m_dummyTarget == entt::null) {
     m_respawnTimer -= dt;
     if (m_respawnTimer <= 0.0) {
-      m_dummyTarget = spawnEnemy(registry);
+      m_dummyTarget = spawnEnemy(
+          registry, WorldPos{.w = registry.ctx().get<EnemyConfig>().spawnW}
+      );
+    }
+  }
+
+  if (DebugOnly::IsEnemySpawnRequested()) {
+    // 複数体でのロック対象選択を確認するための固定配置テーブル（乱数は
+    // 使わない）。押すたびに1体ずつ、テーブルを使い切ったら末尾で止まる
+    static const Array<WorldPos> kExtraEnemySpawns{
+        WorldPos{.w = -150.0, .d = 80.0},
+        WorldPos{.w = 250.0, .d = -60.0},
+        WorldPos{.w = -100.0, .d = -120.0},
+        WorldPos{.w = 100.0, .d = 150.0},
+    };
+    if (m_extraEnemies.size() < kExtraEnemySpawns.size()) {
+      m_extraEnemies.push_back(
+          spawnEnemy(registry, kExtraEnemySpawns[m_extraEnemies.size()])
+      );
     }
   }
 
@@ -170,9 +196,14 @@ void PlayerTestPhase::onBeforePop(entt::registry& registry) {
     m_playerRoot = entt::null;
   }
   if (m_dummyTarget != entt::null && registry.valid(m_dummyTarget)) {
-    registry.destroy(m_dummyTarget);
+    // 敵に付いたレティクル（LockOn.target のアタッチ先）も連動して破棄する
+    Hierarchy::DestroyWithChildren(registry, m_dummyTarget);
     m_dummyTarget = entt::null;
   }
+  for (const auto entity : m_extraEnemies) {
+    Hierarchy::DestroyWithChildren(registry, entity);
+  }
+  m_extraEnemies.clear();
 
   // 弾は独立エンティティ（m_playerRoot の子孫ではない）なので、
   // Projectile タグで検索して個別に破棄する

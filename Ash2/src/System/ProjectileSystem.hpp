@@ -14,6 +14,8 @@ class ProjectileSystem {
   /// - 着弾: `Attack.hitTargets` が空でなくなった（`HitSystem`
   /// がヒットを記録した）
   /// - 画面外: `WorldPos` を画面座標に変換した結果が `Scene::Rect()` の範囲外
+  /// - 最大射程: `Projectile.origin` からの3軸距離が `Projectile.maxRange`
+  /// を超えた
   ///
   /// 位置更新は `MovementSystem` が担うため、`MovementSystem::Update`
   /// および `HitSystem::Update` の後に呼び出すこと。

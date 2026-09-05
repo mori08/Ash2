@@ -15,12 +15,14 @@ namespace {
 /// @param registry ECS レジストリ
 /// @param pos 初期ワールド座標
 /// @param vel 速度
+/// @param projectile origin/maxRange（省略時は既定値 = 原点・無制限）
 /// @return 生成した弾エンティティ
 entt::entity MakeBullet(
-    entt::registry& registry, const WorldPos& pos, const Velocity& vel
+    entt::registry& registry, const WorldPos& pos, const Velocity& vel,
+    const Projectile& projectile = Projectile{}
 ) {
   const auto bullet = registry.create();
-  registry.emplace<Projectile>(bullet);
+  registry.emplace<Projectile>(bullet, projectile);
   registry.emplace<WorldPos>(bullet, pos);
   registry.emplace<Velocity>(bullet, vel);
   registry.emplace<Collider>(
@@ -56,6 +58,39 @@ TEST_CASE(
   ProjectileSystem::Update(registry);
 
   REQUIRE_FALSE(registry.valid(bullet));
+}
+
+TEST_CASE("ProjectileSystem - destroys bullet exceeding maxRange") {
+  // origin からの3軸距離が maxRange を超えたら破棄される
+  entt::registry registry;
+
+  const auto bullet = MakeBullet(
+      registry, WorldPos{.w = 100.0, .h = 0.0, .d = 0.0},
+      Velocity{.w = 100.0, .h = 0.0, .d = 0.0},
+      Projectile{
+          .origin = WorldPos{.w = 0.0, .h = 0.0, .d = 0.0}, .maxRange = 50.0
+      }
+  );
+
+  ProjectileSystem::Update(registry);
+
+  REQUIRE_FALSE(registry.valid(bullet));
+}
+
+TEST_CASE("ProjectileSystem - keeps bullet within maxRange") {
+  entt::registry registry;
+
+  const auto bullet = MakeBullet(
+      registry, WorldPos{.w = 30.0, .h = 0.0, .d = 0.0},
+      Velocity{.w = 100.0, .h = 0.0, .d = 0.0},
+      Projectile{
+          .origin = WorldPos{.w = 0.0, .h = 0.0, .d = 0.0}, .maxRange = 50.0
+      }
+  );
+
+  ProjectileSystem::Update(registry);
+
+  REQUIRE(registry.valid(bullet));
 }
 
 #endif

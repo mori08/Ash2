@@ -48,5 +48,6 @@ inline InputState KeyboardInputAction::toInputState() const {
       .attackDown = attack.down(),
       .rangedAttackDown = rangedAttack.down(),
       .dashDown = dash.down(),
+      .pointerPos = Cursor::PosF(),
   };
 }

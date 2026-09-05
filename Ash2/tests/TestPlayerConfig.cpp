@@ -88,7 +88,18 @@ constexpr std::string_view kFullToml =
     "knockback_speed_w = 300.0\n"
     "knockback_speed_h = 350.0\n"
     "down_sec = 0.60\n"
-    "get_up_sec = 0.30\n";
+    "get_up_sec = 0.30\n"
+    "[lock]\n"
+    "capsule_scale = 2.0\n"
+    "angle_limit_deg = 60.0\n"
+    "angle_weight = 1.0\n"
+    "stick_tilt = 0.5\n"
+    "stick_release = 0.24\n"
+    "locked_color = \"#ff5050\"\n"
+    "locked_alpha = 1.0\n"
+    "warning_alpha = 0.4\n"
+    "half_color = \"#ffffff\"\n"
+    "half_alpha = 0.6\n";
 
 }  // namespace
 
@@ -125,6 +136,12 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->damage.knockbackSpeedH == 350.0);
   REQUIRE(cfg->damage.downSec == 0.60);
   REQUIRE(cfg->damage.getUpSec == 0.30);
+  REQUIRE(cfg->lock.capsuleScale == 2.0);
+  REQUIRE(cfg->lock.angleLimitDeg == 60.0);
+  REQUIRE(cfg->lock.stickTilt == 0.5);
+  REQUIRE(cfg->lock.stickRelease == 0.24);
+  REQUIRE(cfg->lock.lockedColor == ColorF{U"#ff5050"});
+  REQUIRE(cfg->lock.halfAlpha == 0.6);
 }
 
 TEST_CASE("PlayerConfig::FromToml - missing melee.chain returns unexpected") {
@@ -207,6 +224,28 @@ TEST_CASE(
   const auto pos = toml.find("capsule_radius = 20.0\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"capsule_radius = 20.0\n"}.size());
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+}
+
+TEST_CASE(
+    "PlayerConfig::FromToml - missing lock.capsule_scale returns unexpected"
+) {
+  std::string toml{kFullToml};
+  const auto pos = toml.find("capsule_scale = 2.0\n");
+  REQUIRE(pos != std::string::npos);
+  toml.erase(pos, std::string_view{"capsule_scale = 2.0\n"}.size());
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+}
+
+TEST_CASE(
+    "PlayerConfig::FromToml - missing lock.locked_color returns unexpected"
+) {
+  std::string toml{kFullToml};
+  const auto pos = toml.find("locked_color = \"#ff5050\"\n");
+  REQUIRE(pos != std::string::npos);
+  toml.erase(pos, std::string_view{"locked_color = \"#ff5050\"\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
 }

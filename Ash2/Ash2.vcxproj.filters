@@ -231,6 +231,9 @@
     <ClCompile Include="System\EnemySystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\LockOnSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\FadeOutSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -313,6 +316,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestHitSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestLockOnSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp">
@@ -1118,6 +1124,9 @@
     <ClInclude Include="Debug.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Screen.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="DebugOnly.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1183,6 +1192,12 @@
     </ClInclude>
     <ClInclude Include="Component\Projectile.hpp">
       <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\LockOn.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\LockOnSystem.hpp">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\HitSystem.hpp">
       <Filter>Header Files\System</Filter>

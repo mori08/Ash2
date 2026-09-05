@@ -3,12 +3,12 @@
 #include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/WorldPos.hpp"
+#include "Screen.hpp"
 #include "Util/Overloaded.hpp"
 
 void DrawSystem::Draw(const entt::registry& registry) {
   // HUD・フォント描画へ波及させないため、この関数のスコープに閉じる
   const ScopedRenderStates2D sampler{SamplerState::ClampNearest};
-  const Vec2 cameraOffset = Scene::Center();
 
   struct DrawEntry {
     std::reference_wrapper<const WorldPos> pos;
@@ -32,7 +32,7 @@ void DrawSystem::Draw(const entt::registry& registry) {
   });
 
   for (const auto& entry : entries) {
-    const Vec2 screenPos = cameraOffset + entry.pos.get().toScreen();
+    const Vec2 screenPos = WorldToScreen(entry.pos.get());
     const ColorF& color = entry.color;
     std::visit(
         Overloaded{

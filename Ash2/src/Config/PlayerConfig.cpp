@@ -288,6 +288,25 @@ namespace {
   );
 }
 
+/// @brief TOML からロック（遠距離照準）の設定値を生成する
+[[nodiscard]] std::expected<LockConfig, String> ParseLock(const TOMLValue& l) {
+  TomlFields f{l, U"PlayerConfig::ParseLock", U"lock"};
+  return f.wrap(
+      LockConfig{
+          .capsuleScale = f.get<double>(U"capsule_scale"),
+          .angleLimitDeg = f.get<double>(U"angle_limit_deg"),
+          .angleWeight = f.get<double>(U"angle_weight"),
+          .stickTilt = f.get<double>(U"stick_tilt"),
+          .stickRelease = f.get<double>(U"stick_release"),
+          .lockedColor = f.get<ColorF>(U"locked_color"),
+          .lockedAlpha = f.get<double>(U"locked_alpha"),
+          .warningAlpha = f.get<double>(U"warning_alpha"),
+          .halfColor = f.get<ColorF>(U"half_color"),
+          .halfAlpha = f.get<double>(U"half_alpha"),
+      }
+  );
+}
+
 }  // namespace
 
 std::expected<PlayerConfig, String> PlayerConfig::FromToml(
@@ -329,6 +348,10 @@ std::expected<PlayerConfig, String> PlayerConfig::FromToml(
   if (!damage) {
     return std::unexpected{std::move(damage).error()};
   }
+  auto lock = ParseLock(toml[U"lock"]);
+  if (!lock) {
+    return std::unexpected{std::move(lock).error()};
+  }
 
   TomlFields f{toml, U"PlayerConfig::FromToml"};
   return f.wrap(
@@ -347,6 +370,7 @@ std::expected<PlayerConfig, String> PlayerConfig::FromToml(
           .landing = *std::move(landing),
           .attackEffect = *std::move(attackEffect),
           .damage = *std::move(damage),
+          .lock = *std::move(lock),
       }
   );
 }

@@ -148,6 +148,7 @@
     <ClCompile Include="src\System\MotionSystem.cpp" />
     <ClCompile Include="src\System\EnemyMotionSystem.cpp" />
     <ClCompile Include="src\System\EnemySystem.cpp" />
+    <ClCompile Include="src\System\LockOnSystem.cpp" />
     <ClCompile Include="src\System\FadeOutSystem.cpp" />
     <ClCompile Include="src\System\HitReactionSystem.cpp" />
     <ClCompile Include="src\System\HitSystem.cpp" />
@@ -174,6 +175,7 @@
     <ClCompile Include="tests\TestHitReactionSystem.cpp" />
     <ClCompile Include="tests\TestHitstopSystem.cpp" />
     <ClCompile Include="tests\TestHitSystem.cpp" />
+    <ClCompile Include="tests\TestLockOnSystem.cpp" />
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
     <ClCompile Include="tests\TestMotionTimeline.cpp" />
@@ -424,6 +426,7 @@
     <ClInclude Include="src\Asset.hpp" />
     <ClInclude Include="src\UiFonts.hpp" />
     <ClInclude Include="src\Debug.hpp" />
+    <ClInclude Include="src\Screen.hpp" />
     <ClInclude Include="src\DebugOnly.hpp" />
     <ClInclude Include="src\CrashHandler.hpp" />
     <ClInclude Include="src\FatalError.hpp" />
@@ -444,6 +447,8 @@
     <ClInclude Include="src\Component\EnemyMotion.hpp" />
     <ClInclude Include="src\Component\ReactionLevel.hpp" />
     <ClInclude Include="src\Component\Projectile.hpp" />
+    <ClInclude Include="src\Component\LockOn.hpp" />
+    <ClInclude Include="src\System\LockOnSystem.hpp" />
     <ClInclude Include="src\System\HitSystem.hpp" />
     <ClInclude Include="src\System\HitReactionSystem.hpp" />
     <ClInclude Include="src\System\HudSystem.hpp" />

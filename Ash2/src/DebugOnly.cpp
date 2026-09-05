@@ -27,6 +27,7 @@ constexpr Input kStaggerKey = Key1;
 constexpr Input kRepelKey = Key2;
 constexpr Input kBlowKey = Key3;
 constexpr Input kColliderDrawKey = KeyF2;
+constexpr Input kEnemySpawnKey = Key4;
 
 /// Collider のデバッグ描画を表示中か（既定は非表示）
 bool colliderDrawEnabled = false;
@@ -132,6 +133,8 @@ void DrawColliders(const entt::registry& registry) {
     DebugDrawSystem::DrawColliders(registry);
   }
 }
+
+bool IsEnemySpawnRequested() { return kEnemySpawnKey.down(); }
 
 }  // namespace DebugOnly
 
