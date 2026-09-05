@@ -18,7 +18,7 @@ git branch --show-current
 git log main..HEAD --oneline
 ```
 
-main ブランチの場合は作業を中止し、feature/fix ブランチに切り替えるよう伝える。
+main ブランチの場合は作業を中止し、feature/fix/refactor ブランチに切り替えるよう伝える。
 
 コミットログから対応する Issue 番号を特定し、`gh issue view <number>` で Issue の内容を確認する。
 Issue のスコープと実装内容にズレがあれば、ユーザーに報告し、必要に応じて Issue にコメントを追加してから次のステップへ進む。

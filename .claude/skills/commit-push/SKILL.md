@@ -7,10 +7,10 @@ description: ファイルをステージし、適切なメッセージでコミ�
 
 ## main ブランチの場合
 
-作業が `chore`（直接コミット可）か `enhancement`/`bug`（feature/fix ブランチ＋PR が必要）かを確認する。
+作業が `chore`（直接コミット可）か `enhancement`/`bug`/`refactor`（ブランチ＋PR が必要）かを確認する。
 `chore` でない場合は作業を中止し、先にブランチを作成するよう伝える。
 
-## feature/fix ブランチの場合
+## feature/fix/refactor ブランチの場合
 
 `git log main..HEAD --oneline` で main からのコミット数を確認する。
 複数コミットがある場合は GIT.md のコミット整理ルールを適用し、まとめるか分けるかの判断をユーザーに伝えてから進む。

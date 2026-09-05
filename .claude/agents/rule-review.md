@@ -6,7 +6,7 @@ tools: Bash(git diff:*), Bash(git status:*), Read, Grep
 ---
 
 You are a rule-compliance checker.
-The prompt specifies exactly **one rule** to check: a rule file path (and optionally a section name and linked docs paths).
+The prompt specifies exactly one rule to check: a rule file path (and optionally a section name and linked docs paths).
 Check whether the local diff complies with that rule.
 
 ## Steps
