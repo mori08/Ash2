@@ -24,16 +24,16 @@ constexpr ColorF kMeleeOrbColor = {1.0, 0.9, 0.5};
 ///
 /// 生成時点では構え中につき体の近くに静止した位置に置く。現在位置は
 /// UpdateAttackHitbox/UpdateAttackLights が更新する LocalOffset のみが担う。
+/// 役割タグ（AttackHitboxOrb/AttackLightOrb）の付与は呼び出し側が行う。
 /// @param visible true なら Drawable/DrawColor を付与して描画対象にする
-/// @param index 生成順のインデックス（AttackOrb::index に格納する）
 entt::entity SpawnOrb(
     entt::registry& registry, entt::entity owner, const WorldPos& pos,
-    double radius, bool visible, int32 index
+    double radius, bool visible
 ) {
   const auto orb = registry.create();
   registry.emplace<WorldPos>(orb, pos);
   registry.emplace<LocalOffset>(orb, LocalOffset{});
-  registry.emplace<AttackOrb>(orb, AttackOrb{.index = index});
+  registry.emplace<AttackOrb>(orb);
   Hierarchy::Attach(registry, owner, orb);
   if (visible) {
     registry.emplace<Drawable>(orb, CircleDrawable{.radius = radius});
@@ -52,8 +52,8 @@ entt::entity SpawnAttackHitbox(
     entt::registry& registry, entt::entity owner, const WorldPos& pos,
     const HitboxSpec& spec
 ) {
-  const auto hitbox =
-      SpawnOrb(registry, owner, pos, spec.radius, spec.drawOrb, /*index=*/0);
+  const auto hitbox = SpawnOrb(registry, owner, pos, spec.radius, spec.drawOrb);
+  registry.emplace<AttackHitboxOrb>(hitbox);
   registry.emplace<Team>(hitbox, Team::Player);
   registry.emplace<Collider>(
       hitbox,
@@ -80,6 +80,42 @@ void SetOrbOffset(entt::registry& registry, entt::entity orb, Vec3 offset) {
   localOffset = LocalOffset{.w = offset.x, .h = offset.y, .d = offset.z};
 }
 
+/// @brief 所有者の子から `Tag` を持つ最初の珠を探す
+/// @return 見つからなければ entt::null
+template <typename Tag>
+entt::entity FindAttackOrb(entt::registry& registry, entt::entity owner) {
+  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
+    auto child = hierarchy->firstChild();
+    while (child != entt::null) {
+      if (registry.all_of<Tag>(child)) {
+        return child;
+      }
+      child = registry.get<Hierarchy>(child).nextSibling();
+    }
+  }
+  return entt::null;
+}
+
+/// @brief 所有者の子から `Tag` を持つ珠をすべて収集する
+///
+/// `Hierarchy::Detach` が連結を切ってしまうため、解放前に集めておく用途に使う。
+template <typename Tag>
+Array<entt::entity>
+CollectAttackOrbs(entt::registry& registry, entt::entity owner) {
+  Array<entt::entity> orbs;
+  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
+    auto child = hierarchy->firstChild();
+    while (child != entt::null) {
+      const auto next = registry.get<Hierarchy>(child).nextSibling();
+      if (registry.all_of<Tag>(child)) {
+        orbs.push_back(child);
+      }
+      child = next;
+    }
+  }
+  return orbs;
+}
+
 }  // namespace
 
 void SetClip(SpriteAnimation& anim, const String& clip) {
@@ -95,7 +131,7 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity) {
   vel.d = 0.0;
 }
 
-entt::entity ReleaseAttackHitbox(
+void ReleaseAttackHitbox(
     entt::registry& registry, entt::entity hitboxEntity, double fadeSec
 ) {
   Hierarchy::Detach(registry, hitboxEntity);
@@ -108,17 +144,17 @@ entt::entity ReleaseAttackHitbox(
         hitboxEntity, FadeOut{.duration = fadeSec, .remaining = fadeSec}
     );
   }
-  return entt::null;
 }
 
 void UpdateAttackHitbox(
     entt::registry& registry, entt::entity owner, double elapsed,
     const MotionTimeline& timeline, const HitboxSpec& spec,
-    entt::entity& hitboxEntity, const std::function<Vec3(double)>& offsetFn
+    const std::function<Vec3(double)>& offsetFn
 ) {
   // 攻撃フレーム中（未生成ならここで生成する）：珠を前方へ EaseOut
   // 補間で移動させる
   if (timeline.isActive(elapsed)) {
+    auto hitboxEntity = FindAttackOrb<AttackHitboxOrb>(registry, owner);
     if (hitboxEntity == entt::null) {
       const auto& pos = registry.get<WorldPos>(owner);
       hitboxEntity = SpawnAttackHitbox(registry, owner, pos, spec);
@@ -130,61 +166,53 @@ void UpdateAttackHitbox(
   }
 
   // 後隙以降：ヒットボックスが残っていれば解放する
-  if (elapsed >= timeline.activeEnd() && hitboxEntity != entt::null) {
-    hitboxEntity = ReleaseAttackHitbox(registry, hitboxEntity, spec.fadeSec);
+  if (elapsed >= timeline.activeEnd()) {
+    const auto hitboxEntity = FindAttackOrb<AttackHitboxOrb>(registry, owner);
+    if (hitboxEntity != entt::null) {
+      ReleaseAttackHitbox(registry, hitboxEntity, spec.fadeSec);
+    }
   }
 }
 
 void UpdateAttackLights(
     entt::registry& registry, entt::entity owner, double elapsed,
     const MotionTimeline& timeline, const LightSpec& spec,
-    Array<entt::entity>& lightEntities,
     const std::function<Vec3(double, int32)>& offsetFn
 ) {
   // 攻撃フレーム中（未生成ならここで生成する）：光を前方へ移動させる
   if (timeline.isActive(elapsed)) {
-    if (lightEntities.isEmpty()) {
+    if (FindAttackOrb<AttackLightOrb>(registry, owner) == entt::null) {
       const auto& pos = registry.get<WorldPos>(owner);
       for (int32 i = 0; i < spec.count; ++i) {
-        lightEntities.push_back(
-            SpawnOrb(registry, owner, pos, spec.radius, /*visible=*/true, i)
-        );
+        const auto light =
+            SpawnOrb(registry, owner, pos, spec.radius, /*visible=*/true);
+        registry.emplace<AttackLightOrb>(light, AttackLightOrb{.index = i});
       }
     }
 
+    // Hierarchy::Attach は先頭挿入のため子の走査順は生成順の逆になる。
+    // 上下の並びを保つため、走査順ではなく AttackLightOrb::index を使う
     const double progress = timeline.activeProgress(elapsed);
-    for (size_t i = 0; i < lightEntities.size(); ++i) {
-      SetOrbOffset(
-          registry, lightEntities[i], offsetFn(progress, static_cast<int32>(i))
-      );
+    for (const auto light :
+         CollectAttackOrbs<AttackLightOrb>(registry, owner)) {
+      const auto index = registry.get<AttackLightOrb>(light).index;
+      SetOrbOffset(registry, light, offsetFn(progress, index));
     }
   }
 
   // 後隙以降：光が残っていれば解放する
-  if (elapsed >= timeline.activeEnd() && !lightEntities.isEmpty()) {
-    for (const auto light : lightEntities) {
+  if (elapsed >= timeline.activeEnd()) {
+    for (const auto light :
+         CollectAttackOrbs<AttackLightOrb>(registry, owner)) {
       ReleaseAttackHitbox(registry, light, spec.fadeSec);
     }
-    lightEntities.clear();
   }
 }
 
 void ReleaseAttackOrbs(
     entt::registry& registry, entt::entity owner, double fadeSec
 ) {
-  Array<entt::entity> orbs;
-  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
-    auto child = hierarchy->firstChild();
-    while (child != entt::null) {
-      const auto next = registry.get<Hierarchy>(child).nextSibling();
-      if (registry.all_of<AttackOrb>(child)) {
-        orbs.push_back(child);
-      }
-      child = next;
-    }
-  }
-
-  for (const auto orb : orbs) {
+  for (const auto orb : CollectAttackOrbs<AttackOrb>(registry, owner)) {
     ReleaseAttackHitbox(registry, orb, fadeSec);
   }
 }

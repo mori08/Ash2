@@ -78,7 +78,7 @@ void UpdateMeleeHitbox(
     entt::registry& registry, entt::entity owner, double elapsed,
     const MotionTimeline& timeline, const MeleeConfig& melee,
     const MeleeSwingConfig& swing, double fadeSec, ReactionLevel reaction,
-    entt::entity& hitboxEntity, const std::function<Vec3(double)>& offsetFn
+    const std::function<Vec3(double)>& offsetFn
 ) {
   UpdateAttackHitbox(
       registry, owner, elapsed, timeline,
@@ -91,7 +91,7 @@ void UpdateMeleeHitbox(
           // 近接の見た目は光エンティティが担うため、判定の珠は描画しない
           .drawOrb = false
       },
-      hitboxEntity, offsetFn
+      offsetFn
   );
 }
 
@@ -150,8 +150,7 @@ Optional<Variant> Tick(
   const auto offsetFn = MakeMeleeOffsetFn(swing, anim.facingRight, melee);
   UpdateMeleeHitbox(
       registry, entity, state.elapsed, timeline, melee, swing,
-      cfg.attackEffect.fadeSec, ReactionLevel::Stagger, state.hitboxEntity,
-      offsetFn
+      cfg.attackEffect.fadeSec, ReactionLevel::Stagger, offsetFn
   );
   UpdateAttackLights(
       registry, entity, state.elapsed, timeline,
@@ -160,7 +159,7 @@ Optional<Variant> Tick(
           .radius = swing.radius,
           .fadeSec = cfg.attackEffect.fadeSec
       },
-      state.lightEntities, [&offsetFn](double progress, int32 /*index*/) {
+      [&offsetFn](double progress, int32 /*index*/) {
         return offsetFn(progress);
       }
   );
@@ -209,8 +208,7 @@ Optional<Variant> Tick(
   const auto offsetFn = MakeMeleeOffsetFn(swing, anim.facingRight, melee);
   UpdateMeleeHitbox(
       registry, entity, state.elapsed, timeline, melee, swing,
-      cfg.attackEffect.fadeSec, ReactionLevel::Blow, state.hitboxEntity,
-      offsetFn
+      cfg.attackEffect.fadeSec, ReactionLevel::Blow, offsetFn
   );
   UpdateAttackLights(
       registry, entity, state.elapsed, timeline,
@@ -219,7 +217,6 @@ Optional<Variant> Tick(
           .radius = swing.radius,
           .fadeSec = cfg.attackEffect.fadeSec
       },
-      state.lightEntities,
       [&offsetFn, &finisher](double progress, int32 index) {
         Vec3 offset = offsetFn(progress);
         offset.y += MeleeLightSpread(progress, finisher, index);

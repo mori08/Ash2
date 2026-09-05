@@ -38,7 +38,7 @@ Vec3 AirAttackOrbOffset(
 
 AirAttack MakeAirAttack(SpriteAnimation& anim) {
   SetClip(anim, U"air_attack");
-  return AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null};
+  return AirAttack{.elapsed = 0.0};
 }
 
 Optional<Variant> Tick(
@@ -80,7 +80,7 @@ Optional<Variant> Tick(
           .hitstopSec = aa.hitstopSec,
           .fadeSec = cfg.attackEffect.fadeSec
       },
-      state.hitboxEntity, offsetFn
+      offsetFn
   );
 
   // 接地せずに終わった場合はタイマー満了で Neutral へ戻る

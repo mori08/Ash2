@@ -51,12 +51,13 @@ void StopHorizontalMovement(entt::registry& registry, entt::entity entity);
 /// `Hierarchy::Detach` で親から切り離し、`Attack`/`Collider` を外して
 /// 当たり判定から除外したうえで `FadeOut` を付与する。`fadeSec` が 0
 /// 以下の場合はフェードを挟まず即座に破棄する。
-/// @return entt::null（呼び出し側の hitboxEntity 変数への代入に使う）
-entt::entity ReleaseAttackHitbox(
+void ReleaseAttackHitbox(
     entt::registry& registry, entt::entity hitboxEntity, double fadeSec
 );
 
 /// @brief 攻撃判定の発生区間に応じてヒットボックスを生成・更新・破棄する
+///
+/// 未生成の判定は所有者の子に `AttackHitboxOrb` が無いことで判定する。
 /// @param timeline 攻撃のタイムライン（active 区間の判定に使用）
 /// @param spec
 /// 生成時に確定させる半径・ダメージ・リアクション・ヒットストップ時間
@@ -64,11 +65,13 @@ entt::entity ReleaseAttackHitbox(
 void UpdateAttackHitbox(
     entt::registry& registry, entt::entity owner, double elapsed,
     const MotionTimeline& timeline, const HitboxSpec& spec,
-    entt::entity& hitboxEntity, const std::function<Vec3(double)>& offsetFn
+    const std::function<Vec3(double)>& offsetFn
 );
 
 /// @brief 攻撃判定の発生区間に応じて見た目専用の光エンティティ群を
 /// 生成・更新・破棄する
+///
+/// 未生成の光は所有者の子に `AttackLightOrb` が無いことで判定する。
 /// @param timeline 攻撃のタイムライン（active 区間の判定に使用）
 /// @param spec 生成時に確定させる光の数・半径・フェード時間
 /// @param offsetFn 攻撃フレーム内の進行度と光のインデックス（0始まり）から
@@ -76,7 +79,6 @@ void UpdateAttackHitbox(
 void UpdateAttackLights(
     entt::registry& registry, entt::entity owner, double elapsed,
     const MotionTimeline& timeline, const LightSpec& spec,
-    Array<entt::entity>& lightEntities,
     const std::function<Vec3(double, int32)>& offsetFn
 );
 

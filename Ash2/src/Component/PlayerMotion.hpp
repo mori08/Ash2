@@ -16,10 +16,6 @@ struct MeleeChain {
   size_t stage = 0;
   /// モーション開始からの経過時間（秒）
   double elapsed = 0.0;
-  /// 攻撃判定の子エンティティ（不可視）
-  entt::entity hitboxEntity = entt::null;
-  /// 見た目だけを担う光の子エンティティ
-  Array<entt::entity> lightEntities;
   /// 後隙中の次段への遷移予約（windup/active中の入力で立つ）
   bool comboQueued = false;
 };
@@ -28,10 +24,6 @@ struct MeleeChain {
 struct MeleeFinisher {
   /// モーション開始からの経過時間（秒）
   double elapsed = 0.0;
-  /// 攻撃判定の子エンティティ（不可視）
-  entt::entity hitboxEntity = entt::null;
-  /// 見た目だけを担う光の子エンティティ
-  Array<entt::entity> lightEntities;
 };
 
 /// @brief 遠距離攻撃中
@@ -60,8 +52,6 @@ struct DashAttack {
   double elapsed = 0.0;
   /// 空中発動か（true: 空中ダッシュ攻撃相当。接地強制遷移の有無が変わる）
   bool air = false;
-  /// 攻撃判定の子エンティティ
-  entt::entity hitboxEntity = entt::null;
   /// ダッシュ時の移動方向（突進フェーズに使用、正規化済み）
   Vec2 dashDir = {1.0, 0.0};
 };
@@ -71,8 +61,6 @@ struct DashAttack {
 struct AirAttack {
   /// モーション開始からの経過時間（秒）
   double elapsed = 0.0;
-  /// 攻撃判定の子エンティティ
-  entt::entity hitboxEntity = entt::null;
 };
 
 /// @brief 着地硬直中（空中アクションの接地検出から遷移する）
