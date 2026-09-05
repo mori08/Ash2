@@ -1,6 +1,6 @@
 ---
 name: review
-description: 変更差分を広くレビューし、OK または NG レポートを返す（ci サブエージェントから起動）
+description: 変更差分を広くレビューし、OK または NG レポートを返す（ci-review サブエージェントから起動）
 model: opus
 tools: Bash(git diff:*), Bash(git status:*), Read
 ---
