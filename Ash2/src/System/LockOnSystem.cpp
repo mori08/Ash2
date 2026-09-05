@@ -251,8 +251,7 @@ void LockOnSystem::Update(
   const auto& input = frameData.input;
   const auto& cfg = registry.ctx().get<PlayerConfig>().lock;
 
-  // LockOn は入場時にプレイヤーへ1つだけ付与される想定（HudSystem の
-  // Hp/Stamina 走査と同じ前提）
+  // LockOn は入場時にプレイヤーへ1つだけ付与される想定
   //
   // WorldPos はこのループ内でレティクルの生成・破棄により増減するため、
   // ビューには含めない（ビュー走査中に自分が束ねるプールを変更しない）。
