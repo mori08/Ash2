@@ -28,7 +28,9 @@
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
 | [`ReactionLevel`](../Ash2/src/Component/ReactionLevel.hpp) | 被弾側に生じるリアクションの強さを表す `enum class`（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応） |
 | [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction` の割り当て元と遷移先は下記「リアクションの対応」参照 |
-| [`AttackOrb`](../Ash2/src/Component/AttackOrb.hpp) | プレイヤーの攻撃判定・見た目用の珠エンティティ（`Hierarchy` で所有者の子）であることを示すタグ。生成順のインデックス `index` を持つが解放処理自体は参照しない。`PlayerMotion::ReleaseAttackOrbs` が所有者の子から一括解放する対象の識別に使う |
+| [`AttackOrb`](../Ash2/src/Component/AttackOrb.hpp) | プレイヤーの攻撃判定・見た目用の珠エンティティ（`Hierarchy` で所有者の子）であることを示すタグ。`PlayerMotion::ReleaseAttackOrbs` が所有者の子から一括解放する対象の識別に使う。役割は必ず `AttackHitboxOrb`/`AttackLightOrb` のいずれかと組み合わせて表す |
+| [`AttackHitboxOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち攻撃判定を担う珠であることを示すタグ。`PlayerMotion::UpdateAttackHitbox` が生成済みかどうかの判定・解放対象の特定に子走査で使う |
+| [`AttackLightOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち見た目だけを担う光の珠であることを示すタグ。扇の並び順 `index`（0始まり）を持ち、`PlayerMotion::UpdateAttackLights` が `offsetFn` へ渡す（`Hierarchy::Attach` は先頭挿入のため子の走査順は生成順の逆になり、並び順の判断には使えない） |
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
 | [`Team`](../Ash2/src/Component/Team.hpp) | エンティティの陣営を表す `enum class`（`Player`/`Enemy` の2値）。攻撃判定・被弾判定を持つエンティティに付与し、`HitSystem` が同じ値どうしのヒットを捨てる（自己ヒット・同士討ちの防止）。片方でも持たなければ判定に参加せず従来どおり当たる |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int32 フィールド、StaminaSystem が管理する回復端数累積 accum と回復ディレイ計測用 recoveryTimer を持つ） |

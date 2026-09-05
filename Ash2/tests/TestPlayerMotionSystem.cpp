@@ -173,6 +173,63 @@ entt::entity MakePlayer(entt::registry& registry) {
   return player;
 }
 
+/// @brief 所有者の子から `Tag` を持つ最初のエンティティを返す
+/// @return 見つからなければ entt::null
+template <typename Tag>
+entt::entity FindChildOrb(entt::registry& registry, entt::entity owner) {
+  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
+    auto child = hierarchy->firstChild();
+    while (child != entt::null) {
+      if (registry.all_of<Tag>(child)) {
+        return child;
+      }
+      child = registry.get<Hierarchy>(child).nextSibling();
+    }
+  }
+  return entt::null;
+}
+
+/// @brief 所有者の子から `Tag` を持つエンティティをすべて収集する
+template <typename Tag>
+Array<entt::entity>
+CollectChildOrbs(entt::registry& registry, entt::entity owner) {
+  Array<entt::entity> orbs;
+  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
+    auto child = hierarchy->firstChild();
+    while (child != entt::null) {
+      if (registry.all_of<Tag>(child)) {
+        orbs.push_back(child);
+      }
+      child = registry.get<Hierarchy>(child).nextSibling();
+    }
+  }
+  return orbs;
+}
+
+/// @brief 所有者の子から `AttackLightOrb::index` が一致するエンティティを返す
+/// @return 見つからなければ entt::null
+entt::entity FindLightOrbByIndex(
+    entt::registry& registry, entt::entity owner, int32 index
+) {
+  for (const auto light : CollectChildOrbs<AttackLightOrb>(registry, owner)) {
+    if (registry.get<AttackLightOrb>(light).index == index) {
+      return light;
+    }
+  }
+  return entt::null;
+}
+
+/// @brief ダミーの判定珠を生成し、所有者へアタッチしてタグを付与する
+entt::entity MakeDummyHitboxOrb(entt::registry& registry, entt::entity owner) {
+  const auto hitbox = registry.create();
+  registry.emplace<LocalOffset>(hitbox);
+  registry.emplace<Collider>(hitbox);
+  registry.emplace<AttackOrb>(hitbox);
+  registry.emplace<AttackHitboxOrb>(hitbox);
+  Hierarchy::Attach(registry, owner, hitbox);
+  return hitbox;
+}
+
 }  // namespace
 
 TEST_CASE(
@@ -196,7 +253,10 @@ TEST_CASE(
   REQUIRE(chain.stage == 0);
   REQUIRE(chain.elapsed == Approx(0.0));
   // 構え中（windupSec 未満）はヒットボックス未生成
-  REQUIRE(chain.hitboxEntity == entt::entity{entt::null});
+  REQUIRE(
+      FindChildOrb<AttackHitboxOrb>(registry, player) ==
+      entt::entity{entt::null}
+  );
   REQUIRE_FALSE(chain.comboQueued);
 
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_1");
@@ -343,10 +403,8 @@ TEST_CASE("PlayerMotionSystem - melee hitbox does not hit its owner") {
   frameData.dt = 0.06;
   MotionSystem::Update(registry, frameData);
 
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(
-      registry.get<PlayerMotion::Variant>(player)
-  );
-  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
 
   AttachmentSystem::UpdateTransform(registry);
 
@@ -355,7 +413,7 @@ TEST_CASE("PlayerMotionSystem - melee hitbox does not hit its owner") {
 
   // Team を外すと当たる。上のヒットなしが位置のすれ違いではなく
   // 同陣営スキップによるものだと示す
-  registry.remove<Team>(chain.hitboxEntity);
+  registry.remove<Team>(hitbox);
   REQUIRE(HitSystem::Update(registry).size() == 1);
   REQUIRE(registry.get<Hp>(player).current < 100);
 }
@@ -394,7 +452,10 @@ TEST_CASE(
   const auto& air = std::get<PlayerMotion::AirAttack>(motion);
   REQUIRE(air.elapsed == Approx(0.0));
   // 構え中（windupSec 未満）はヒットボックス未生成
-  REQUIRE(air.hitboxEntity == entt::entity{entt::null});
+  REQUIRE(
+      FindChildOrb<AttackHitboxOrb>(registry, player) ==
+      entt::entity{entt::null}
+  );
 
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"air_attack");
 }
@@ -441,8 +502,7 @@ TEST_CASE(
   registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null}
+      player, PlayerMotion::AirAttack{.elapsed = 0.0}
   );
 
   // windupSec(0.05) を跨ぎ、activeSec(0.25) 中の進行度 0.70 地点まで進める
@@ -450,19 +510,20 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& air = std::get<PlayerMotion::AirAttack>(motion);
-  REQUIRE(air.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(air.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(air.hitboxEntity));
+  REQUIRE(std::holds_alternative<PlayerMotion::AirAttack>(motion));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(hitbox));
 
   // 進行度0.70 → 角度90°＝真下
   // （w=0、h=capMidH(40.0)-orbitRadius(50.0)=-10.0）
-  const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
+  const auto& localOffset = registry.get<LocalOffset>(hitbox);
   REQUIRE(localOffset.w == Approx(0.0).margin(0.001));
   REQUIRE(localOffset.h == Approx(-10.0));
   REQUIRE(localOffset.d == Approx(0.0));
 
-  const auto& attack = registry.get<Attack>(air.hitboxEntity);
+  const auto& attack = registry.get<Attack>(hitbox);
   REQUIRE(attack.damage == 15);
 }
 
@@ -479,8 +540,7 @@ TEST_CASE(
   registry.get<SpriteAnimation>(player).facingRight = false;
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null}
+      player, PlayerMotion::AirAttack{.elapsed = 0.0}
   );
 
   // 進行度 0.40（角度0°＝正面）まで進め、w = -orbitRadius にする
@@ -488,11 +548,12 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& air = std::get<PlayerMotion::AirAttack>(motion);
-  REQUIRE(air.hitboxEntity != entt::entity{entt::null});
+  REQUIRE(std::holds_alternative<PlayerMotion::AirAttack>(motion));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
 
   // 進行度0.40 → 角度0°＝正面。w = -orbitRadius(50.0)、h = capMidH(40.0)
-  const auto& localOffset = registry.get<LocalOffset>(air.hitboxEntity);
+  const auto& localOffset = registry.get<LocalOffset>(hitbox);
   REQUIRE(localOffset.w == Approx(-50.0));
   REQUIRE(localOffset.h == Approx(40.0));
   REQUIRE(localOffset.d == Approx(0.0));
@@ -512,9 +573,10 @@ TEST_CASE(
   registry.emplace<LocalOffset>(hitbox);
   registry.emplace<Collider>(hitbox);
   registry.emplace<AttackOrb>(hitbox);
+  registry.emplace<AttackHitboxOrb>(hitbox);
   Hierarchy::Attach(registry, player, hitbox);
   registry.replace<PlayerMotion::Variant>(
-      player, PlayerMotion::AirAttack{.elapsed = 0.1, .hitboxEntity = hitbox}
+      player, PlayerMotion::AirAttack{.elapsed = 0.1}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -554,8 +616,7 @@ TEST_CASE(
   // recoveryBEnd は windupSec+activeSec+recoveryASec+recoveryBSec(0)
   // = 0.05+0.25+0.20 = 0.50
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::AirAttack{.elapsed = 0.49, .hitboxEntity = entt::null}
+      player, PlayerMotion::AirAttack{.elapsed = 0.49}
   );
 
   const FrameData frameData{.dt = 0.02};
@@ -577,8 +638,7 @@ TEST_CASE(
   registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::AirAttack{.elapsed = 0.0, .hitboxEntity = entt::null}
+      player, PlayerMotion::AirAttack{.elapsed = 0.0}
   );
 
   FrameData frameData{.dt = 0.01};  // windupSec(0.05) 未満に留まる
@@ -602,8 +662,7 @@ TEST_CASE(
 
   // activeStart(0.05) を超え activeEnd(0.30) 未満
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::AirAttack{.elapsed = 0.10, .hitboxEntity = entt::null}
+      player, PlayerMotion::AirAttack{.elapsed = 0.10}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -627,8 +686,7 @@ TEST_CASE(
   registry.get<WorldPos>(player).h = 100.0;  // 空中（接地遷移を避ける）
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::AirAttack{.elapsed = 0.35, .hitboxEntity = entt::null}
+      player, PlayerMotion::AirAttack{.elapsed = 0.35}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -652,8 +710,7 @@ TEST_CASE(
   registry.get<SpriteAnimation>(player).facingRight = false;
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::AirAttack{.elapsed = 0.10, .hitboxEntity = entt::null}
+      player, PlayerMotion::AirAttack{.elapsed = 0.10}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -752,13 +809,9 @@ TEST_CASE(
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  // ヒットボックスエンティティ（MeleeChain.hitboxEntity 用のダミー）
-  const auto hitbox = registry.create();
+  const auto hitbox = MakeDummyHitboxOrb(registry, player);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.34, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.34}
   );
 
   const FrameData frameData{.dt = 0.5};
@@ -771,7 +824,7 @@ TEST_CASE(
   REQUIRE(registry.valid(hitbox));
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
-  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
 }
 
 TEST_CASE("PlayerMotionSystem - timer expiry transitions Ranged to Neutral") {
@@ -801,10 +854,7 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
   );
 
   const FrameData frameData{.dt = 0.1};
@@ -825,10 +875,7 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
   );
 
   // windupSec(0.05) を跨ぐ dt
@@ -836,12 +883,13 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
-  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(chain.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(chain.hitboxEntity));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(hitbox));
 
-  const auto& attack = registry.get<Attack>(chain.hitboxEntity);
+  const auto& attack = registry.get<Attack>(hitbox);
   REQUIRE(attack.hitstopSec > 0.0);
 }
 
@@ -854,29 +902,25 @@ TEST_CASE(
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  const auto hitbox = registry.create();
-  registry.emplace<LocalOffset>(hitbox);
-  registry.emplace<Collider>(hitbox);
+  const auto hitbox = MakeDummyHitboxOrb(registry, player);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.10, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.10}
   );
 
   // windupSec+activeSec(0.15) を跨ぐ dt
   const FrameData frameData{.dt = 0.06};
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
-  REQUIRE(chain.hitboxEntity == entt::entity{entt::null});
+  REQUIRE(
+      FindChildOrb<AttackHitboxOrb>(registry, player) ==
+      entt::entity{entt::null}
+  );
   // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
   // へ引き渡す（親からも切り離される）
   REQUIRE(registry.valid(hitbox));
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
-  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
 }
 
 TEST_CASE("PlayerMotionSystem - MeleeChain stage 0 stops horizontal movement") {
@@ -886,10 +930,7 @@ TEST_CASE("PlayerMotionSystem - MeleeChain stage 0 stops horizontal movement") {
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
   );
 
   FrameData frameData{.dt = 0.1};
@@ -912,10 +953,7 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -939,10 +977,7 @@ TEST_CASE(
 
   // windupSec(0.05) を超え activeEnd(0.15) 未満
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.10, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.10}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -966,12 +1001,7 @@ TEST_CASE(
   // activeEnd は windupSec+activeSec = 0.15
   registry.replace<PlayerMotion::Variant>(
       player,
-      PlayerMotion::MeleeChain{
-          .stage = 0,
-          .elapsed = 0.14,
-          .hitboxEntity = entt::null,
-          .comboQueued = true
-      }
+      PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.14, .comboQueued = true}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -993,10 +1023,7 @@ TEST_CASE(
 
   // activeEnd(0.15) を既に過ぎている状態（comboQueued は未予約）
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.16, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.16}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -1023,10 +1050,7 @@ TEST_CASE(
       0.10;
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.16, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.16}
   );
 
   // 後隙A中の攻撃入力：予約のみで遷移しない
@@ -1063,10 +1087,7 @@ TEST_CASE(
 
   // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.35
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.34, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.34}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -1086,10 +1107,7 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
   );
 
   // 1フレーム目：攻撃入力あり、comboQueued が立つ
@@ -1123,10 +1141,7 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.0}
   );
 
   const FrameData frameData{.dt = 0.1};
@@ -1147,10 +1162,7 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.0}
   );
 
   // windupSec(0.05) を跨ぐ dt
@@ -1158,10 +1170,11 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
-  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(chain.hitboxEntity));
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(chain.hitboxEntity));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(hitbox));
 }
 
 TEST_CASE(
@@ -1173,29 +1186,25 @@ TEST_CASE(
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  const auto hitbox = registry.create();
-  registry.emplace<LocalOffset>(hitbox);
-  registry.emplace<Collider>(hitbox);
+  const auto hitbox = MakeDummyHitboxOrb(registry, player);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.15, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.15}
   );
 
   // windupSec+activeSec(0.20) を跨ぐ dt
   const FrameData frameData{.dt = 0.06};
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
-  REQUIRE(chain.hitboxEntity == entt::entity{entt::null});
+  REQUIRE(
+      FindChildOrb<AttackHitboxOrb>(registry, player) ==
+      entt::entity{entt::null}
+  );
   // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
   // へ引き渡す（親からも切り離される）
   REQUIRE(registry.valid(hitbox));
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
-  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
 }
 
 TEST_CASE(
@@ -1209,10 +1218,7 @@ TEST_CASE(
 
   // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.40
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.39, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.39}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -1233,10 +1239,7 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.0}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -1260,12 +1263,7 @@ TEST_CASE(
   // activeEnd は windupSec+activeSec = 0.20
   registry.replace<PlayerMotion::Variant>(
       player,
-      PlayerMotion::MeleeChain{
-          .stage = 1,
-          .elapsed = 0.19,
-          .hitboxEntity = entt::null,
-          .comboQueued = true
-      }
+      PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.19, .comboQueued = true}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -1287,10 +1285,7 @@ TEST_CASE(
 
   // activeEnd(0.20) を既に過ぎている状態（comboQueued は未予約）
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.21, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.21}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -1313,10 +1308,7 @@ TEST_CASE(
 
   // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.40
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.39, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.39}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -1365,14 +1357,13 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
-  REQUIRE(finisher.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(finisher.hitboxEntity));
-  REQUIRE(
-      registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
-  );
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(hitbox));
 
-  const auto& attack = registry.get<Attack>(finisher.hitboxEntity);
+  const auto& attack = registry.get<Attack>(hitbox);
   REQUIRE(attack.hitstopSec > 0.0);
 }
 
@@ -1386,30 +1377,22 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
   );
   // windupSec(0.05) を跨ぐ dt
   MotionSystem::Update(registry, FrameData{.dt = 0.06});
-  const auto stage0Hitbox =
-      std::get<PlayerMotion::MeleeChain>(
-          registry.get<PlayerMotion::Variant>(player)
-      )
-          .hitboxEntity;
+  const auto stage0Hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
   const double stage0HitstopSec = registry.get<Attack>(stage0Hitbox).hitstopSec;
 
+  // 状態を直接差し替えるテストのため、通常の Tick が行うはずの解放を
+  // 代わりに行っておく（次の締め段が新しい珠を生成できるようにするため）
+  Hierarchy::Detach(registry, stage0Hitbox);
   registry.replace<PlayerMotion::Variant>(
       player, PlayerMotion::MeleeFinisher{.elapsed = 0.0}
   );
   // windupSec(0.10) を跨ぐ dt
   MotionSystem::Update(registry, FrameData{.dt = 0.11});
-  const auto finisherHitbox =
-      std::get<PlayerMotion::MeleeFinisher>(
-          registry.get<PlayerMotion::Variant>(player)
-      )
-          .hitboxEntity;
+  const auto finisherHitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
   const double finisherHitstopSec =
       registry.get<Attack>(finisherHitbox).hitstopSec;
 
@@ -1427,27 +1410,25 @@ TEST_CASE(
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  const auto hitbox = registry.create();
-  registry.emplace<LocalOffset>(hitbox);
-  registry.emplace<Collider>(hitbox);
+  const auto hitbox = MakeDummyHitboxOrb(registry, player);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeFinisher{.elapsed = 0.29, .hitboxEntity = hitbox}
+      player, PlayerMotion::MeleeFinisher{.elapsed = 0.29}
   );
 
   // windupSec+activeSec(0.30) を跨ぐ dt
   const FrameData frameData{.dt = 0.06};
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
-  REQUIRE(finisher.hitboxEntity == entt::entity{entt::null});
+  REQUIRE(
+      FindChildOrb<AttackHitboxOrb>(registry, player) ==
+      entt::entity{entt::null}
+  );
   // ヒットボックスは即座に破棄せず、Attack を外して FadeOut
   // へ引き渡す（親からも切り離される）
   REQUIRE(registry.valid(hitbox));
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
-  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
 }
 
 TEST_CASE(
@@ -1541,24 +1522,21 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.0, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
   );
 
   // windupSec(0.05) を跨ぐ dt
   const FrameData frameData{.dt = 0.06};
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
-  REQUIRE(chain.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(chain.hitboxEntity));
-  REQUIRE_FALSE(registry.all_of<Drawable>(chain.hitboxEntity));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Drawable>(hitbox));
 
-  REQUIRE(chain.lightEntities.size() == 1);
-  const auto light = chain.lightEntities[0];
+  const auto lights = CollectChildOrbs<AttackLightOrb>(registry, player);
+  REQUIRE(lights.size() == 1);
+  const auto light = lights[0];
   REQUIRE(registry.all_of<Drawable, LocalOffset>(light));
   REQUIRE_FALSE(registry.all_of<Attack>(light));
 }
@@ -1582,15 +1560,15 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
-  REQUIRE(finisher.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(
-      registry.all_of<Collider, Attack, LocalOffset>(finisher.hitboxEntity)
-  );
-  REQUIRE_FALSE(registry.all_of<Drawable>(finisher.hitboxEntity));
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(hitbox));
+  REQUIRE_FALSE(registry.all_of<Drawable>(hitbox));
 
-  REQUIRE(finisher.lightEntities.size() == 2);
-  for (const auto light : finisher.lightEntities) {
+  const auto lights = CollectChildOrbs<AttackLightOrb>(registry, player);
+  REQUIRE(lights.size() == 2);
+  for (const auto light : lights) {
     REQUIRE(registry.all_of<Drawable, LocalOffset>(light));
     REQUIRE_FALSE(registry.all_of<Attack>(light));
   }
@@ -1598,8 +1576,10 @@ TEST_CASE(
   // capMidH(40.0)、lightGap(36.0) の半分ずつ上下に開く
   constexpr double kCapMidH = 40.0;
   constexpr double kHalfLightGap = 36.0 / 2.0;
-  const auto& offset0 = registry.get<LocalOffset>(finisher.lightEntities[0]);
-  const auto& offset1 = registry.get<LocalOffset>(finisher.lightEntities[1]);
+  const auto light0 = FindLightOrbByIndex(registry, player, 0);
+  const auto light1 = FindLightOrbByIndex(registry, player, 1);
+  const auto& offset0 = registry.get<LocalOffset>(light0);
+  const auto& offset1 = registry.get<LocalOffset>(light1);
   REQUIRE(offset0.h == Approx(kCapMidH - kHalfLightGap));
   REQUIRE(offset1.h == Approx(kCapMidH + kHalfLightGap));
 }
@@ -1617,22 +1597,19 @@ TEST_CASE(
   const auto light = registry.create();
   registry.emplace<LocalOffset>(light);
   registry.emplace<Drawable>(light, CircleDrawable{.radius = 20.0});
+  registry.emplace<AttackOrb>(light);
+  registry.emplace<AttackLightOrb>(light, AttackLightOrb{.index = 0});
   Hierarchy::Attach(registry, player, light);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.10, .lightEntities = {light}
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.10}
   );
 
   // windupSec+activeSec(0.15) を跨ぐ dt
   const FrameData frameData{.dt = 0.06};
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
-  REQUIRE(chain.lightEntities.isEmpty());
+  REQUIRE(CollectChildOrbs<AttackLightOrb>(registry, player).isEmpty());
   REQUIRE(registry.valid(light));
   REQUIRE(registry.all_of<FadeOut>(light));
   // Hierarchy::Detach は Hierarchy 自体は残し、親子のリンクと LocalOffset
@@ -1653,27 +1630,26 @@ TEST_CASE(
   const auto light0 = registry.create();
   registry.emplace<LocalOffset>(light0);
   registry.emplace<Drawable>(light0, CircleDrawable{.radius = 25.0});
+  registry.emplace<AttackOrb>(light0);
+  registry.emplace<AttackLightOrb>(light0, AttackLightOrb{.index = 0});
   Hierarchy::Attach(registry, player, light0);
 
   const auto light1 = registry.create();
   registry.emplace<LocalOffset>(light1);
   registry.emplace<Drawable>(light1, CircleDrawable{.radius = 25.0});
+  registry.emplace<AttackOrb>(light1);
+  registry.emplace<AttackLightOrb>(light1, AttackLightOrb{.index = 1});
   Hierarchy::Attach(registry, player, light1);
 
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeFinisher{
-          .elapsed = 0.29, .lightEntities = {light0, light1}
-      }
+      player, PlayerMotion::MeleeFinisher{.elapsed = 0.29}
   );
 
   // windupSec+activeSec(0.30) を跨ぐ dt
   const FrameData frameData{.dt = 0.06};
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& finisher = std::get<PlayerMotion::MeleeFinisher>(motion);
-  REQUIRE(finisher.lightEntities.isEmpty());
+  REQUIRE(CollectChildOrbs<AttackLightOrb>(registry, player).isEmpty());
   for (const auto light : {light0, light1}) {
     REQUIRE(registry.valid(light));
     REQUIRE(registry.all_of<FadeOut>(light));
@@ -1917,10 +1893,7 @@ TEST_CASE(
 
   // activeEnd(0.15) を既に過ぎている状態
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.16, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.16}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -1944,10 +1917,7 @@ TEST_CASE(
 
   // activeEnd(0.20) を既に過ぎている状態
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 1, .elapsed = 0.21, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.21}
   );
 
   FrameData frameData{.dt = 0.01};
@@ -1968,15 +1938,10 @@ TEST_CASE(
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  const auto hitbox = registry.create();
-  registry.emplace<LocalOffset>(hitbox);
-  registry.emplace<Collider>(hitbox);
+  const auto hitbox = MakeDummyHitboxOrb(registry, player);
   // activeEnd(0.15) を跨ぐ dt でヒットボックスが解放される
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.14, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.14}
   );
 
   FrameData frameData{.dt = 0.02};
@@ -1990,7 +1955,7 @@ TEST_CASE(
   REQUIRE(registry.valid(hitbox));
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
-  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
 }
 
 TEST_CASE(
@@ -2263,7 +2228,10 @@ TEST_CASE(
   const auto& dashAttack = std::get<PlayerMotion::DashAttack>(motion);
   REQUIRE(dashAttack.air);
   REQUIRE(dashAttack.elapsed == Approx(0.0));
-  REQUIRE(dashAttack.hitboxEntity == entt::entity{entt::null});
+  REQUIRE(
+      FindChildOrb<AttackHitboxOrb>(registry, player) ==
+      entt::entity{entt::null}
+  );
   REQUIRE(dashAttack.dashDir.x == Approx(0.0));
   REQUIRE(dashAttack.dashDir.y == Approx(1.0));
 
@@ -2283,10 +2251,7 @@ TEST_CASE(
   registry.replace<PlayerMotion::Variant>(
       player,
       PlayerMotion::DashAttack{
-          .elapsed = 0.0,
-          .air = true,
-          .hitboxEntity = entt::null,
-          .dashDir = Vec2{1.0, 0.0}
+          .elapsed = 0.0, .air = true, .dashDir = Vec2{1.0, 0.0}
       }
   );
 
@@ -2295,20 +2260,19 @@ TEST_CASE(
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& dashAttack = std::get<PlayerMotion::DashAttack>(motion);
-  REQUIRE(dashAttack.hitboxEntity != entt::entity{entt::null});
-  REQUIRE(registry.valid(dashAttack.hitboxEntity));
-  REQUIRE(
-      registry.all_of<Collider, Attack, LocalOffset>(dashAttack.hitboxEntity)
-  );
+  REQUIRE(std::holds_alternative<PlayerMotion::DashAttack>(motion));
+  const auto hitbox = FindChildOrb<AttackHitboxOrb>(registry, player);
+  REQUIRE(hitbox != entt::entity{entt::null});
+  REQUIRE(registry.valid(hitbox));
+  REQUIRE(registry.all_of<Collider, Attack, LocalOffset>(hitbox));
 
   // 進行度0.25 → 円上の点（w=0、h=capMidH(40.0)、d=orbitRadius(30.0)）
-  const auto& localOffset = registry.get<LocalOffset>(dashAttack.hitboxEntity);
+  const auto& localOffset = registry.get<LocalOffset>(hitbox);
   REQUIRE(localOffset.w == Approx(0.0).margin(0.001));
   REQUIRE(localOffset.h == Approx(40.0));
   REQUIRE(localOffset.d == Approx(30.0));
 
-  const auto& attack = registry.get<Attack>(dashAttack.hitboxEntity);
+  const auto& attack = registry.get<Attack>(hitbox);
   REQUIRE(attack.damage == 20);
 }
 
@@ -2326,12 +2290,10 @@ TEST_CASE(
   registry.emplace<LocalOffset>(hitbox);
   registry.emplace<Collider>(hitbox);
   registry.emplace<AttackOrb>(hitbox);
+  registry.emplace<AttackHitboxOrb>(hitbox);
   Hierarchy::Attach(registry, player, hitbox);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::DashAttack{
-          .elapsed = 0.1, .air = true, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::DashAttack{.elapsed = 0.1, .air = true}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -2362,14 +2324,9 @@ TEST_CASE(
   registry.get<WorldPos>(player).h =
       0.0;  // 接地していても air=false なら無関係
 
-  const auto hitbox = registry.create();
-  registry.emplace<LocalOffset>(hitbox);
-  registry.emplace<Collider>(hitbox);
+  MakeDummyHitboxOrb(registry, player);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::DashAttack{
-          .elapsed = 0.1, .air = false, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::DashAttack{.elapsed = 0.1, .air = false}
   );
 
   const FrameData frameData{.dt = 0.01};
@@ -2392,10 +2349,7 @@ TEST_CASE(
   // recoveryEnd は windupSec+activeSec+recoveryASec+recoveryBSec(0)
   // = 0.05+0.20+0.20 = 0.45
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::DashAttack{
-          .elapsed = 0.44, .air = true, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::DashAttack{.elapsed = 0.44, .air = true}
   );
 
   const FrameData frameData{.dt = 0.02};
@@ -2407,7 +2361,7 @@ TEST_CASE(
 
 TEST_CASE(
     "PlayerMotionSystem - Hitstop freezes MeleeChain elapsed and keeps the "
-    "same hitboxEntity"
+    "same hitbox"
 ) {
   // Hitstop 中は dt = 0 で Tick されるため、elapsed もヒットボックスの再生成も
   // 起きない
@@ -2416,23 +2370,18 @@ TEST_CASE(
   const auto player = MakePlayer(registry);
   registry.emplace<Hitstop>(player, Hitstop{.remaining = 0.05});
 
-  const auto hitbox = registry.create();
-  registry.emplace<LocalOffset>(hitbox);
-  registry.emplace<Collider>(hitbox);
+  const auto hitbox = MakeDummyHitboxOrb(registry, player);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.06, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.06}
   );
 
   const FrameData frameData{.dt = 0.1};
   MotionSystem::Update(registry, frameData);
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  const auto& chain = std::get<PlayerMotion::MeleeChain>(motion);
-  REQUIRE(chain.elapsed == Approx(0.06));
-  REQUIRE(chain.hitboxEntity == hitbox);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).elapsed == Approx(0.06));
+  REQUIRE(FindChildOrb<AttackHitboxOrb>(registry, player) == hitbox);
   REQUIRE(registry.valid(hitbox));
 }
 
@@ -2448,10 +2397,7 @@ TEST_CASE(
 
   // windupSec(0.05) を超え activeEnd(0.15) 未満（active区間）
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.10, .hitboxEntity = entt::null
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.10}
   );
 
   FrameData frameData{.dt = 0.1};
@@ -2478,12 +2424,7 @@ TEST_CASE(
   // activeEnd(0.15) 手前、次段への予約は既に立っている
   registry.replace<PlayerMotion::Variant>(
       player,
-      PlayerMotion::MeleeChain{
-          .stage = 0,
-          .elapsed = 0.14,
-          .hitboxEntity = entt::null,
-          .comboQueued = true
-      }
+      PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.14, .comboQueued = true}
   );
 
   // 停止中：dt を与えても elapsed は凍結されたまま、まだ MeleeChain stage 0

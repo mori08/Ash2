@@ -34,9 +34,7 @@ Vec3 DashAttackOrbOffset(
 
 DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir) {
   SetClip(anim, U"dash_attack");
-  return DashAttack{
-      .elapsed = 0.0, .air = air, .hitboxEntity = entt::null, .dashDir = dashDir
-  };
+  return DashAttack{.elapsed = 0.0, .air = air, .dashDir = dashDir};
 }
 
 Optional<Variant> Tick(
@@ -75,7 +73,7 @@ Optional<Variant> Tick(
           .hitstopSec = da.hitstopSec,
           .fadeSec = cfg.attackEffect.fadeSec
       },
-      state.hitboxEntity, offsetFn
+      offsetFn
   );
 
   // 突進フェーズ（構え）：ダッシュ方向へ移動

@@ -542,7 +542,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "HitReactionSystem - player hit while attacking releases hitboxEntity"
+    "HitReactionSystem - player hit while attacking releases the hitbox"
 ) {
   // 攻撃中に被弾したとき、上書き前の MeleeChain が持つヒットボックスが
   // ReleaseAttackHitbox で解放される（後始末。ARCHITECTURE.md の
@@ -555,12 +555,10 @@ TEST_CASE(
   registry.emplace<LocalOffset>(hitbox);
   registry.emplace<Collider>(hitbox);
   registry.emplace<AttackOrb>(hitbox);
+  registry.emplace<AttackHitboxOrb>(hitbox);
   Hierarchy::Attach(registry, target, hitbox);
   registry.replace<PlayerMotion::Variant>(
-      target,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.10, .hitboxEntity = hitbox
-      }
+      target, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.10}
   );
 
   HitReactionSystem::Apply(
@@ -606,12 +604,10 @@ TEST_CASE(
       Attack{.damage = 10, .hitstopSec = 0.05, .reaction = ReactionLevel::Blow}
   );
   registry.emplace<AttackOrb>(hitbox);
+  registry.emplace<AttackHitboxOrb>(hitbox);
   Hierarchy::Attach(registry, player, hitbox);
   registry.replace<PlayerMotion::Variant>(
-      player,
-      PlayerMotion::MeleeChain{
-          .stage = 0, .elapsed = 0.10, .hitboxEntity = hitbox
-      }
+      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.10}
   );
 
   HitReactionSystem::Apply(
@@ -652,8 +648,8 @@ TEST_CASE(
     "HitReactionSystem - player hit during MeleeFinisher releases hitbox "
     "and light orbs together"
 ) {
-  // MeleeFinisher の光2つを含む状態から被弾すると、hitboxEntity・
-  // lightEntities の珠がすべて所有者の子から外れ、Attack を失う
+  // MeleeFinisher の光2つを含む状態から被弾すると、判定・光の珠が
+  // すべて所有者の子から外れ、Attack を失う
   // （ReleaseAttackOrbs が所有者の子を AttackOrb タグで一括解放するため）
   entt::registry registry;
   SetupContext(registry);
@@ -667,22 +663,21 @@ TEST_CASE(
       Attack{.damage = 10, .hitstopSec = 0.05, .reaction = ReactionLevel::Blow}
   );
   registry.emplace<AttackOrb>(hitbox);
+  registry.emplace<AttackHitboxOrb>(hitbox);
   Hierarchy::Attach(registry, target, hitbox);
 
   Array<entt::entity> lights;
   for (int32 i = 0; i < 2; ++i) {
     const auto light = registry.create();
     registry.emplace<LocalOffset>(light);
-    registry.emplace<AttackOrb>(light, AttackOrb{.index = i});
+    registry.emplace<AttackOrb>(light);
+    registry.emplace<AttackLightOrb>(light, AttackLightOrb{.index = i});
     Hierarchy::Attach(registry, target, light);
     lights.push_back(light);
   }
 
   registry.replace<PlayerMotion::Variant>(
-      target,
-      PlayerMotion::MeleeFinisher{
-          .elapsed = 0.10, .hitboxEntity = hitbox, .lightEntities = lights
-      }
+      target, PlayerMotion::MeleeFinisher{.elapsed = 0.10}
   );
 
   HitReactionSystem::Apply(
