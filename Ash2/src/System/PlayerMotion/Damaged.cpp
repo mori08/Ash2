@@ -15,10 +15,7 @@ Variant MakeDamaged(
     entt::registry& registry, entt::entity entity, const PlayerConfig& cfg,
     SpriteAnimation& anim, ReactionLevel reaction, double knockbackSign
 ) {
-  // 解放処理は子エンティティを破棄するため、コンポーネントへの参照ではなく
-  // 値で受けてから渡す
-  const Variant prevMotion = registry.get<Variant>(entity);
-  ReleaseMotionEntities(registry, prevMotion, cfg.attackEffect.fadeSec);
+  ReleaseAttackOrbs(registry, entity, cfg.attackEffect.fadeSec);
 
   registry.get<Velocity>(entity) = Velocity{};
   registry.remove<Invincible>(entity);

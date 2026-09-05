@@ -440,6 +440,7 @@
     <ClInclude Include="src\Util\Overloaded.hpp" />
     <ClInclude Include="src\Component\Collider.hpp" />
     <ClInclude Include="src\Component\Attack.hpp" />
+    <ClInclude Include="src\Component\AttackOrb.hpp" />
     <ClInclude Include="src\Component\Hp.hpp" />
     <ClInclude Include="src\Component\Stamina.hpp" />
     <ClInclude Include="src\Component\PlayerMotion.hpp" />

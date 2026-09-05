@@ -57,11 +57,7 @@ Optional<Variant> Tick(
   // 接地検出は後隙中も含め毎フレーム優先して評価する（タイマー満了判定より先、
   // 空中発動時のみ。地上 DashAttack は接地遷移を持たない）
   if (state.air && pos.isOnGround()) {
-    if (state.hitboxEntity != entt::null) {
-      state.hitboxEntity = ReleaseAttackHitbox(
-          registry, state.hitboxEntity, cfg.attackEffect.fadeSec
-      );
-    }
+    ReleaseAttackOrbs(registry, entity, cfg.attackEffect.fadeSec);
     return Landing{.timer = cfg.landing.recoverySec};
   }
 

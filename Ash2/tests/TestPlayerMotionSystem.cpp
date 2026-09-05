@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "Component/Attack.hpp"
+#include "Component/AttackOrb.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/FadeOut.hpp"
@@ -510,6 +511,8 @@ TEST_CASE(
   const auto hitbox = registry.create();
   registry.emplace<LocalOffset>(hitbox);
   registry.emplace<Collider>(hitbox);
+  registry.emplace<AttackOrb>(hitbox);
+  Hierarchy::Attach(registry, player, hitbox);
   registry.replace<PlayerMotion::Variant>(
       player, PlayerMotion::AirAttack{.elapsed = 0.1, .hitboxEntity = hitbox}
   );
@@ -527,7 +530,8 @@ TEST_CASE(
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
   REQUIRE_FALSE(registry.all_of<Collider>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
-  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
+  REQUIRE_FALSE(registry.all_of<LocalOffset>(hitbox));
 
   const auto& landing = std::get<PlayerMotion::Landing>(motion);
   REQUIRE(landing.timer == Approx(0.20));
@@ -2321,6 +2325,8 @@ TEST_CASE(
   const auto hitbox = registry.create();
   registry.emplace<LocalOffset>(hitbox);
   registry.emplace<Collider>(hitbox);
+  registry.emplace<AttackOrb>(hitbox);
+  Hierarchy::Attach(registry, player, hitbox);
   registry.replace<PlayerMotion::Variant>(
       player,
       PlayerMotion::DashAttack{
@@ -2338,7 +2344,8 @@ TEST_CASE(
   REQUIRE(registry.valid(hitbox));
   REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
   REQUIRE(registry.all_of<FadeOut>(hitbox));
-  REQUIRE_FALSE(registry.all_of<Hierarchy>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
+  REQUIRE_FALSE(registry.all_of<LocalOffset>(hitbox));
 
   const auto& landing = std::get<PlayerMotion::Landing>(motion);
   REQUIRE(landing.timer == Approx(0.20));
