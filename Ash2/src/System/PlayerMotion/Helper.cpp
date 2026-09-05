@@ -3,6 +3,7 @@
 #include "System/PlayerMotion/Helper.hpp"
 
 #include "Component/Attack.hpp"
+#include "Component/AttackOrb.hpp"
 #include "Component/Collider.hpp"
 #include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
@@ -24,13 +25,15 @@ constexpr ColorF kMeleeOrbColor = {1.0, 0.9, 0.5};
 /// 生成時点では構え中につき体の近くに静止した位置に置く。現在位置は
 /// UpdateAttackHitbox/UpdateAttackLights が更新する LocalOffset のみが担う。
 /// @param visible true なら Drawable/DrawColor を付与して描画対象にする
+/// @param index 生成順のインデックス（AttackOrb::index に格納する）
 entt::entity SpawnOrb(
     entt::registry& registry, entt::entity owner, const WorldPos& pos,
-    double radius, bool visible
+    double radius, bool visible, int32 index
 ) {
   const auto orb = registry.create();
   registry.emplace<WorldPos>(orb, pos);
   registry.emplace<LocalOffset>(orb, LocalOffset{});
+  registry.emplace<AttackOrb>(orb, AttackOrb{.index = index});
   Hierarchy::Attach(registry, owner, orb);
   if (visible) {
     registry.emplace<Drawable>(orb, CircleDrawable{.radius = radius});
@@ -49,7 +52,8 @@ entt::entity SpawnAttackHitbox(
     entt::registry& registry, entt::entity owner, const WorldPos& pos,
     const HitboxSpec& spec
 ) {
-  const auto hitbox = SpawnOrb(registry, owner, pos, spec.radius, spec.drawOrb);
+  const auto hitbox =
+      SpawnOrb(registry, owner, pos, spec.radius, spec.drawOrb, /*index=*/0);
   registry.emplace<Team>(hitbox, Team::Player);
   registry.emplace<Collider>(
       hitbox,
@@ -143,7 +147,7 @@ void UpdateAttackLights(
       const auto& pos = registry.get<WorldPos>(owner);
       for (int32 i = 0; i < spec.count; ++i) {
         lightEntities.push_back(
-            SpawnOrb(registry, owner, pos, spec.radius, /*visible=*/true)
+            SpawnOrb(registry, owner, pos, spec.radius, /*visible=*/true, i)
         );
       }
     }
@@ -165,15 +169,24 @@ void UpdateAttackLights(
   }
 }
 
-void ReleaseMotionEntities(
-    entt::registry& registry, const Variant& motion, double fadeSec
+void ReleaseAttackOrbs(
+    entt::registry& registry, entt::entity owner, double fadeSec
 ) {
-  std::visit(
-      [&](const auto& state) {
-        ReleaseMotionEntities(registry, state, fadeSec);
-      },
-      motion
-  );
+  Array<entt::entity> orbs;
+  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
+    auto child = hierarchy->firstChild();
+    while (child != entt::null) {
+      const auto next = registry.get<Hierarchy>(child).nextSibling();
+      if (registry.all_of<AttackOrb>(child)) {
+        orbs.push_back(child);
+      }
+      child = next;
+    }
+  }
+
+  for (const auto orb : orbs) {
+    ReleaseAttackHitbox(registry, orb, fadeSec);
+  }
 }
 
 }  // namespace PlayerMotion

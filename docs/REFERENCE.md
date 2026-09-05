@@ -28,6 +28,7 @@
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
 | [`ReactionLevel`](../Ash2/src/Component/ReactionLevel.hpp) | 被弾側に生じるリアクションの強さを表す `enum class`（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応） |
 | [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction` の割り当て元と遷移先は下記「リアクションの対応」参照 |
+| [`AttackOrb`](../Ash2/src/Component/AttackOrb.hpp) | プレイヤーの攻撃判定・見た目用の珠エンティティ（`Hierarchy` で所有者の子）であることを示すタグ。生成順のインデックス `index` を持つが解放処理自体は参照しない。`PlayerMotion::ReleaseAttackOrbs` が所有者の子から一括解放する対象の識別に使う |
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
 | [`Team`](../Ash2/src/Component/Team.hpp) | エンティティの陣営を表す `enum class`（`Player`/`Enemy` の2値）。攻撃判定・被弾判定を持つエンティティに付与し、`HitSystem` が同じ値どうしのヒットを捨てる（自己ヒット・同士討ちの防止）。片方でも持たなければ判定に参加せず従来どおり当たる |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int32 フィールド、StaminaSystem が管理する回復端数累積 accum と回復ディレイ計測用 recoveryTimer を持つ） |
@@ -242,7 +243,7 @@
 | `ReleaseAttackHitbox` | ヒットボックス（判定・光いずれも）を `Hierarchy::Detach` → `Attack`/`Collider` 除去 → `FadeOut` 付与の順で解放する。`fadeSec` が 0 以下なら即座に破棄する。光は元々 `Attack`/`Collider` を持たないため切り離しとフェード付与だけが働く | `Helper.hpp`/`.cpp` |
 | `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティを生成・`LocalOffset` 更新し、後隙入りで `ReleaseAttackHitbox` を呼ぶ。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
 | `UpdateAttackLights` | active 区間に応じて光エンティティ群を生成・`LocalOffset` 更新し、後隙入りで解放する。オフセットは `offsetFn(progress, index)` で決まる | `Helper.hpp`/`.cpp` |
-| `ReleaseMotionEntities` | 状態が `hitboxEntity`/`lightEntities` を持つ場合のみ `ReleaseAttackHitbox` で解放する（`requires` で有無を判定するテンプレート、`Variant` を受ける `std::visit` 版も持つ）。被弾による強制遷移の後始末に使う | `Helper.hpp`/`.cpp` |
+| `ReleaseAttackOrbs` | 所有者の子のうち `AttackOrb` を持つものを先に集めてから `ReleaseAttackHitbox` で一括解放する。着地・被弾など中断経路の後始末に使う（所有者が子を持たない場合は何もしない） | `Helper.hpp`/`.cpp` |
 | `MakeMeleeChain` | 指定段の `MeleeChain` を生成（`melee_{stage+1}` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
 | `MakeMeleeFinisher` | `MeleeFinisher` を生成（`melee_finish` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
 | `MakeRanged` | `Ranged` を生成（スタミナ消費、`timer` は `RangedConfig::recoverySec`） | `Transition.hpp` / `Ranged.cpp` |
@@ -250,7 +251,7 @@
 | `MakeDashAttack` | `DashAttack` を生成（`air`・`dashDir` を引き継ぐ） | `Transition.hpp` / `DashAttack.cpp` |
 | `MakeAirAttack` | `AirAttack` を生成 | `Transition.hpp` / `AirAttack.cpp` |
 | `SpawnProjectile` | 遠距離攻撃の弾エンティティを生成する（`WorldPos`+`Velocity`+`Collider`+`Attack`+`Drawable`+`Projectile`+`Team::Player`）。`owner` が `LockOn` を持ち `target` が有効なら狙点（`LockOnSystem::AimPoint`）へ向かう方向で撃ち `anim.facingRight` をその w 成分の符号で書き換える。ロックがなければ従来どおり `anim.facingRight` の正面へ撃つ。`Projectile.origin`/`maxRange` は発射位置・`RangedConfig::reach` から設定する | `Transition.hpp` / `Ranged.cpp` |
-| `MakeDamaged` | 被弾による強制遷移を生成する。上書き前の `Motion` を値で取得して `ReleaseMotionEntities` で後始末し、`Velocity` リセットと `Invincible` 除去のうえで `reaction`・接地状態に応じ `Stagger`/`Knockback` を返す | `Transition.hpp` / `Damaged.cpp` |
+| `MakeDamaged` | 被弾による強制遷移を生成する。`ReleaseAttackOrbs` で上書き前の攻撃判定・光エンティティを後始末し、`Velocity` リセットと `Invincible` 除去のうえで `reaction`・接地状態に応じ `Stagger`/`Knockback` を返す | `Transition.hpp` / `Damaged.cpp` |
 
 ---
 

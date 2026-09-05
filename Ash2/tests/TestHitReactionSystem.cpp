@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "Component/Attack.hpp"
+#include "Component/AttackOrb.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
@@ -553,6 +554,7 @@ TEST_CASE(
   const auto hitbox = registry.create();
   registry.emplace<LocalOffset>(hitbox);
   registry.emplace<Collider>(hitbox);
+  registry.emplace<AttackOrb>(hitbox);
   Hierarchy::Attach(registry, target, hitbox);
   registry.replace<PlayerMotion::Variant>(
       target,
@@ -603,6 +605,7 @@ TEST_CASE(
       hitbox,
       Attack{.damage = 10, .hitstopSec = 0.05, .reaction = ReactionLevel::Blow}
   );
+  registry.emplace<AttackOrb>(hitbox);
   Hierarchy::Attach(registry, player, hitbox);
   registry.replace<PlayerMotion::Variant>(
       player,
@@ -643,6 +646,62 @@ TEST_CASE(
       )
   );
   REQUIRE(registry.get<Velocity>(enemy).w > 0.0);
+}
+
+TEST_CASE(
+    "HitReactionSystem - player hit during MeleeFinisher releases hitbox "
+    "and light orbs together"
+) {
+  // MeleeFinisher の光2つを含む状態から被弾すると、hitboxEntity・
+  // lightEntities の珠がすべて所有者の子から外れ、Attack を失う
+  // （ReleaseAttackOrbs が所有者の子を AttackOrb タグで一括解放するため）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto target = MakePlayerTarget(registry, 50.0);
+
+  const auto hitbox = registry.create();
+  registry.emplace<LocalOffset>(hitbox);
+  registry.emplace<Collider>(hitbox);
+  registry.emplace<Attack>(
+      hitbox,
+      Attack{.damage = 10, .hitstopSec = 0.05, .reaction = ReactionLevel::Blow}
+  );
+  registry.emplace<AttackOrb>(hitbox);
+  Hierarchy::Attach(registry, target, hitbox);
+
+  Array<entt::entity> lights;
+  for (int32 i = 0; i < 2; ++i) {
+    const auto light = registry.create();
+    registry.emplace<LocalOffset>(light);
+    registry.emplace<AttackOrb>(light, AttackOrb{.index = i});
+    Hierarchy::Attach(registry, target, light);
+    lights.push_back(light);
+  }
+
+  registry.replace<PlayerMotion::Variant>(
+      target,
+      PlayerMotion::MeleeFinisher{
+          .elapsed = 0.10, .hitboxEntity = hitbox, .lightEntities = lights
+      }
+  );
+
+  HitReactionSystem::Apply(
+      registry, {MakeHitEvent(registry, 0.0, target, ReactionLevel::Stagger)}
+  );
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Stagger>(
+          registry.get<PlayerMotion::Variant>(target)
+      )
+  );
+
+  REQUIRE_FALSE(registry.all_of<Attack>(hitbox));
+  REQUIRE(registry.get<Hierarchy>(hitbox).parent() == entt::entity{entt::null});
+  for (const auto light : lights) {
+    REQUIRE(
+        registry.get<Hierarchy>(light).parent() == entt::entity{entt::null}
+    );
+  }
 }
 
 #endif

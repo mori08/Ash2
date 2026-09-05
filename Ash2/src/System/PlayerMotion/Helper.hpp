@@ -3,7 +3,6 @@
 
 #include <entt/entt.hpp>
 #include <functional>
-#include <variant>
 
 #include "Component/PlayerMotion.hpp"
 #include "Component/ReactionLevel.hpp"
@@ -81,32 +80,15 @@ void UpdateAttackLights(
     const std::function<Vec3(double, int32)>& offsetFn
 );
 
-/// @brief 状態が hitboxEntity / lightEntities を持つ場合のみ解放する
+/// @brief 所有者の子のうち `AttackOrb` を持つものをすべて解放する
 ///
-/// `requires` で対象フィールドの有無を判定するため、持たない状態型を渡しても
-/// 何もしない。
-template <typename S>
-void ReleaseMotionEntities(
-    entt::registry& registry, const S& state, double fadeSec
-) {
-  if constexpr (requires { state.hitboxEntity; }) {
-    if (state.hitboxEntity != entt::null) {
-      ReleaseAttackHitbox(registry, state.hitboxEntity, fadeSec);
-    }
-  }
-  if constexpr (requires { state.lightEntities; }) {
-    for (const auto light : state.lightEntities) {
-      ReleaseAttackHitbox(registry, light, fadeSec);
-    }
-  }
-}
-
-/// @brief 現在の Motion が持つ攻撃判定・光エンティティを解放する
-///
-/// 外部要因による強制遷移（被弾）で上書きされる前の後始末に使う
-/// （ARCHITECTURE.md の「例外：外部要因による強制遷移」を参照）。
-void ReleaseMotionEntities(
-    entt::registry& registry, const Variant& motion, double fadeSec
+/// 着地・被弾による中断経路の後始末に使う（正常終了時の解放は
+/// `UpdateAttackHitbox`/`UpdateAttackLights` が担い、ここは通らない）。
+/// 走査しながら解放すると `Hierarchy::Detach`
+/// が連結を切ってしまうため、対象を先に集めてから `ReleaseAttackHitbox`
+/// を呼ぶ。所有者が子を持たない場合は何もしない。
+void ReleaseAttackOrbs(
+    entt::registry& registry, entt::entity owner, double fadeSec
 );
 
 }  // namespace PlayerMotion

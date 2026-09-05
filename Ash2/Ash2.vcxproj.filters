@@ -1172,6 +1172,9 @@
     <ClInclude Include="Component\Attack.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\AttackOrb.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Hp.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
