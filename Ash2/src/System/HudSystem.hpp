@@ -10,7 +10,7 @@
 /// ワールド座標と無関係に画面左上にゲージを描画する。
 class HudSystem {
  public:
-  /// @brief Player + Hp + Stamina を持つエンティティの HP /
+  /// @brief Player + Hp + Stamina を持つ最初の1体の HP /
   /// スタミナゲージを画面左上に描画する
   static void Draw(const entt::registry& registry) {
     constexpr double kBarX = 16.0;
@@ -22,27 +22,27 @@ class HudSystem {
     constexpr ColorF kHpColor{0.2, 0.8, 0.2};
     constexpr ColorF kStaminaColor{0.9, 0.8, 0.1};
 
-    auto view = registry.view<const Player, const Hp, const Stamina>();
-    for (const auto& [entity, hp, stamina] : view.each()) {
-      RectF{kBarX, kHpBarY, kBarWidth, kBarHeight}.draw(kBgColor);
-      if (hp.max > 0) {
-        const double hpRatio =
-            Clamp(static_cast<double>(hp.current) / hp.max, 0.0, 1.0);
-        RectF{kBarX, kHpBarY, kBarWidth * hpRatio, kBarHeight}.draw(kHpColor);
-      }
+    const auto view = registry.view<const Player, const Hp, const Stamina>();
+    const auto entity = view.front();
+    if (entity == entt::null) return;
 
-      RectF{kBarX, kStaminaBarY, kBarWidth, kBarHeight}.draw(kBgColor);
-      if (stamina.max > 0) {
-        const double staminaRatio =
-            Clamp(static_cast<double>(stamina.current) / stamina.max, 0.0, 1.0);
-        RectF{kBarX, kStaminaBarY, kBarWidth * staminaRatio, kBarHeight}.draw(
-            kStaminaColor
-        );
-      }
+    const auto& hp = view.get<const Hp>(entity);
+    const auto& stamina = view.get<const Stamina>(entity);
 
-      // Player タグを持つエンティティは 1
-      // 体のみ想定のため最初のものだけ描画する
-      break;
+    RectF{kBarX, kHpBarY, kBarWidth, kBarHeight}.draw(kBgColor);
+    if (hp.max > 0) {
+      const double hpRatio =
+          Clamp(static_cast<double>(hp.current) / hp.max, 0.0, 1.0);
+      RectF{kBarX, kHpBarY, kBarWidth * hpRatio, kBarHeight}.draw(kHpColor);
+    }
+
+    RectF{kBarX, kStaminaBarY, kBarWidth, kBarHeight}.draw(kBgColor);
+    if (stamina.max > 0) {
+      const double staminaRatio =
+          Clamp(static_cast<double>(stamina.current) / stamina.max, 0.0, 1.0);
+      RectF{kBarX, kStaminaBarY, kBarWidth * staminaRatio, kBarHeight}.draw(
+          kStaminaColor
+      );
     }
   }
 };
