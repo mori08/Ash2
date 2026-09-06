@@ -21,7 +21,7 @@
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
-#include "ReactionLevel.hpp"
+#include "Config/ReactionLevel.hpp"
 #include "System/HitReactionSystem.hpp"
 #include "System/HitSystem.hpp"
 

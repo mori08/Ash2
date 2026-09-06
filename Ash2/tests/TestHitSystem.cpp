@@ -8,7 +8,7 @@
 #include "Component/Hp.hpp"
 #include "Component/Team.hpp"
 #include "Component/WorldPos.hpp"
-#include "ReactionLevel.hpp"
+#include "Config/ReactionLevel.hpp"
 #include "System/HitSystem.hpp"
 
 TEST_CASE("HitSystem - no repeated damage from multi-frame attack") {

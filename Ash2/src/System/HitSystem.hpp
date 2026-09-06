@@ -3,7 +3,7 @@
 
 #include <entt/entt.hpp>
 
-#include "ReactionLevel.hpp"
+#include "Config/ReactionLevel.hpp"
 
 /// @brief 成立したヒット1件の情報
 ///

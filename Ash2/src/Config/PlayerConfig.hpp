@@ -3,7 +3,7 @@
 
 #include <expected>
 
-#include "ReactionLevel.hpp"
+#include "Config/ReactionLevel.hpp"
 
 /// @brief 攻撃・ダッシュ系アクション共通の4区間タイムライン
 ///

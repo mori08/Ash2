@@ -4,8 +4,8 @@
 #include <functional>
 
 #include "Component/Stamina.hpp"
+#include "Config/ReactionLevel.hpp"
 #include "FrameData.hpp"
-#include "ReactionLevel.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
 #include "System/PlayerMotionSystem.hpp"

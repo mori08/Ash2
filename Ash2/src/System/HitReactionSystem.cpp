@@ -13,7 +13,7 @@
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
-#include "ReactionLevel.hpp"
+#include "Config/ReactionLevel.hpp"
 #include "System/PlayerMotion/Transition.hpp"
 
 namespace {

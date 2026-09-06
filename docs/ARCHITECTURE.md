@@ -51,14 +51,13 @@ Ash2/src/
 ├── GameSetup.hpp/.cpp    # registry 初期化・アニメーション設定読み込み
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
 ├── FrameData.hpp         # フレームごとの更新データ（dt + InputState）
-├── ReactionLevel.hpp     # 被弾側リアクションの強さ（Component/Config 共有の enum class）
 ├── UiFonts.hpp           # UI 描画用フォント一式（registry.ctx() に格納）
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── DebugOnly.hpp/.cpp    # Debug ビルドにのみ存在する機能とそのキー判定
 ├── FatalError.hpp        # 致命エラーの型（分類と詳細）
 ├── CrashHandler.hpp/.cpp # 致命エラーの記録・表示・終了
 ├── Component/            # ECS コンポーネント（データのみ）
-├── Config/               # TOML 設定データ（FromToml 付き構造体）
+├── Config/               # TOML 設定データ（FromToml 付き構造体）と、それが持つ enum
 ├── Input/                # 入力抽象化
 ├── Phase/                # フェーズ管理（ゲーム状態機械）
 ├── System/               # ECS システム（ロジックのみ）

@@ -26,7 +26,7 @@
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）コンポーネント（発射位置 `origin`・最大射程 `maxRange`、既定は無制限）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅（着弾・画面外・最大射程超）を管理する対象を識別する |
 | [`LockOn`](../Ash2/src/Component/LockOn.hpp) | 遠距離照準のロック状態（プレイヤーへ付与）。確定/半ロック対象 `target`/`halfTarget`、追従レティクル `targetReticle`/`halfReticle`、スティック傾きのヒステリシス用 `stickTilted` を持つ |
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
-| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction`（`ReactionLevel`、下記「基盤・ユーティリティ」参照）の割り当て元と遷移先は下記「リアクションの対応」参照 |
+| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction`（`ReactionLevel`、下記「設定（Config）」参照）の割り当て元と遷移先は下記「リアクションの対応」参照 |
 | [`AttackOrb`](../Ash2/src/Component/AttackOrb.hpp) | プレイヤーの攻撃判定・見た目用の珠エンティティ（`Hierarchy` で所有者の子）であることを示すタグ。`PlayerMotion::ReleaseAttackOrbs` が所有者の子から一括解放する対象の識別に使う。役割は必ず `AttackHitboxOrb`/`AttackLightOrb` のいずれかと組み合わせて表す |
 | [`AttackHitboxOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち攻撃判定を担う珠であることを示すタグ。`PlayerMotion::UpdateAttackHitbox` が生成済みかどうかの判定・解放対象の特定に子走査で使う |
 | [`AttackLightOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち見た目だけを担う光の珠であることを示すタグ。扇の並び順 `index`（0始まり）を持ち、`PlayerMotion::UpdateAttackLights` が `offsetFn` へ渡す（`Hierarchy::Attach` は先頭挿入のため子の走査順は生成順の逆になり、並び順の判断には使えない） |
@@ -336,11 +336,12 @@
 - 地上・空中を共有する `Dash`/`DashAttack`（`air` フラグで区別）は、それぞれ単一の
   `DashConfig`/`DashAttackConfig` を共通で参照する（専用設定は持たない）
 
-同ヘッダが定義する部品：
+`PlayerConfig.hpp` と同ディレクトリの `ReactionLevel.hpp` が定義する部品：
 
 | 名前 | 役割 |
 |---|---|
 | `MotionTimeline` | 攻撃・ダッシュ系共通の4区間タイムライン（windup / active / 後隙A＝キャンセル不可 / 後隙B＝キャンセル可）。`activeStart`/`activeEnd`/`recoveryAEnd`/`recoveryBEnd` と `isActive`/`isCancelable`/`isFinished`/`activeProgress` を提供する。`DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeSwingConfig` が共通で持つ |
+| `ReactionLevel` | 被弾側に生じるリアクションの強さ（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応）。`Config/ReactionLevel.hpp` に置き、`Config`（各攻撃の `reaction`）と `Component`（`Attack.reaction`）の双方から参照される |
 | `MeleeTrajectory` | 近接攻撃の軌道パターン（`Thrust` 突き出し / `Slash` 斬り上げ。`Slash` は `slashCurve` で弧の曲がり具合を指定し、0 なら直線になる） |
 | `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`/`reaction`/`staminaCost`）。継続段・締め段の両方が持つ |
 | `MeleeFinisherConfig` | 締め段の設定。`MeleeSwingConfig swing` を集約し、見た目の光の数 `lightCount`（2以上、parse 時に検証）と間隔 `lightGap` を足す |
@@ -482,7 +483,6 @@
 | [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画に使うフォント一式（`large`/`small`）。`Create()` が `std::expected<UiFonts, String>` を返し、`InitializeRegistry` が `registry.ctx()` に登録する |
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
 | [`FrameData`](../Ash2/src/FrameData.hpp) | フレームごとの更新データ（`dt` + `InputState`）。`Main` が組み立て、フェーズとシステムの双方が受け取る |
-| [`ReactionLevel`](../Ash2/src/ReactionLevel.hpp) | 被弾側に生じるリアクションの強さを表す `enum class`（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応）。`Component`（`Attack.reaction`）と `Config`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` の `reaction`）の双方から参照される共有型のため `Component/` に置かない |
 | [`AppDebug::testMode`](../Ash2/src/Debug.hpp) | テスト実行中フラグ。true の間 `APP_LOG` を無効化する |
 | [`Overloaded`](../Ash2/src/Util/Overloaded.hpp) | 複数のラムダを1つの visitor にまとめる `std::visit` 用ヘルパー |
 

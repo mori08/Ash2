@@ -7,7 +7,7 @@
 #include "Component/PlayerMotion.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Config/PlayerConfig.hpp"
-#include "ReactionLevel.hpp"
+#include "Config/ReactionLevel.hpp"
 
 namespace PlayerMotion {
 
