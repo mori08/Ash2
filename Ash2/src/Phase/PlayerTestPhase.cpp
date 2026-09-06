@@ -39,7 +39,6 @@
 
 constexpr ColorF kDummyColor = {0.8, 0.2, 0.2};
 constexpr int32 kPlayerMaxHp = 100;
-constexpr int32 kPlayerMaxStamina = 100;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
@@ -70,8 +69,7 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
       }
   );
   registry.emplace<Stamina>(
-      m_playerRoot,
-      Stamina{.max = kPlayerMaxStamina, .current = kPlayerMaxStamina}
+      m_playerRoot, Stamina{.max = cfg.stamina.max, .current = cfg.stamina.max}
   );
   registry.emplace<PlayerMotion::Variant>(
       m_playerRoot, PlayerMotion::Neutral{}

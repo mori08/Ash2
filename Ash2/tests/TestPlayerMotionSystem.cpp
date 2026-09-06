@@ -57,6 +57,8 @@ void SetupContext(entt::registry& registry) {
                           .radius = 20.0,
                           .trajectory = MeleeTrajectory::Thrust,
                           .hitstopSec = 0.05,
+                          .reaction = ReactionLevel::Stagger,
+                          .staminaCost = 2,
                       },
                       // 2段目相当（斬り上げ）
                       MeleeSwingConfig{
@@ -69,6 +71,8 @@ void SetupContext(entt::registry& registry) {
                           .trajectory = MeleeTrajectory::Slash,
                           .slashRiseHeight = 40.0,
                           .hitstopSec = 0.05,
+                          .reaction = ReactionLevel::Stagger,
+                          .staminaCost = 3,
                       },
                   },
               .finisher =
@@ -84,6 +88,8 @@ void SetupContext(entt::registry& registry) {
                               .radius = 25.0,
                               .trajectory = MeleeTrajectory::Thrust,
                               .hitstopSec = 0.13,
+                              .reaction = ReactionLevel::Blow,
+                              .staminaCost = 5,
                           },
                       .lightGap = 36.0,
                   },
@@ -113,7 +119,9 @@ void SetupContext(entt::registry& registry) {
            .orbitRadius = 30.0,
            .radius = 20.0,
            .damage = 20,
-           .hitstopSec = 0.08},
+           .hitstopSec = 0.08,
+           .reaction = ReactionLevel::Repel,
+           .staminaCost = 12},
       .airAttack =
           {.timeline =
                {.windupSec = 0.05,
@@ -126,7 +134,10 @@ void SetupContext(entt::registry& registry) {
            .orbitEndDeg = 180.0,
            .radius = 20.0,
            .damage = 15,
-           .hitstopSec = 0.08},
+           .hitstopSec = 0.08,
+           .reaction = ReactionLevel::Repel,
+           .staminaCost = 12},
+      .stamina = {.max = 100},
       .landing = {.recoverySec = 0.20},
       .attackEffect = {.fadeSec = 0.30},
       .damage = {
@@ -260,6 +271,28 @@ TEST_CASE(
   REQUIRE_FALSE(chain.comboQueued);
 
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_1");
+  // chain[0].staminaCost(2) 分が消費される
+  REQUIRE(registry.get<Stamina>(player).current == 98);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - melee attack input is ignored when stamina is "
+    "insufficient"
+) {
+  // ST不足の場合は近接攻撃入力を無視し Neutral のまま、ST も減らない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Stamina>(player).current = 1;  // chain[0].staminaCost(2) 未満
+
+  FrameData frameData{};
+  frameData.input.attackDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+  REQUIRE(registry.get<Stamina>(player).current == 1);
 }
 
 TEST_CASE(
@@ -458,6 +491,29 @@ TEST_CASE(
   );
 
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"air_attack");
+  // airAttack.staminaCost(12) 分が消費される
+  REQUIRE(registry.get<Stamina>(player).current == 88);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - air attack input is ignored when stamina is "
+    "insufficient"
+) {
+  // ST不足の場合は空中攻撃入力を無視し Neutral のまま、ST も減らない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;
+  registry.get<Stamina>(player).current = 11;  // airAttack.staminaCost(12) 未満
+
+  FrameData frameData{};
+  frameData.input.attackDown = true;
+
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
+  REQUIRE(registry.get<Stamina>(player).current == 11);
 }
 
 TEST_CASE(
@@ -1010,6 +1066,36 @@ TEST_CASE(
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
   REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
+  // chain[1].staminaCost(3) 分が消費される
+  REQUIRE(registry.get<Stamina>(player).current == 97);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - MeleeChain stage 0 stays in MeleeChain and does "
+    "not consume stamina when comboQueued but stamina is insufficient for "
+    "the next stage"
+) {
+  // 次段のST不足時は遷移せず MeleeChain（1段目）のまま、comboQueued
+  // はクリアされない
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Stamina>(player).current = 2;  // chain[1].staminaCost(3) 未満
+
+  // activeEnd は windupSec+activeSec = 0.15
+  registry.replace<PlayerMotion::Variant>(
+      player,
+      PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.14, .comboQueued = true}
+  );
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 0);
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
+  REQUIRE(registry.get<Stamina>(player).current == 2);
 }
 
 TEST_CASE(
@@ -1272,6 +1358,45 @@ TEST_CASE(
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::MeleeFinisher>(motion));
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"melee_finish");
+  // finisher.swing.staminaCost(5) 分が消費される
+  REQUIRE(registry.get<Stamina>(player).current == 95);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - MeleeChain stage 1 stays in MeleeChain and does "
+    "not consume stamina when comboQueued but stamina is insufficient for "
+    "MeleeFinisher"
+) {
+  // 締め段のST不足時は遷移せず MeleeChain のまま、comboQueued
+  // はクリアされない（満了で Neutral へ戻ることでコンボが途切れる）
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Stamina>(player).current = 4;  // finisher.staminaCost(5) 未満
+
+  // activeEnd は windupSec+activeSec = 0.20
+  registry.replace<PlayerMotion::Variant>(
+      player,
+      PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.19, .comboQueued = true}
+  );
+
+  const FrameData frameData{.dt = 0.01};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
+  REQUIRE(registry.get<Stamina>(player).current == 4);
+
+  // 満了まで進めるとコンボが途切れて Neutral へ戻る
+  // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.40
+  const FrameData advance{.dt = 0.20};
+  MotionSystem::Update(registry, advance);
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Neutral>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
 }
 
 TEST_CASE(
@@ -2236,6 +2361,38 @@ TEST_CASE(
   REQUIRE(dashAttack.dashDir.y == Approx(1.0));
 
   REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"dash_attack");
+  // dashAttack.staminaCost(12) 分が消費される
+  REQUIRE(registry.get<Stamina>(player).current == 88);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash stays until expiry when stamina is "
+    "insufficient for DashAttack"
+) {
+  // 予約済みでもST不足なら DashAttack へ遷移せず、満了で Neutral へ戻る
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;  // 空中（接地遷移を避ける）
+  registry.get<Stamina>(player).current =
+      11;  // dashAttack.staminaCost(12) 未満
+
+  registry.replace<PlayerMotion::Variant>(
+      player,
+      PlayerMotion::Dash{
+          .elapsed = 0.29,
+          .air = true,
+          .dashAttackQueued = true,
+          .lastDashDir = Vec2{0.0, 1.0}
+      }
+  );
+
+  const FrameData frameData{.dt = 0.02};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(registry.get<Stamina>(player).current == 11);
 }
 
 TEST_CASE(

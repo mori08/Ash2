@@ -6,9 +6,9 @@
 #include "Component/Collider.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
-#include "Component/ReactionLevel.hpp"
 #include "Component/Team.hpp"
 #include "Component/WorldPos.hpp"
+#include "Config/ReactionLevel.hpp"
 #include "System/HitSystem.hpp"
 
 TEST_CASE("HitSystem - no repeated damage from multi-frame attack") {

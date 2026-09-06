@@ -8,12 +8,12 @@
 #include "Component/Hitstop.hpp"
 #include "Component/Hp.hpp"
 #include "Component/PlayerMotion.hpp"
-#include "Component/ReactionLevel.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
+#include "Config/ReactionLevel.hpp"
 #include "System/PlayerMotion/Transition.hpp"
 
 namespace {

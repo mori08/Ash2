@@ -32,13 +32,15 @@ Optional<Variant> Tick(
 
   // MeleeChain/Ranged への入場（接地中のみ）
   if (pos.isOnGround()) {
-    if (input.attackDown) {
+    if (input.attackDown &&
+        registry.get<Stamina>(entity).current >=
+            cfg.melee.chain[0].staminaCost) {
       // 直前で設定した横方向速度を打ち消す（持ち越すと1フレーム分滑る）
       vel.w = 0.0;
       vel.d = 0.0;
       // ヒットボックス・光は攻撃フレーム開始時に Tick(MeleeChain&, ...)
       // が生成する
-      return MakeMeleeChain(anim, 0);
+      return MakeMeleeChain(registry, entity, anim, 0);
     }
     if (input.rangedAttackDown &&
         registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost) {
@@ -51,11 +53,14 @@ Optional<Variant> Tick(
         registry.get<Stamina>(entity).current >= cfg.dash.staminaCost) {
       return MakeDash(registry, entity, cfg, anim, /*air=*/false);
     }
-  } else if (input.attackDown) {
+  } else if (
+      input.attackDown &&
+      registry.get<Stamina>(entity).current >= cfg.airAttack.staminaCost
+  ) {
     // 空中攻撃への入場（AirAttack::Tick が接地検出で Landing へ遷移させる）
     vel.w = 0.0;
     vel.d = 0.0;
-    return MakeAirAttack(anim);
+    return MakeAirAttack(registry, entity, anim);
   } else if (
       input.rangedAttackDown &&
       registry.get<Stamina>(entity).current >= cfg.ranged.staminaCost

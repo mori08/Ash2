@@ -446,7 +446,7 @@
     <ClInclude Include="src\Component\PlayerMotion.hpp" />
     <ClInclude Include="src\Component\Enemy.hpp" />
     <ClInclude Include="src\Component\EnemyMotion.hpp" />
-    <ClInclude Include="src\Component\ReactionLevel.hpp" />
+    <ClInclude Include="src\Config\ReactionLevel.hpp" />
     <ClInclude Include="src\Component\Projectile.hpp" />
     <ClInclude Include="src\Component\LockOn.hpp" />
     <ClInclude Include="src\System\LockOnSystem.hpp" />
