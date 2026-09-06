@@ -283,7 +283,7 @@
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
 | [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。プレイヤーに `LockOn` を付与し `LockOnSystem::Update` を呼ぶ。`EnemyConfig` から敵（`Enemy`+`EnemyMotion::Variant`+`Collider`+`Hp` 等）を1体生成し、`HitReactionSystem`/`EnemySystem` に被弾リアクション・撃破後の破棄（`Hierarchy::DestroyWithChildren`）を委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に再生成する。Key4 で固定配置テーブルから敵を追加生成できる（`m_extraEnemies`、撃破されても再生成しない）。F5 でプレイヤー・設定再生成、Esc で Pop |
-| [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop） |
+| [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop）。`dataKey` が `AnimationDataRegistry` に未登録なら `FatalError{FatalReason::ConfigInvalid, ...}` を投げる |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
 
 ### シナリオ TOML から生成できるフェーズ名
