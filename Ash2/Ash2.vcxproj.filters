@@ -348,6 +348,9 @@
     <ClCompile Include="tests\TestWorldPos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestDrawSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestPlayerConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

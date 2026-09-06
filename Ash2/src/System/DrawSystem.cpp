@@ -11,6 +11,7 @@ void DrawSystem::Draw(const entt::registry& registry) {
   const ScopedRenderStates2D sampler{SamplerState::ClampNearest};
 
   struct DrawEntry {
+    DrawOrderKey order;
     std::reference_wrapper<const WorldPos> pos;
     std::reference_wrapper<const Drawable> drawable;
     ColorF color;
@@ -21,15 +22,14 @@ void DrawSystem::Draw(const entt::registry& registry) {
        registry.view<const WorldPos, const Drawable>().each()) {
     const auto* drawColor = registry.try_get<DrawColor>(entity);
     entries.push_back(
-        {.pos = std::cref(pos),
+        {.order = {.d = pos.d, .entity = entity},
+         .pos = std::cref(pos),
          .drawable = std::cref(drawable),
          .color = (drawColor != nullptr) ? drawColor->color : kDefaultDrawColor}
     );
   }
 
-  std::ranges::sort(entries, [](const DrawEntry& a, const DrawEntry& b) {
-    return DrawOrderLess(a.pos.get(), b.pos.get());
-  });
+  std::ranges::sort(entries, DrawOrderLess, &DrawEntry::order);
 
   for (const auto& entry : entries) {
     const Vec2 screenPos = WorldToScreen(entry.pos.get());
