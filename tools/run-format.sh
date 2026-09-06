@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-CLANG_FORMAT="${CLANG_FORMAT:-clang-format}"
+: "${CLANG_FORMAT:?環境変数 CLANG_FORMAT が設定されていません。docs/SETUP.md「clang-format / clang-tidy」を参照してください}"
 
 FILES=()
 while [[ $# -gt 0 ]]; do

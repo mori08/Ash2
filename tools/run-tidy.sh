@@ -22,7 +22,7 @@ SIV3D_WIN=$(cygpath -w "$SIV3D_0_6_16")
 TIDY_WIN=$(cygpath -w "$REPO/Ash2/.tidy")
 VCPKG_WIN=$(cygpath -w "$REPO/Ash2/vcpkg_installed/x64-windows/x64-windows/include")
 
-CLANG_TIDY="${CLANG_TIDY:-clang-tidy}"
+: "${CLANG_TIDY:?環境変数 CLANG_TIDY が設定されていません。docs/SETUP.md「clang-format / clang-tidy」を参照してください}"
 JOBS=$(nproc 2>/dev/null || echo "${NUMBER_OF_PROCESSORS:-4}")
 
 # ---- 引数パース ---------------------------------------------------------
