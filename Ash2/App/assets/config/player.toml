@@ -19,6 +19,8 @@ radius            = 18.0
 slash_rise_height = 0.0
 slash_curve       = 0.0
 hitstop_sec       = 0.05
+reaction          = "stagger"
+stamina_cost      = 2
 
 [[melee.chain]]
 trajectory        = "slash"
@@ -30,6 +32,8 @@ radius            = 20.0
 slash_rise_height = 48.0
 slash_curve       = 1.0
 hitstop_sec       = 0.05
+reaction          = "stagger"
+stamina_cost      = 2
 
 [melee.finisher]
 trajectory        = "slash"
@@ -41,6 +45,8 @@ radius            = 24.0
 slash_rise_height = -64.0
 slash_curve       = 1.0
 hitstop_sec       = 0.13
+reaction          = "blow"
+stamina_cost      = 3
 light_count       = 2
 light_gap         = 52.0
 
@@ -50,7 +56,7 @@ radius       = 15.0
 damage       = 15
 bullet_speed = 300.0
 spawn_height = 30.0
-stamina_cost = 30
+stamina_cost = 5
 recovery_sec = 0.15
 
 [dash]
@@ -59,7 +65,7 @@ windup_sec      = 0.00
 active_sec      = 0.15
 recovery_a_sec  = 0.15
 recovery_b_sec  = 0.15
-stamina_cost    = 20
+stamina_cost    = 5
 
 [dash_attack]
 windup_sec     = 0.05
@@ -71,6 +77,8 @@ orbit_radius   = 50.0
 radius         = 25.0
 damage         = 25
 hitstop_sec    = 0.08
+reaction       = "repel"
+stamina_cost   = 2
 
 [air_attack]
 windup_sec      = 0.05
@@ -84,9 +92,12 @@ orbit_end_deg   = 180.0
 radius          = 25.0
 damage          = 25
 hitstop_sec     = 0.08
+reaction        = "repel"
+stamina_cost    = 2
 
 [stamina]
-recovery_delay = 2.0
+max            = 100
+recovery_delay = 1.0
 recovery_rate  = 0.5
 
 [landing]

@@ -26,8 +26,7 @@
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）コンポーネント（発射位置 `origin`・最大射程 `maxRange`、既定は無制限）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅（着弾・画面外・最大射程超）を管理する対象を識別する |
 | [`LockOn`](../Ash2/src/Component/LockOn.hpp) | 遠距離照準のロック状態（プレイヤーへ付与）。確定/半ロック対象 `target`/`halfTarget`、追従レティクル `targetReticle`/`halfReticle`、スティック傾きのヒステリシス用 `stickTilted` を持つ |
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
-| [`ReactionLevel`](../Ash2/src/Component/ReactionLevel.hpp) | 被弾側に生じるリアクションの強さを表す `enum class`（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応） |
-| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction` の割り当て元と遷移先は下記「リアクションの対応」参照 |
+| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction`（`ReactionLevel`、下記「基盤・ユーティリティ」参照）の割り当て元と遷移先は下記「リアクションの対応」参照 |
 | [`AttackOrb`](../Ash2/src/Component/AttackOrb.hpp) | プレイヤーの攻撃判定・見た目用の珠エンティティ（`Hierarchy` で所有者の子）であることを示すタグ。`PlayerMotion::ReleaseAttackOrbs` が所有者の子から一括解放する対象の識別に使う。役割は必ず `AttackHitboxOrb`/`AttackLightOrb` のいずれかと組み合わせて表す |
 | [`AttackHitboxOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち攻撃判定を担う珠であることを示すタグ。`PlayerMotion::UpdateAttackHitbox` が生成済みかどうかの判定・解放対象の特定に子走査で使う |
 | [`AttackLightOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち見た目だけを担う光の珠であることを示すタグ。扇の並び順 `index`（0始まり）を持ち、`PlayerMotion::UpdateAttackLights` が `offsetFn` へ渡す（`Hierarchy::Attach` は先頭挿入のため子の走査順は生成順の逆になり、並び順の判断には使えない） |
@@ -174,7 +173,8 @@
 ### リアクションの対応
 
 `Attack.reaction`（`ReactionLevel`）は各 `PlayerMotion` の `Tick()` が `PlayerMotion::UpdateAttackHitbox`
-経由で固定値を割り当て、`HitReactionSystem::Apply` が被弾側が持つモーション variant
+経由で `PlayerConfig`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` の `reaction`）から
+割り当て、`HitReactionSystem::Apply` が被弾側が持つモーション variant
 （`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先を決める。
 
 **`Enemy` の被弾側**
@@ -246,12 +246,12 @@
 | `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティを生成・`LocalOffset` 更新し、後隙入りで `ReleaseAttackHitbox` を呼ぶ。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
 | `UpdateAttackLights` | active 区間に応じて光エンティティ群を生成・`LocalOffset` 更新し、後隙入りで解放する。オフセットは `offsetFn(progress, index)` で決まる | `Helper.hpp`/`.cpp` |
 | `ReleaseAttackOrbs` | 所有者の子のうち `AttackOrb` を持つものを先に集めてから `ReleaseAttackHitbox` で一括解放する。着地・被弾など中断経路の後始末に使う（所有者が子を持たない場合は何もしない） | `Helper.hpp`/`.cpp` |
-| `MakeMeleeChain` | 指定段の `MeleeChain` を生成（`melee_{stage+1}` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
-| `MakeMeleeFinisher` | `MeleeFinisher` を生成（`melee_finish` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
+| `MakeMeleeChain` | 指定段の `MeleeChain` を生成（スタミナ消費、`melee_{stage+1}` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
+| `MakeMeleeFinisher` | `MeleeFinisher` を生成（スタミナ消費、`melee_finish` クリップを先頭から再生） | `Transition.hpp` / `Melee.cpp` |
 | `MakeRanged` | `Ranged` を生成（スタミナ消費、`timer` は `RangedConfig::recoverySec`） | `Transition.hpp` / `Ranged.cpp` |
 | `MakeDash` | `Dash` を生成（スタミナ消費、`air` フラグ設定） | `Transition.hpp` / `Dash.cpp` |
-| `MakeDashAttack` | `DashAttack` を生成（`air`・`dashDir` を引き継ぐ） | `Transition.hpp` / `DashAttack.cpp` |
-| `MakeAirAttack` | `AirAttack` を生成 | `Transition.hpp` / `AirAttack.cpp` |
+| `MakeDashAttack` | `DashAttack` を生成（スタミナ消費、`air`・`dashDir` を引き継ぐ） | `Transition.hpp` / `DashAttack.cpp` |
+| `MakeAirAttack` | `AirAttack` を生成（スタミナ消費） | `Transition.hpp` / `AirAttack.cpp` |
 | `SpawnProjectile` | 遠距離攻撃の弾エンティティを生成する（`WorldPos`+`Velocity`+`Collider`+`Attack`+`Drawable`+`Projectile`+`Team::Player`）。`owner` が `LockOn` を持ち `target` が有効なら狙点（`LockOnSystem::AimPoint`）へ向かう方向で撃ち `anim.facingRight` をその w 成分の符号で書き換える。ロックがなければ従来どおり `anim.facingRight` の正面へ撃つ。`Projectile.origin`/`maxRange` は発射位置・`RangedConfig::reach` から設定する | `Transition.hpp` / `Ranged.cpp` |
 | `MakeDamaged` | 被弾による強制遷移を生成する。`ReleaseAttackOrbs` で上書き前の攻撃判定・光エンティティを後始末し、`Velocity` リセットと `Invincible` 除去のうえで `reaction`・接地状態に応じ `Stagger`/`Knockback` を返す | `Transition.hpp` / `Damaged.cpp` |
 
@@ -342,14 +342,14 @@
 |---|---|
 | `MotionTimeline` | 攻撃・ダッシュ系共通の4区間タイムライン（windup / active / 後隙A＝キャンセル不可 / 後隙B＝キャンセル可）。`activeStart`/`activeEnd`/`recoveryAEnd`/`recoveryBEnd` と `isActive`/`isCancelable`/`isFinished`/`activeProgress` を提供する。`DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeSwingConfig` が共通で持つ |
 | `MeleeTrajectory` | 近接攻撃の軌道パターン（`Thrust` 突き出し / `Slash` 斬り上げ。`Slash` は `slashCurve` で弧の曲がり具合を指定し、0 なら直線になる） |
-| `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`）。継続段・締め段の両方が持つ |
+| `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`/`reaction`/`staminaCost`）。継続段・締め段の両方が持つ |
 | `MeleeFinisherConfig` | 締め段の設定。`MeleeSwingConfig swing` を集約し、見た目の光の数 `lightCount`（2以上、parse 時に検証）と間隔 `lightGap` を足す |
 | `MeleeConfig` | 段共通のパラメータ（`capMidH`/`reach`/`damage`）と継続段配列 `chain`（先頭が1段目）・締め段 `finisher` |
 | `RangedConfig` | 最大射程（`Projectile.maxRange`）・半径・ダメージ・弾速（狙点方向）・発射高さ・スタミナ消費・発射後の硬直時間 `recoverySec` |
 | `DashConfig` | 速度・タイムライン・スタミナ消費 |
-| `DashAttackConfig` | タイムライン・突進速度・軌道半径（w-d 平面）・カプセル半径・ダメージ・ヒットストップ時間 |
-| `AirAttackConfig` | タイムライン・ドリフト移動速度倍率（地上ニュートラル速度 `speed` に対する `driftRatio`）・軌道半径（w-h 平面）・軌道の開始角/終了角（度、`orbitStartDeg`/`orbitEndDeg`。0°が正面・-90°が頭上・90°が真下・180°が真後ろ）・カプセル半径・ダメージ・ヒットストップ時間 |
-| `StaminaConfig` | 回復開始待機秒数 `recoveryDelay`・毎秒の不足分回復割合 `recoveryRate` |
+| `DashAttackConfig` | タイムライン・突進速度・軌道半径（w-d 平面）・カプセル半径・ダメージ・ヒットストップ時間・`reaction`・スタミナ消費量 |
+| `AirAttackConfig` | タイムライン・ドリフト移動速度倍率（地上ニュートラル速度 `speed` に対する `driftRatio`）・軌道半径（w-h 平面）・軌道の開始角/終了角（度、`orbitStartDeg`/`orbitEndDeg`。0°が正面・-90°が頭上・90°が真下・180°が真後ろ）・カプセル半径・ダメージ・ヒットストップ時間・`reaction`・スタミナ消費量 |
+| `StaminaConfig` | 最大スタミナ `max`・回復開始待機秒数 `recoveryDelay`・毎秒の不足分回復割合 `recoveryRate` |
 | `LandingConfig` | 着地硬直時間 `recoverySec` |
 | `AttackEffectConfig` | ヒットボックス解放後のフェードアウト時間 `fadeSec`（全攻撃共通の1値。`HitboxSpec::fadeSec` として渡される） |
 | `DamageConfig` | 被弾リアクションの設定値（仰け反り時間 `staggerSec`、吹き飛ばし初速 `knockbackSpeedW`/`knockbackSpeedH`、ダウン時間 `downSec`、起き上がり時間 `getUpSec`） |
@@ -358,7 +358,13 @@
 - `hitstopSec`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` が個別に持つ）はヒット成立時に
   `Attack.hitstopSec` へ渡す停止時間で、段・アクションごとに調整できる（`RangedConfig` は持たない。
   弾は `reaction` が `None` で無反応の仕様のため）
-- 近接攻撃はスタミナを消費しない（`MeleeConfig` は `staminaCost` を持たない）
+- `reaction`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` が個別に持つ）は
+  `Attack.reaction` へ渡す `ReactionLevel` で、TOML では文字列（`"none"`/`"stagger"`/`"repel"`/
+  `"blow"`）で指定する（`RangedConfig` は持たず `None` 固定）
+- `staminaCost`（`MeleeSwingConfig` が継続段・締め段それぞれに持つほか、`DashAttackConfig`/
+  `AirAttackConfig` も持つ）は `MakeMeleeChain`/`MakeMeleeFinisher`/`MakeDashAttack`/
+  `MakeAirAttack` が消費する。ダッシュ攻撃は直前のダッシュ（`DashConfig::staminaCost`）とは
+  別に消費する
 - `[[melee.chain]]` が0件（欠落含む）の場合、`FromToml` は失敗を返す
   （`Tick(MeleeChain&, ...)` の `chain[state.stage]` アクセスを不正にしないため）
 
@@ -371,8 +377,6 @@
 - `Knockback` の重力加速度は専用の値を持たず、`PlayerConfig::gravity` を敵にもそのまま付与して
   流用する（`PlayerTestPhase::spawnEnemy` 参照）
 - 色は toml 化せず `PlayerTestPhase.cpp` 側の定数（`kDummyColor`）に残す（パーサを増やさないため）
-- リアクション Lv（`ReactionLevel`）自体は config 化せず、各 `PlayerMotion` の `Tick()` が固定値で
-  割り当てる。スタミナ連動の降格表を含む config 化は #233 のスコープ
 
 ### [`AnimationData`](../Ash2/src/Config/AnimationData.hpp)
 
@@ -478,6 +482,7 @@
 | [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画に使うフォント一式（`large`/`small`）。`Create()` が `std::expected<UiFonts, String>` を返し、`InitializeRegistry` が `registry.ctx()` に登録する |
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
 | [`FrameData`](../Ash2/src/FrameData.hpp) | フレームごとの更新データ（`dt` + `InputState`）。`Main` が組み立て、フェーズとシステムの双方が受け取る |
+| [`ReactionLevel`](../Ash2/src/ReactionLevel.hpp) | 被弾側に生じるリアクションの強さを表す `enum class`（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応）。`Component`（`Attack.reaction`）と `Config`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` の `reaction`）の双方から参照される共有型のため `Component/` に置かない |
 | [`AppDebug::testMode`](../Ash2/src/Debug.hpp) | テスト実行中フラグ。true の間 `APP_LOG` を無効化する |
 | [`Overloaded`](../Ash2/src/Util/Overloaded.hpp) | 複数のラムダを1つの visitor にまとめる `std::visit` 用ヘルパー |
 

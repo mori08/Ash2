@@ -3,7 +3,7 @@
 
 #include <entt/entt.hpp>
 
-#include "Component/ReactionLevel.hpp"
+#include "ReactionLevel.hpp"
 
 /// @brief 攻撃中コンポーネント（タグ兼攻撃力）
 ///

@@ -5,9 +5,9 @@
 #include <functional>
 
 #include "Component/PlayerMotion.hpp"
-#include "Component/ReactionLevel.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Config/PlayerConfig.hpp"
+#include "ReactionLevel.hpp"
 
 namespace PlayerMotion {
 

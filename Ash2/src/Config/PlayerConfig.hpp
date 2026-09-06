@@ -3,6 +3,8 @@
 
 #include <expected>
 
+#include "ReactionLevel.hpp"
+
 /// @brief 攻撃・ダッシュ系アクション共通の4区間タイムライン
 ///
 /// 構え（windup）・攻撃/移動（active）・後隙A（recoveryA、キャンセル不可）・
@@ -75,6 +77,10 @@ struct MeleeSwingConfig {
   double slashCurve = 0.0;
   /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
   double hitstopSec = 0.0;
+  /// 被弾側リアクションの強さ
+  ReactionLevel reaction = ReactionLevel::None;
+  /// この振り1回に必要なスタミナ消費量
+  int32 staminaCost = 0;
 };
 
 /// @brief 近接コンボの締め段の設定値
@@ -144,6 +150,10 @@ struct DashAttackConfig {
   int32 damage;
   /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
   double hitstopSec = 0.0;
+  /// 被弾側リアクションの強さ
+  ReactionLevel reaction = ReactionLevel::None;
+  /// 1回の発生に必要なスタミナ消費量
+  int32 staminaCost;
 };
 
 /// @brief 空中攻撃の設定値
@@ -164,10 +174,16 @@ struct AirAttackConfig {
   int32 damage;
   /// ヒット成立時に攻撃側・被弾側へ付与するヒットストップ時間（秒）
   double hitstopSec = 0.0;
+  /// 被弾側リアクションの強さ
+  ReactionLevel reaction = ReactionLevel::None;
+  /// 1回の発生に必要なスタミナ消費量
+  int32 staminaCost;
 };
 
 /// @brief スタミナ回復の設定値
 struct StaminaConfig {
+  /// 最大スタミナ
+  int32 max;
   /// 行動後に回復が始まるまでの待機秒数
   double recoveryDelay;
   /// 毎秒、スタミナ不足分の何割を回復するか（0.5 = 不足分の半分/秒）

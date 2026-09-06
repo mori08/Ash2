@@ -16,12 +16,12 @@
 #include "Component/LocalOffset.hpp"
 #include "Component/Player.hpp"
 #include "Component/PlayerMotion.hpp"
-#include "Component/ReactionLevel.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
+#include "ReactionLevel.hpp"
 #include "System/HitReactionSystem.hpp"
 #include "System/HitSystem.hpp"
 

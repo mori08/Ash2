@@ -1,9 +1,10 @@
 #include <Siv3D.hpp>
 
-#include "Component/ReactionLevel.hpp"
+#include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "FrameData.hpp"
+#include "ReactionLevel.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
 #include "System/PlayerMotionSystem.hpp"
@@ -36,7 +37,13 @@ Vec3 AirAttackOrbOffset(
 
 }  // namespace
 
-AirAttack MakeAirAttack(SpriteAnimation& anim) {
+AirAttack MakeAirAttack(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim
+) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  auto& stamina = registry.get<Stamina>(entity);
+  stamina.current = Max(0, stamina.current - cfg.airAttack.staminaCost);
+
   SetClip(anim, U"air_attack");
   return AirAttack{.elapsed = 0.0};
 }
@@ -76,7 +83,7 @@ Optional<Variant> Tick(
       HitboxSpec{
           .radius = aa.radius,
           .damage = aa.damage,
-          .reaction = ReactionLevel::Repel,
+          .reaction = aa.reaction,
           .hitstopSec = aa.hitstopSec,
           .fadeSec = cfg.attackEffect.fadeSec
       },

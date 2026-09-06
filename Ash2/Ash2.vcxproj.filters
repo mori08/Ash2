@@ -1190,8 +1190,8 @@
     <ClInclude Include="Component\EnemyMotion.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="Component\ReactionLevel.hpp">
-      <Filter>Header Files\Component</Filter>
+    <ClInclude Include="ReactionLevel.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Component\Projectile.hpp">
       <Filter>Header Files\Component</Filter>

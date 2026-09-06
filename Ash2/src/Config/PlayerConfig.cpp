@@ -36,6 +36,19 @@ namespace {
   };
 }
 
+/// @brief TOML の reaction 文字列を ReactionLevel へ変換する
+[[nodiscard]] std::expected<ReactionLevel, String> ParseReactionLevel(
+    const String& value
+) {
+  if (value == U"none") return ReactionLevel::None;
+  if (value == U"stagger") return ReactionLevel::Stagger;
+  if (value == U"repel") return ReactionLevel::Repel;
+  if (value == U"blow") return ReactionLevel::Blow;
+  return std::unexpected{
+      U"PlayerConfig::ParseReactionLevel: 不明な reaction \"" + value + U"\""
+  };
+}
+
 /// @brief TOML から近接1振り分の MeleeSwingConfig を生成する
 /// @param section 欠落キーのメッセージに前置するテーブル名
 [[nodiscard]] std::expected<MeleeSwingConfig, String> ParseMeleeSwing(
@@ -52,9 +65,11 @@ namespace {
   const auto slashRiseHeight = f.get<double>(U"slash_rise_height");
   const auto slashCurve = f.get<double>(U"slash_curve");
   const auto hitstopSec = f.get<double>(U"hitstop_sec");
-  // Why not: trajectory の変換前に check() で欠落を確定させる。変換を先に
-  // 行うと、欠落時の既定値 String{}（空文字列）が「不明な trajectory」と
-  // 誤報されてしまうため。
+  const auto reactionStr = f.get<String>(U"reaction");
+  const auto staminaCost = f.get<int32>(U"stamina_cost");
+  // Why not: trajectory/reaction の変換前に check() で欠落を確定させる。変換を
+  // 先に行うと、欠落時の既定値 String{}（空文字列）が「不明な
+  // trajectory/reaction」と誤報されてしまうため。
   if (auto result = f.check(); !result) {
     return std::unexpected{std::move(result).error()};
   }
@@ -64,6 +79,11 @@ namespace {
     return std::unexpected{std::move(trajectory).error()};
   }
 
+  auto reaction = ParseReactionLevel(reactionStr);
+  if (!reaction) {
+    return std::unexpected{std::move(reaction).error()};
+  }
+
   return MeleeSwingConfig{
       .timeline = *std::move(timeline),
       .radius = radius,
@@ -71,6 +91,8 @@ namespace {
       .slashRiseHeight = slashRiseHeight,
       .slashCurve = slashCurve,
       .hitstopSec = hitstopSec,
+      .reaction = *reaction,
+      .staminaCost = staminaCost,
   };
 }
 
@@ -199,16 +221,35 @@ namespace {
   }
 
   TomlFields f{da, U"PlayerConfig::ParseDashAttack", U"dash_attack"};
-  return f.wrap(
-      DashAttackConfig{
-          .timeline = *std::move(timeline),
-          .speed = f.get<double>(U"speed"),
-          .orbitRadius = f.get<double>(U"orbit_radius"),
-          .radius = f.get<double>(U"radius"),
-          .damage = f.get<int32>(U"damage"),
-          .hitstopSec = f.get<double>(U"hitstop_sec"),
-      }
-  );
+  const auto speed = f.get<double>(U"speed");
+  const auto orbitRadius = f.get<double>(U"orbit_radius");
+  const auto radius = f.get<double>(U"radius");
+  const auto damage = f.get<int32>(U"damage");
+  const auto hitstopSec = f.get<double>(U"hitstop_sec");
+  const auto staminaCost = f.get<int32>(U"stamina_cost");
+  const auto reactionStr = f.get<String>(U"reaction");
+  // Why not: reaction の変換前に check() で欠落を確定させる。変換を先に
+  // 行うと、欠落時の既定値 String{}（空文字列）が「不明な reaction」と
+  // 誤報されてしまうため。
+  if (auto result = f.check(); !result) {
+    return std::unexpected{std::move(result).error()};
+  }
+
+  auto reaction = ParseReactionLevel(reactionStr);
+  if (!reaction) {
+    return std::unexpected{std::move(reaction).error()};
+  }
+
+  return DashAttackConfig{
+      .timeline = *std::move(timeline),
+      .speed = speed,
+      .orbitRadius = orbitRadius,
+      .radius = radius,
+      .damage = damage,
+      .hitstopSec = hitstopSec,
+      .reaction = *reaction,
+      .staminaCost = staminaCost,
+  };
 }
 
 /// @brief TOML から空中攻撃の設定値を生成する
@@ -221,18 +262,39 @@ namespace {
   }
 
   TomlFields f{aa, U"PlayerConfig::ParseAirAttack", U"air_attack"};
-  return f.wrap(
-      AirAttackConfig{
-          .timeline = *std::move(timeline),
-          .driftRatio = f.get<double>(U"drift_ratio"),
-          .orbitRadius = f.get<double>(U"orbit_radius"),
-          .orbitStartDeg = f.get<double>(U"orbit_start_deg"),
-          .orbitEndDeg = f.get<double>(U"orbit_end_deg"),
-          .radius = f.get<double>(U"radius"),
-          .damage = f.get<int32>(U"damage"),
-          .hitstopSec = f.get<double>(U"hitstop_sec"),
-      }
-  );
+  const auto driftRatio = f.get<double>(U"drift_ratio");
+  const auto orbitRadius = f.get<double>(U"orbit_radius");
+  const auto orbitStartDeg = f.get<double>(U"orbit_start_deg");
+  const auto orbitEndDeg = f.get<double>(U"orbit_end_deg");
+  const auto radius = f.get<double>(U"radius");
+  const auto damage = f.get<int32>(U"damage");
+  const auto hitstopSec = f.get<double>(U"hitstop_sec");
+  const auto staminaCost = f.get<int32>(U"stamina_cost");
+  const auto reactionStr = f.get<String>(U"reaction");
+  // Why not: reaction の変換前に check() で欠落を確定させる。変換を先に
+  // 行うと、欠落時の既定値 String{}（空文字列）が「不明な reaction」と
+  // 誤報されてしまうため。
+  if (auto result = f.check(); !result) {
+    return std::unexpected{std::move(result).error()};
+  }
+
+  auto reaction = ParseReactionLevel(reactionStr);
+  if (!reaction) {
+    return std::unexpected{std::move(reaction).error()};
+  }
+
+  return AirAttackConfig{
+      .timeline = *std::move(timeline),
+      .driftRatio = driftRatio,
+      .orbitRadius = orbitRadius,
+      .orbitStartDeg = orbitStartDeg,
+      .orbitEndDeg = orbitEndDeg,
+      .radius = radius,
+      .damage = damage,
+      .hitstopSec = hitstopSec,
+      .reaction = *reaction,
+      .staminaCost = staminaCost,
+  };
 }
 
 /// @brief TOML からスタミナ回復の設定値を生成する
@@ -242,6 +304,7 @@ namespace {
   TomlFields f{s, U"PlayerConfig::ParseStamina", U"stamina"};
   return f.wrap(
       StaminaConfig{
+          .max = f.get<int32>(U"max"),
           .recoveryDelay = f.get<double>(U"recovery_delay"),
           .recoveryRate = f.get<double>(U"recovery_rate"),
       }

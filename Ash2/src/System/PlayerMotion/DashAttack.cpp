@@ -1,9 +1,10 @@
 #include <Siv3D.hpp>
 
-#include "Component/ReactionLevel.hpp"
+#include "Component/Stamina.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "FrameData.hpp"
+#include "ReactionLevel.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
 #include "System/PlayerMotionSystem.hpp"
@@ -32,7 +33,14 @@ Vec3 DashAttackOrbOffset(
 
 }  // namespace
 
-DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir) {
+DashAttack MakeDashAttack(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim,
+    bool air, Vec2 dashDir
+) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  auto& stamina = registry.get<Stamina>(entity);
+  stamina.current = Max(0, stamina.current - cfg.dashAttack.staminaCost);
+
   SetClip(anim, U"dash_attack");
   return DashAttack{.elapsed = 0.0, .air = air, .dashDir = dashDir};
 }
@@ -69,7 +77,7 @@ Optional<Variant> Tick(
       HitboxSpec{
           .radius = da.radius,
           .damage = da.damage,
-          .reaction = ReactionLevel::Repel,
+          .reaction = da.reaction,
           .hitstopSec = da.hitstopSec,
           .fadeSec = cfg.attackEffect.fadeSec
       },

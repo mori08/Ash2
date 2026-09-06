@@ -27,6 +27,8 @@ constexpr std::string_view kFullToml =
     "slash_rise_height = 0.0\n"
     "slash_curve = 0.0\n"
     "hitstop_sec = 0.05\n"
+    "reaction = \"stagger\"\n"
+    "stamina_cost = 2\n"
     "[melee.finisher]\n"
     "windup_sec = 0.2\n"
     "active_sec = 0.2\n"
@@ -37,6 +39,8 @@ constexpr std::string_view kFullToml =
     "slash_rise_height = 0.0\n"
     "slash_curve = 0.0\n"
     "hitstop_sec = 0.1\n"
+    "reaction = \"blow\"\n"
+    "stamina_cost = 5\n"
     "light_count = 2\n"
     "light_gap = 36.0\n"
     "[ranged]\n"
@@ -64,6 +68,8 @@ constexpr std::string_view kFullToml =
     "radius = 25.0\n"
     "damage = 25\n"
     "hitstop_sec = 0.08\n"
+    "reaction = \"repel\"\n"
+    "stamina_cost = 12\n"
     "[air_attack]\n"
     "windup_sec = 0.05\n"
     "active_sec = 0.25\n"
@@ -76,7 +82,10 @@ constexpr std::string_view kFullToml =
     "radius = 25.0\n"
     "damage = 25\n"
     "hitstop_sec = 0.08\n"
+    "reaction = \"repel\"\n"
+    "stamina_cost = 12\n"
     "[stamina]\n"
+    "max = 100\n"
     "recovery_delay = 2.0\n"
     "recovery_rate = 0.5\n"
     "[landing]\n"
@@ -118,16 +127,25 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->melee.chain.size() == 1);
   REQUIRE(cfg->melee.chain[0].trajectory == MeleeTrajectory::Thrust);
   REQUIRE(cfg->melee.chain[0].radius == 20.0);
+  REQUIRE(cfg->melee.chain[0].reaction == ReactionLevel::Stagger);
+  REQUIRE(cfg->melee.chain[0].staminaCost == 2);
   REQUIRE(cfg->melee.finisher.swing.trajectory == MeleeTrajectory::Thrust);
   REQUIRE(cfg->melee.finisher.swing.radius == 25.0);
+  REQUIRE(cfg->melee.finisher.swing.reaction == ReactionLevel::Blow);
+  REQUIRE(cfg->melee.finisher.swing.staminaCost == 5);
   REQUIRE(cfg->melee.finisher.lightCount == 2);
   REQUIRE(cfg->melee.finisher.lightGap == 36.0);
   REQUIRE(cfg->ranged.damage == 15);
   REQUIRE(cfg->ranged.recoverySec == 0.15);
   REQUIRE(cfg->dash.speed == 600.0);
   REQUIRE(cfg->dashAttack.damage == 25);
+  REQUIRE(cfg->dashAttack.reaction == ReactionLevel::Repel);
+  REQUIRE(cfg->dashAttack.staminaCost == 12);
   REQUIRE(cfg->airAttack.damage == 25);
   REQUIRE(cfg->airAttack.driftRatio == 0.5);
+  REQUIRE(cfg->airAttack.reaction == ReactionLevel::Repel);
+  REQUIRE(cfg->airAttack.staminaCost == 12);
+  REQUIRE(cfg->stamina.max == 100);
   REQUIRE(cfg->stamina.recoveryRate == 0.5);
   REQUIRE(cfg->landing.recoverySec == 0.20);
   REQUIRE(cfg->attackEffect.fadeSec == 0.30);
@@ -187,6 +205,36 @@ TEST_CASE(
   toml.replace(
       pos, std::string_view{"trajectory = \"thrust\"\n"}.size(),
       "trajectory = \"spin\"\n"
+  );
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+}
+
+TEST_CASE(
+    "PlayerConfig::FromToml - missing melee.chain reaction returns "
+    "unexpected (not \"unknown value\")"
+) {
+  std::string toml{kFullToml};
+  const auto pos = toml.find("reaction = \"stagger\"\n");
+  REQUIRE(pos != std::string::npos);
+  toml.erase(pos, std::string_view{"reaction = \"stagger\"\n"}.size());
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  const auto result = PlayerConfig::FromToml(reader);
+  REQUIRE_FALSE(result.has_value());
+  REQUIRE(result.error().contains(U"キーがありません"));
+  REQUIRE_FALSE(result.error().contains(U"不明な"));
+}
+
+TEST_CASE(
+    "PlayerConfig::FromToml - unknown melee.chain reaction value returns "
+    "unexpected"
+) {
+  std::string toml{kFullToml};
+  const auto pos = toml.find("reaction = \"stagger\"\n");
+  REQUIRE(pos != std::string::npos);
+  toml.replace(
+      pos, std::string_view{"reaction = \"stagger\"\n"}.size(),
+      "reaction = \"heavy\"\n"
   );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());

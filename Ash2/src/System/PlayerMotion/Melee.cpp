@@ -3,9 +3,9 @@
 #include <cassert>
 #include <functional>
 
-#include "Component/ReactionLevel.hpp"
 #include "Component/Stamina.hpp"
 #include "FrameData.hpp"
+#include "ReactionLevel.hpp"
 #include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
 #include "System/PlayerMotionSystem.hpp"
@@ -115,7 +115,15 @@ double MeleeLightSpread(
 
 }  // namespace
 
-MeleeChain MakeMeleeChain(SpriteAnimation& anim, size_t stage) {
+MeleeChain MakeMeleeChain(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim,
+    size_t stage
+) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  auto& stamina = registry.get<Stamina>(entity);
+  stamina.current =
+      Max(0, stamina.current - cfg.melee.chain[stage].staminaCost);
+
   // 段ごとに専用クリップ（melee_1/melee_2/...）へ切り替わるため、
   // 呼び出し元（初回入場・コンボ継続いずれも）で必ずクリップ名が変わり、
   // RestartClip と SetClip の挙動差は生じない。
@@ -123,7 +131,14 @@ MeleeChain MakeMeleeChain(SpriteAnimation& anim, size_t stage) {
   return MeleeChain{.stage = stage};
 }
 
-MeleeFinisher MakeMeleeFinisher(SpriteAnimation& anim) {
+MeleeFinisher MakeMeleeFinisher(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim
+) {
+  const auto& cfg = registry.ctx().get<PlayerConfig>();
+  auto& stamina = registry.get<Stamina>(entity);
+  stamina.current =
+      Max(0, stamina.current - cfg.melee.finisher.swing.staminaCost);
+
   RestartClip(anim, U"melee_finish");
   return MeleeFinisher{};
 }
@@ -150,7 +165,7 @@ Optional<Variant> Tick(
   const auto offsetFn = MakeMeleeOffsetFn(swing, anim.facingRight, melee);
   UpdateMeleeHitbox(
       registry, entity, state.elapsed, timeline, melee, swing,
-      cfg.attackEffect.fadeSec, ReactionLevel::Stagger, offsetFn
+      cfg.attackEffect.fadeSec, swing.reaction, offsetFn
   );
   UpdateAttackLights(
       registry, entity, state.elapsed, timeline,
@@ -170,11 +185,21 @@ Optional<Variant> Tick(
   }
 
   // 後隙Bに入った時点で予約済み、または後隙B中の新規入力があれば即座に次段へ
+  // （ST不足時は無視し、comboQueued はクリアしない。攻撃中はスタミナが
+  // 回復しないため、満了による Neutral への遷移がそのままコンボ途切れになる）
   if (timeline.isCancelable(state.elapsed) &&
       (state.comboQueued || input.attackDown)) {
-    return state.stage + 1 < melee.chain.size()
-               ? Variant{MakeMeleeChain(anim, state.stage + 1)}
-               : Variant{MakeMeleeFinisher(anim)};
+    const bool hasNextStage = state.stage + 1 < melee.chain.size();
+    const int32 nextStaminaCost =
+        hasNextStage ? melee.chain[state.stage + 1].staminaCost
+                     : melee.finisher.swing.staminaCost;
+    if (registry.get<Stamina>(entity).current >= nextStaminaCost) {
+      return hasNextStage
+                 ? Variant{MakeMeleeChain(
+                       registry, entity, anim, state.stage + 1
+                   )}
+                 : Variant{MakeMeleeFinisher(registry, entity, anim)};
+    }
   }
 
   // 後隙中のダッシュ入力でダッシュへキャンセル（ST不足時は無視）
@@ -208,7 +233,7 @@ Optional<Variant> Tick(
   const auto offsetFn = MakeMeleeOffsetFn(swing, anim.facingRight, melee);
   UpdateMeleeHitbox(
       registry, entity, state.elapsed, timeline, melee, swing,
-      cfg.attackEffect.fadeSec, ReactionLevel::Blow, offsetFn
+      cfg.attackEffect.fadeSec, swing.reaction, offsetFn
   );
   UpdateAttackLights(
       registry, entity, state.elapsed, timeline,

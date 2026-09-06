@@ -4,18 +4,25 @@
 #include <entt/entt.hpp>
 
 #include "Component/PlayerMotion.hpp"
-#include "Component/ReactionLevel.hpp"
 #include "Component/SpriteAnimation.hpp"
 #include "Config/PlayerConfig.hpp"
+#include "ReactionLevel.hpp"
 
 namespace PlayerMotion {
 
-/// @brief 指定段の MeleeChain へ移行する（攻撃クリップを先頭から再生）
+/// @brief 指定段の MeleeChain へ移行する（スタミナ消費、攻撃クリップを先頭から
+/// 再生）
 /// @param stage 移行先のコンボ段インデックス
-MeleeChain MakeMeleeChain(SpriteAnimation& anim, size_t stage);
+MeleeChain MakeMeleeChain(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim,
+    size_t stage
+);
 
-/// @brief MeleeFinisher へ移行する（締め技クリップを先頭から再生）
-MeleeFinisher MakeMeleeFinisher(SpriteAnimation& anim);
+/// @brief MeleeFinisher へ移行する（スタミナ消費、締め技クリップを先頭から
+/// 再生）
+MeleeFinisher MakeMeleeFinisher(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim
+);
 
 /// @brief Ranged へ移行する（スタミナ消費、遠距離攻撃クリップの設定と timer
 /// の算出）
@@ -31,13 +38,18 @@ Dash MakeDash(
     SpriteAnimation& anim, bool air
 );
 
-/// @brief DashAttack へ移行する
+/// @brief DashAttack へ移行する（スタミナを消費する）
 /// @param air 空中発動か（true: 空中ダッシュ攻撃相当）
 /// @param dashDir ダッシュ時の移動方向（正規化済み）
-DashAttack MakeDashAttack(SpriteAnimation& anim, bool air, Vec2 dashDir);
+DashAttack MakeDashAttack(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim,
+    bool air, Vec2 dashDir
+);
 
-/// @brief AirAttack へ移行する
-AirAttack MakeAirAttack(SpriteAnimation& anim);
+/// @brief AirAttack へ移行する（スタミナを消費する）
+AirAttack MakeAirAttack(
+    entt::registry& registry, entt::entity entity, SpriteAnimation& anim
+);
 
 /// @brief 遠距離攻撃の弾エンティティを生成する
 ///

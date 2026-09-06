@@ -78,8 +78,10 @@ Optional<Variant> Tick(
 
   // 後隙B中：前フレームまでに予約済みならダッシュ攻撃へ遷移
   // 入力受付より先に評価することで、今フレームの入力は次フレーム以降に発動する
-  if (timeline.isCancelable(state.elapsed) && state.dashAttackQueued) {
-    return MakeDashAttack(anim, state.air, state.lastDashDir);
+  // （スタミナ不足時は遷移せず、満了で Neutral へ戻る）
+  if (timeline.isCancelable(state.elapsed) && state.dashAttackQueued &&
+      registry.get<Stamina>(entity).current >= cfg.dashAttack.staminaCost) {
+    return MakeDashAttack(registry, entity, anim, state.air, state.lastDashDir);
   }
 
   // ダッシュ中・後隙A・B中の入力で遷移を予約する（DashAttack チェック後に評価）

@@ -51,6 +51,7 @@ Ash2/src/
 ├── GameSetup.hpp/.cpp    # registry 初期化・アニメーション設定読み込み
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
 ├── FrameData.hpp         # フレームごとの更新データ（dt + InputState）
+├── ReactionLevel.hpp     # 被弾側リアクションの強さ（Component/Config 共有の enum class）
 ├── UiFonts.hpp           # UI 描画用フォント一式（registry.ctx() に格納）
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── DebugOnly.hpp/.cpp    # Debug ビルドにのみ存在する機能とそのキー判定
