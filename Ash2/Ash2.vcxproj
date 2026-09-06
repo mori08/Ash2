@@ -167,6 +167,7 @@
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
+    <ClCompile Include="tests\TestDrawSystem.cpp" />
     <ClCompile Include="tests\TestEnemyConfig.cpp" />
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
     <ClCompile Include="tests\TestFadeOutSystem.cpp" />

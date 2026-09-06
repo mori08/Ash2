@@ -2,7 +2,6 @@
 #include <ThirdParty/Catch2/catch.hpp>
 
 #include "Component/WorldPos.hpp"
-#include "System/DrawSystem.hpp"
 
 TEST_CASE("WorldPos::ToScreen - far objects have smaller y") {
   // 奥にあるものほどy座標が小さい
@@ -35,14 +34,6 @@ TEST_CASE("WorldPos::isOnGround - not on ground when h is positive") {
   // h>0 は地面上ではない
   WorldPos pos{.w = 0.0, .h = 1.0, .d = 0.0};
   REQUIRE_FALSE(pos.isOnGround());
-}
-
-TEST_CASE("DrawOrderLess - far objects come first") {
-  // 奥のオブジェクトが先に来る
-  WorldPos near{.w = 0.0, .h = 0.0, .d = 100.0};
-  WorldPos far{.w = 0.0, .h = 0.0, .d = 500.0};
-  REQUIRE(DrawOrderLess(far, near));
-  REQUIRE_FALSE(DrawOrderLess(near, far));
 }
 
 #endif
