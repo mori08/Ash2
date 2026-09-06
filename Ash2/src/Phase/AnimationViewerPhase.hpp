@@ -16,6 +16,7 @@ class AnimationViewerPhase : public IPhase {
   explicit AnimationViewerPhase(const Param& param);
 
   /// @brief 一時エンティティを生成する
+  /// @note m_dataKey が AnimationDataRegistry に無ければ FatalError を投げる
   void onAfterPush(entt::registry& registry) override;
 
   [[nodiscard]] PhaseCommand update(

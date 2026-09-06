@@ -345,6 +345,9 @@
     <ClCompile Include="tests\TestAnimationData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestAnimationViewerPhase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestWorldPos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -166,6 +166,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="tests\TestAnimationData.cpp" />
+    <ClCompile Include="tests\TestAnimationViewerPhase.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
     <ClCompile Include="tests\TestDrawSystem.cpp" />
     <ClCompile Include="tests\TestEnemyConfig.cpp" />
