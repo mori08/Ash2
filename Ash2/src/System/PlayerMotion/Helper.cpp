@@ -118,13 +118,6 @@ CollectAttackOrbs(entt::registry& registry, entt::entity owner) {
 
 }  // namespace
 
-void SetClip(SpriteAnimation& anim, const String& clip) {
-  if (clip != anim.currentClip) {
-    anim.currentClip = clip;
-    anim.elapsed = 0.0;
-  }
-}
-
 void StopHorizontalMovement(entt::registry& registry, entt::entity entity) {
   auto& vel = registry.get<Velocity>(entity);
   vel.w = 0.0;

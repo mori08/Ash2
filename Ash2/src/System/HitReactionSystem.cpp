@@ -2,8 +2,8 @@
 
 #include "System/HitReactionSystem.hpp"
 
+#include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
-#include "Component/Drawable.hpp"
 #include "Component/EnemyMotion.hpp"
 #include "Component/Hitstop.hpp"
 #include "Component/Hp.hpp"
@@ -39,24 +39,22 @@ void ApplyEnemyReaction(entt::registry& registry, const HitEvent& hit) {
   const double sign = (targetW < ownerW) ? -1.0 : 1.0;
 
   // EnemyMotion::Variant を差し替えない経路では後始末もしない。後始末だけが
-  // 走ると前の状態が続いたまま Velocity と size を失う
+  // 走ると前の状態が続いたまま Velocity と Attack を失う
   if (hit.reaction == ReactionLevel::None && hp->current > 0) return;
 
   // EnemyMotion::Variant は Tick() の返り値を経由せずここで直接 replace
   // する（被弾は Tick() 側が知らない外部要因による強制遷移のため）。
-  // 前の状態が遺した Velocity・縮んだ size は Tick() 満了時にしか戻らない
-  // ので、上書きする前にここで後始末しておく
+  // 前の状態が遺した Velocity・Leap 中の Attack（体当たり判定）は Tick()
+  // 満了時にしか戻らないので、上書きする前にここで後始末しておく
   registry.get<Velocity>(hit.target) = Velocity{};
-  if (auto* drawable = registry.try_get<Drawable>(hit.target);
-      drawable != nullptr) {
-    if (auto* rect = std::get_if<RectDrawable>(drawable); rect != nullptr) {
-      rect->size = cfg.size;
-    }
-  }
+  registry.remove<Attack>(hit.target);
+
+  auto& anim = registry.get<SpriteAnimation>(hit.target);
 
   if (hp->current <= 0) {
     registry.remove<Collider>(hit.target);
     registry.remove<Hp>(hit.target);
+    SetClip(anim, U"knockback");
     registry.replace<EnemyMotion::Variant>(
         hit.target, EnemyMotion::Defeated{.remaining = cfg.defeatedSec}
     );
@@ -67,17 +65,20 @@ void ApplyEnemyReaction(entt::registry& registry, const HitEvent& hit) {
     case ReactionLevel::None:
       break;
     case ReactionLevel::Stagger:
+      SetClip(anim, U"stagger");
       registry.replace<EnemyMotion::Variant>(
           hit.target, EnemyMotion::Stagger{.remaining = cfg.staggerSec}
       );
       break;
     case ReactionLevel::Repel:
+      SetClip(anim, U"stagger");
       registry.get<Velocity>(hit.target).w = sign * cfg.repelSpeed;
       registry.replace<EnemyMotion::Variant>(
           hit.target, EnemyMotion::Repel{.remaining = cfg.repelSec}
       );
       break;
     case ReactionLevel::Blow:
+      SetClip(anim, U"knockback");
       registry.get<Velocity>(hit.target).w = sign * cfg.blowSpeedW;
       registry.get<Velocity>(hit.target).h = cfg.blowSpeedH;
       registry.replace<EnemyMotion::Variant>(

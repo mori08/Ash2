@@ -40,9 +40,6 @@ struct LightSpec {
   double fadeSec = 0.0;
 };
 
-/// @brief クリップが変化していれば差し替え、再生位置をリセットする
-void SetClip(SpriteAnimation& anim, const String& clip);
-
 /// @brief 横方向の速度を止める
 void StopHorizontalMovement(entt::registry& registry, entt::entity entity);
 

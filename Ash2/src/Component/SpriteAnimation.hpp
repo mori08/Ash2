@@ -12,3 +12,11 @@ struct SpriteAnimation {
   /// スプライトは左向きがデフォルト。true のとき AnimationSystem が反転描画する
   bool facingRight = false;
 };
+
+/// @brief クリップが変化していれば差し替え、再生位置をリセットする
+inline void SetClip(SpriteAnimation& anim, const String& clip) {
+  if (clip != anim.currentClip) {
+    anim.currentClip = clip;
+    anim.elapsed = 0.0;
+  }
+}

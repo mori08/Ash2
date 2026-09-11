@@ -29,6 +29,14 @@ void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
             );
           },
       },
+      MenuItem{
+          .label = U"AnimationViewer (enemy)",
+          .create = [](entt::registry&) -> std::unique_ptr<IPhase> {
+            return std::make_unique<AnimationViewerPhase>(
+                AnimationViewerPhase::Param{.dataKey = U"enemy"}
+            );
+          },
+      },
   };
   m_selectedIndex = 0;
 }

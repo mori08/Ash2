@@ -4,10 +4,29 @@
 /// @brief Enemy専用のモーション（行動状態）
 namespace EnemyMotion {
 
-/// @brief 通常状態（無反応）
+/// @brief 通常状態（索敵範囲内かつ接地中なら Chase へ移行する）
 struct Idle {};
 
-/// @brief ひるみ中（縦縮み演出のみ。原寸は EnemyConfig::size から復元する）
+/// @brief プレイヤーへ w-d 平面を接近中
+struct Chase {};
+
+/// @brief 飛びつきの溜め
+struct Windup {
+  /// 残り時間（秒）
+  double remaining = 0.0;
+};
+
+/// @brief 跳躍中（本体の Collider に Attack
+/// が乗り体当たり判定として機能する。接地で満了）
+struct Leap {};
+
+/// @brief 着地硬直
+struct Landing {
+  /// 残り時間（秒）
+  double remaining = 0.0;
+};
+
+/// @brief ひるみ中
 struct Stagger {
   /// 残り時間（秒）
   double remaining = 0.0;
@@ -34,6 +53,7 @@ struct Defeated {
 };
 
 /// @brief 敵の排他的な行動状態
-using Variant = std::variant<Idle, Stagger, Repel, Knockback, Defeated>;
+using Variant = std::variant<
+    Idle, Chase, Windup, Leap, Landing, Stagger, Repel, Knockback, Defeated>;
 
 }  // namespace EnemyMotion

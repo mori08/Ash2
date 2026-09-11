@@ -7,7 +7,6 @@
 #include <cstdlib>
 
 #include "Asset.hpp"
-#include "Component/Attack.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "CrashHandler.hpp"
@@ -23,20 +22,11 @@ namespace {
 // Siv3D 予約キー（割り当て不可）:
 //   F1 = ライセンス表示 / F12・PrintScreen = スクリーンショット
 constexpr Input kConfigReloadKey = KeyF5;
-constexpr Input kStaggerKey = Key1;
-constexpr Input kRepelKey = Key2;
-constexpr Input kBlowKey = Key3;
 constexpr Input kColliderDrawKey = KeyF2;
 constexpr Input kEnemySpawnKey = Key4;
 
 /// Collider のデバッグ描画を表示中か（既定は非表示）
 bool colliderDrawEnabled = false;
-
-// TODO(#115): 敵の攻撃モーション・AI が未実装
-// デバッグキー（Key1/Key2/Key3）で敵に攻撃力を仮付与し、被弾確認を代替する。
-// 値は仮値のため config 化しない
-constexpr int32 kDebugAttackDamage = 10;
-constexpr double kDebugAttackHitstopSec = 0.05;
 
 /// @brief 設定を再読込する
 /// @note 失敗時は旧データを維持して戻る
@@ -100,30 +90,6 @@ void UpdateConfigReload(entt::registry& registry) {
 }
 
 bool IsConfigReloadRequested() { return kConfigReloadKey.down(); }
-
-void ApplyHitReactionTest(entt::registry& registry, entt::entity target) {
-  if (target == entt::null) return;
-
-  Optional<ReactionLevel> reaction;
-  if (kStaggerKey.down()) reaction = ReactionLevel::Stagger;
-  if (kRepelKey.down()) reaction = ReactionLevel::Repel;
-  if (kBlowKey.down()) reaction = ReactionLevel::Blow;
-  if (!reaction) return;
-
-  registry.emplace<Attack>(
-      target,
-      Attack{
-          .damage = kDebugAttackDamage,
-          .hitstopSec = kDebugAttackHitstopSec,
-          .reaction = *reaction
-      }
-  );
-}
-
-void ClearHitReactionTest(entt::registry& registry, entt::entity target) {
-  if (target == entt::null) return;
-  registry.remove<Attack>(target);
-}
 
 void DrawColliders(const entt::registry& registry) {
   if (kColliderDrawKey.down()) {

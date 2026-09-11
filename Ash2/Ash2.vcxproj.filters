@@ -183,6 +183,9 @@
     <ClCompile Include="Config\PlayerConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
+    <ClCompile Include="Config\ReactionLevel.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
     <ClCompile Include="Config\ScenarioData.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
