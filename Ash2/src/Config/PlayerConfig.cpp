@@ -36,19 +36,6 @@ namespace {
   };
 }
 
-/// @brief TOML の reaction 文字列を ReactionLevel へ変換する
-[[nodiscard]] std::expected<ReactionLevel, String> ParseReactionLevel(
-    const String& value
-) {
-  if (value == U"none") return ReactionLevel::None;
-  if (value == U"stagger") return ReactionLevel::Stagger;
-  if (value == U"repel") return ReactionLevel::Repel;
-  if (value == U"blow") return ReactionLevel::Blow;
-  return std::unexpected{
-      U"PlayerConfig::ParseReactionLevel: 不明な reaction \"" + value + U"\""
-  };
-}
-
 /// @brief TOML から近接1振り分の MeleeSwingConfig を生成する
 /// @param section 欠落キーのメッセージに前置するテーブル名
 [[nodiscard]] std::expected<MeleeSwingConfig, String> ParseMeleeSwing(
