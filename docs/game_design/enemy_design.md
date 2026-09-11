@@ -58,6 +58,25 @@
 |--------|------|---------|
 | **飛びつき型** | ジャンプで突っ込んでくる | 予備動作（ジャンプ）が視覚的に分かりやすく、着地時に大きな隙を作れる |
 
+###### 飛びつき型の区間・数値（実装値）
+
+状態遷移は `Idle → Chase → Windup → Leap → Landing → Idle` の一巡（`EnemyMotion::Variant`。
+詳細は [REFERENCE.md](../REFERENCE.md) の「敵（`EnemyMotion`）」参照）。数値は
+`Ash2/App/assets/config/enemy.toml` の初期値で、調整前提（[motion_design.md](motion_design.md)
+の方針と同様）。
+
+| 区間 | 内容 | 主なパラメータ |
+|---|---|---|
+| `Idle` | 待機。索敵距離内に入ると `Chase` へ | `aggro_range` 400px |
+| `Chase` | プレイヤーへ接近 | `move_speed` 90px/秒 |
+| `Windup` | 飛びつきの溜め（予備動作） | `windup_sec` 0.50秒 |
+| `Leap` | 跳躍・体当たり判定あり | `leap_speed_w` 260px/秒・`leap_speed_h` 350px/秒 |
+| `Landing` | 着地硬直（大きな隙） | `landing_sec` 0.60秒 |
+
+体当たりのダメージ・リアクションは `attack_damage`（10）・`attack_reaction`（`stagger`）。
+`Chase` から `Windup` へ切り替わる距離 `leap_range`（180px）は、`leap_speed_w` と重力から逆算した
+跳躍の到達距離（約186px）とおおむね一致するよう調整している。
+
 ##### Hard系
 
 | タイプ | 行動 | プレイヤーへの正解行動 |

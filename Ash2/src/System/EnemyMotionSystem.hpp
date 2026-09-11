@@ -9,16 +9,46 @@ struct FrameData;
 
 namespace EnemyMotion {
 
-/// @brief Idle 状態の更新（無反応、何もしない）
-/// @return 常に none
+/// @brief Idle 状態の更新（索敵範囲内かつ接地中なら Chase へ遷移する）
+/// @return 遷移先がある場合はその状態、なければ none
 [[nodiscard]] Optional<Variant> Tick(
     Idle& state, entt::registry& registry, entt::entity entity,
     const FrameData& frameData
 );
 
-/// @brief Stagger 状態の更新（RectDrawable
-/// を縦縮みさせながら残り時間を減算する。満了時は EnemyConfig::size
-/// で原寸に戻し Idle へ遷移する）
+/// @brief Chase 状態の更新（プレイヤー方向へ moveSpeed
+/// で接近しながら向きを追従させる。飛びつき開始距離まで近づいたら Windup
+/// へ遷移する）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    Chase& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief Windup 状態の更新（残り時間減算。満了時はプレイヤー方向へ
+/// Velocity と Attack を設定し Leap へ遷移する）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    Windup& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief Leap 状態の更新（接地かつ Velocity.h <= 0 で満了。Attack
+/// を外し Landing へ遷移する）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    Leap& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief Landing 状態の更新（残り時間減算。満了で Idle へ遷移する）
+/// @return 遷移先がある場合はその状態、なければ none
+[[nodiscard]] Optional<Variant> Tick(
+    Landing& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
+/// @brief Stagger 状態の更新（残り時間減算。満了で Idle へ遷移する）
 /// @return 遷移先がある場合はその状態、なければ none
 [[nodiscard]] Optional<Variant> Tick(
     Stagger& state, entt::registry& registry, entt::entity entity,

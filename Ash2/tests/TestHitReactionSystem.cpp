@@ -5,7 +5,6 @@
 #include "Component/Attack.hpp"
 #include "Component/AttackOrb.hpp"
 #include "Component/Collider.hpp"
-#include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
 #include "Component/FadeOut.hpp"
@@ -31,9 +30,8 @@ namespace {
 void SetupContext(entt::registry& registry) {
   registry.ctx().emplace<EnemyConfig>(EnemyConfig{
       .maxHp = 100,
-      .size = {60.0, 80.0},
-      .capsuleRadius = 30.0,
-      .capsuleHeight = 80.0,
+      .capsuleRadius = 24.0,
+      .capsuleHeight = 56.0,
       .spawnW = 150.0,
       .staggerSec = 0.15,
       .repelSpeed = 250.0,
@@ -43,6 +41,16 @@ void SetupContext(entt::registry& registry) {
       .knockbackSec = 1.00,
       .defeatedSec = 0.50,
       .respawnSec = 1.00,
+      .moveSpeed = 90.0,
+      .aggroRange = 400.0,
+      .leapRange = 180.0,
+      .windupSec = 0.50,
+      .leapSpeedW = 260.0,
+      .leapSpeedH = 350.0,
+      .landingSec = 0.60,
+      .attackDamage = 10,
+      .attackHitstopSec = 0.05,
+      .attackReaction = ReactionLevel::Stagger,
   });
 
   registry.ctx().emplace<PlayerConfig>(PlayerConfig{
@@ -88,6 +96,9 @@ entt::entity MakeTarget(entt::registry& registry, double targetW) {
   registry.emplace<Velocity>(target);
   registry.emplace<Collider>(target);
   registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
+  registry.emplace<SpriteAnimation>(
+      target, SpriteAnimation{.dataKey = U"enemy", .currentClip = U"idle"}
+  );
   registry.emplace<EnemyMotion::Variant>(target, EnemyMotion::Idle{});
   return target;
 }
@@ -307,8 +318,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "HitReactionSystem - Blow hit while Stagger restores RectDrawable "
-    "size"
+    "HitReactionSystem - Blow hit while Stagger transitions to Knockback "
+    "and sets knockback clip"
 ) {
   entt::registry registry;
   SetupContext(registry);
@@ -316,7 +327,7 @@ TEST_CASE(
   registry.replace<EnemyMotion::Variant>(
       target, EnemyMotion::Stagger{.remaining = 0.05}
   );
-  registry.emplace<Drawable>(target, RectDrawable{.size = {60.0, 40.0}});
+  registry.get<SpriteAnimation>(target).currentClip = U"stagger";
 
   HitReactionSystem::Apply(
       registry, {MakeHitEvent(registry, 0.0, target, ReactionLevel::Blow)}
@@ -327,8 +338,35 @@ TEST_CASE(
           registry.get<EnemyMotion::Variant>(target)
       )
   );
-  const auto& rect = std::get<RectDrawable>(registry.get<Drawable>(target));
-  REQUIRE(rect.size.y == Approx(80.0));
+  REQUIRE(registry.get<SpriteAnimation>(target).currentClip == U"knockback");
+}
+
+TEST_CASE(
+    "HitReactionSystem - hit while Leap removes the self-granted Attack"
+) {
+  // Leap 中は本体に Attack が乗る（体当たり判定）。被弾で中断されたとき
+  // Attack を外し忘れると、ひるんだ後も攻撃判定が当たり続けてしまう
+  entt::registry registry;
+  SetupContext(registry);
+  const auto target = MakeTarget(registry, 50.0);
+  registry.replace<EnemyMotion::Variant>(target, EnemyMotion::Leap{});
+  registry.emplace<Attack>(
+      target,
+      Attack{
+          .damage = 10, .hitstopSec = 0.05, .reaction = ReactionLevel::Stagger
+      }
+  );
+
+  HitReactionSystem::Apply(
+      registry, {MakeHitEvent(registry, 0.0, target, ReactionLevel::Stagger)}
+  );
+
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Stagger>(
+          registry.get<EnemyMotion::Variant>(target)
+      )
+  );
+  REQUIRE_FALSE(registry.all_of<Attack>(target));
 }
 
 TEST_CASE(

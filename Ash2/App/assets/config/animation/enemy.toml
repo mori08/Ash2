@@ -1,0 +1,44 @@
+texture = "assets/images/enemy.png"
+width = 64
+height = 64
+draw_offset = {x = 0.0, y = 0.0}
+
+# speed（コマ/秒）の決め方は docs/game_design/motion_design.md の
+# 「アニメーションのコマ送り」節を参照。
+
+[idle]
+row = 0
+count = 2
+speed = 1.5
+loop = true
+
+[move]
+row = 1
+count = 2
+speed = 4.0
+loop = true
+
+[windup]
+row = 2
+count = 2
+speed = 4.0
+
+[leap]
+row = 3
+count = 1
+speed = 5.0
+
+[landing]
+row = 4
+count = 1
+speed = 5.0
+
+[stagger]
+row = 5
+count = 1
+speed = 5.0
+
+[knockback]
+row = 6
+count = 1
+speed = 5.0

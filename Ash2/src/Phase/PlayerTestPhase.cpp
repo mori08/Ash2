@@ -1,7 +1,6 @@
 #include "Phase/PlayerTestPhase.hpp"
 
 #include "Component/Collider.hpp"
-#include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
@@ -37,7 +36,6 @@
 #include "System/ProjectileSystem.hpp"
 #include "System/StaminaSystem.hpp"
 
-constexpr ColorF kDummyColor = {0.8, 0.2, 0.2};
 constexpr int32 kPlayerMaxHp = 100;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
@@ -98,10 +96,11 @@ entt::entity PlayerTestPhase::spawnEnemy(
   registry.emplace<Gravity>(enemy, Gravity{.accel = playerCfg.gravity});
   registry.emplace<EnemyMotion::Variant>(enemy, EnemyMotion::Idle{});
   registry.emplace<Drawable>(
-      enemy,
-      RectDrawable{.size = enemyCfg.size, .anchor = DrawAnchor::BottomCenter}
+      enemy, TextureDrawable{.anchor = DrawAnchor::BottomCenter}
   );
-  registry.emplace<DrawColor>(enemy, DrawColor{.color = kDummyColor});
+  registry.emplace<SpriteAnimation>(
+      enemy, SpriteAnimation{.dataKey = U"enemy", .currentClip = U"idle"}
+  );
   registry.emplace<Collider>(
       enemy,
       Collider{
@@ -113,6 +112,7 @@ entt::entity PlayerTestPhase::spawnEnemy(
   registry.emplace<Hp>(
       enemy, Hp{.max = enemyCfg.maxHp, .current = enemyCfg.maxHp}
   );
+  AnimationSystem::Update(registry, 0.0);
   return enemy;
 }
 
@@ -129,11 +129,8 @@ PhaseCommand PlayerTestPhase::update(
   GravitySystem::Update(registry, dt);
   AttachmentSystem::UpdateTransform(registry);
 
-  DebugOnly::ApplyHitReactionTest(registry, m_dummyTarget);
-
   const auto hits = HitSystem::Update(registry);
   HitReactionSystem::Apply(registry, hits);
-  DebugOnly::ClearHitReactionTest(registry, m_dummyTarget);
   ProjectileSystem::Update(registry);
   EnemySystem::Update(registry);
   FadeOutSystem::Update(registry, dt);

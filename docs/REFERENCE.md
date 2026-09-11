@@ -19,7 +19,7 @@
 | [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作） |
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画形状の variant。詳細は下記「描画データ型」参照 |
 | [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`kDefaultDrawColor`）として扱われる |
-| [`SpriteAnimation`](../Ash2/src/Component/SpriteAnimation.hpp) | アニメーション再生状態（per-entity）。共有データは `AnimationDataRegistry` を `dataKey` で参照する |
+| [`SpriteAnimation`](../Ash2/src/Component/SpriteAnimation.hpp) | アニメーション再生状態（per-entity）。共有データは `AnimationDataRegistry` を `dataKey` で参照する。同ヘッダの `SetClip`（inline 自由関数）がクリップの変化していれば差し替え、再生位置をリセットする |
 | [`Name`](../Ash2/src/Component/Name.hpp) | エンティティ名（`const String`、構築後不変。NameLookup と対応） |
 | [`Player`](../Ash2/src/Component/Player.hpp) | プレイヤータグ（データなし） |
 | [`Enemy`](../Ash2/src/Component/Enemy.hpp) | 敵エンティティを示すタグ（データなし）。`HitReactionSystem` がリアクション適用対象を絞り込むのに使う |
@@ -73,7 +73,8 @@
 
 `PlayerMotion::Variant` は
 `std::variant<Neutral, MeleeChain, MeleeFinisher, Ranged, Dash, DashAttack, AirAttack, Landing, Stagger, Knockback, Downed, GetUp>`、
-`EnemyMotion::Variant` は `std::variant<Idle, Stagger, Repel, Knockback, Defeated>`。
+`EnemyMotion::Variant` は
+`std::variant<Idle, Chase, Windup, Leap, Landing, Stagger, Repel, Knockback, Defeated>`。
 種別ごとに別の variant で、両者を1つの型にまとめたものは無い（`PlayerMotion::Stagger`/`Knockback`
 と `EnemyMotion::Stagger`/`Knockback` は名前が同じでも別の型）。
 
@@ -109,15 +110,24 @@
 ### 敵（`EnemyMotion`）
 
 状態型の定義と各状態が持つデータは [`Component/EnemyMotion.hpp`](../Ash2/src/Component/EnemyMotion.hpp)。
-5状態とも `Tick()` の実装は [`EnemyMotionSystem.cpp`](../Ash2/src/System/EnemyMotionSystem.cpp) にまとまっている。
+9状態とも `Tick()` の実装は [`EnemyMotionSystem.cpp`](../Ash2/src/System/EnemyMotionSystem.cpp) にまとまっている。
+`Idle → Chase → Windup → Leap → Landing → Idle` が AI 側の一巡で、`Stagger`/`Repel`/`Knockback`/
+`Defeated` は被弾による強制遷移のみで入る（下記「例外」参照）。
 
 | 状態 | 主な遷移先 |
 |---|---|
-| `Idle` | なし（通常状態。`Tick()` は何もしない） |
-| `Stagger` | 満了で `Idle`（`Tick()` が `RectDrawable::size` を縦縮みさせ、満了時に原寸へ戻す） |
+| `Idle` | 接地中かつ `EnemyConfig::aggroRange` 内にプレイヤーがいれば `Chase` |
+| `Chase` | プレイヤーへ w-d 平面を `EnemyConfig::moveSpeed` で接近。`EnemyConfig::leapRange` 内で `Windup`（`Velocity` を 0 に戻す） |
+| `Windup` | 満了（`EnemyConfig::windupSec`）でプレイヤー方向へ `Velocity`（`leapSpeedW`/`leapSpeedH`）を設定し、本体へ `Attack` を付与して `Leap` |
+| `Leap` | 接地かつ `Velocity.h <= 0` で満了。`Attack` を外し `Landing` |
+| `Landing` | 満了（`EnemyConfig::landingSec`）で `Idle` |
+| `Stagger` | 満了で `Idle` |
 | `Repel` | 満了で `Idle`（満了時に `Velocity.w` を 0 に戻す） |
 | `Knockback` | 満了で `Idle`（放物線は `MovementSystem`/`GravitySystem` に委ねる） |
 | `Defeated` | なし（`DrawColor::color.a` をフェードさせ、満了エンティティは `EnemySystem` が破棄する） |
+
+`Idle`/`Chase`/`Windup` は入場時にプレイヤーとの `WorldPos.w` 比較で `SpriteAnimation::facingRight`
+を更新する（`Chase` のみ毎フレーム更新）。被弾4状態では向きを変えない。
 
 ### 例外
 
@@ -127,8 +137,9 @@
 - `Stagger`/`GetUp` は全区間で `dashDown` によるキャンセルを受ける（スタミナ不足なら無視して継続）
 - `Knockback`/`Downed` は `Invincible` を毎フレーム付与し、`GetUp` への遷移時に除去する
 - 近接の後隙A/Bの配分は段ごとに異なる（`MeleeChain` はキャンセル可、`MeleeFinisher` はキャンセル不可）
-- 敵の状態遷移は `Tick()` の戻り値ではなく `HitReactionSystem` が直接行う
-  （[ARCHITECTURE.md](ARCHITECTURE.md) の「例外：外部要因による強制遷移」）。
+- 敵の被弾4状態（`Stagger`/`Repel`/`Knockback`/`Defeated`）への遷移は `Tick()` の戻り値ではなく
+  `HitReactionSystem` が直接行う（[ARCHITECTURE.md](ARCHITECTURE.md) の「例外：外部要因による強制遷移」）。
+  `Leap` 中に被弾した場合は `Velocity` に加えて自身の `Attack`（体当たり判定）も後始末で除去する。
   プレイヤーの被弾（`Stagger`/`Knockback`）も同様に `HitReactionSystem` が
   `PlayerMotion::MakeDamaged` 経由で直接 `replace` する
 
@@ -172,10 +183,11 @@
 
 ### リアクションの対応
 
-`Attack.reaction`（`ReactionLevel`）は各 `PlayerMotion` の `Tick()` が `PlayerMotion::UpdateAttackHitbox`
-経由で `PlayerConfig`（`MeleeSwingConfig`/`DashAttackConfig`/`AirAttackConfig` の `reaction`）から
-割り当て、`HitReactionSystem::Apply` が被弾側が持つモーション variant
-（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先を決める。
+`Attack.reaction`（`ReactionLevel`）は、プレイヤー側の攻撃は各 `PlayerMotion` の `Tick()` が
+`PlayerMotion::UpdateAttackHitbox` 経由で `PlayerConfig`（`MeleeSwingConfig`/`DashAttackConfig`/
+`AirAttackConfig` の `reaction`）から、敵の `Leap`（体当たり）は `Windup → Leap` の遷移時に
+`EnemyConfig::attackReaction` から割り当てる。`HitReactionSystem::Apply` が被弾側が持つモーション
+variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先を決める。
 
 **`Enemy` の被弾側**
 
@@ -216,9 +228,10 @@
 ### 敵モーションの実装ファイル
 
 `MotionSystem::Update` が呼ぶ `EnemyMotion::Tick()` は
-[`EnemyMotionSystem.hpp`](../Ash2/src/System/EnemyMotionSystem.hpp)/`.cpp` に5状態分すべてを
+[`EnemyMotionSystem.hpp`](../Ash2/src/System/EnemyMotionSystem.hpp)/`.cpp` に9状態分すべてを
 宣言・実装する（`PlayerMotion` と異なり状態ごとのファイル分割はしない。各状態が `remaining`
-1つだけを持つ単純さのため）。
+1つ以下しか持たない単純さのため）。索敵・接近の共通処理（`FindPlayerPos`/`DistanceWD`/
+`UpdateFacing`）は同ファイルの無名名前空間にまとめる。
 
 ### プレイヤーモーションの実装ファイル
 
@@ -241,7 +254,6 @@
 |---|---|---|
 | `HitboxSpec` | 攻撃判定エンティティの生成仕様（半径・ダメージ・リアクション・ヒットストップ時間・フェード時間・描画有無 `drawOrb`）をまとめた構造体。近接だけ `drawOrb = false` を渡し、見た目を光エンティティ側に分離する | `Helper.hpp` |
 | `LightSpec` | 見た目だけを担う光エンティティ群の生成仕様（数・半径・フェード時間） | `Helper.hpp` |
-| `SetClip` | クリップが変化していれば差し替え、再生位置をリセットする | `Helper.hpp`/`.cpp` |
 | `StopHorizontalMovement` | 横方向（w・d）の速度を 0 にする | `Helper.hpp`/`.cpp` |
 | `ReleaseAttackHitbox` | ヒットボックス（判定・光いずれも）を `Hierarchy::Detach` → `Attack`/`Collider` 除去 → `FadeOut` 付与の順で解放する。`fadeSec` が 0 以下なら即座に破棄する。光は元々 `Attack`/`Collider` を持たないため切り離しとフェード付与だけが働く | `Helper.hpp`/`.cpp` |
 | `UpdateAttackHitbox` | active 区間に応じて攻撃判定エンティティを生成・`LocalOffset` 更新し、後隙入りで `ReleaseAttackHitbox` を呼ぶ。オフセットは `offsetFn(progress)` で決まる | `Helper.hpp`/`.cpp` |
@@ -343,6 +355,7 @@
 |---|---|
 | `MotionTimeline` | 攻撃・ダッシュ系共通の4区間タイムライン（windup / active / 後隙A＝キャンセル不可 / 後隙B＝キャンセル可）。`activeStart`/`activeEnd`/`recoveryAEnd`/`recoveryBEnd` と `isActive`/`isCancelable`/`isFinished`/`activeProgress` を提供する。`DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeSwingConfig` が共通で持つ |
 | `ReactionLevel` | 被弾側に生じるリアクションの強さ（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応）。`Config/ReactionLevel.hpp` に置き、`Config`（各攻撃の `reaction`）と `Component`（`Attack.reaction`）の双方から参照される |
+| `ParseReactionLevel` | TOML の reaction 文字列（`"none"`/`"stagger"`/`"repel"`/`"blow"`）を `ReactionLevel` へ変換する。`Config/ReactionLevel.hpp`/`.cpp` に定義し、`PlayerConfig::FromToml`/`EnemyConfig::FromToml` の双方が共有する |
 | `MeleeTrajectory` | 近接攻撃の軌道パターン（`Thrust` 突き出し / `Slash` 斬り上げ。`Slash` は `slashCurve` で弧の曲がり具合を指定し、0 なら直線になる） |
 | `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`/`reaction`/`staminaCost`）。継続段・締め段の両方が持つ |
 | `MeleeFinisherConfig` | 締め段の設定。`MeleeSwingConfig swing` を集約し、見た目の光の数 `lightCount`（2以上、parse 時に検証）と間隔 `lightGap` を足す |
@@ -373,12 +386,16 @@
 ### [`EnemyConfig`](../Ash2/src/Config/EnemyConfig.hpp)
 
 - `Ash2/App/assets/config/enemy.toml` から読み込む敵設定
-- ステータス・形状（`maxHp`/`size`/`capsuleRadius`/`capsuleHeight`/`spawnW`）と、`EnemyMotion`
+- ステータス・形状（`maxHp`/`capsuleRadius`/`capsuleHeight`/`spawnW`）と、`EnemyMotion`
   各状態の演出パラメータ（`staggerSec`、`repelSpeed`/`repelSec`、`blowSpeedW`/`blowSpeedH`/
   `knockbackSec`、`defeatedSec`/`respawnSec`）を持つ
+- AI・攻撃のパラメータも持つ（`moveSpeed`/`aggroRange`/`leapRange`、`windupSec`/`leapSpeedW`/
+  `leapSpeedH`/`landingSec`、`attackDamage`/`attackHitstopSec`/`attackReaction`）。
+  `attackReaction` の変換は `ParseReactionLevel`（上記「設定（Config）」の `PlayerConfig` の項を参照）が担う
+- 描画サイズを表す `size` は持たない（敵はテクスチャ描画のため寸法は `Collider` のカプセルのみで
+  表す。#115 でテクスチャ化する前は `RectDrawable` のダミー矩形用に持っていた）
 - `Knockback` の重力加速度は専用の値を持たず、`PlayerConfig::gravity` を敵にもそのまま付与して
   流用する（`PlayerTestPhase::spawnEnemy` 参照）
-- 色は toml 化せず `PlayerTestPhase.cpp` 側の定数（`kDummyColor`）に残す（パーサを増やさないため）
 
 ### [`AnimationData`](../Ash2/src/Config/AnimationData.hpp)
 
@@ -475,7 +492,7 @@
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / `UiFonts` / 各 Config / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
-| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`/`IsConfigReloadRequested`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`ApplyHitReactionTest`/`ClearHitReactionTest`（Key1/2/3 による被弾リアクション仮付与、`PlayerTestPhase` 用）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）・`IsEnemySpawnRequested`（Key4。`PlayerTestPhase` が固定配置テーブルから敵を追加する判定のみを持つ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
+| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`/`IsConfigReloadRequested`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）・`IsEnemySpawnRequested`（Key4。`PlayerTestPhase` が固定配置テーブルから敵を追加する判定のみを持つ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
 | [`WorldToScreen`](../Ash2/src/Screen.hpp) | `WorldPos` をカメラオフセット（`Scene::Center()`）込みの画面座標へ変換するインライン関数。`DrawSystem`・`ProjectileSystem`・`DebugDrawSystem` が参照する |
 | [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。`std::expected<Array<FilePath>, String>` を返し、開けなければ失敗を返す |
 | [`AssetPath`](../Ash2/src/Asset.hpp) | Debug では `FilePath`、Release では `Resource` パスを返す |
@@ -518,6 +535,18 @@
 | クリップ名 | 使用箇所 |
 |---|---|
 | `idle` | `LockOnSystem` の `SpawnReticle`（静止画を 1 コマのクリップとして持つ） |
+
+`enemy.toml`（`dataKey = enemy`）:
+
+| クリップ名 | 使用箇所 |
+|---|---|
+| `idle` | `Idle`（`PlayerTestPhase::spawnEnemy`／`Landing`/`Stagger`/`Repel`/`Knockback` の `Tick()` が `Idle` へ遷移する瞬間） |
+| `move` | `Idle` の `Tick()`（`Chase` へ遷移する瞬間） |
+| `windup` | `Chase` の `Tick()`（`Windup` へ遷移する瞬間） |
+| `leap` | `Windup` の `Tick()`（`Leap` へ遷移する瞬間） |
+| `landing` | `Leap` の `Tick()`（`Landing` へ遷移する瞬間） |
+| `stagger` | `HitReactionSystem`（`Stagger`/`Repel` へ遷移する場合） |
+| `knockback` | `HitReactionSystem`（`Knockback`/`Defeated` へ遷移する場合） |
 
 ---
 
