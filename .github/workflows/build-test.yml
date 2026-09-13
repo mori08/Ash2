@@ -9,7 +9,7 @@ on:
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
-      - 'ideas/**'
+      - 'workshop/**'
       - '.claude/**'
   pull_request:
     branches:
@@ -17,7 +17,7 @@ on:
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
-      - 'ideas/**'
+      - 'workshop/**'
       - '.claude/**'
   workflow_dispatch:
 

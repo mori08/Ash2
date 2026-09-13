@@ -27,7 +27,7 @@
 以下のファイルは、本リポジトリの [LICENSE](LICENSE) の対象外です（© 2026 mori08）。
 
 - [`Ash2/App/assets/`](Ash2/App/assets/) 配下（画像・音声・テキスト・設定データ等）
-- [`ideas/`](ideas/) 配下（初期案・シナリオ原文）
+- [`workshop/`](workshop/) 配下（画像の作業ファイル・初期案・シナリオ原文）
 
 **許可する利用**
 
@@ -52,8 +52,9 @@
 <!--
   未対応:
   - assets/sounds/ 追加時に「AI を利用していない箇所」へ音声素材の行を足す
-  - ideas/scenario/ 作成時:
-    - ideas/README.md へ行を足す
+  - workshop/images/ へ .edg を追加時に「AI を利用していない箇所」の画像素材の行へパスを足す
+  - workshop/scenario/ 作成時:
+    - workshop/README.md の表へ行を足す
     - 「AI を利用していない箇所」のシナリオ原文にパスを足す
 -->
 
@@ -71,5 +72,5 @@
 ### AI を利用していない箇所
 
 - 画像素材（[`Ash2/App/assets/images/`](Ash2/App/assets/images/)）— EDGE を使用
-- 手書きの初期案（[`ideas/sketches/`](ideas/sketches/)）— Concepts を使用
+- 手書きの初期案（[`workshop/sketches/`](workshop/sketches/)）— Concepts を使用
 - シナリオ原文

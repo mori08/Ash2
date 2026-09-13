@@ -125,7 +125,7 @@ tmp/
 # ============================================================
 
 docs/game_design/private_*
-ideas/**/private_*
+workshop/**/private_*
 
 # ============================================================
 # Private skills (not for public repo)
