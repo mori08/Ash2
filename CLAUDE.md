@@ -21,8 +21,8 @@ C++ / Siv3D v0.6.16 / Visual Studio 2022
 
 ## テスト
 
-- 書き方・実行方法: [TEST.md](docs/TEST.md)
-- どこまで書くか・評価の観点: [TEST_POLICY.md](docs/TEST_POLICY.md)
+- 書き方・実行方法: [TEST.md](docs/work_style/TEST.md)
+- どこまで書くか・評価の観点: [TEST_POLICY.md](docs/coding_style/TEST_POLICY.md)
 
 ## 設計ドキュメント
 
@@ -34,4 +34,4 @@ C++ / Siv3D v0.6.16 / Visual Studio 2022
 ## Git / GitHub 運用
 
 git または GitHub の操作（commit・push・PR・issue 等）を始める前に、
-一連の作業の最初に一度 [GIT.md](docs/GIT.md) を読むこと。
+一連の作業の最初に一度 [GIT.md](docs/work_style/GIT.md) を読むこと。

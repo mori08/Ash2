@@ -132,7 +132,7 @@ bash tools/run-tidy.sh Ash2/src/Main.cpp
 ## 関連ドキュメント
 
 - [CLAUDE.md](../CLAUDE.md) — 開発フロー全般
-- [TEST.md](TEST.md) — テストの書き方・実行方法
-- [GIT.md](GIT.md) — Git / GitHub 運用ルール
+- [TEST.md](work_style/TEST.md) — テストの書き方・実行方法
+- [GIT.md](work_style/GIT.md) — Git / GitHub 運用ルール
 - [ARCHITECTURE.md](ARCHITECTURE.md) — 設計
 - [tools/vscode-plan-links/README.md](../tools/vscode-plan-links/README.md) — 計画ファイルのパスリンク化拡張（任意）

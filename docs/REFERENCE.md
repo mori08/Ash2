@@ -552,7 +552,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 
 ## テスト
 
-`Ash2/tests/` に Catch2 のテストを置く。実行方法は [TEST.md](TEST.md) を参照。
+`Ash2/tests/` に Catch2 のテストを置く。実行方法は [TEST.md](work_style/TEST.md) を参照。
 
 | テストファイル | 対象 |
 |---|---|

@@ -10,7 +10,7 @@ review:
 ## テスト方針
 
 - 条件：テストを追加・変更する前
-- 必読：[docs/TEST_POLICY.md](../../docs/TEST_POLICY.md)（4本柱と判定基準）
+- 必読：[docs/coding_style/TEST_POLICY.md](../../docs/coding_style/TEST_POLICY.md)（4本柱と判定基準）
 
 テストの価値は次の4つの積で決まる。1つでも 0 に近ければ全体も 0 に近い。
 
@@ -27,6 +27,6 @@ review:
 ## 書き方
 
 - 条件：テストファイルを追加するとき
-- 必読：[docs/TEST.md](../../docs/TEST.md)（実行方法・実行時の環境・準備コードの置き場所）
+- 必読：[docs/work_style/TEST.md](../../docs/work_style/TEST.md)（実行方法・実行時の環境・準備コードの置き場所）
 
 1つのテスト対象につき1ファイル、`Test<対象名>.cpp`。別の対象を同じファイルに混ぜない。

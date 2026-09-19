@@ -1,6 +1,6 @@
 # テスト
 
-どこまでテストを書くか・評価の観点は [TEST_POLICY.md](TEST_POLICY.md) を参照。
+どこまでテストを書くか・評価の観点は [TEST_POLICY.md](../coding_style/TEST_POLICY.md) を参照。
 
 ## ツール
 

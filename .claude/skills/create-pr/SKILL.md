@@ -5,7 +5,7 @@ description: Create a GitHub PR
 
 Create a GitHub pull request.
 
-Before doing anything, read `docs/GIT.md`.
+Before doing anything, read `docs/work_style/GIT.md`.
 
 ## 手順
 

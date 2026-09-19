@@ -13,7 +13,7 @@ description: 実装計画に基づきコードを変更し、全チェックが�
 ### 1. 準備
 
 `$ARGUMENTS` から Issue 番号を取得し、`tmp/plan-<number>.md` と `gh issue view <number>` の本文を読み込む。
-Issue のラベルと実装方針から GIT.md の命名規則に従いブランチ名を決め、作成する。
+Issue のラベルと実装方針から docs/work_style/GIT.md の命名規則に従いブランチ名を決め、作成する。
 
 ```bash
 git checkout -b <branch-name>

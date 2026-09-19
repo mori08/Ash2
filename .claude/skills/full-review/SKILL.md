@@ -59,7 +59,7 @@ description: Read all source files, refresh ARCHITECTURE.md / REFERENCE.md, and 
 ### 4. テストの確認
 
 `Ash2/tests/` 以下のファイルを Glob で列挙し、すべて読む。
-`docs/TEST_POLICY.md` に従って既存テストを仕分けし、テスト追加候補を挙げる。
+`docs/coding_style/TEST_POLICY.md` に従って既存テストを仕分けし、テスト追加候補を挙げる。
 
 結果はステップ6のレポートにコードレビューとは別セクションで出力する。
 

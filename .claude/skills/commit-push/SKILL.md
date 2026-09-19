@@ -3,7 +3,7 @@ name: commit-push
 description: ファイルをステージし、適切なメッセージでコミットしてリモートにプッシュする
 ---
 
-最初に `docs/GIT.md` を読み、`git branch` で現在のブランチを確認する（並列実行）。
+最初に `docs/work_style/GIT.md` を読み、`git branch` で現在のブランチを確認する（並列実行）。
 
 ## main ブランチの場合
 
@@ -13,7 +13,7 @@ description: ファイルをステージし、適切なメッセージでコミ�
 ## feature/fix/refactor ブランチの場合
 
 `git log main..HEAD --oneline` で main からのコミット数を確認する。
-複数コミットがある場合は GIT.md のコミット整理ルールを適用し、まとめるか分けるかの判断をユーザーに伝えてから進む。
+複数コミットがある場合は docs/work_style/GIT.md のコミット整理ルールを適用し、まとめるか分けるかの判断をユーザーに伝えてから進む。
 
 ---
 
