@@ -92,9 +92,14 @@ struct GetUp {
   double timer = 0.0;
 };
 
+/// @brief 撃破により行動不能な終端状態（外部要因による強制遷移。
+/// ARCHITECTURE.md の「例外：外部要因による強制遷移」を参照）。
+/// 遷移先を持たず、復帰は Phase によるプレイヤー再生成に委ねる
+struct Dead {};
+
 /// @brief プレイヤーの排他的な行動状態
 using Variant = std::variant<
     Neutral, MeleeChain, MeleeFinisher, Ranged, Dash, DashAttack, AirAttack,
-    Landing, Stagger, Knockback, Downed, GetUp>;
+    Landing, Stagger, Knockback, Downed, GetUp, Dead>;
 
 }  // namespace PlayerMotion

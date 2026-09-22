@@ -470,6 +470,7 @@
     <ClInclude Include="src\Component\Invincible.hpp" />
     <ClInclude Include="src\Component\DrawColor.hpp" />
     <ClInclude Include="src\Component\Team.hpp" />
+    <ClInclude Include="src\Component\Dead.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

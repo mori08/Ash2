@@ -5,6 +5,7 @@
 #include "Component/Attack.hpp"
 #include "Component/AttackOrb.hpp"
 #include "Component/Collider.hpp"
+#include "Component/Dead.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
 #include "Component/FadeOut.hpp"
@@ -104,11 +105,16 @@ entt::entity MakeTarget(entt::registry& registry, double targetW) {
 }
 
 /// @brief テスト用のプレイヤー（被弾側）エンティティを生成する
+///
+/// `Hp`/`Collider` は本番の `PlayerTestPhase` と同じく常に持たせる
+/// （`ApplyPlayerReaction` が撃破判定のため無条件に `Hp` を読むため）。
 entt::entity MakePlayerTarget(entt::registry& registry, double targetW) {
   const auto player = registry.create();
   registry.emplace<Player>(player);
   registry.emplace<WorldPos>(player, WorldPos{.w = targetW});
   registry.emplace<Velocity>(player);
+  registry.emplace<Collider>(player);
+  registry.emplace<Hp>(player, Hp{.max = 100, .current = 100});
   registry.emplace<SpriteAnimation>(
       player, SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"}
   );
@@ -577,6 +583,69 @@ TEST_CASE(
           registry.get<PlayerMotion::Variant>(target)
       )
   );
+}
+
+TEST_CASE(
+    "HitReactionSystem - player Hp depletion forces Dead even with None "
+    "reaction"
+) {
+  // 弾（reaction 既定の None）で Hp が尽きても撃破は成立する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto target = MakePlayerTarget(registry, 50.0);
+  registry.get<Hp>(target).current = 0;
+
+  HitReactionSystem::Apply(
+      registry, {MakeHitEvent(registry, 0.0, target, ReactionLevel::None)}
+  );
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dead>(
+          registry.get<PlayerMotion::Variant>(target)
+      )
+  );
+  REQUIRE(registry.all_of<Dead>(target));
+}
+
+TEST_CASE(
+    "HitReactionSystem - player Hp depletion removes Collider but keeps Hp"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto target = MakePlayerTarget(registry, 50.0);
+  registry.get<Hp>(target).current = 0;
+
+  HitReactionSystem::Apply(
+      registry, {MakeHitEvent(registry, 0.0, target, ReactionLevel::Stagger)}
+  );
+
+  REQUIRE_FALSE(registry.all_of<Collider>(target));
+  REQUIRE(registry.all_of<Hp>(target));
+}
+
+TEST_CASE(
+    "HitReactionSystem - a Dead player is not reprocessed by a further hit "
+    "in the same call"
+) {
+  // 多重ヒット対策の回帰テスト。Dead 付与後の2件目が Velocity
+  // を再び動かしてしまうと、その場で倒れる仕様が崩れる
+  entt::registry registry;
+  SetupContext(registry);
+  const auto target = MakePlayerTarget(registry, 50.0);
+  registry.get<Hp>(target).current = 0;
+
+  HitReactionSystem::Apply(
+      registry, {MakeHitEvent(registry, 0.0, target, ReactionLevel::None),
+                 MakeHitEvent(registry, 0.0, target, ReactionLevel::Blow)}
+  );
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dead>(
+          registry.get<PlayerMotion::Variant>(target)
+      )
+  );
+  REQUIRE(registry.get<Velocity>(target).w == Approx(0.0));
+  REQUIRE(registry.get<Velocity>(target).h == Approx(0.0));
 }
 
 TEST_CASE(

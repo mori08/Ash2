@@ -37,6 +37,8 @@ class PlayerTestPhase : public IPhase {
   entt::entity m_dummyTarget = entt::null;
   /// 敵が撃破され破棄された後、再出現までの残り時間（秒）
   double m_respawnTimer = 0.0;
+  /// プレイヤー撃破（Dead）検知からの残り時間（秒）。負値は未検知
+  double m_deathTimer = -1.0;
   /// Key4 のデバッグ操作で追加した敵（撃破されても再生成しない）
   Array<entt::entity> m_extraEnemies;
 };

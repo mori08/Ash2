@@ -3,6 +3,7 @@
 #include "System/EnemyMotionSystem.hpp"
 
 #include "Component/Attack.hpp"
+#include "Component/Dead.hpp"
 #include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Player.hpp"
@@ -17,12 +18,12 @@ namespace EnemyMotion {
 namespace {
 
 /// @brief 索敵に使うプレイヤーの WorldPos を返す
-/// @return プレイヤーが存在しなければ none
+/// @return プレイヤーが存在しない、または撃破済み（`Dead`）なら none
 [[nodiscard]] Optional<WorldPos> FindPlayerPos(entt::registry& registry) {
-  for (auto&& [entity, pos] : registry.view<Player, WorldPos>().each()) {
-    return pos;
-  }
-  return none;
+  const auto view = registry.view<Player, WorldPos>(entt::exclude<Dead>);
+  const auto entity = view.front();
+  if (entity == entt::null) return none;
+  return view.get<WorldPos>(entity);
 }
 
 /// @brief w-d 平面上の距離を返す
@@ -73,15 +74,22 @@ Optional<Variant> Tick(
   const auto& cfg = registry.ctx().get<EnemyConfig>();
   const auto& pos = registry.get<WorldPos>(entity);
   auto& anim = registry.get<SpriteAnimation>(entity);
+  auto& vel = registry.get<Velocity>(entity);
 
   const auto playerPos = FindPlayerPos(registry);
-  if (!playerPos) return none;
+  if (!playerPos) {
+    // 索敵範囲外への移動・撃破などで見失った場合、Velocity
+    // を残したままにすると徘徊し続けるため Idle へ戻す
+    vel.w = 0.0;
+    vel.d = 0.0;
+    SetClip(anim, U"idle");
+    return Idle{};
+  }
   const WorldPos& target = *playerPos;
 
   UpdateFacing(anim, pos, target);
 
   const double dist = DistanceWD(pos, target);
-  auto& vel = registry.get<Velocity>(entity);
   if (dist <= cfg.leapRange) {
     // Chase は毎フレーム Velocity を書くため、抜けるときに 0 へ戻す
     vel.w = 0.0;
