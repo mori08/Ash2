@@ -2782,4 +2782,20 @@ TEST_CASE("PlayerMotionSystem - GetUp cancels into Dash on dash input") {
   REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
 }
 
+TEST_CASE("PlayerMotionSystem - Dead is a terminal state that ignores input") {
+  // 終端状態。入力を読まないため、ダッシュ入力があっても継続する
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<PlayerMotion::Variant>(player, PlayerMotion::Dead{});
+
+  FrameData frameData{.dt = 0.5};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  const auto& motion = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dead>(motion));
+}
+
 #endif

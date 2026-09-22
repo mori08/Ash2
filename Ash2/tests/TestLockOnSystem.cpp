@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "Component/Collider.hpp"
+#include "Component/Dead.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
 #include "Component/Hierarchy.hpp"
@@ -382,6 +383,26 @@ TEST_CASE("LockOnSystem::Update - clears the target once it becomes Defeated") {
 
   REQUIRE((registry.get<LockOn>(player).target == entt::null));
   REQUIRE_FALSE(registry.valid(reticle));
+}
+
+TEST_CASE(
+    "LockOnSystem::Update - a defeated player ignores stick input and does "
+    "not crash on the missing Collider"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry, WorldPos{});
+  MakeEnemy(registry, WorldPos{.w = 0.0, .h = 0.0, .d = 50.0}, kPointCollider);
+  // HitReactionSystem の撃破分岐を模す（Dead 付与 + Collider 除去）
+  registry.emplace<Dead>(player);
+  registry.remove<Collider>(player);
+
+  LockOnSystem::Update(
+      registry, FrameData{.input = InputState{.lockAxis = Vec2{0.0, -1.0}}}
+  );
+
+  REQUIRE((registry.get<LockOn>(player).halfTarget == entt::null));
+  REQUIRE((registry.get<LockOn>(player).target == entt::null));
 }
 
 #endif

@@ -1,6 +1,7 @@
 #include "Phase/PlayerTestPhase.hpp"
 
 #include "Component/Collider.hpp"
+#include "Component/Dead.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
@@ -37,9 +38,13 @@
 #include "System/StaminaSystem.hpp"
 
 constexpr int32 kPlayerMaxHp = 100;
+// TODO(#116): 撃破後の Pop までの猶予に根拠となる仕様がなく、値が暫定
+constexpr double kDeathPopDelaySec = 2.0;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
   const auto& cfg = registry.ctx().get<PlayerConfig>();
+
+  m_deathTimer = -1.0;
 
   m_playerRoot = registry.create();
   registry.emplace<Player>(m_playerRoot);
@@ -136,6 +141,18 @@ PhaseCommand PlayerTestPhase::update(
   FadeOutSystem::Update(registry, dt);
 
   AnimationSystem::Update(registry, dt);
+
+  // TODO(#116): 撃破後の受け側が暫定で、猶予（kDeathPopDelaySec）後に
+  // Pop するだけの挙動しか持たない
+  if (m_playerRoot != entt::null && registry.all_of<Dead>(m_playerRoot)) {
+    if (m_deathTimer < 0.0) {
+      m_deathTimer = kDeathPopDelaySec;
+    }
+    m_deathTimer -= dt;
+    if (m_deathTimer <= 0.0) {
+      return PhaseCommand::Pop{};
+    }
+  }
 
   // 敵が撃破され破棄されたら respawnSec 後に再生成する
   if (m_dummyTarget != entt::null && !registry.valid(m_dummyTarget)) {

@@ -115,4 +115,13 @@ Optional<Variant> Tick(
   return none;
 }
 
+Optional<Variant> Tick(
+    Dead& /*state*/, entt::registry& /*registry*/, entt::entity /*entity*/,
+    const FrameData& /*frameData*/
+) {
+  // 終端状態。入力を読まないため操作不可のまま継続する。復帰は Phase
+  // によるプレイヤー再生成に委ねる
+  return none;
+}
+
 }  // namespace PlayerMotion

@@ -4,6 +4,7 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
+#include "Component/Dead.hpp"
 #include "Component/EnemyMotion.hpp"
 #include "Component/Hitstop.hpp"
 #include "Component/Hp.hpp"
@@ -14,6 +15,7 @@
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ReactionLevel.hpp"
+#include "System/PlayerMotion/Helper.hpp"
 #include "System/PlayerMotion/Transition.hpp"
 
 namespace {
@@ -90,19 +92,41 @@ void ApplyEnemyReaction(entt::registry& registry, const HitEvent& hit) {
 
 /// @brief Player 被弾側へリアクションを適用する
 ///
-/// `reaction` が `None` の場合は遷移させない（ダメージのみ）。それ以外は
-/// `PlayerMotion::MakeDamaged` が Stagger/Knockback を決める。
+/// `Hp` 枯渇時は `reaction` によらず撃破として扱い、`Collider` を外して
+/// `PlayerMotion::Dead` へ強制遷移する（`Hp` は `HudSystem`
+/// が読むため残す）。それ以外は `reaction` が `None`
+/// の場合は遷移させず（ダメージのみ）、それ以外は `PlayerMotion::MakeDamaged`
+/// が Stagger/Knockback を決める。
 void ApplyPlayerReaction(entt::registry& registry, const HitEvent& hit) {
-  if (hit.reaction == ReactionLevel::None) return;
+  // 同一フレームの多重ヒット対策：敵側は Hp 除去が番兵になるが、
+  // プレイヤーは Hp を残すため Dead タグで再処理を止める
+  if (registry.all_of<Dead>(hit.target)) return;
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
+  auto& anim = registry.get<SpriteAnimation>(hit.target);
+
+  if (registry.get<Hp>(hit.target).current <= 0) {
+    // 撃破は reaction によらず成立させる（None の弾で Hp
+    // が尽きた場合も倒れる）。MakeDamaged
+    // と同じ後始末（判定・光の解放、Velocity リセット）を行う
+    PlayerMotion::ReleaseAttackOrbs(
+        registry, hit.target, cfg.attackEffect.fadeSec
+    );
+    registry.get<Velocity>(hit.target) = Velocity{};
+    registry.remove<Collider>(hit.target);
+    SetClip(anim, U"downed");
+    registry.replace<PlayerMotion::Variant>(hit.target, PlayerMotion::Dead{});
+    registry.emplace<Dead>(hit.target);
+    return;
+  }
+
+  if (hit.reaction == ReactionLevel::None) return;
 
   // 吹き飛ばし方向は攻撃側本体と被弾側の w を比較して決める
   const double ownerW = registry.get<WorldPos>(hit.attackerOwner).w;
   const double targetW = registry.get<WorldPos>(hit.target).w;
   const double sign = (targetW < ownerW) ? -1.0 : 1.0;
 
-  auto& anim = registry.get<SpriteAnimation>(hit.target);
   const auto next = PlayerMotion::MakeDamaged(
       registry, hit.target, cfg, anim, hit.reaction, sign
   );

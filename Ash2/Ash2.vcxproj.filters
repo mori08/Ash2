@@ -1256,6 +1256,9 @@
     <ClInclude Include="Component\Team.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Dead.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="System\HitstopSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>

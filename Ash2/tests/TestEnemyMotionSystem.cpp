@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include "Component/Attack.hpp"
+#include "Component/Dead.hpp"
 #include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/EnemyMotion.hpp"
@@ -146,6 +147,26 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "EnemyMotionSystem - Idle does not transition to Chase when the player "
+    "is Dead"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto enemy = MakeEnemy(registry, EnemyMotion::Idle{});
+  const auto player = MakePlayer(registry, WorldPos{.w = 100.0});
+  registry.emplace<Dead>(player);
+
+  const FrameData frameData{.dt = 0.1};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Idle>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
+  );
+}
+
+TEST_CASE(
     "EnemyMotionSystem - Chase moves toward the player while outside leap "
     "range"
 ) {
@@ -190,6 +211,30 @@ TEST_CASE(
   );
   REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
   REQUIRE(registry.get<SpriteAnimation>(enemy).currentClip == U"windup");
+}
+
+TEST_CASE(
+    "EnemyMotionSystem - Chase returns to Idle and zeroes Velocity when the "
+    "player is Dead"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto enemy = MakeEnemy(registry, EnemyMotion::Chase{});
+  registry.get<Velocity>(enemy).w = 90.0;
+  const auto player = MakePlayer(registry, WorldPos{.w = 100.0});
+  registry.emplace<Dead>(player);
+
+  const FrameData frameData{.dt = 0.1};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(
+      std::holds_alternative<EnemyMotion::Idle>(
+          registry.get<EnemyMotion::Variant>(enemy)
+      )
+  );
+  REQUIRE(registry.get<Velocity>(enemy).w == Approx(0.0));
+  REQUIRE(registry.get<Velocity>(enemy).d == Approx(0.0));
+  REQUIRE(registry.get<SpriteAnimation>(enemy).currentClip == U"idle");
 }
 
 TEST_CASE("EnemyMotionSystem - Windup keeps counting down while remaining") {

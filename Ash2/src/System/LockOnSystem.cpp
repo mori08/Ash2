@@ -1,6 +1,7 @@
 #include "System/LockOnSystem.hpp"
 
 #include "Component/Collider.hpp"
+#include "Component/Dead.hpp"
 #include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
@@ -264,7 +265,14 @@ void LockOnSystem::Update(
       lockOn.halfTarget = entt::null;
     }
 
-    if (input.pointerPos) {
+    // 撃破後は入力を無視する。ApplyStickRule はロック未確定時に player
+    // 自身を軸として Collider を読むが、撃破分岐で Collider を外している
+    // ため呼ぶと欠落を踏む
+    if (registry.all_of<Dead>(player)) {
+      lockOn.target = entt::null;
+      lockOn.halfTarget = entt::null;
+      lockOn.stickTilted = false;
+    } else if (input.pointerPos) {
       ApplyMouseRule(registry, playerPos, *input.pointerPos, cfg, lockOn);
     } else {
       ApplyStickRule(registry, player, input.lockAxis, cfg, lockOn);

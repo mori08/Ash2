@@ -103,4 +103,11 @@ namespace PlayerMotion {
     const FrameData& frameData
 );
 
+/// @brief Dead 状態の更新（終端状態。入力を読まず常に継続する）
+/// @return 常に none
+[[nodiscard]] Optional<Variant> Tick(
+    Dead& state, entt::registry& registry, entt::entity entity,
+    const FrameData& frameData
+);
+
 }  // namespace PlayerMotion
