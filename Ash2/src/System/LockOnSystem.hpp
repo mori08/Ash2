@@ -9,7 +9,7 @@
 
 struct FrameData;
 
-/// @brief 画面へ投影したカプセル（カメラオフセットは含まない）
+/// @brief 画面へ投影したカプセル（床原点込みの画面座標）
 struct ScreenCapsule {
   Vec2 start;
   Vec2 end;
@@ -32,7 +32,7 @@ class LockOnSystem {
       const WorldPos& pos, const Collider& col
   );
 
-  /// @brief Collider を画面へ投影し、半径を scale 倍したカプセルを返す
+  /// @brief Collider を画面座標へ投影し、半径を scale 倍したカプセルを返す
   [[nodiscard]] static ScreenCapsule Project(
       const WorldPos& pos, const Collider& col, double scale
   );

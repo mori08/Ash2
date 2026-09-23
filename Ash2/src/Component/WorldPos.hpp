@@ -1,6 +1,9 @@
 #pragma once
 #include <Siv3D.hpp>
 
+/// 奥行き方向の画面投影の圧縮率（1.0 なら高さと等倍）
+inline constexpr double kDepthScale = 0.5;
+
 /// @brief ワールド座標
 /// @note 描画（Drawable の DrawAnchor）・当たり判定（Collider のオフセット）の
 ///       共通基準点。基準点が「中心」か「接地点」かはエンティティごとに異なり、
@@ -14,8 +17,8 @@ struct WorldPos {
   double d = 0.0;
 
   /// @brief ワールド座標を画面座標に変換する
-  /// @return 画面座標（右方向・下方向が正）
-  [[nodiscard]] Vec2 toScreen() const { return {w, -(d + h)}; }
+  /// @return 画面座標（右方向・下方向が正）。`d` は `kDepthScale` で圧縮する
+  [[nodiscard]] Vec2 toScreen() const { return {w, -(d * kDepthScale + h)}; }
 
   /// @brief 地面上にいるか
   /// @return 高さが 0 以下なら true
