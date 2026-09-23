@@ -11,6 +11,7 @@
 #include "Component/WorldPos.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "FrameData.hpp"
+#include "Screen.hpp"
 #include "System/LockOnSystem.hpp"
 
 namespace {
@@ -94,8 +95,8 @@ TEST_CASE(
       .radius = 10.0
   };
   const auto cap = LockOnSystem::Project(pos, col, 2.0);
-  REQUIRE(cap.start == Vec2{0.0, 0.0});
-  REQUIRE(cap.end == Vec2{0.0, -40.0});
+  REQUIRE(cap.start == WorldOrigin());
+  REQUIRE(cap.end == WorldOrigin().movedBy(0.0, -40.0));
   REQUIRE(cap.radius == Approx(20.0));
 }
 
@@ -252,7 +253,7 @@ TEST_CASE(
   );
 
   const FrameData frameData{
-      .input = InputState{.pointerPos = Scene::Center() + Vec2{50.0, 0.0}}
+      .input = InputState{.pointerPos = WorldOrigin() + Vec2{50.0, 0.0}}
   };
   LockOnSystem::Update(registry, frameData);
 
@@ -282,7 +283,7 @@ TEST_CASE(
   LockOnSystem::Update(
       registry,
       FrameData{
-          .input = InputState{.pointerPos = Scene::Center() + Vec2{50.0, 0.0}}
+          .input = InputState{.pointerPos = WorldOrigin() + Vec2{50.0, 0.0}}
       }
   );
   const auto reticle = registry.get<LockOn>(player).targetReticle;
@@ -292,7 +293,7 @@ TEST_CASE(
       registry,
       FrameData{
           .input =
-              InputState{.pointerPos = Scene::Center() + Vec2{9999.0, 9999.0}}
+              InputState{.pointerPos = WorldOrigin() + Vec2{9999.0, 9999.0}}
       }
   );
 
@@ -364,7 +365,7 @@ TEST_CASE("LockOnSystem::Update - clears the target once it becomes Defeated") {
   LockOnSystem::Update(
       registry,
       FrameData{
-          .input = InputState{.pointerPos = Scene::Center() + Vec2{50.0, 0.0}}
+          .input = InputState{.pointerPos = WorldOrigin() + Vec2{50.0, 0.0}}
       }
   );
   REQUIRE(registry.get<LockOn>(player).target == enemy);
@@ -377,7 +378,7 @@ TEST_CASE("LockOnSystem::Update - clears the target once it becomes Defeated") {
       registry,
       FrameData{
           .input =
-              InputState{.pointerPos = Scene::Center() + Vec2{9999.0, 9999.0}}
+              InputState{.pointerPos = WorldOrigin() + Vec2{9999.0, 9999.0}}
       }
   );
 

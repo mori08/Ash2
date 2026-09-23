@@ -12,6 +12,7 @@
 #include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
 #include "FrameData.hpp"
+#include "Screen.hpp"
 
 namespace {
 
@@ -39,10 +40,6 @@ void ApplyMouseRule(
     const entt::registry& registry, const WorldPos& playerPos, Vec2 pointerPos,
     const LockConfig& cfg, LockOn& lockOn
 ) {
-  // カメラオフセットを1回だけ差し引き、以降は Project() の投影と同じ
-  // 「カメラオフセットを含まない画面座標」で比較する
-  const Vec2 cursor = pointerPos - Scene::Center();
-
   entt::entity best = entt::null;
   double bestDepthDiff = Math::Inf;
 
@@ -59,7 +56,7 @@ void ApplyMouseRule(
     const auto& pos = view.get<const WorldPos>(entity);
     const auto& col = view.get<const Collider>(entity);
     const auto cap = LockOnSystem::Project(pos, col, cfg.capsuleScale);
-    if (!LockOnSystem::Contains(cap, cursor)) continue;
+    if (!LockOnSystem::Contains(cap, pointerPos)) continue;
 
     const double depthDiff = Abs(pos.d - playerPos.d);
     if (depthDiff < bestDepthDiff) {
@@ -180,8 +177,8 @@ ScreenCapsule LockOnSystem::Project(
       .d = pos.d + col.segmentEnd.z,
   };
   return ScreenCapsule{
-      .start = start.toScreen(),
-      .end = end.toScreen(),
+      .start = WorldToScreen(start),
+      .end = WorldToScreen(end),
       .radius = col.radius * scale,
   };
 }
@@ -205,9 +202,9 @@ entt::entity LockOnSystem::SelectByDirection(
 ) {
   if (dir.isZero()) return entt::null;
 
-  const Vec2 axisScreen =
+  const Vec2 axisScreen = WorldToScreen(
       AimPoint(registry.get<WorldPos>(axis), registry.get<Collider>(axis))
-          .toScreen();
+  );
 
   entt::entity best = entt::null;
   double bestScore = Math::Inf;
@@ -223,11 +220,9 @@ entt::entity LockOnSystem::SelectByDirection(
       continue;
     }
 
-    const Vec2 candidateScreen =
-        AimPoint(
-            view.get<const WorldPos>(entity), view.get<const Collider>(entity)
-        )
-            .toScreen();
+    const Vec2 candidateScreen = WorldToScreen(AimPoint(
+        view.get<const WorldPos>(entity), view.get<const Collider>(entity)
+    ));
     const Vec2 toCandidate = candidateScreen - axisScreen;
     if (toCandidate.isZero()) continue;
 

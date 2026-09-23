@@ -5,8 +5,15 @@
 #include "Component/WorldPos.hpp"
 #include "Screen.hpp"
 
+namespace {
+
+// 弾が中心のみで判定されるため、描画半径を上回る余裕を持たせてから消す
+constexpr double kOffscreenMargin = 32.0;
+
+}  // namespace
+
 void ProjectileSystem::Update(entt::registry& registry) {
-  const RectF screenRect = Scene::Rect();
+  const RectF screenRect = RectF{Scene::Rect()}.stretched(kOffscreenMargin);
 
   Array<entt::entity> toDestroy;
 
@@ -18,7 +25,8 @@ void ProjectileSystem::Update(entt::registry& registry) {
       continue;
     }
 
-    // 画面外: 画面座標に変換した結果が Scene::Rect() の範囲外
+    // 画面外: 画面座標に変換した結果が kOffscreenMargin ぶん広げた
+    // Scene::Rect() の範囲外
     const Vec2 screenPos = WorldToScreen(pos);
     if (!screenRect.contains(screenPos)) {
       toDestroy.push_back(entity);

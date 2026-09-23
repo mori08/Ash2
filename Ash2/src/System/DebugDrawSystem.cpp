@@ -65,7 +65,8 @@ void DebugDrawSystem::DrawCapsule(
   const Vec2 p1 = ToScreen(origin, capsule.segmentEnd);
   const double r = capsule.radius;
 
-  // 高さ方向・奥行き方向のカプセルは投影の性質上どちらも同じ形に映る
+  // 奥行き方向のカプセルは kDepthScale ぶん画面上で縮んで映る（同じ長さの
+  // 高さ方向のカプセルの半分）。radius は圧縮しないため太さは変わらない
   // （区別したい場合は DrawGroundLine の接地線を併用する）
   const Vec2 d = p1 - p0;
   if (d.isZero()) {
@@ -94,8 +95,8 @@ void DebugDrawSystem::DrawGroundLine(
 ) {
   const WorldPos mid = CapsuleCenter(origin, capsule);
   const Vec2 from = WorldToScreen(mid);
-  // h だけを 0 にした点が接地点。toScreen() は {w, -(d+h)} なので、
-  // 画面上では from の真下へ h ピクセル降りる線になる
+  // h だけを 0 にした点が接地点。toScreen() は {w, -(d*kDepthScale+h)}
+  // なので、画面上では from の真下へ h ピクセル降りる線になる
   const Vec2 to = WorldToScreen(WorldPos{.w = mid.w, .h = 0.0, .d = mid.d});
   Line{from, to}.draw(
       LineStyle::SquareDot, kGroundThickness, color.withAlpha(kGroundAlpha)

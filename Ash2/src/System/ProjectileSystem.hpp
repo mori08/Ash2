@@ -13,7 +13,8 @@ class ProjectileSystem {
   /// 以下のいずれかを満たすエンティティを `registry.destroy()` する。
   /// - 着弾: `Attack.hitTargets` が空でなくなった（`HitSystem`
   /// がヒットを記録した）
-  /// - 画面外: `WorldPos` を画面座標に変換した結果が `Scene::Rect()` の範囲外
+  /// - 画面外: `WorldPos` を画面座標に変換した結果が、描画半径ぶんのマージンを
+  /// 取った `Scene::Rect()` の範囲外
   /// - 最大射程: `Projectile.origin` からの3軸距離が `Projectile.maxRange`
   /// を超えた
   ///

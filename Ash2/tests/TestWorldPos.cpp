@@ -24,6 +24,19 @@ TEST_CASE("WorldPos::ToScreen - x maps to horizontal position") {
   REQUIRE(left.toScreen().x < right.toScreen().x);
 }
 
+TEST_CASE(
+    "WorldPos::ToScreen - depth movement is compressed relative to height"
+) {
+  // dを100動かした画面移動量は、hを100動かした量の半分になる
+  WorldPos base{.w = 0.0, .h = 0.0, .d = 0.0};
+  WorldPos movedByDepth{.w = 0.0, .h = 0.0, .d = 100.0};
+  WorldPos movedByHeight{.w = 0.0, .h = 100.0, .d = 0.0};
+  const double depthDelta = Abs(movedByDepth.toScreen().y - base.toScreen().y);
+  const double heightDelta =
+      Abs(movedByHeight.toScreen().y - base.toScreen().y);
+  REQUIRE(depthDelta == Approx(heightDelta * kDepthScale));
+}
+
 TEST_CASE("WorldPos::isOnGround - on ground when h is 0") {
   // h=0 は地面上
   WorldPos pos{.w = 0.0, .h = 0.0, .d = 0.0};
