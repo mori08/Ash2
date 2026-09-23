@@ -1,5 +1,6 @@
 #include "Phase/PlayerTestPhase.hpp"
 
+#include "Component/Boundary.hpp"
 #include "Component/Collider.hpp"
 #include "Component/Dead.hpp"
 #include "Component/Drawable.hpp"
@@ -25,6 +26,7 @@
 #include "FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 #include "System/AttachmentSystem.hpp"
+#include "System/BoundarySystem.hpp"
 #include "System/EnemySystem.hpp"
 #include "System/FadeOutSystem.hpp"
 #include "System/GravitySystem.hpp"
@@ -78,6 +80,7 @@ void PlayerTestPhase::onAfterPush(entt::registry& registry) {
       m_playerRoot, PlayerMotion::Neutral{}
   );
   registry.emplace<LockOn>(m_playerRoot);
+  registry.emplace<Boundary>(m_playerRoot);
   AnimationSystem::Update(registry, 0.0);
 
   m_dummyTarget = spawnEnemy(
@@ -117,6 +120,7 @@ entt::entity PlayerTestPhase::spawnEnemy(
   registry.emplace<Hp>(
       enemy, Hp{.max = enemyCfg.maxHp, .current = enemyCfg.maxHp}
   );
+  registry.emplace<Boundary>(enemy);
   AnimationSystem::Update(registry, 0.0);
   return enemy;
 }
@@ -132,6 +136,7 @@ PhaseCommand PlayerTestPhase::update(
   StaminaSystem::Update(registry, dt);
   MovementSystem::Update(registry, dt);
   GravitySystem::Update(registry, dt);
+  BoundarySystem::Update(registry);
   AttachmentSystem::UpdateTransform(registry);
 
   const auto hits = HitSystem::Update(registry);

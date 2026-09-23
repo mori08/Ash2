@@ -189,6 +189,9 @@
     <ClCompile Include="Config\ScenarioData.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
+    <ClCompile Include="Config\StageConfig.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
     <ClCompile Include="Phase\ScenarioPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
@@ -253,6 +256,9 @@
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="System\GravitySystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\BoundarySystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="System\AttachmentSystem.cpp">
@@ -373,6 +379,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestScenarioData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestStageConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestBoundarySystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1109,6 +1121,9 @@
     <ClInclude Include="Config\EnemyConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
+    <ClInclude Include="Config\StageConfig.hpp">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
     <ClInclude Include="Config\PlayerConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
@@ -1196,6 +1211,9 @@
     <ClInclude Include="Component\Enemy.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Boundary.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\EnemyMotion.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
@@ -1242,6 +1260,9 @@
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\GravitySystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\BoundarySystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Component\Hitstop.hpp">

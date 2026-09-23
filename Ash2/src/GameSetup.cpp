@@ -6,6 +6,7 @@
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
+#include "Config/StageConfig.hpp"
 #include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
@@ -77,6 +78,16 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
     return std::unexpected{std::move(enemy).error()};
   }
   registry.ctx().emplace<EnemyConfig>(*std::move(enemy));
+
+  auto stageToml = OpenToml(U"assets/config/stage.toml");
+  if (!stageToml) {
+    return std::unexpected{std::move(stageToml).error()};
+  }
+  auto stage = StageConfig::FromToml(*stageToml);
+  if (!stage) {
+    return std::unexpected{std::move(stage).error()};
+  }
+  registry.ctx().emplace<StageConfig>(*std::move(stage));
 
   auto anims = LoadAnimations();
   if (!anims) {

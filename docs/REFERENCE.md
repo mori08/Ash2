@@ -15,6 +15,7 @@
 | [`WorldPos`](../Ash2/src/Component/WorldPos.hpp) | ワールド絶対座標（w/h/d）。`toScreen()`・`isOnGround()` を持つ |
 | [`Velocity`](../Ash2/src/Component/Velocity.hpp) | 速度ベクトル（w/h/d、ピクセル/秒） |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
+| [`Boundary`](../Ash2/src/Component/Boundary.hpp) | ステージ境界でのクランプ対象であることを示すタグ（データなし）。`BoundarySystem` が `WorldPos`+`Collider` と組み合わせて絞り込みに使う。弾（`Projectile`）には付与しない |
 | [`LocalOffset`](../Ash2/src/Component/LocalOffset.hpp) | 親からの相対座標（w/h/d、Hierarchy 付きエンティティのみ）。`WorldPos` とは別の型で、`toScreen()`・`isOnGround()` は持たない |
 | [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作） |
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画形状の variant。詳細は下記「描画データ型」参照 |
@@ -167,7 +168,8 @@
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + PlayerMotion::Variant` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
-| [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋フェーズ内（PlayerTestPhase、GravitySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。PlayerTestPhase では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
+| [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | フェーズ内（PlayerTestPhase、GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `StageConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
+| [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋フェーズ内（PlayerTestPhase、BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。PlayerTestPhase では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（PlayerTestPhase、AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（PlayerTestPhase、HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外 / 最大射程超（`origin` からの3軸距離が `maxRange` を超えた）での破棄 |
@@ -176,6 +178,7 @@
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。`d` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。カメラは `WorldOrigin()`（`Scene::Center()` から `kFloorOriginOffsetY` 下の床原点）の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
 | [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
+| [`DebugDrawSystem::DrawBoundary`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DrawColliders` と同じ F2 トグルで `DrawColliders` の直後に呼ばれる） | `StageConfig` の半幅から4隅を `h = 0` の平面上で `WorldToScreen` へ投影し、対角2点から組んだ `RectF` の輪郭を描く（平行投影のため長方形のまま映る） |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）。他のシステムと異なり実装をヘッダに直書きしている |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
@@ -190,6 +193,7 @@
 | `ProjectileSystem` は `MovementSystem` と `HitSystem` の後 | 着弾判定を `Attack::hitTargets` の中身で行うため |
 | `LockOnSystem` は `MotionSystem` より前（`AttachmentSystem` より前でよい） | 同フレームの `Ranged` 発射がその場のロック対象を見るため。レティクルの `WorldPos` と `TextureDrawable::region` は同フレーム内で `AttachmentSystem`・`AnimationSystem` がそれぞれ埋める |
 | `GravitySystem` の「加速」と「地面クランプ」は1つの関数に留める | 時間軸が違う（次フレーム用／今フレーム確定）。分割すると跳ね方が変わる |
+| `BoundarySystem` は `GravitySystem` の後、`AttachmentSystem` の前に置く | 座標クランプは軸ごとに担当が分かれる。`h` は `GravitySystem` の地面クランプ、`w`/`d` は `BoundarySystem` の境界クランプが扱う |
 
 ### リアクションの対応
 
@@ -412,6 +416,13 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 - `Knockback` の重力加速度は専用の値を持たず、`PlayerConfig::gravity` を敵にもそのまま付与して
   流用する（`PlayerTestPhase::spawnEnemy` 参照）
 
+### [`StageConfig`](../Ash2/src/Config/StageConfig.hpp)
+
+- `Ash2/App/assets/config/stage.toml` から読み込むステージ境界の設定
+- `w`/`d` 軸それぞれの境界の半幅 `halfW`/`halfD` を持つ
+- `FromToml` は `TomlFields::check()` を通した後、両方が正であることを検証する
+  （`Clamp` の下限が上限を超えるのを防ぐため）
+
 ### [`AnimationData`](../Ash2/src/Config/AnimationData.hpp)
 
 - スプライトシート単位のアニメーション共有データ（テクスチャキー・コマサイズ・描画オフセット・
@@ -442,6 +453,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 | [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画用フォント一式（`large`/`small`） |
 | `PlayerConfig` | プレイヤー設定 |
 | `EnemyConfig` | 敵設定 |
+| `StageConfig` | ステージ境界の設定 |
 | `AnimationDataRegistry` | アニメーション共有データ |
 | `ScenarioData` | シナリオデータ |
 
@@ -575,6 +587,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 | `TestWorldPos.cpp` | `WorldPos` の座標変換・接地判定 |
 | `TestDrawSystem.cpp` | `DrawOrderLess` |
 | `TestMovementSystem.cpp` | `MovementSystem` |
+| `TestBoundarySystem.cpp` | `BoundarySystem` の境界クランプ |
 | `TestAttachmentSystem.cpp` | `AttachmentSystem` の座標伝播、`Hierarchy` の連結リスト操作 |
 | `TestHitSystem.cpp` | `HitSystem` のカプセル交差・重複ヒット防止・root 解決・`Team` による同陣営スキップ |
 | `TestLockOnSystem.cpp` | `LockOnSystem` の `AimPoint`/`Project`/`Contains`/`SelectByDirection`、マウス規則・スティック規則によるロック対象更新とレティクル同期 |
@@ -587,6 +600,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
 | `TestEnemyConfig.cpp` | `EnemyConfig::FromToml` |
+| `TestStageConfig.cpp` | `StageConfig::FromToml` |
 | `TestAnimationData.cpp` | `AnimationData::FromToml` |
 | `TestScenarioData.cpp` | `ScenarioData::FromToml` |
 | `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset |
