@@ -7,7 +7,7 @@
 #include "Component/Hitstop.hpp"
 #include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
-#include "Config/StageConfig.hpp"
+#include "Config/ArenaConfig.hpp"
 #include "System/BoundarySystem.hpp"
 
 namespace {
@@ -16,10 +16,10 @@ constexpr double kHalfW = 380.0;
 constexpr double kHalfD = 280.0;
 constexpr double kRadius = 24.0;
 
-/// @brief StageConfig を registry.ctx() へ登録する
-void SetupStage(entt::registry& registry) {
-  registry.ctx().emplace<StageConfig>(
-      StageConfig{.halfW = kHalfW, .halfD = kHalfD}
+/// @brief ArenaConfig を registry.ctx() へ登録する
+void SetupArena(entt::registry& registry) {
+  registry.ctx().emplace<ArenaConfig>(
+      ArenaConfig{.halfW = kHalfW, .halfD = kHalfD}
   );
 }
 
@@ -48,7 +48,7 @@ entt::entity MakeBounded(
 
 TEST_CASE("BoundarySystem - clamps out-of-range w to half minus radius") {
   entt::registry registry;
-  SetupStage(registry);
+  SetupArena(registry);
   const auto entity =
       MakeBounded(registry, WorldPos{.w = 1000.0, .h = 10.0, .d = 0.0});
 
@@ -59,7 +59,7 @@ TEST_CASE("BoundarySystem - clamps out-of-range w to half minus radius") {
 
 TEST_CASE("BoundarySystem - clamps out-of-range d to half minus radius") {
   entt::registry registry;
-  SetupStage(registry);
+  SetupArena(registry);
   const auto entity =
       MakeBounded(registry, WorldPos{.w = 0.0, .h = 10.0, .d = -1000.0});
 
@@ -70,7 +70,7 @@ TEST_CASE("BoundarySystem - clamps out-of-range d to half minus radius") {
 
 TEST_CASE("BoundarySystem - leaves an in-range position untouched") {
   entt::registry registry;
-  SetupStage(registry);
+  SetupArena(registry);
   const auto entity =
       MakeBounded(registry, WorldPos{.w = 50.0, .h = 10.0, .d = -30.0});
 
@@ -83,7 +83,7 @@ TEST_CASE("BoundarySystem - leaves an in-range position untouched") {
 
 TEST_CASE("BoundarySystem - does not touch h or Velocity") {
   entt::registry registry;
-  SetupStage(registry);
+  SetupArena(registry);
   const auto entity = MakeBounded(
       registry, WorldPos{.w = 1000.0, .h = 42.0, .d = 0.0},
       Velocity{.w = 5.0, .h = 6.0, .d = 7.0}
@@ -102,7 +102,7 @@ TEST_CASE("BoundarySystem - does not touch h or Velocity") {
 TEST_CASE("BoundarySystem - leaves entities without Boundary untouched") {
   // 弾（Projectile）を想定。Boundary を持たないビューには入らない
   entt::registry registry;
-  SetupStage(registry);
+  SetupArena(registry);
   const auto entity = registry.create();
   registry.emplace<WorldPos>(entity, WorldPos{.w = 1000.0});
   registry.emplace<Velocity>(entity);
@@ -123,7 +123,7 @@ TEST_CASE("BoundarySystem - leaves entities without Boundary untouched") {
 TEST_CASE("BoundarySystem - leaves entities without Collider untouched") {
   // 撃破後（Collider が外れたエンティティ）を想定
   entt::registry registry;
-  SetupStage(registry);
+  SetupArena(registry);
   const auto entity = registry.create();
   registry.emplace<WorldPos>(entity, WorldPos{.w = 1000.0});
   registry.emplace<Velocity>(entity);
@@ -136,7 +136,7 @@ TEST_CASE("BoundarySystem - leaves entities without Collider untouched") {
 
 TEST_CASE("BoundarySystem - clamps even while in hitstop") {
   entt::registry registry;
-  SetupStage(registry);
+  SetupArena(registry);
   const auto entity =
       MakeBounded(registry, WorldPos{.w = 1000.0, .h = 10.0, .d = 0.0});
   registry.emplace<Hitstop>(entity, Hitstop{.remaining = 0.1});

@@ -189,7 +189,7 @@
     <ClCompile Include="Config\ScenarioData.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
-    <ClCompile Include="Config\StageConfig.cpp">
+    <ClCompile Include="Config\ArenaConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
     <ClCompile Include="Phase\ScenarioPhase.cpp">
@@ -381,7 +381,7 @@
     <ClCompile Include="tests\TestScenarioData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TestStageConfig.cpp">
+    <ClCompile Include="tests\TestArenaConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestBoundarySystem.cpp">
@@ -1121,7 +1121,7 @@
     <ClInclude Include="Config\EnemyConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
-    <ClInclude Include="Config\StageConfig.hpp">
+    <ClInclude Include="Config\ArenaConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
     <ClInclude Include="Config\PlayerConfig.hpp">

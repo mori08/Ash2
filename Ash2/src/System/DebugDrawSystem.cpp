@@ -2,7 +2,7 @@
 
 #include "Component/Attack.hpp"
 #include "Component/Hp.hpp"
-#include "Config/StageConfig.hpp"
+#include "Config/ArenaConfig.hpp"
 #include "Screen.hpp"
 
 namespace {
@@ -22,7 +22,7 @@ constexpr ColorF kAttackColor = Palette::Red;
 constexpr ColorF kHpColor = Palette::Green;
 /// 判定に参加していない Collider（残り）の色
 constexpr ColorF kNeutralColor = Palette::Gray;
-/// ステージ境界の色
+/// アリーナ境界の色
 constexpr ColorF kBoundaryColor = Palette::Yellow;
 
 /// @brief WorldPos + Collider のオフセット（x=w y=h z=d）を画面座標に変換する
@@ -124,13 +124,13 @@ void DebugDrawSystem::DrawColliders(const entt::registry& registry) {
 }
 
 void DebugDrawSystem::DrawBoundary(const entt::registry& registry) {
-  const auto& stage = registry.ctx().get<StageConfig>();
+  const auto& arena = registry.ctx().get<ArenaConfig>();
   // 平行投影（w は等倍、d は kDepthScale で圧縮）のため、対角2点を結ぶだけで
   // 長方形のまま画面に映る
   const Vec2 p0 =
-      WorldToScreen(WorldPos{.w = -stage.halfW, .h = 0.0, .d = -stage.halfD});
+      WorldToScreen(WorldPos{.w = -arena.halfW, .h = 0.0, .d = -arena.halfD});
   const Vec2 p1 =
-      WorldToScreen(WorldPos{.w = stage.halfW, .h = 0.0, .d = stage.halfD});
+      WorldToScreen(WorldPos{.w = arena.halfW, .h = 0.0, .d = arena.halfD});
   const Vec2 topLeft{Min(p0.x, p1.x), Min(p0.y, p1.y)};
   const Vec2 size{Abs(p1.x - p0.x), Abs(p1.y - p0.y)};
   RectF{Arg::topLeft(topLeft), size.x, size.y}.drawFrame(

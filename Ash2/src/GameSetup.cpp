@@ -3,10 +3,10 @@
 #include "GameSetup.hpp"
 
 #include "Asset.hpp"
+#include "Config/ArenaConfig.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
-#include "Config/StageConfig.hpp"
 #include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
@@ -79,15 +79,15 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   }
   registry.ctx().emplace<EnemyConfig>(*std::move(enemy));
 
-  auto stageToml = OpenToml(U"assets/config/stage.toml");
-  if (!stageToml) {
-    return std::unexpected{std::move(stageToml).error()};
+  auto arenaToml = OpenToml(U"assets/config/arena.toml");
+  if (!arenaToml) {
+    return std::unexpected{std::move(arenaToml).error()};
   }
-  auto stage = StageConfig::FromToml(*stageToml);
-  if (!stage) {
-    return std::unexpected{std::move(stage).error()};
+  auto arena = ArenaConfig::FromToml(*arenaToml);
+  if (!arena) {
+    return std::unexpected{std::move(arena).error()};
   }
-  registry.ctx().emplace<StageConfig>(*std::move(stage));
+  registry.ctx().emplace<ArenaConfig>(*std::move(arena));
 
   auto anims = LoadAnimations();
   if (!anims) {
