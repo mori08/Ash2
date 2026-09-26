@@ -125,7 +125,7 @@
     <ClCompile Include="src\Config\PlayerConfig.cpp" />
     <ClCompile Include="src\Config\ReactionLevel.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
-    <ClCompile Include="src\Config\StageConfig.cpp" />
+    <ClCompile Include="src\Config\ArenaConfig.cpp" />
     <ClCompile Include="src\CrashHandler.cpp" />
     <ClCompile Include="src\DebugOnly.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
@@ -183,7 +183,7 @@
     <ClCompile Include="tests\TestLockOnSystem.cpp" />
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
-    <ClCompile Include="tests\TestStageConfig.cpp" />
+    <ClCompile Include="tests\TestArenaConfig.cpp" />
     <ClCompile Include="tests\TestBoundarySystem.cpp" />
     <ClCompile Include="tests\TestMotionTimeline.cpp" />
     <ClCompile Include="tests\TestMovementSystem.cpp" />
@@ -425,7 +425,7 @@
     <ClInclude Include="src\Config\EnemyConfig.hpp" />
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
-    <ClInclude Include="src\Config\StageConfig.hpp" />
+    <ClInclude Include="src\Config\ArenaConfig.hpp" />
     <ClInclude Include="src\Config\TomlFields.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />

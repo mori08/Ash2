@@ -1,10 +1,10 @@
 assets/config/animation/enemy.toml
 assets/config/animation/player.toml
 assets/config/animation/reticle.toml
+assets/config/arena.toml
 assets/config/enemy.toml
 assets/config/player.toml
 assets/config/scenario.toml
-assets/config/stage.toml
 assets/images/enemy.png
 assets/images/player.png
 assets/images/reticle.png

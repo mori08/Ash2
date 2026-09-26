@@ -16,7 +16,7 @@ class DebugDrawSystem {
   /// 接地線を描く
   static void DrawColliders(const entt::registry& registry);
 
-  /// @brief ステージ境界（StageConfig）の輪郭を h = 0 の平面上に描く
+  /// @brief アリーナ境界（ArenaConfig）の輪郭を h = 0 の平面上に描く
   static void DrawBoundary(const entt::registry& registry);
 
   /// @brief カプセルの輪郭（半円2つ＋側面2本）を描く

@@ -1,13 +1,13 @@
-#include "StageConfig.hpp"
+#include "ArenaConfig.hpp"
 
 #include "Config/TomlFields.hpp"
 
-std::expected<StageConfig, String> StageConfig::FromToml(
+std::expected<ArenaConfig, String> ArenaConfig::FromToml(
     const TOMLValue& toml
 ) {
-  TomlFields f{toml, U"StageConfig::FromToml"};
+  TomlFields f{toml, U"ArenaConfig::FromToml"};
   auto cfg = f.wrap(
-      StageConfig{
+      ArenaConfig{
           .halfW = f.get<double>(U"half_w"),
           .halfD = f.get<double>(U"half_d"),
       }
@@ -20,7 +20,7 @@ std::expected<StageConfig, String> StageConfig::FromToml(
   // 超えないよう、half は正でなければならない
   if (cfg->halfW <= 0.0 || cfg->halfD <= 0.0) {
     return std::unexpected{
-        U"StageConfig::FromToml: half_w と half_d は正でなければなりません"
+        U"ArenaConfig::FromToml: half_w と half_d は正でなければなりません"
     };
   }
 
