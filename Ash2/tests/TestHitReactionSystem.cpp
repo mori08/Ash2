@@ -106,7 +106,7 @@ entt::entity MakeTarget(entt::registry& registry, double targetW) {
 
 /// @brief テスト用のプレイヤー（被弾側）エンティティを生成する
 ///
-/// `Hp`/`Collider` は本番の `PlayerTestPhase` と同じく常に持たせる
+/// `Hp`/`Collider` は本番の `PlayerFactory` と同じく常に持たせる
 /// （`ApplyPlayerReaction` が撃破判定のため無条件に `Hp` を読むため）。
 entt::entity MakePlayerTarget(entt::registry& registry, double targetW) {
   const auto player = registry.create();

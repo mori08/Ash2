@@ -1,128 +1,26 @@
 #include "Phase/PlayerTestPhase.hpp"
 
-#include "Component/Boundary.hpp"
-#include "Component/Collider.hpp"
 #include "Component/Dead.hpp"
-#include "Component/Drawable.hpp"
-#include "Component/Enemy.hpp"
-#include "Component/EnemyMotion.hpp"
-#include "Component/FadeOut.hpp"
-#include "Component/Gravity.hpp"
 #include "Component/Hierarchy.hpp"
-#include "Component/Hp.hpp"
-#include "Component/LockOn.hpp"
-#include "Component/Name.hpp"
-#include "Component/Player.hpp"
-#include "Component/PlayerMotion.hpp"
-#include "Component/Projectile.hpp"
-#include "Component/SpriteAnimation.hpp"
-#include "Component/Stamina.hpp"
-#include "Component/Team.hpp"
-#include "Component/Velocity.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
-#include "Config/PlayerConfig.hpp"
 #include "DebugOnly.hpp"
+#include "Factory/EnemyFactory.hpp"
+#include "Factory/PlayerFactory.hpp"
 #include "FrameData.hpp"
-#include "System/AnimationSystem.hpp"
-#include "System/AttachmentSystem.hpp"
-#include "System/BoundarySystem.hpp"
-#include "System/EnemySystem.hpp"
-#include "System/FadeOutSystem.hpp"
-#include "System/GravitySystem.hpp"
-#include "System/HitReactionSystem.hpp"
-#include "System/HitSystem.hpp"
-#include "System/HitstopSystem.hpp"
-#include "System/LockOnSystem.hpp"
-#include "System/MotionSystem.hpp"
-#include "System/MovementSystem.hpp"
-#include "System/ProjectileSystem.hpp"
-#include "System/StaminaSystem.hpp"
+#include "System/BattleSystem.hpp"
 
-constexpr int32 kPlayerMaxHp = 100;
 // TODO(#116): 撃破後の Pop までの猶予に根拠となる仕様がなく、値が暫定
 constexpr double kDeathPopDelaySec = 2.0;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
-  const auto& cfg = registry.ctx().get<PlayerConfig>();
-
   m_deathTimer = -1.0;
 
-  m_playerRoot = registry.create();
-  registry.emplace<Player>(m_playerRoot);
-  registry.emplace<Team>(m_playerRoot, Team::Player);
-  registry.emplace<WorldPos>(m_playerRoot);
-  registry.emplace<Velocity>(m_playerRoot);
-  registry.emplace<Gravity>(m_playerRoot, Gravity{.accel = cfg.gravity});
-  registry.emplace<Name>(m_playerRoot, Name{U"player"});
-  registry.emplace<Drawable>(
-      m_playerRoot, TextureDrawable{.anchor = DrawAnchor::BottomCenter}
-  );
-  registry.emplace<SpriteAnimation>(
-      m_playerRoot,
-      SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"}
-  );
-  registry.emplace<Hp>(
-      m_playerRoot, Hp{.max = kPlayerMaxHp, .current = kPlayerMaxHp}
-  );
-  registry.emplace<Collider>(
-      m_playerRoot,
-      Collider{
-          .segmentStart = Vec3{0.0, 0.0, 0.0},
-          .segmentEnd = Vec3{0.0, cfg.capsuleHeight, 0.0},
-          .radius = cfg.capsuleRadius
-      }
-  );
-  registry.emplace<Stamina>(
-      m_playerRoot, Stamina{.max = cfg.stamina.max, .current = cfg.stamina.max}
-  );
-  registry.emplace<PlayerMotion::Variant>(
-      m_playerRoot, PlayerMotion::Neutral{}
-  );
-  registry.emplace<LockOn>(m_playerRoot);
-  registry.emplace<Boundary>(m_playerRoot);
-  AnimationSystem::Update(registry, 0.0);
+  m_playerRoot = PlayerFactory::Create(registry, {});
 
-  m_dummyTarget = spawnEnemy(
-      registry, WorldPos{.w = registry.ctx().get<EnemyConfig>().spawnW}
+  m_dummyTarget = EnemyFactory::Create(
+      registry, {.pos = WorldPos{.w = registry.ctx().get<EnemyConfig>().spawnW}}
   );
-}
-
-entt::entity PlayerTestPhase::spawnEnemy(
-    entt::registry& registry, const WorldPos& pos
-) {
-  const auto& enemyCfg = registry.ctx().get<EnemyConfig>();
-  const auto& playerCfg = registry.ctx().get<PlayerConfig>();
-
-  const auto enemy = registry.create();
-  registry.emplace<Enemy>(enemy);
-  registry.emplace<Team>(enemy, Team::Enemy);
-  registry.emplace<WorldPos>(enemy, pos);
-  registry.emplace<Velocity>(enemy);
-  // Knockback の放物線は GravitySystem に任せるため、プレイヤーと同じ重力
-  // 加速度を与える（EnemyConfig は専用の重力値を持たない）
-  registry.emplace<Gravity>(enemy, Gravity{.accel = playerCfg.gravity});
-  registry.emplace<EnemyMotion::Variant>(enemy, EnemyMotion::Idle{});
-  registry.emplace<Drawable>(
-      enemy, TextureDrawable{.anchor = DrawAnchor::BottomCenter}
-  );
-  registry.emplace<SpriteAnimation>(
-      enemy, SpriteAnimation{.dataKey = U"enemy", .currentClip = U"idle"}
-  );
-  registry.emplace<Collider>(
-      enemy,
-      Collider{
-          .segmentStart = Vec3{0.0, 0.0, 0.0},
-          .segmentEnd = Vec3{0.0, enemyCfg.capsuleHeight, 0.0},
-          .radius = enemyCfg.capsuleRadius
-      }
-  );
-  registry.emplace<Hp>(
-      enemy, Hp{.max = enemyCfg.maxHp, .current = enemyCfg.maxHp}
-  );
-  registry.emplace<Boundary>(enemy);
-  AnimationSystem::Update(registry, 0.0);
-  return enemy;
 }
 
 PhaseCommand PlayerTestPhase::update(
@@ -130,22 +28,7 @@ PhaseCommand PlayerTestPhase::update(
 ) {
   const double dt = frameData.dt;
 
-  HitstopSystem::Update(registry, dt);
-  LockOnSystem::Update(registry, frameData);
-  MotionSystem::Update(registry, frameData);
-  StaminaSystem::Update(registry, dt);
-  MovementSystem::Update(registry, dt);
-  GravitySystem::Update(registry, dt);
-  BoundarySystem::Update(registry);
-  AttachmentSystem::UpdateTransform(registry);
-
-  const auto hits = HitSystem::Update(registry);
-  HitReactionSystem::Apply(registry, hits);
-  ProjectileSystem::Update(registry);
-  EnemySystem::Update(registry);
-  FadeOutSystem::Update(registry, dt);
-
-  AnimationSystem::Update(registry, dt);
+  BattleSystem::Update(registry, frameData);
 
   // TODO(#116): 撃破後の受け側が暫定で、猶予（kDeathPopDelaySec）後に
   // Pop するだけの挙動しか持たない
@@ -166,8 +49,9 @@ PhaseCommand PlayerTestPhase::update(
   } else if (m_dummyTarget == entt::null) {
     m_respawnTimer -= dt;
     if (m_respawnTimer <= 0.0) {
-      m_dummyTarget = spawnEnemy(
-          registry, WorldPos{.w = registry.ctx().get<EnemyConfig>().spawnW}
+      m_dummyTarget = EnemyFactory::Create(
+          registry,
+          {.pos = WorldPos{.w = registry.ctx().get<EnemyConfig>().spawnW}}
       );
     }
   }
@@ -183,7 +67,9 @@ PhaseCommand PlayerTestPhase::update(
     };
     if (m_extraEnemies.size() < kExtraEnemySpawns.size()) {
       m_extraEnemies.push_back(
-          spawnEnemy(registry, kExtraEnemySpawns[m_extraEnemies.size()])
+          EnemyFactory::Create(
+              registry, {.pos = kExtraEnemySpawns[m_extraEnemies.size()]}
+          )
       );
     }
   }
@@ -221,15 +107,5 @@ void PlayerTestPhase::onBeforePop(entt::registry& registry) {
   }
   m_extraEnemies.clear();
 
-  // 弾は独立エンティティ（m_playerRoot の子孫ではない）なので、
-  // Projectile タグで検索して個別に破棄する
-  for (const auto entity : registry.view<Projectile>()) {
-    registry.destroy(entity);
-  }
-
-  // フェード中のヒットボックスも m_playerRoot から Detach 済みの独立
-  // エンティティなので、FadeOut タグで検索して個別に破棄する
-  for (const auto entity : registry.view<FadeOut>()) {
-    registry.destroy(entity);
-  }
+  BattleSystem::Cleanup(registry);
 }

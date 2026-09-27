@@ -3,7 +3,6 @@
 
 #include <entt/entt.hpp>
 
-#include "Component/WorldPos.hpp"
 #include "IPhase.hpp"
 
 /// @brief プレイヤー操作テストフェーズ
@@ -29,9 +28,6 @@ class PlayerTestPhase : public IPhase {
  private:
   /// @brief プレイヤーを破棄して最新の設定で再生成する
   void reloadPlayer(entt::registry& registry);
-
-  /// @brief EnemyConfig に基づき、指定位置に敵エンティティを生成する
-  entt::entity spawnEnemy(entt::registry& registry, const WorldPos& pos);
 
   entt::entity m_playerRoot = entt::null;
   entt::entity m_dummyTarget = entt::null;
