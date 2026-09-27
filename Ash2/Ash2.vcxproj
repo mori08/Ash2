@@ -126,6 +126,8 @@
     <ClCompile Include="src\Config\ReactionLevel.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\Config\ArenaConfig.cpp" />
+    <ClCompile Include="src\Factory\PlayerFactory.cpp" />
+    <ClCompile Include="src\Factory\EnemyFactory.cpp" />
     <ClCompile Include="src\CrashHandler.cpp" />
     <ClCompile Include="src\DebugOnly.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
@@ -163,6 +165,7 @@
     <ClCompile Include="src\System\DebugDrawSystem.cpp" />
     <ClCompile Include="src\System\HitstopSystem.cpp" />
     <ClCompile Include="src\System\StaminaSystem.cpp" />
+    <ClCompile Include="src\System\BattleSystem.cpp" />
     <ClCompile Include="src\Phase\PhaseStack.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -427,6 +430,8 @@
     <ClInclude Include="src\Config\ScenarioData.hpp" />
     <ClInclude Include="src\Config\ArenaConfig.hpp" />
     <ClInclude Include="src\Config\TomlFields.hpp" />
+    <ClInclude Include="src\Factory\PlayerFactory.hpp" />
+    <ClInclude Include="src\Factory\EnemyFactory.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseLoaders.hpp" />
@@ -478,6 +483,7 @@
     <ClInclude Include="src\Component\DrawColor.hpp" />
     <ClInclude Include="src\Component\Team.hpp" />
     <ClInclude Include="src\Component\Dead.hpp" />
+    <ClInclude Include="src\System\BattleSystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\example\obj\blacksmith.obj">

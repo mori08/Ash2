@@ -162,20 +162,22 @@
 
 | システム | タイミング | 処理 |
 |---|---|---|
-| [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
-| [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは `SpriteAnimation`（`dataKey = reticle`）を持つエンティティとして生成し、テクスチャの解決は `AnimationSystem` に委ねる。`Dead` を持つプレイヤーは入力処理を飛ばして `target`/`halfTarget` を解除する（`Collider` を外した撃破後の被参照を避けるため） |
-| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | フェーズ内（PlayerTestPhase、HitstopSystem の後） | `PlayerMotion::Variant` → `EnemyMotion::Variant` の順に、状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<M>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（停止中も入力の受付を続けるため） |
-| [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | フェーズ内（PlayerTestPhase、MotionSystem の後） | `Player + Stamina + PlayerMotion::Variant` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
-| [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | フェーズ内（PlayerTestPhase、StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
-| [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | フェーズ内（PlayerTestPhase、MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
-| [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | フェーズ内（PlayerTestPhase、GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `ArenaConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
-| [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋フェーズ内（PlayerTestPhase、BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。PlayerTestPhase では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
-| [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | フェーズ内（PlayerTestPhase、AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
-| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | フェーズ内（PlayerTestPhase、HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
-| [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | フェーズ内（PlayerTestPhase、HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外 / 最大射程超（`origin` からの3軸距離が `maxRange` を超えた）での破棄 |
-| [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | フェーズ内（PlayerTestPhase、ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外で `Hierarchy::DestroyWithChildren` によりまとめて破棄する（`LockOn` のレティクルが子として付いていても連動して消える） |
-| [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | フェーズ内（PlayerTestPhase、EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
-| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | フェーズ内（各フェーズが直接呼出） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
+| [`BattleSystem::Update`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（PlayerTestPhase が毎フレーム1回呼出） | `HitstopSystem` から `AnimationSystem` までを固定順で呼ぶ。戦闘に参加するシステムの並びをこの1関数に閉じ込め、フェーズ側は個々のシステムを並べない |
+| [`BattleSystem::Cleanup`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（PlayerTestPhase の `onBeforePop`、本体破棄の後） | 独立エンティティ（`Projectile`・`FadeOut`）をタグで検索してまとめて破棄する |
+| [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | BattleSystem 内（MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
+| [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | BattleSystem 内（HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは `SpriteAnimation`（`dataKey = reticle`）を持つエンティティとして生成し、テクスチャの解決は `AnimationSystem` に委ねる。`Dead` を持つプレイヤーは入力処理を飛ばして `target`/`halfTarget` を解除する（`Collider` を外した撃破後の被参照を避けるため） |
+| [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | BattleSystem 内（HitstopSystem の後） | `PlayerMotion::Variant` → `EnemyMotion::Variant` の順に、状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<M>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（停止中も入力の受付を続けるため） |
+| [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | BattleSystem 内（MotionSystem の後） | `Player + Stamina + PlayerMotion::Variant` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
+| [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | BattleSystem 内（StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
+| [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | BattleSystem 内（MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
+| [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | BattleSystem 内（GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `ArenaConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
+| [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋BattleSystem 内（BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。BattleSystem では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
+| [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
+| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
+| [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | BattleSystem 内（HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外 / 最大射程超（`origin` からの3軸距離が `maxRange` を超えた）での破棄 |
+| [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | BattleSystem 内（ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外で `Hierarchy::DestroyWithChildren` によりまとめて破棄する（`LockOn` のレティクルが子として付いていても連動して消える） |
+| [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | BattleSystem 内（EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
+| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | BattleSystem 内（FadeOutSystem の後）＋各 Factory（生成直後）＋ AnimationViewerPhase（単体確認用） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | WorldPos+Drawable を奥行き順にソートして描画。`d` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。カメラは `WorldOrigin()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用し、`TextureDrawable` の描画位置は `Math::Round` で整数化する（HUD・フォントには波及しない） |
 | [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
 | [`DebugDrawSystem::DrawBoundary`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DrawColliders` と同じ F2 トグルで `DrawColliders` の直後に呼ばれる） | `ArenaConfig` の半幅から4隅を `h = 0` の平面上で `WorldToScreen` へ投影し、対角2点から組んだ `RectF` の輪郭を描く（平行投影のため長方形のまま映る） |
@@ -185,7 +187,8 @@
 
 ### 呼び出し順の制約
 
-入れ替えると壊れる組み合わせ。フェーズの `update` に並べるときはこれを守る。
+入れ替えると壊れる組み合わせ。`BattleSystem::Update` に並べるときはこれを守る。フェーズは
+個々のシステムを並べない。
 
 | 制約 | 理由 |
 |---|---|
@@ -289,6 +292,19 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 
 ---
 
+## ファクトリ一覧
+
+`Factory/` に配置。エンティティ本体の生成を担う（振る舞いの途中で生まれる付属エンティティは
+System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参照）。入れ子の `Param`
+と `static entt::entity Create(entt::registry&, const Param&)` の形を持つ。
+
+| ファクトリ | 役割 |
+|---|---|
+| [`PlayerFactory::Create`](../Ash2/src/Factory/PlayerFactory.hpp) | プレイヤーエンティティ（ルート）を生成する。`Param::pos`（既定 `WorldPos{}`）を初期位置とし、HP はファクトリ内の定数 `kPlayerMaxHp`、コライダー寸法・重力は `PlayerConfig`（`registry.ctx()`）から読む |
+| [`EnemyFactory::Create`](../Ash2/src/Factory/EnemyFactory.hpp) | `EnemyConfig` に基づき、`Param::pos` の位置に敵エンティティを生成する |
+
+---
+
 ## フェーズシステム
 
 `PhaseStack` がスタックで `IPhase` を管理。各フレームで先頭フェーズの `update()` を呼び、返り値の `PhaseCommand` でスタックを操作する。
@@ -313,7 +329,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。プレイヤーに `LockOn` を付与し `LockOnSystem::Update` を呼ぶ。`EnemyConfig` から敵（`Enemy`+`EnemyMotion::Variant`+`Collider`+`Hp` 等）を1体生成し、`HitReactionSystem`/`EnemySystem` に被弾リアクション・撃破後の破棄（`Hierarchy::DestroyWithChildren`）を委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に再生成する。Key4 で固定配置テーブルから敵を追加生成できる（`m_extraEnemies`、撃破されても再生成しない）。プレイヤーが `Dead` になったら `kDeathPopDelaySec`（フェーズ内 `constexpr`、暫定値）後に Pop する（撃破後の受け側は本番未定のため暫定）。F5 でプレイヤー・設定再生成、Esc で Pop |
+| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。生成は `PlayerFactory`/`EnemyFactory` に、毎フレームの更新は `BattleSystem::Update` に委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に `EnemyFactory` で再生成する。Key4 で固定配置テーブルから敵を追加生成できる（`m_extraEnemies`、撃破されても再生成しない）。プレイヤーが `Dead` になったら `kDeathPopDelaySec`（フェーズ内 `constexpr`、暫定値）後に Pop する（撃破後の受け側は本番未定のため暫定）。F5 でプレイヤー・設定再生成、Esc で Pop |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop）。`dataKey` が `AnimationDataRegistry` に未登録なら `FatalError{FatalReason::ConfigInvalid, ...}` を投げる |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
 
@@ -414,7 +430,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 - 描画サイズを表す `size` は持たない（敵はテクスチャ描画のため寸法は `Collider` のカプセルのみで
   表す。#115 でテクスチャ化する前は `RectDrawable` のダミー矩形用に持っていた）
 - `Knockback` の重力加速度は専用の値を持たず、`PlayerConfig::gravity` を敵にもそのまま付与して
-  流用する（`PlayerTestPhase::spawnEnemy` 参照）
+  流用する（`EnemyFactory::Create` 参照）
 
 ### [`ArenaConfig`](../Ash2/src/Config/ArenaConfig.hpp)
 
@@ -569,7 +585,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 
 | クリップ名 | 使用箇所 |
 |---|---|
-| `idle` | `Idle`（`PlayerTestPhase::spawnEnemy`／`Landing`/`Stagger`/`Repel`/`Knockback` の `Tick()` が `Idle` へ遷移する瞬間） |
+| `idle` | `Idle`（`EnemyFactory::Create`／`Landing`/`Stagger`/`Repel`/`Knockback` の `Tick()` が `Idle` へ遷移する瞬間） |
 | `move` | `Idle` の `Tick()`（`Chase` へ遷移する瞬間） |
 | `windup` | `Chase` の `Tick()`（`Windup` へ遷移する瞬間） |
 | `leap` | `Windup` の `Tick()`（`Leap` へ遷移する瞬間） |
@@ -624,3 +640,4 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 - 新しいアニメーションクリップを参照するときは `Ash2/App/assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` の `assert` で落ちる）。
 - アニメーションクリップは既定で一発再生（最終コマで停止）。ループさせたいクリップにのみ `loop = true` を明記する。
 - 攻撃判定・被弾判定を持つエンティティ（本体・ヒットボックス・弾）には `Team` を付与する。持たない側は `HitSystem` の同陣営スキップに参加せず、静かに当たる（`assert` では捕まえない仕様）。新しい攻撃エンティティの生成時は `Team` を付与する。
+- 戦闘に参加する新しいシステムは `BattleSystem::Update` に並べる。フェーズの `update` に直接並べない（呼び出し順の制約は上記「呼び出し順の制約」参照）。

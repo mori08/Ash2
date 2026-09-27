@@ -62,12 +62,13 @@ Ash2/src/
 ├── Phase/                # フェーズ管理（ゲーム状態機械）
 ├── System/               # ECS システム（ロジックのみ）
 │   └── PlayerMotion/     # PlayerMotionSystem の状態別 Tick() 実装
+├── Factory/              # エンティティ本体の生成（部品一覧は REFERENCE.md 参照）
 └── Util/                 # フレームワーク非依存の汎用ヘルパー
 ```
 
-依存の向きは `Component` / `Config` → `System` → `Phase` の一方向。System は Phase を知らず、
-Component は System を知らない。Config は最下層で、他のどのディレクトリも include しない。
-System が Config を読むのは `registry.ctx()` 経由のみ。
+依存の向きは `Component` / `Config` → `System` → `Factory` → `Phase` の一方向。System は Phase・
+Factory を知らず、Component は System を知らない。Config は最下層で、他のどのディレクトリも
+include しない。System が Config を読むのは `registry.ctx()` 経由のみ。
 
 ---
 
@@ -107,6 +108,10 @@ EnTT を使用し、実体（Entity）とデータ（Component）、処理（Sys
 - **システム**（`System/` に関数を配置）
   - 状態を持たない静的関数
   - 引数は `registry` と `FrameData`
+- **ファクトリ**（`Factory/` に関数を配置）
+  - エンティティ本体（プレイヤー・敵など）の生成を担う
+  - 振る舞いの途中で生まれる付属エンティティ（弾・攻撃判定・レティクル等）は
+    本体側と同じ System が生成する。ファクトリは本体の生成にだけ責務を持つ
 - **コンテキスト**（`registry.ctx()`）
   - グローバルな読み取り専用データの置き場
   - システムの引数が `registry` 1つで済み、テストは registry を作り直すだけで隔離できる
@@ -168,6 +173,9 @@ Main.cpp ── registry を1つ作る
        └ IPhase::update(registry, frameData)    ← 先頭のフェーズだけ
             └ 各 System::Update(registry, ...)  ← そのフェーズに必要なものを順に
 ```
+
+戦闘に参加するシステムの並びは各フェーズには書かず、`BattleSystem::Update` 1か所に閉じる。
+戦闘を行うフェーズはこれを呼ぶだけにする（詳細は [REFERENCE.md](REFERENCE.md) の「システム一覧」参照）。
 
 ---
 
