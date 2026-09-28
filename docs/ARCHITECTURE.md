@@ -70,6 +70,11 @@ Ash2/src/
 Factory を知らず、Component は System を知らない。Config は最下層で、他のどのディレクトリも
 include しない。System が Config を読むのは `registry.ctx()` 経由のみ。
 
+**例外：ステージ定義の置き場所。** `StageData`（TOML 由来の構造体）は `Config/` ではなく
+`Phase/` に置く。使うのが `StagePhase` と読み込みを担う `GameSetup` だけであることに加え、
+`Config` は他のディレクトリを include できない制約上、`EnemyFactory::Param` を持つ
+`StageData` を置けないため。
+
 ---
 
 ## 1. 座標系 — 疑似3D
@@ -134,6 +139,14 @@ EnTT を使用し、実体（Entity）とデータ（Component）、処理（Sys
 次に動くのは下に残っていたフェーズになる。`WaitPhase` のような汎用のフェーズが、呼び出し元
 ごとの遷移先を持たずに済む。
 
+**例外：結果フェーズの Reset 先決め打ち（暫定）。** `StageClearPhase`/`StageGameOverPhase`
+は表示時間が尽きると `TestMenuPhase` への `Reset` を返す。`ScenarioPhase` を含むスタックを
+畳み、ステージの実体（`StagePhase` が持つプレイヤー・敵）を確実に片付けるためで、`Reset` を
+「遷移先へ進む」ではなく「続きではなく新しく始め直す」操作と位置づけて使う。ステージを終えて
+テストメニューからやり直す今回の用途はこの意味に沿う。タイトル画面やリトライができたら
+見直す暫定の設計であり、結果表示中に一部の演出が止まって見える点も同様に暫定とする
+（詳細は [REFERENCE.md](REFERENCE.md) の `BattleSystem::UpdateAftermath` 参照）。
+
 ### ScenarioPhase だけが進行順を知る
 
 画面の流れは C++ ではなく `assets/config/scenario.toml` にある。`Main.cpp` が最初に積むのは、
@@ -148,6 +161,16 @@ EnTT を使用し、実体（Entity）とデータ（Component）、処理（Sys
 ScenarioPhase          ← 下に残り続ける
   └ push → TestMenuPhase   ← Pop すると ScenarioPhase の続きへ戻る
        └ push → PlayerTestPhase
+```
+
+`StagePhase` も同様に子フェーズを積むが、決着時は `Push` した結果フェーズが `Reset` で
+スタックごと畳むため、`StagePhase` へ戻ることはない（Esc で抜けたときだけ `Pop` で戻る）。
+
+```
+ScenarioPhase
+  └ push → StagePhase
+       └ push → StageClearPhase / StageGameOverPhase
+            └ 表示時間経過 → Reset(TestMenuPhase)  ← スタック全体を畳む
 ```
 
 TOML を読むのは Config 層で、具象フェーズを知らない。
@@ -172,10 +195,14 @@ Main.cpp ── registry を1つ作る
   └ PhaseStack::update(registry, frameData)
        └ IPhase::update(registry, frameData)    ← 先頭のフェーズだけ
             └ 各 System::Update(registry, ...)  ← そのフェーズに必要なものを順に
+  └ （DrawSystem・HudSystem の後）PhaseStack::draw(registry)
+       └ IPhase::draw(registry)                 ← 先頭のフェーズだけ、画面固定の文字等
 ```
 
 戦闘に参加するシステムの並びは各フェーズには書かず、`BattleSystem::Update` 1か所に閉じる。
 戦闘を行うフェーズはこれを呼ぶだけにする（詳細は [REFERENCE.md](REFERENCE.md) の「システム一覧」参照）。
+決着後の演出だけを進めたいフェーズ（結果フェーズ）は、代わりに `BattleSystem::UpdateAftermath`
+を呼ぶ。
 
 ---
 
@@ -245,6 +272,8 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 ## 7. 描画 — ワールドを画面へ
 
 画面を描くシステムは `DrawSystem` と `HudSystem` の2つだけ。見た目の話はここに閉じている。
+フェーズが持つ画面固定の文字などは、この2システムの後に呼ばれる `IPhase::draw` が描く
+（先頭のフェーズのみ。呼び出しは `PhaseStack::draw` 経由）。
 
 `DrawSystem` は `WorldPos` と `Drawable` を持つエンティティをまとめて描く。種別ごとの描画
 コードはない。`Drawable` は形状の variant（矩形・円・テクスチャ）で、色は `DrawColor` が別に

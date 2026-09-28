@@ -5,4 +5,11 @@ param = "GameStart"
 
 [[GameStart]]
 action = "push"
+phase = "stage"
+param = "stage1"
+
+# StagePhase の決着時は結果フェーズが Reset するため、この test_menu は
+# 実行されない。ここまで進むのは StagePhase を Esc で抜けたときだけ。
+[[GameStart]]
+action = "push"
 phase = "test_menu"

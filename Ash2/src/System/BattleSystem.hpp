@@ -13,4 +13,9 @@ class BattleSystem {
 
   /// @brief 独立エンティティ（`Projectile`・`FadeOut`）をまとめて破棄する
   static void Cleanup(entt::registry& registry);
+
+  /// @brief 決着後の演出だけを進め、戦闘は進めない
+  /// @note 内部の呼び出し順は Update と同じ相対順（Hitstop → FadeOut →
+  ///       Animation）を守る
+  static void UpdateAftermath(entt::registry& registry, double dt);
 };

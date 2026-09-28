@@ -54,3 +54,9 @@ void BattleSystem::Cleanup(entt::registry& registry) {
     registry.destroy(entity);
   }
 }
+
+void BattleSystem::UpdateAftermath(entt::registry& registry, double dt) {
+  HitstopSystem::Update(registry, dt);
+  FadeOutSystem::Update(registry, dt);
+  AnimationSystem::Update(registry, dt);
+}

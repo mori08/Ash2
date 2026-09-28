@@ -35,6 +35,7 @@ void RunGameLoop(
     DrawSystem::Draw(registry);
     DebugOnly::DrawColliders(registry);
     HudSystem::Draw(registry);
+    phaseStack.draw(registry);
   }
 }
 

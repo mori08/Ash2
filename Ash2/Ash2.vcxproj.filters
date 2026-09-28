@@ -321,6 +321,18 @@
     <ClCompile Include="Phase\PhaseLoaders.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
+    <ClCompile Include="Phase\StageData.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\StagePhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\StageClearPhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\StageGameOverPhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -400,6 +412,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestBoundarySystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestStageData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestStagePhase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestStageClearPhase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestStageGameOverPhase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1197,6 +1221,18 @@
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Phase\PhaseLoaders.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\StageData.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\StagePhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\StageClearPhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\StageGameOverPhase.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Phase\PhaseStack.hpp">

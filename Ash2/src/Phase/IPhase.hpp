@@ -59,4 +59,8 @@ class IPhase {
 
   /// @brief スタックから取り出される直前に呼ばれる
   virtual void onBeforePop(entt::registry&) {}
+
+  /// @brief 画面固定の文字などを描く（既定では何もしない）
+  /// @note Main.cpp が HudSystem::Draw の後に PhaseStack::draw 経由で呼ぶ
+  virtual void draw(const entt::registry&) const {}
 };

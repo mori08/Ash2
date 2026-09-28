@@ -35,6 +35,13 @@ void PhaseStack::update(entt::registry& registry, const FrameData& frameData) {
   );
 }
 
+void PhaseStack::draw(const entt::registry& registry) const {
+  if (m_stack.empty()) {
+    return;
+  }
+  m_stack.back()->draw(registry);
+}
+
 void PhaseStack::pop(entt::registry& registry) {
   m_stack.back()->onBeforePop(registry);
   m_stack.pop_back();

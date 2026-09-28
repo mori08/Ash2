@@ -1,0 +1,7 @@
+[stage1]
+[[stage1.enemies]]
+w = 150.0
+d = 0.0
+[[stage1.enemies]]
+w = -150.0
+d = 80.0

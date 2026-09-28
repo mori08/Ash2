@@ -48,6 +48,22 @@ std::expected<AnimationDataRegistry, String> LoadAnimations() {
   return animReg;
 }
 
+std::expected<StageDataRegistry, String> LoadStages() {
+  auto toml = OpenToml(U"assets/config/stage.toml");
+  if (!toml) {
+    return std::unexpected{std::move(toml).error()};
+  }
+  StageDataRegistry stages;
+  for (const auto& member : toml->tableView()) {
+    auto stage = StageData::FromToml(member.value);
+    if (!stage) {
+      return std::unexpected{member.name + U": " + std::move(stage).error()};
+    }
+    stages[member.name] = *std::move(stage);
+  }
+  return stages;
+}
+
 std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<NameLookup>();
   NameLookupSystem::Connect(registry);
@@ -88,6 +104,12 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
     return std::unexpected{std::move(arena).error()};
   }
   registry.ctx().emplace<ArenaConfig>(*std::move(arena));
+
+  auto stages = LoadStages();
+  if (!stages) {
+    return std::unexpected{std::move(stages).error()};
+  }
+  registry.ctx().emplace<StageDataRegistry>(*std::move(stages));
 
   auto anims = LoadAnimations();
   if (!anims) {

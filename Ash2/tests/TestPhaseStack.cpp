@@ -11,6 +11,7 @@ struct PhaseSpy {
   int32 afterPushCount = 0;
   int32 beforePopCount = 0;
   int32 updateCount = 0;
+  int32 drawCount = 0;
 };
 
 /// @brief MockPhase が update() で返すコマンドの種類
@@ -31,6 +32,7 @@ class MockPhase : public IPhase {
 
   void onAfterPush(entt::registry&) override { m_spy->afterPushCount++; }
   void onBeforePop(entt::registry&) override { m_spy->beforePopCount++; }
+  void draw(const entt::registry&) const override { m_spy->drawCount++; }
 
   PhaseCommand update(entt::registry&, const FrameData&) override {
     m_spy->updateCount++;
@@ -128,6 +130,35 @@ TEST_CASE("PhaseStack - update on empty stack does nothing") {
 
   stack.update(registry, FrameData{});
   REQUIRE(spy->updateCount == 1);
+}
+
+TEST_CASE("PhaseStack - draw calls only the top phase") {
+  entt::registry registry;
+  auto spy1 = std::make_shared<PhaseSpy>();
+  auto spy2 = std::make_shared<PhaseSpy>();
+  PhaseStack stack{
+      std::make_unique<MockPhase>(
+          spy1, MockCommand::Push, std::make_unique<MockPhase>(spy2)
+      ),
+      registry
+  };
+  stack.update(registry, FrameData{});
+
+  stack.draw(registry);
+  REQUIRE(spy1->drawCount == 0);
+  REQUIRE(spy2->drawCount == 1);
+}
+
+TEST_CASE("PhaseStack - draw on empty stack does nothing") {
+  entt::registry registry;
+  auto spy = std::make_shared<PhaseSpy>();
+  PhaseStack stack{
+      std::make_unique<MockPhase>(spy, MockCommand::Pop), registry
+  };
+  stack.update(registry, FrameData{});
+
+  stack.draw(registry);
+  REQUIRE(spy->drawCount == 0);
 }
 
 #endif

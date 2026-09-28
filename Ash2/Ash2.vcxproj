@@ -138,6 +138,10 @@
     <ClCompile Include="src\Phase\AnimationViewerPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
     <ClCompile Include="src\Phase\PhaseLoaders.cpp" />
+    <ClCompile Include="src\Phase\StageData.cpp" />
+    <ClCompile Include="src\Phase\StagePhase.cpp" />
+    <ClCompile Include="src\Phase\StageClearPhase.cpp" />
+    <ClCompile Include="src\Phase\StageGameOverPhase.cpp" />
     <ClCompile Include="src\Component\Hierarchy.cpp" />
     <ClCompile Include="src\System\AnimationSystem.cpp" />
     <ClCompile Include="src\System\PlayerMotion\Helper.cpp" />
@@ -197,6 +201,10 @@
     <ClCompile Include="tests\TestScenarioData.cpp" />
     <ClCompile Include="tests\TestWaitPhase.cpp" />
     <ClCompile Include="tests\TestWorldPos.cpp" />
+    <ClCompile Include="tests\TestStageData.cpp" />
+    <ClCompile Include="tests\TestStagePhase.cpp" />
+    <ClCompile Include="tests\TestStageClearPhase.cpp" />
+    <ClCompile Include="tests\TestStageGameOverPhase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\engine\texture\box-shadow\128.png" />
@@ -435,6 +443,10 @@
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseLoaders.hpp" />
+    <ClInclude Include="src\Phase\StageData.hpp" />
+    <ClInclude Include="src\Phase\StagePhase.hpp" />
+    <ClInclude Include="src\Phase\StageClearPhase.hpp" />
+    <ClInclude Include="src\Phase\StageGameOverPhase.hpp" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Asset.hpp" />
     <ClInclude Include="src\UiFonts.hpp" />

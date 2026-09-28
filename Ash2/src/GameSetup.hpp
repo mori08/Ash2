@@ -5,6 +5,7 @@
 #include <expected>
 
 #include "Config/AnimationData.hpp"
+#include "Phase/StageData.hpp"
 
 /// @brief registry のコンテキストを初期化する
 [[nodiscard]] std::expected<void, String> InitializeRegistry(
@@ -14,3 +15,7 @@
 /// @brief アニメーション設定 TOML を全件読み込む
 /// @return 失敗時は toml のパスを前置したメッセージ
 [[nodiscard]] std::expected<AnimationDataRegistry, String> LoadAnimations();
+
+/// @brief ステージ設定 TOML を全件読み込む
+/// @return 失敗時はステージ名を前置したメッセージ
+[[nodiscard]] std::expected<StageDataRegistry, String> LoadStages();

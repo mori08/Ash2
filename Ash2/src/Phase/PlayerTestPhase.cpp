@@ -10,7 +10,8 @@
 #include "FrameData.hpp"
 #include "System/BattleSystem.hpp"
 
-// TODO(#116): 撃破後の Pop までの猶予に根拠となる仕様がなく、値が暫定
+// 撃破後の本来の処理は StageGameOverPhase が持つ。ここはテスト用に、
+// 一定時間後に Pop するだけにする
 constexpr double kDeathPopDelaySec = 2.0;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
@@ -30,8 +31,8 @@ PhaseCommand PlayerTestPhase::update(
 
   BattleSystem::Update(registry, frameData);
 
-  // TODO(#116): 撃破後の受け側が暫定で、猶予（kDeathPopDelaySec）後に
-  // Pop するだけの挙動しか持たない
+  // 撃破後の本来の処理は StageGameOverPhase が持つ。ここはテスト用に、
+  // 猶予（kDeathPopDelaySec）後に Pop するだけにする
   if (m_playerRoot != entt::null && registry.all_of<Dead>(m_playerRoot)) {
     if (m_deathTimer < 0.0) {
       m_deathTimer = kDeathPopDelaySec;

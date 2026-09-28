@@ -12,6 +12,9 @@ class PhaseStack {
 
   void update(entt::registry& registry, const FrameData& frameData);
 
+  /// @brief スタック先頭のフェーズの draw を呼ぶ（空なら何もしない）
+  void draw(const entt::registry& registry) const;
+
  private:
   /// @brief スタックの先頭フェーズを取り出す
   void pop(entt::registry& registry);
