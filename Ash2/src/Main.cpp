@@ -3,7 +3,6 @@
 #include <entt/entt.hpp>
 #include <exception>
 
-#include "Asset.hpp"
 #include "Config/ScenarioData.hpp"
 #include "CrashHandler.hpp"
 #include "DebugOnly.hpp"
@@ -40,13 +39,12 @@ void RunGameLoop(
 
 /// @brief ゲームに必要な状態を構築し、ゲームループへ渡す
 void Run() {
-  if (auto result = RegisterAssets(); !result) {
+  if (auto result = InitializeEngine(); !result) {
     throw FatalError{
         .reason = FatalReason::AssetMissing,
         .detail = std::move(result).error(),
     };
   }
-  Scene::SetTextureFilter(TextureFilter::Nearest);
 
   entt::registry registry;
   if (auto result = InitializeRegistry(registry); !result) {
