@@ -246,11 +246,11 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 
 画面を描くシステムは `DrawSystem` と `HudSystem` の2つだけ。見た目の話はここに閉じている。
 
-`DrawSystem` は `WorldPos` と `Drawable` を持つエンティティをまとめて描く。種別ごとの描画
-コードはない。`Drawable` は形状の variant（矩形・円・テクスチャ）で、色は `DrawColor` が別に
-持つ。持たないエンティティは白・不透明として扱う。
+**どのシステムが描くかは位置コンポーネントで決まる。** `WorldPos` + `Drawable` は `DrawSystem` が
+ワールドとして描き、`ScreenPos` + `Drawable` は `HudSystem` が画面固定で描く。
 
-`HudSystem` はワールドを通らず、画面座標へ直接描く。
+種別ごとの描画コードはない。`Drawable` は形状の variant（矩形・円・テクスチャ・文字）で、色は
+`DrawColor` が別に持つ。持たないエンティティは白・不透明として扱う。
 
 アニメーションは `TextureDrawable` の中身の差し替えとして表す。`AnimationSystem` が
 `SpriteAnimation` の経過時間を進め、切り出した `TextureRegion` を書き込む。`DrawSystem` は
