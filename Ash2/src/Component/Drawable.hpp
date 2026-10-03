@@ -31,5 +31,14 @@ struct TextureDrawable {
   DrawAnchor anchor = DrawAnchor::Center;
 };
 
+/// @brief 文字描画データ
+struct TextDrawable {
+  /// 描画する文字列
+  String text;
+  Font font;
+  DrawAnchor anchor = DrawAnchor::Center;
+};
+
 /// @brief 描画コンポーネント（描画形状の variant）
-using Drawable = std::variant<RectDrawable, CircleDrawable, TextureDrawable>;
+using Drawable =
+    std::variant<RectDrawable, CircleDrawable, TextureDrawable, TextDrawable>;
