@@ -48,16 +48,21 @@ std::expected<AnimationDataRegistry, String> LoadAnimations() {
   return animReg;
 }
 
+std::expected<void, String> InitializeEngine() {
+  if (auto result = RegisterAssets(); !result) {
+    return std::unexpected{std::move(result).error()};
+  }
+  if (auto result = UiFonts::Register(); !result) {
+    return std::unexpected{std::move(result).error()};
+  }
+  Scene::SetTextureFilter(TextureFilter::Nearest);
+  return {};
+}
+
 std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<NameLookup>();
   NameLookupSystem::Connect(registry);
   HierarchySystem::Connect(registry);
-
-  auto fonts = UiFonts::Create();
-  if (!fonts) {
-    return std::unexpected{std::move(fonts).error()};
-  }
-  registry.ctx().emplace<UiFonts>(*std::move(fonts));
 
   auto playerToml = OpenToml(U"assets/config/player.toml");
   if (!playerToml) {

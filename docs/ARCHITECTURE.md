@@ -48,10 +48,10 @@
 ```
 Ash2/src/
 ├── Main.cpp              # エントリポイント・ゲームループ
-├── GameSetup.hpp/.cpp    # registry 初期化・アニメーション設定読み込み
+├── GameSetup.hpp/.cpp    # Siv3D 側・registry 側の初期化・アニメーション設定読み込み
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
 ├── FrameData.hpp         # フレームごとの更新データ（dt + InputState）
-├── UiFonts.hpp           # UI 描画用フォント一式（registry.ctx() に格納）
+├── UiFonts.hpp           # UI フォントの FontAsset キーと登録
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── DebugOnly.hpp/.cpp    # Debug ビルドにのみ存在する機能とそのキー判定
 ├── FatalError.hpp        # 致命エラーの型（分類と詳細）

@@ -56,7 +56,7 @@ PhaseCommand TestMenuPhase::update(
     return PhaseCommand::Push{.nextPhase = std::move(phase)};
   }
 
-  const auto& font = registry.ctx().get<UiFonts>().large;
+  const FontAsset font{UiFonts::kLarge};
 
   Scene::SetBackground(ColorF{kBgBrightness});
   font(U"Test Menu").draw(kTitleX, kTitleY);

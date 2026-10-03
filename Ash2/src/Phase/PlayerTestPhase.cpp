@@ -42,9 +42,7 @@ PhaseCommand PlayerTestPhase::update(
       registry.emplace<ScreenPos>(m_gameOverText, Scene::CenterF());
       registry.emplace<Drawable>(
           m_gameOverText,
-          TextDrawable{
-              .text = U"GAME OVER", .font = registry.ctx().get<UiFonts>().large
-          }
+          TextDrawable{.text = U"GAME OVER", .font = FontAsset{UiFonts::kLarge}}
       );
     }
     m_deathTimer -= dt;

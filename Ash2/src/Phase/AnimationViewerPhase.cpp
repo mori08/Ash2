@@ -99,7 +99,7 @@ PhaseCommand AnimationViewerPhase::update(
 
   AnimationSystem::Update(registry, frameData.dt);
 
-  const auto& font = registry.ctx().get<UiFonts>().small;
+  const FontAsset font{UiFonts::kSmall};
 
   Scene::SetBackground(ColorF{kBgBrightness});
   font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(kTitleX, kTitleY);
