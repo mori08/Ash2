@@ -174,9 +174,6 @@ Main.cpp ── registry を1つ作る
             └ 各 System::Update(registry, ...)  ← そのフェーズに必要なものを順に
 ```
 
-戦闘に参加するシステムの並びは各フェーズには書かず、`BattleSystem::Update` 1か所に閉じる。
-戦闘を行うフェーズはこれを呼ぶだけにする（詳細は [REFERENCE.md](REFERENCE.md) の「システム一覧」参照）。
-
 ---
 
 ## 4. Motion — プレイヤーと敵の行動状態

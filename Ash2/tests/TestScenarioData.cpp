@@ -79,6 +79,15 @@ TEST_CASE("ScenarioData::FromToml - missing param returns unexpected") {
   REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
 }
 
+TEST_CASE("ScenarioData::FromToml - stage without param returns unexpected") {
+  constexpr std::string_view kToml =
+      "[[intro]]\n"
+      "action = \"push\"\n"
+      "phase = \"stage\"\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+}
+
 TEST_CASE(
     "ScenarioData::FromToml - reference to nonexistent section returns "
     "unexpected"

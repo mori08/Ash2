@@ -297,6 +297,9 @@
     <ClCompile Include="Factory\EnemyFactory.cpp">
       <Filter>Source Files\Factory</Filter>
     </ClCompile>
+    <ClCompile Include="Factory\StageData.cpp">
+      <Filter>Source Files\Factory</Filter>
+    </ClCompile>
     <ClCompile Include="CrashHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -310,6 +313,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Phase\PlayerTestPhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\StagePhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\StageClearPhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
+    <ClCompile Include="Phase\StageGameOverPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
     <ClCompile Include="Phase\TestMenuPhase.cpp">
@@ -400,6 +412,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestScenarioData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestStageData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestStagePhase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestArenaConfig.cpp">
@@ -1196,6 +1214,15 @@
     <ClInclude Include="Phase\PlayerTestPhase.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
+    <ClInclude Include="Phase\StagePhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\StageClearPhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\StageGameOverPhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
     <ClInclude Include="Phase\TestMenuPhase.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
@@ -1320,6 +1347,9 @@
       <Filter>Header Files\Factory</Filter>
     </ClInclude>
     <ClInclude Include="Factory\EnemyFactory.hpp">
+      <Filter>Header Files\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="Factory\StageData.hpp">
       <Filter>Header Files\Factory</Filter>
     </ClInclude>
   </ItemGroup>

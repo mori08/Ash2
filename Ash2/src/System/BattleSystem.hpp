@@ -11,6 +11,14 @@ class BattleSystem {
   ///       システムを増減・並び替えるときはこの関数を直す
   static void Update(entt::registry& registry, const FrameData& frameData);
 
+  /// @brief 決着後に演出だけを進める（`Hitstop`
+  /// 解除・フェードアウト・アニメーション）
+  /// @note Motion・移動・判定は止まる。`AnimationSystem` は `Hitstop` を
+  ///       除外するため、`HitstopSystem` を先に呼ぶ
+  static void UpdateAftermath(
+      entt::registry& registry, const FrameData& frameData
+  );
+
   /// @brief 独立エンティティ（`Projectile`・`FadeOut`）をまとめて破棄する
   static void Cleanup(entt::registry& registry);
 };
