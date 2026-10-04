@@ -279,6 +279,9 @@
     <ClCompile Include="System\HudSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\GaugeSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\DebugDrawSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -349,6 +352,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestStaminaSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestGaugeSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestMotionTimeline.cpp">
@@ -1106,6 +1112,9 @@
     <ClInclude Include="Component\ScreenPos.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Gauge.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\SpriteAnimation.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
@@ -1284,6 +1293,9 @@
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\HudSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\GaugeSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\ProjectileSystem.hpp">

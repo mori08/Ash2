@@ -21,6 +21,9 @@
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画形状の variant。詳細は下記「描画データ型」参照 |
 | [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`kDefaultDrawColor`）として扱われる |
 | [`ScreenPos`](../Ash2/src/Component/ScreenPos.hpp) | 画面固定の描画位置（px）と `layer`（前後関係、大きいほど手前）。`Drawable` と組み合わせ、`HudSystem` が画面座標へ直接描く対象であることを示す（`WorldPos` + `Drawable` は `DrawSystem` が描く） |
+| [`HpGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Hp` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
+| [`StaminaGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Stamina` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
+| [`GaugeSource`](../Ash2/src/Component/Gauge.hpp) | ゲージが値を読む先のエンティティ。参照先の生成・破棄には関与せず、ゲージを生成した側（`StagePhase`）が参照先より先に破棄する |
 | [`SpriteAnimation`](../Ash2/src/Component/SpriteAnimation.hpp) | アニメーション再生状態（per-entity）。共有データは `AnimationDataRegistry` を `dataKey` で参照する。同ヘッダの `SetClip`（inline 自由関数）がクリップの変化していれば差し替え、再生位置をリセットする |
 | [`Name`](../Ash2/src/Component/Name.hpp) | エンティティ名（`const String`、構築後不変。NameLookup と対応） |
 | [`Player`](../Ash2/src/Component/Player.hpp) | プレイヤータグ（データなし） |
@@ -57,7 +60,7 @@
 | `CircleDrawable` | 円描画（半径） |
 | `TextureDrawable` | テクスチャ描画（`TextureRegion`・描画オフセット・`DrawAnchor`） |
 | `TextDrawable` | 文字描画（文字列・`Font`・`DrawAnchor`） |
-| `DrawAnchor` | `WorldPos`（または `ScreenPos`）を形状のどこに合わせるか（`Center` / `BottomCenter`）。`RectDrawable`・`TextureDrawable`・`TextDrawable` が持ち、既定は `Center` |
+| `DrawAnchor` | `WorldPos`（または `ScreenPos`）を形状のどこに合わせるか（`Center` / `BottomCenter` / `TopLeft`）。`RectDrawable`・`TextureDrawable`・`TextDrawable` が持ち、既定は `Center` |
 
 ---
 
@@ -154,7 +157,7 @@
   `PlayerMotion::MakeDamaged` 経由で直接 `replace` する
 - プレイヤーの撃破（`PlayerMotion::Dead`）も `HitReactionSystem` が直接 `replace` する。
   `Hp` 枯渇時は `reaction` によらず成立し、`Collider` を外して `Dead` タグを付与する
-  （`Hp` は `HudSystem` が読むため残す。詳細は下記「リアクションの対応」参照）
+  （`Hp` は `GaugeSystem` が読むため残す。詳細は下記「リアクションの対応」参照）
 
 ---
 
@@ -174,6 +177,7 @@
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | BattleSystem 内（StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | BattleSystem 内（MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
 | [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | BattleSystem 内（GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `ArenaConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
+| [`GaugeSystem::Update`](../Ash2/src/System/GaugeSystem.hpp) | 毎フレーム（フェーズ後） | `HpGauge`/`StaminaGauge` + `GaugeSource` + `Drawable` を持つエンティティの `RectDrawable` 幅を、`GaugeSource` が指す `Hp`/`Stamina` の `current / max`（0〜1 にクランプ）× `fullWidth` に更新する。`max <= 0` は幅 0。参照先が無効、または `Hp`/`Stamina` を持たない場合は `assert` で止まる |
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋BattleSystem 内（BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。BattleSystem では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
@@ -184,7 +188,7 @@
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | `WorldPos`+`Drawable`（`ScreenPos` を持つものは `exclude`）を奥行き順にソートして描画。`d` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。カメラは `WorldOrigin()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。形状ごとの描画は `DrawShape` に委ね、関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用する |
 | [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
 | [`DebugDrawSystem::DrawBoundary`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DrawColliders` と同じ F2 トグルで `DrawColliders` の直後に呼ばれる） | `ArenaConfig` の半幅から4隅を `h = 0` の平面上で `WorldToScreen` へ投影し、対角2点から組んだ `RectF` の輪郭を描く（平行投影のため長方形のまま映る） |
-| [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | Player の Hp / Stamina を画面左上にゲージ描画（プレイヤー 1 体のみ想定）した後、`ScreenPos`+`Drawable` を `(layer, entity)` の昇順にソートして `DrawShape` で描く。`layer` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。色は `DrawColor`（未所持は `kDefaultDrawColor`）から取る |
+| [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | `ScreenPos`+`Drawable` を `(layer, entity)` の昇順にソートして `DrawShape` で描く。`layer` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。色は `DrawColor`（未所持は `kDefaultDrawColor`）から取る |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 
@@ -236,7 +240,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 
 `Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` へ遷移する（その場で倒れる。吹き飛びは
 持たせない）。`MakeDamaged` と同じ後始末（`ReleaseAttackOrbs`・`Velocity` リセット）を行った
-うえで `Collider` のみ外し、`Hp` は `HudSystem` のゲージ表示のため残す。同一フレームの
+うえで `Collider` のみ外し、`Hp` は `GaugeSystem` のゲージ表示のため残す。同一フレームの
 多重ヒットは、敵側の「`Hp` 除去」に代わる番兵として `Dead` タグで防ぐ。
 
 ### システム付随の型・関数
@@ -335,7 +339,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `FatalError{FatalReason::ConfigInvalid, ...}` を投げる。Esc の Pop は持たない |
+| [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `FatalError{FatalReason::ConfigInvalid, ...}` を投げる。Esc の Pop は持たない |
 | [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop）。`dataKey` が `AnimationDataRegistry` に未登録なら `FatalError{FatalReason::ConfigInvalid, ...}` を投げる |
@@ -539,7 +543,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 
 | 名前 | 役割 |
 |---|---|
-| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
+| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
 | [`FatalError`](../Ash2/src/FatalError.hpp) | 続行できない失敗を表す型。分類（`FatalReason`）と開発者向けの `detail` を持つ |
 | [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
@@ -631,6 +635,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `TestAnimationData.cpp` | `AnimationData::FromToml` |
 | `TestScenarioData.cpp` | `ScenarioData::FromToml` |
 | `TestStageData.cpp` | `StageData::FromToml`（`EnemyFactory::Param::FromToml` を含む） |
+| `TestGaugeSystem.cpp` | `GaugeSystem` の割合の幅への反映・0〜1 へのクランプ・`max == 0` 時の幅 0・ゲージごとの参照先 |
 | `TestStagePhase.cpp` | `StagePhase::onAfterPush` の未登録 `stageName` 検証 |
 | `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset |
 | `TestWaitPhase.cpp` | `WaitPhase` |

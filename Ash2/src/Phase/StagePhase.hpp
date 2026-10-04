@@ -18,7 +18,8 @@ class StagePhase : public IPhase {
 
   explicit StagePhase(const Param& param);
 
-  /// @brief プレイヤーとステージ定義の敵を生成する
+  /// @brief プレイヤーとステージ定義の敵、プレイヤーの HP / スタミナゲージを
+  /// 生成する
   /// @note stageName が StageData に無ければ FatalError を投げる
   void onAfterPush(entt::registry& registry) override;
 
@@ -27,7 +28,8 @@ class StagePhase : public IPhase {
       entt::registry& registry, const FrameData& frameData
   ) override;
 
-  /// @brief プレイヤーと残存する敵を破棄する
+  /// @brief ゲージ、プレイヤー、残存する敵の順に破棄する
+  /// @note ゲージは参照先のプレイヤーより先に破棄する
   void onBeforePop(entt::registry& registry) override;
 
  private:
@@ -36,4 +38,6 @@ class StagePhase : public IPhase {
   entt::entity m_playerRoot = entt::null;
   /// ステージ定義から生成した敵（クリア判定の対象）
   Array<entt::entity> m_enemies;
+  /// プレイヤーのゲージ（背景と fill の組を HP・スタミナの順に保持）
+  Array<entt::entity> m_gauges;
 };
