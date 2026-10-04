@@ -3,12 +3,14 @@
 
 #include <variant>
 
-/// @brief WorldPos を描画形状内のどの点に合わせるか
+/// @brief WorldPos / ScreenPos を描画形状内のどの点に合わせるか
 enum class DrawAnchor : uint8 {
   /// 形状の中心
   Center,
   /// 形状の下端中央
   BottomCenter,
+  /// 形状の左上
+  TopLeft,
 };
 
 /// @brief 矩形描画データ

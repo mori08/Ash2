@@ -14,6 +14,10 @@ void DrawShape(
                   return RectF{
                       Arg::bottomCenter(screenPos), shape.size.x, shape.size.y
                   };
+                case DrawAnchor::TopLeft:
+                  return RectF{
+                      Arg::topLeft(screenPos), shape.size.x, shape.size.y
+                  };
                 case DrawAnchor::Center:
                 default:
                   return RectF{
@@ -34,6 +38,9 @@ void DrawShape(
               case DrawAnchor::BottomCenter:
                 shape.region.draw(Arg::bottomCenter(anchorPos), color);
                 break;
+              case DrawAnchor::TopLeft:
+                shape.region.draw(Arg::topLeft(anchorPos), color);
+                break;
               case DrawAnchor::Center:
               default:
                 shape.region.draw(Arg::center(anchorPos), color);
@@ -47,6 +54,9 @@ void DrawShape(
               case DrawAnchor::BottomCenter:
                 shape.font(shape.text)
                     .draw(Arg::bottomCenter(anchorPos), color);
+                break;
+              case DrawAnchor::TopLeft:
+                shape.font(shape.text).draw(Arg::topLeft(anchorPos), color);
                 break;
               case DrawAnchor::Center:
               default:

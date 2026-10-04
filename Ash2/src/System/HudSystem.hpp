@@ -6,6 +6,6 @@
 /// ワールド座標と無関係に画面座標へ直接描画する。
 class HudSystem {
  public:
-  /// @brief ゲージ、続けて ScreenPos + Drawable エンティティを画面へ描画する
+  /// @brief ScreenPos + Drawable エンティティを画面へ描画する
   static void Draw(const entt::registry& registry);
 };

@@ -167,6 +167,7 @@
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\System\DrawShape.cpp" />
     <ClCompile Include="src\System\HudSystem.cpp" />
+    <ClCompile Include="src\System\GaugeSystem.cpp" />
     <ClCompile Include="src\System\DebugDrawSystem.cpp" />
     <ClCompile Include="src\System\HitstopSystem.cpp" />
     <ClCompile Include="src\System\StaminaSystem.cpp" />
@@ -196,6 +197,7 @@
     <ClCompile Include="tests\TestMotionTimeline.cpp" />
     <ClCompile Include="tests\TestMovementSystem.cpp" />
     <ClCompile Include="tests\TestStaminaSystem.cpp" />
+    <ClCompile Include="tests\TestGaugeSystem.cpp" />
     <ClCompile Include="tests\TestNameLookup.cpp" />
     <ClCompile Include="tests\TestPhaseStack.cpp" />
     <ClCompile Include="tests\TestPlayerConfig.cpp" />
@@ -411,6 +413,7 @@
   <ItemGroup>
     <ClInclude Include="src\Component\Drawable.hpp" />
     <ClInclude Include="src\Component\ScreenPos.hpp" />
+    <ClInclude Include="src\Component\Gauge.hpp" />
     <ClInclude Include="src\Component\SpriteAnimation.hpp" />
     <ClInclude Include="src\Component\Hierarchy.hpp" />
     <ClInclude Include="src\Component\LocalOffset.hpp" />
@@ -478,6 +481,7 @@
     <ClInclude Include="src\System\HitSystem.hpp" />
     <ClInclude Include="src\System\HitReactionSystem.hpp" />
     <ClInclude Include="src\System\HudSystem.hpp" />
+    <ClInclude Include="src\System\GaugeSystem.hpp" />
     <ClInclude Include="src\System\ProjectileSystem.hpp" />
     <ClInclude Include="src\System\EnemyMotionSystem.hpp" />
     <ClInclude Include="src\System\EnemySystem.hpp" />

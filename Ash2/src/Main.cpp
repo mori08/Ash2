@@ -13,6 +13,7 @@
 #include "Phase/ScenarioPhase.hpp"
 #include "System/AttachmentSystem.hpp"
 #include "System/DrawSystem.hpp"
+#include "System/GaugeSystem.hpp"
 #include "System/HudSystem.hpp"
 
 namespace {
@@ -29,6 +30,7 @@ void RunGameLoop(
     };
     DebugOnly::UpdateConfigReload(registry);
     phaseStack.update(registry, frameData);
+    GaugeSystem::Update(registry);
     AttachmentSystem::UpdateTransform(registry);
 
     DrawSystem::Draw(registry);
