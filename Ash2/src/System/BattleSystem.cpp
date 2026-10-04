@@ -41,6 +41,16 @@ void BattleSystem::Update(
   AnimationSystem::Update(registry, dt);
 }
 
+void BattleSystem::UpdateAftermath(
+    entt::registry& registry, const FrameData& frameData
+) {
+  const double dt = frameData.dt;
+
+  HitstopSystem::Update(registry, dt);
+  FadeOutSystem::Update(registry, dt);
+  AnimationSystem::Update(registry, dt);
+}
+
 void BattleSystem::Cleanup(entt::registry& registry) {
   // 弾は独立エンティティ（親を持たない）なので、
   // Projectile タグで検索して個別に破棄する

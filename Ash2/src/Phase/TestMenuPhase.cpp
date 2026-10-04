@@ -2,6 +2,7 @@
 
 #include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/PlayerTestPhase.hpp"
+#include "Phase/StagePhase.hpp"
 #include "UiFonts.hpp"
 
 namespace {
@@ -19,6 +20,14 @@ void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
           .label = U"PlayerTest",
           .create = [](entt::registry&) -> std::unique_ptr<IPhase> {
             return std::make_unique<PlayerTestPhase>();
+          },
+      },
+      MenuItem{
+          .label = U"Stage (stage1)",
+          .create = [](entt::registry&) -> std::unique_ptr<IPhase> {
+            return std::make_unique<StagePhase>(
+                StagePhase::Param{.stageName = U"stage1"}
+            );
           },
       },
       MenuItem{

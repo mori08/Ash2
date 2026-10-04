@@ -164,8 +164,9 @@
 
 | システム | タイミング | 処理 |
 |---|---|---|
-| [`BattleSystem::Update`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（PlayerTestPhase が毎フレーム1回呼出） | `HitstopSystem` から `AnimationSystem` までを固定順で呼ぶ。戦闘に参加するシステムの並びをこの1関数に閉じ込め、フェーズ側は個々のシステムを並べない |
-| [`BattleSystem::Cleanup`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（PlayerTestPhase の `onBeforePop`、本体破棄の後） | 独立エンティティ（`Projectile`・`FadeOut`）をタグで検索してまとめて破棄する |
+| [`BattleSystem::Update`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（PlayerTestPhase・StagePhase が毎フレーム1回呼出） | `HitstopSystem` から `AnimationSystem` までを固定順で呼ぶ。戦闘に参加するシステムの並びをこの1関数に閉じ込め、フェーズ側は個々のシステムを並べない |
+| [`BattleSystem::UpdateAftermath`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（StageClearPhase・StageGameOverPhase が毎フレーム1回呼出） | `HitstopSystem` → `FadeOutSystem` → `AnimationSystem` の順に呼ぶ。決着後は Motion・移動・判定を止め、演出だけを進める。`AnimationSystem` は `Hitstop` を除外するため `HitstopSystem` を先に呼ぶ |
+| [`BattleSystem::Cleanup`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（PlayerTestPhase・StagePhase の `onBeforePop`、本体破棄の後） | 独立エンティティ（`Projectile`・`FadeOut`）をタグで検索してまとめて破棄する |
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | BattleSystem 内（MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
 | [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | BattleSystem 内（HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは `SpriteAnimation`（`dataKey = reticle`）を持つエンティティとして生成し、テクスチャの解決は `AnimationSystem` に委ねる。`Dead` を持つプレイヤーは入力処理を飛ばして `target`/`halfTarget` を解除する（`Collider` を外した撃破後の被参照を避けるため） |
 | [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | BattleSystem 内（HitstopSystem の後） | `PlayerMotion::Variant` → `EnemyMotion::Variant` の順に、状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<M>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（停止中も入力の受付を続けるため） |
@@ -179,7 +180,7 @@
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | BattleSystem 内（HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外 / 最大射程超（`origin` からの3軸距離が `maxRange` を超えた）での破棄 |
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | BattleSystem 内（ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外で `Hierarchy::DestroyWithChildren` によりまとめて破棄する（`LockOn` のレティクルが子として付いていても連動して消える） |
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | BattleSystem 内（EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
-| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | BattleSystem 内（FadeOutSystem の後）＋各 Factory（生成直後）＋ AnimationViewerPhase（単体確認用） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
+| [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | `BattleSystem::Update`・`UpdateAftermath` 内（いずれも FadeOutSystem の後）＋各 Factory（生成直後）＋ AnimationViewerPhase（単体確認用） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
 | [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | `WorldPos`+`Drawable`（`ScreenPos` を持つものは `exclude`）を奥行き順にソートして描画。`d` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。カメラは `WorldOrigin()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。形状ごとの描画は `DrawShape` に委ね、関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用する |
 | [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
 | [`DebugDrawSystem::DrawBoundary`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DrawColliders` と同じ F2 トグルで `DrawColliders` の直後に呼ばれる） | `ArenaConfig` の半幅から4隅を `h = 0` の平面上で `WorldToScreen` へ投影し、対角2点から組んだ `RectF` の輪郭を描く（平行投影のため長方形のまま映る） |
@@ -305,6 +306,8 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|
 | [`PlayerFactory::Create`](../Ash2/src/Factory/PlayerFactory.hpp) | プレイヤーエンティティ（ルート）を生成する。`Param::pos`（既定 `WorldPos{}`）を初期位置とし、HP はファクトリ内の定数 `kPlayerMaxHp`、コライダー寸法・重力は `PlayerConfig`（`registry.ctx()`）から読む |
 | [`EnemyFactory::Create`](../Ash2/src/Factory/EnemyFactory.hpp) | `EnemyConfig` に基づき、`Param::pos` の位置に敵エンティティを生成する |
+| [`EnemyFactory::Param::FromToml`](../Ash2/src/Factory/EnemyFactory.hpp) | TOML のテーブルから `Param` を生成する。`w` / `d` が必須で、`h` は持たない（接地で生成する）。`std::expected<Param, String>` を返す |
+| [`StageData`](../Ash2/src/Factory/StageData.hpp) | `Ash2/App/assets/config/stage.toml` から読むステージ定義（ステージ名 → `StageDefinition`。`enemies` に `EnemyFactory::Param` の配列を持つ）。`enemies` が欠落・空のステージは `FromToml` が失敗を返す。`EnemyFactory::Param` を持つため Config ではなく Factory に置く。`registry.ctx()` に載り、F5 で再読込される |
 
 ---
 
@@ -332,7 +335,10 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。生成は `PlayerFactory`/`EnemyFactory` に、毎フレームの更新は `BattleSystem::Update` に委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に `EnemyFactory` で再生成する。Key4 で固定配置テーブルから敵を追加生成できる（`m_extraEnemies`、撃破されても再生成しない）。プレイヤーが `Dead` になったら `kDeathPopDelaySec`（フェーズ内 `constexpr`、暫定値）後に Pop する（撃破後の受け側は本番未定のため暫定）。F5 でプレイヤー・設定再生成、Esc で Pop |
+| [`PlayerTestPhase`](../Ash2/src/Phase/PlayerTestPhase.hpp) | `player_test` | プレイヤー操作・物理・アニメーションのビジュアルテスト。生成は `PlayerFactory`/`EnemyFactory` に、毎フレームの更新は `BattleSystem::Update` に委ねる。敵が破棄されたら `EnemyConfig::respawnSec` 後に `EnemyFactory` で再生成する。Key4 で固定配置テーブルから敵を追加生成できる（`m_extraEnemies`、撃破されても再生成しない）。プレイヤーが `Dead` になったら `StageGameOverPhase` を Push する。F5 でプレイヤー・設定再生成、Esc で Pop |
+| [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `FatalError{FatalReason::ConfigInvalid, ...}` を投げる。Esc の Pop は持たない |
+| [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
+| [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ。`PlayerTestPhase` も撃破時にこれを Push する |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop）。`dataKey` が `AnimationDataRegistry` に未登録なら `FatalError{FatalReason::ConfigInvalid, ...}` を投げる |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
 
@@ -343,6 +349,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `player_test` | `PlayerTestPhase` | なし |
 | `test_menu` | `TestMenuPhase` | なし |
 | `animation_viewer` | `AnimationViewerPhase` | `param`（`AnimationDataRegistry` のキー） |
+| `stage` | `StagePhase` | `param`（`StageData` のステージ名） |
 | `scenario` | `ScenarioPhase` | `param`（セクション名） |
 | `wait` | `WaitPhase` | `duration`（秒） |
 
@@ -473,6 +480,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `PlayerConfig` | プレイヤー設定 |
 | `EnemyConfig` | 敵設定 |
 | `ArenaConfig` | アリーナ境界の設定 |
+| `StageData` | ステージ定義（`Ash2/App/assets/config/stage.toml`。ステージ名 → 敵の配置） |
 | `AnimationDataRegistry` | アニメーション共有データ |
 | `ScenarioData` | シナリオデータ |
 
@@ -538,7 +546,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
 | [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → `Scene::SetTextureFilter(TextureFilter::Nearest)` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
-| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
+| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config / `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
 | [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`/`IsConfigReloadRequested`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）・`IsEnemySpawnRequested`（Key4。`PlayerTestPhase` が固定配置テーブルから敵を追加する判定のみを持つ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
 | [`WorldToScreen`](../Ash2/src/Screen.hpp) | `WorldPos` を床原点（`WorldOrigin()`）込みの画面座標へ変換するインライン関数。`DrawSystem`・`ProjectileSystem`・`DebugDrawSystem`・`LockOnSystem` が参照する |
@@ -624,6 +632,8 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `TestArenaConfig.cpp` | `ArenaConfig::FromToml` |
 | `TestAnimationData.cpp` | `AnimationData::FromToml` |
 | `TestScenarioData.cpp` | `ScenarioData::FromToml` |
+| `TestStageData.cpp` | `StageData::FromToml`（`EnemyFactory::Param::FromToml` を含む） |
+| `TestStagePhase.cpp` | `StagePhase::onAfterPush` の未登録 `stageName` 検証 |
 | `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset |
 | `TestWaitPhase.cpp` | `WaitPhase` |
 

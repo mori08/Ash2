@@ -128,12 +128,16 @@
     <ClCompile Include="src\Config\ArenaConfig.cpp" />
     <ClCompile Include="src\Factory\PlayerFactory.cpp" />
     <ClCompile Include="src\Factory\EnemyFactory.cpp" />
+    <ClCompile Include="src\Factory\StageData.cpp" />
     <ClCompile Include="src\CrashHandler.cpp" />
     <ClCompile Include="src\DebugOnly.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
     <ClCompile Include="src\Phase\PlayerTestPhase.cpp" />
+    <ClCompile Include="src\Phase\StagePhase.cpp" />
+    <ClCompile Include="src\Phase\StageClearPhase.cpp" />
+    <ClCompile Include="src\Phase\StageGameOverPhase.cpp" />
     <ClCompile Include="src\Phase\TestMenuPhase.cpp" />
     <ClCompile Include="src\Phase\AnimationViewerPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
@@ -197,6 +201,8 @@
     <ClCompile Include="tests\TestPhaseStack.cpp" />
     <ClCompile Include="tests\TestPlayerConfig.cpp" />
     <ClCompile Include="tests\TestScenarioData.cpp" />
+    <ClCompile Include="tests\TestStageData.cpp" />
+    <ClCompile Include="tests\TestStagePhase.cpp" />
     <ClCompile Include="tests\TestWaitPhase.cpp" />
     <ClCompile Include="tests\TestWorldPos.cpp" />
   </ItemGroup>
@@ -436,6 +442,7 @@
     <ClInclude Include="src\Config\TomlFields.hpp" />
     <ClInclude Include="src\Factory\PlayerFactory.hpp" />
     <ClInclude Include="src\Factory\EnemyFactory.hpp" />
+    <ClInclude Include="src\Factory\StageData.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseLoaders.hpp" />
@@ -450,6 +457,9 @@
     <ClInclude Include="src\GameSetup.hpp" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
     <ClInclude Include="src\Phase\PlayerTestPhase.hpp" />
+    <ClInclude Include="src\Phase\StagePhase.hpp" />
+    <ClInclude Include="src\Phase\StageClearPhase.hpp" />
+    <ClInclude Include="src\Phase\StageGameOverPhase.hpp" />
     <ClInclude Include="src\Phase\TestMenuPhase.hpp" />
     <ClInclude Include="src\Phase\AnimationViewerPhase.hpp" />
     <ClInclude Include="src\Phase\IPhase.hpp" />

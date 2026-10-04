@@ -12,6 +12,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "CrashHandler.hpp"
 #include "Debug.hpp"
+#include "Factory/StageData.hpp"
 #include "GameSetup.hpp"
 #include "System/DebugDrawSystem.hpp"
 
@@ -65,6 +66,17 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
 
+  auto stageToml = OpenToml(U"assets/config/stage.toml");
+  if (!stageToml) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + stageToml.error());
+    return;
+  }
+  auto stage = StageData::FromToml(*stageToml);
+  if (!stage) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + stage.error());
+    return;
+  }
+
   auto anims = LoadAnimations();
   if (!anims) {
     APP_LOG(U"ReloadConfig: 旧データを維持 / " + anims.error());
@@ -74,6 +86,7 @@ void ReloadConfig(entt::registry& registry) {
   registry.ctx().get<PlayerConfig>() = *std::move(player);
   registry.ctx().get<EnemyConfig>() = *std::move(enemy);
   registry.ctx().get<ArenaConfig>() = *std::move(arena);
+  registry.ctx().get<StageData>() = *std::move(stage);
   registry.ctx().get<AnimationDataRegistry>() = *std::move(anims);
 }
 

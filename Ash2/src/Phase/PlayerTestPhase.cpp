@@ -1,24 +1,17 @@
 #include "Phase/PlayerTestPhase.hpp"
 
 #include "Component/Dead.hpp"
-#include "Component/Drawable.hpp"
 #include "Component/Hierarchy.hpp"
-#include "Component/ScreenPos.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "DebugOnly.hpp"
 #include "Factory/EnemyFactory.hpp"
 #include "Factory/PlayerFactory.hpp"
 #include "FrameData.hpp"
+#include "Phase/StageGameOverPhase.hpp"
 #include "System/BattleSystem.hpp"
-#include "UiFonts.hpp"
-
-// TODO(#116): 撃破後の Pop までの猶予に根拠となる仕様がなく、値が暫定
-constexpr double kDeathPopDelaySec = 2.0;
 
 void PlayerTestPhase::onAfterPush(entt::registry& registry) {
-  m_deathTimer = -1.0;
-
   m_playerRoot = PlayerFactory::Create(registry, {});
 
   m_dummyTarget = EnemyFactory::Create(
@@ -33,22 +26,10 @@ PhaseCommand PlayerTestPhase::update(
 
   BattleSystem::Update(registry, frameData);
 
-  // TODO(#116): 撃破後の受け側が暫定で、猶予（kDeathPopDelaySec）後に
-  // GAME OVER を表示したまま Pop するだけの挙動しか持たない
   if (m_playerRoot != entt::null && registry.all_of<Dead>(m_playerRoot)) {
-    if (m_deathTimer < 0.0) {
-      m_deathTimer = kDeathPopDelaySec;
-      m_gameOverText = registry.create();
-      registry.emplace<ScreenPos>(m_gameOverText, Scene::CenterF());
-      registry.emplace<Drawable>(
-          m_gameOverText,
-          TextDrawable{.text = U"GAME OVER", .font = FontAsset{UiFonts::kLarge}}
-      );
-    }
-    m_deathTimer -= dt;
-    if (m_deathTimer <= 0.0) {
-      return PhaseCommand::Pop{};
-    }
+    return PhaseCommand::Push{
+        .nextPhase = std::make_unique<StageGameOverPhase>()
+    };
   }
 
   // 敵が撃破され破棄されたら respawnSec 後に再生成する
@@ -115,11 +96,6 @@ void PlayerTestPhase::onBeforePop(entt::registry& registry) {
     Hierarchy::DestroyWithChildren(registry, entity);
   }
   m_extraEnemies.clear();
-
-  if (m_gameOverText != entt::null) {
-    registry.destroy(m_gameOverText);
-    m_gameOverText = entt::null;
-  }
 
   BattleSystem::Cleanup(registry);
 }

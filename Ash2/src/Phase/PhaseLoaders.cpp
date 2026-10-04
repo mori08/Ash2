@@ -3,6 +3,7 @@
 #include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/PlayerTestPhase.hpp"
 #include "Phase/ScenarioPhase.hpp"
+#include "Phase/StagePhase.hpp"
 #include "Phase/TestMenuPhase.hpp"
 #include "Phase/WaitPhase.hpp"
 
@@ -87,6 +88,19 @@ const PhaseLoaderTable& GetPhaseLoaders() {
                };
              }
              return AnimationViewerPhase::Param{.dataKey = *dataKey};
+           }
+       )},
+      {U"stage",
+       MakeLoader<StagePhase>(
+           [](const TOMLValue& step)
+               -> std::expected<StagePhase::Param, String> {
+             const auto stageName = step[U"param"].getOpt<String>();
+             if (!stageName) {
+               return std::unexpected{
+                   U"ScenarioData::ParseStep: stage に param がありません"
+               };
+             }
+             return StagePhase::Param{.stageName = *stageName};
            }
        )},
       {U"scenario",
