@@ -17,22 +17,14 @@ void OpenDebugConsole();
 /// @brief 設定リロードキーが押されていれば設定を再読込する
 void UpdateConfigReload(entt::registry& registry);
 
-/// @brief 設定リロードキーが押されたか
-[[nodiscard]] bool IsConfigReloadRequested();
-
 /// @brief Collider 描画トグルキーが押されていれば表示を切り替え、
 /// 表示中なら DebugDrawSystem::DrawColliders を呼ぶ
 void DrawColliders(const entt::registry& registry);
-
-/// @brief 敵追加のデバッグキーが押されたか
-[[nodiscard]] bool IsEnemySpawnRequested();
 #else
 inline void RunTestsIfRequested() {}
 inline void OpenDebugConsole() {}
 inline void UpdateConfigReload(entt::registry&) {}
-[[nodiscard]] inline bool IsConfigReloadRequested() { return false; }
 inline void DrawColliders(const entt::registry&) {}
-[[nodiscard]] inline bool IsEnemySpawnRequested() { return false; }
 #endif
 
 }  // namespace DebugOnly

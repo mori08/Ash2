@@ -13,8 +13,6 @@ struct EnemyConfig {
   double capsuleRadius;
   /// 当たり判定カプセルの高さ（足元からの縦カプセル）
   double capsuleHeight;
-  /// 生成時の初期横位置（WorldPos.w）
-  double spawnW;
 
   /// ひるみ（Stagger）の演出時間（秒）
   double staggerSec;
@@ -33,8 +31,6 @@ struct EnemyConfig {
 
   /// 撃破後の消滅演出時間（秒）
   double defeatedSec;
-  /// 撃破後、再出現までの待機時間（秒）
-  double respawnSec;
 
   /// Chase の接近速度（ピクセル/秒）
   double moveSpeed;

@@ -1,7 +1,6 @@
 #include "Phase/PhaseLoaders.hpp"
 
 #include "Phase/AnimationViewerPhase.hpp"
-#include "Phase/PlayerTestPhase.hpp"
 #include "Phase/ScenarioPhase.hpp"
 #include "Phase/StagePhase.hpp"
 #include "Phase/TestMenuPhase.hpp"
@@ -63,13 +62,6 @@ PhaseLoader MakeLoader(F&& parse) {
 
 const PhaseLoaderTable& GetPhaseLoaders() {
   static const PhaseLoaderTable loaders{
-      {U"player_test",
-       MakeLoader<PlayerTestPhase>(
-           [](const TOMLValue&)
-               -> std::expected<PlayerTestPhase::Param, String> {
-             return PlayerTestPhase::Param{};
-           }
-       )},
       {U"test_menu",
        MakeLoader<TestMenuPhase>(
            [](const TOMLValue&) -> std::expected<TestMenuPhase::Param, String> {

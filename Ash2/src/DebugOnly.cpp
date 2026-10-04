@@ -25,7 +25,6 @@ namespace {
 //   F1 = ライセンス表示 / F12・PrintScreen = スクリーンショット
 constexpr Input kConfigReloadKey = KeyF5;
 constexpr Input kColliderDrawKey = KeyF2;
-constexpr Input kEnemySpawnKey = Key4;
 
 /// Collider のデバッグ描画を表示中か（既定は非表示）
 bool colliderDrawEnabled = false;
@@ -115,8 +114,6 @@ void UpdateConfigReload(entt::registry& registry) {
   }
 }
 
-bool IsConfigReloadRequested() { return kConfigReloadKey.down(); }
-
 void DrawColliders(const entt::registry& registry) {
   if (kColliderDrawKey.down()) {
     colliderDrawEnabled = !colliderDrawEnabled;
@@ -126,8 +123,6 @@ void DrawColliders(const entt::registry& registry) {
     DebugDrawSystem::DrawBoundary(registry);
   }
 }
-
-bool IsEnemySpawnRequested() { return kEnemySpawnKey.down(); }
 
 }  // namespace DebugOnly
 

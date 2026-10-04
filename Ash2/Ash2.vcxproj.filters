@@ -312,9 +312,6 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Phase\PlayerTestPhase.cpp">
-      <Filter>Source Files\Phase</Filter>
-    </ClCompile>
     <ClCompile Include="Phase\StagePhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
@@ -1210,9 +1207,6 @@
     </ClInclude>
     <ClInclude Include="Component\WorldPos.hpp">
       <Filter>Header Files\Component</Filter>
-    </ClInclude>
-    <ClInclude Include="Phase\PlayerTestPhase.hpp">
-      <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Phase\StagePhase.hpp">
       <Filter>Header Files\Phase</Filter>

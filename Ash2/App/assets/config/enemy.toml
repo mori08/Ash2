@@ -1,7 +1,6 @@
 max_hp         = 100
 capsule_radius = 24.0
 capsule_height = 56.0
-spawn_w        = 150.0
 
 stagger_sec = 0.15
 
@@ -13,7 +12,6 @@ blow_speed_h   = 300.0
 knockback_sec  = 1.00
 
 defeated_sec = 0.50
-respawn_sec  = 1.00
 
 move_speed  = 90.0
 aggro_range = 400.0
