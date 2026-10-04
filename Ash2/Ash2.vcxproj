@@ -134,7 +134,6 @@
     <ClCompile Include="src\GameSetup.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Phase\ScenarioPhase.cpp" />
-    <ClCompile Include="src\Phase\PlayerTestPhase.cpp" />
     <ClCompile Include="src\Phase\StagePhase.cpp" />
     <ClCompile Include="src\Phase\StageClearPhase.cpp" />
     <ClCompile Include="src\Phase\StageGameOverPhase.cpp" />
@@ -456,7 +455,6 @@
     <ClInclude Include="src\FatalError.hpp" />
     <ClInclude Include="src\GameSetup.hpp" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
-    <ClInclude Include="src\Phase\PlayerTestPhase.hpp" />
     <ClInclude Include="src\Phase\StagePhase.hpp" />
     <ClInclude Include="src\Phase\StageClearPhase.hpp" />
     <ClInclude Include="src\Phase\StageGameOverPhase.hpp" />

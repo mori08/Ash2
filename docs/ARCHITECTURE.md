@@ -147,7 +147,7 @@ EnTT を使用し、実体（Entity）とデータ（Component）、処理（Sys
 ```
 ScenarioPhase          ← 下に残り続ける
   └ push → TestMenuPhase   ← Pop すると ScenarioPhase の続きへ戻る
-       └ push → PlayerTestPhase
+       └ push → StagePhase
 ```
 
 TOML を読むのは Config 層で、具象フェーズを知らない。

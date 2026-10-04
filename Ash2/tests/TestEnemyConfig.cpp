@@ -8,7 +8,6 @@ constexpr std::string_view kValidToml =
     "max_hp = 100\n"
     "capsule_radius = 24.0\n"
     "capsule_height = 56.0\n"
-    "spawn_w = 150.0\n"
     "stagger_sec = 0.15\n"
     "repel_speed = 250.0\n"
     "repel_sec = 0.20\n"
@@ -16,7 +15,6 @@ constexpr std::string_view kValidToml =
     "blow_speed_h = 300.0\n"
     "knockback_sec = 1.00\n"
     "defeated_sec = 0.50\n"
-    "respawn_sec = 1.00\n"
     "move_speed = 90.0\n"
     "aggro_range = 400.0\n"
     "leap_range = 180.0\n"
@@ -38,7 +36,6 @@ TEST_CASE("EnemyConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->maxHp == 100);
   REQUIRE(cfg->capsuleRadius == 24.0);
   REQUIRE(cfg->capsuleHeight == 56.0);
-  REQUIRE(cfg->spawnW == 150.0);
   REQUIRE(cfg->staggerSec == 0.15);
   REQUIRE(cfg->repelSpeed == 250.0);
   REQUIRE(cfg->repelSec == 0.20);
@@ -46,7 +43,6 @@ TEST_CASE("EnemyConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg->blowSpeedH == 300.0);
   REQUIRE(cfg->knockbackSec == 1.00);
   REQUIRE(cfg->defeatedSec == 0.50);
-  REQUIRE(cfg->respawnSec == 1.00);
   REQUIRE(cfg->moveSpeed == 90.0);
   REQUIRE(cfg->aggroRange == 400.0);
   REQUIRE(cfg->leapRange == 180.0);
@@ -63,7 +59,6 @@ TEST_CASE("EnemyConfig::FromToml - missing max_hp returns unexpected") {
   constexpr std::string_view kToml =
       "capsule_radius = 24.0\n"
       "capsule_height = 56.0\n"
-      "spawn_w = 150.0\n"
       "stagger_sec = 0.15\n"
       "repel_speed = 250.0\n"
       "repel_sec = 0.20\n"
@@ -71,7 +66,6 @@ TEST_CASE("EnemyConfig::FromToml - missing max_hp returns unexpected") {
       "blow_speed_h = 300.0\n"
       "knockback_sec = 1.00\n"
       "defeated_sec = 0.50\n"
-      "respawn_sec = 1.00\n"
       "move_speed = 90.0\n"
       "aggro_range = 400.0\n"
       "leap_range = 180.0\n"
@@ -93,7 +87,6 @@ TEST_CASE(
       "max_hp = 100\n"
       "capsule_radius = 24.0\n"
       "capsule_height = 56.0\n"
-      "spawn_w = 150.0\n"
       "stagger_sec = 0.15\n"
       "repel_speed = 250.0\n"
       "repel_sec = 0.20\n"
@@ -101,7 +94,6 @@ TEST_CASE(
       "blow_speed_h = 300.0\n"
       "knockback_sec = 1.00\n"
       "defeated_sec = 0.50\n"
-      "respawn_sec = 1.00\n"
       "move_speed = 90.0\n"
       "aggro_range = 400.0\n"
       "leap_range = 180.0\n"

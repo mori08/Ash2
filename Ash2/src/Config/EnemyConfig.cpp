@@ -9,7 +9,6 @@ std::expected<EnemyConfig, String> EnemyConfig::FromToml(
   const auto maxHp = f.get<int32>(U"max_hp");
   const auto capsuleRadius = f.get<double>(U"capsule_radius");
   const auto capsuleHeight = f.get<double>(U"capsule_height");
-  const auto spawnW = f.get<double>(U"spawn_w");
   const auto staggerSec = f.get<double>(U"stagger_sec");
   const auto repelSpeed = f.get<double>(U"repel_speed");
   const auto repelSec = f.get<double>(U"repel_sec");
@@ -17,7 +16,6 @@ std::expected<EnemyConfig, String> EnemyConfig::FromToml(
   const auto blowSpeedH = f.get<double>(U"blow_speed_h");
   const auto knockbackSec = f.get<double>(U"knockback_sec");
   const auto defeatedSec = f.get<double>(U"defeated_sec");
-  const auto respawnSec = f.get<double>(U"respawn_sec");
   const auto moveSpeed = f.get<double>(U"move_speed");
   const auto aggroRange = f.get<double>(U"aggro_range");
   const auto leapRange = f.get<double>(U"leap_range");
@@ -44,7 +42,6 @@ std::expected<EnemyConfig, String> EnemyConfig::FromToml(
       .maxHp = maxHp,
       .capsuleRadius = capsuleRadius,
       .capsuleHeight = capsuleHeight,
-      .spawnW = spawnW,
       .staggerSec = staggerSec,
       .repelSpeed = repelSpeed,
       .repelSec = repelSec,
@@ -52,7 +49,6 @@ std::expected<EnemyConfig, String> EnemyConfig::FromToml(
       .blowSpeedH = blowSpeedH,
       .knockbackSec = knockbackSec,
       .defeatedSec = defeatedSec,
-      .respawnSec = respawnSec,
       .moveSpeed = moveSpeed,
       .aggroRange = aggroRange,
       .leapRange = leapRange,

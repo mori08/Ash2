@@ -1,7 +1,6 @@
 #include "Phase/TestMenuPhase.hpp"
 
 #include "Phase/AnimationViewerPhase.hpp"
-#include "Phase/PlayerTestPhase.hpp"
 #include "Phase/StagePhase.hpp"
 #include "UiFonts.hpp"
 
@@ -16,12 +15,6 @@ constexpr int32 kItemSpacing = 40;
 
 void TestMenuPhase::onAfterPush(entt::registry& /*registry*/) {
   m_items = {
-      MenuItem{
-          .label = U"PlayerTest",
-          .create = [](entt::registry&) -> std::unique_ptr<IPhase> {
-            return std::make_unique<PlayerTestPhase>();
-          },
-      },
       MenuItem{
           .label = U"Stage (stage1)",
           .create = [](entt::registry&) -> std::unique_ptr<IPhase> {
