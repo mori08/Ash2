@@ -77,3 +77,4 @@ s3d に相当がないものは `std` をそのまま使う（例: `std::expecte
 
 全体の構成・ディレクトリ構成・複数の仕組みにまたがる制約を変更したら `docs/ARCHITECTURE.md` を、
 コンポーネント・システム・フェーズ等を追加・削除・仕様変更したら `docs/REFERENCE.md` を更新する。
+全体の挙動に影響しない細部の仕様は `docs/ARCHITECTURE.md` に書かない。
