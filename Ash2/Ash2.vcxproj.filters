@@ -1196,6 +1196,9 @@
     <ClInclude Include="UiFonts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WindowPreset.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Debug.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

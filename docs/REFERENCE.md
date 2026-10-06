@@ -547,7 +547,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | [`FatalError`](../Ash2/src/FatalError.hpp) | 続行できない失敗を表す型。分類（`FatalReason`）と開発者向けの `detail` を持つ |
 | [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
-| [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → `Scene::SetTextureFilter(TextureFilter::Nearest)` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
+| [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、アセット・フォント登録の失敗を呼び出し元（`Main`）へ渡す。`ApplyWindowPreset` の失敗は `APP_LOG` に出して続行する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config / `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
 | [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
@@ -558,6 +558,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | [`RegisterAssets`](../Ash2/src/Asset.hpp) | `.png`/`.mp3` をアセットシステムに登録する。`std::expected<void, String>` を返し、失敗を呼び出し元（`InitializeEngine`）へ渡す |
 | [`OpenToml`](../Ash2/src/Asset.hpp) | `AssetPath()` を通してアセット配下の TOML を開く。`std::expected<TOMLReader, String>` を返し、開けなければパスを含むメッセージを返す |
 | [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画に使うフォントの `FontAsset` キー（`kLarge`/`kSmall`）と登録関数。使う側は `FontAsset{UiFonts::kLarge}` で取り出す。`Register()` は `std::expected<void, String>` を返し、`InitializeEngine` が `RegisterAssets` の後に呼ぶ |
+| [`WindowPreset`](../Ash2/src/WindowPreset.hpp) | ウィンドウの表示サイズの候補（`enum class`）。`kDefaultWindowPreset` が起動時の初期値、`ApplyWindowPreset` が `Window::Resize` で適用し `std::expected<void, String>` を返す。`InitializeEngine` が呼ぶ。拡張時は列挙子と `ApplyWindowPreset` の `switch` を更新する |
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
 | [`FrameData`](../Ash2/src/FrameData.hpp) | フレームごとの更新データ（`dt` + `InputState`）。`Main` が組み立て、フェーズとシステムの双方が受け取る |
 | [`AppDebug::testMode`](../Ash2/src/Debug.hpp) | テスト実行中フラグ。true の間 `APP_LOG` を無効化する |

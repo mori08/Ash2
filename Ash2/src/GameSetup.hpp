@@ -8,7 +8,8 @@
 
 /// @brief Siv3D 側の初期設定を行う
 ///
-/// アセット・UI フォントの登録とテクスチャフィルタの設定をまとめる。
+/// アセット・UI フォントの登録、シーンの設定、ウィンドウプリセットの適用を
+/// まとめる。
 /// @return 失敗時は失敗した登録処理のメッセージ
 [[nodiscard]] std::expected<void, String> InitializeEngine();
 

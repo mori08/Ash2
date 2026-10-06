@@ -7,11 +7,20 @@
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
+#include "Debug.hpp"
 #include "Factory/StageData.hpp"
 #include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
 #include "UiFonts.hpp"
+#include "WindowPreset.hpp"
+
+namespace {
+/// ゲームが描画に使う論理座標の大きさ（px）
+///
+/// ウィンドウサイズとは別の概念のため、WindowPreset と値を共有しない。
+constexpr Size kSceneSize{1280, 720};
+}  // namespace
 
 std::expected<AnimationDataRegistry, String> LoadAnimations() {
   auto list = GetAssetList();
@@ -56,7 +65,13 @@ std::expected<void, String> InitializeEngine() {
   if (auto result = UiFonts::Register(); !result) {
     return std::unexpected{std::move(result).error()};
   }
-  Scene::SetTextureFilter(TextureFilter::Nearest);
+  Scene::SetResizeMode(ResizeMode::Keep);
+  Scene::Resize(kSceneSize);
+  Scene::SetTextureFilter(TextureFilter::Linear);
+  // Keep によりどの大きさでも描画は成り立つため、失敗しても起動を止めない
+  if (auto result = ApplyWindowPreset(kDefaultWindowPreset); !result) {
+    APP_LOG(std::move(result).error());
+  }
   return {};
 }
 

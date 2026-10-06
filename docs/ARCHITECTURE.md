@@ -52,6 +52,7 @@ Ash2/src/
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
 ├── FrameData.hpp         # フレームごとの更新データ（dt + InputState）
 ├── UiFonts.hpp           # UI フォントの FontAsset キーと登録
+├── WindowPreset.hpp      # ウィンドウサイズのプリセットと適用
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── DebugOnly.hpp/.cpp    # Debug ビルドにのみ存在する機能とそのキー判定
 ├── FatalError.hpp        # 致命エラーの型（分類と詳細）
