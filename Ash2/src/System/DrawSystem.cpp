@@ -8,9 +8,6 @@
 #include "System/DrawShape.hpp"
 
 void DrawSystem::Draw(const entt::registry& registry) {
-  // HUD・フォント描画へ波及させないため、この関数のスコープに閉じる
-  const ScopedRenderStates2D sampler{SamplerState::ClampNearest};
-
   struct DrawEntry {
     DrawOrderKey order;
     std::reference_wrapper<const WorldPos> pos;
