@@ -3,13 +3,13 @@
 
 #include <variant>
 
-/// @brief WorldPos / ScreenPos を描画形状内のどの点に合わせるか
+/// @brief WorldPos / ScreenPos を描画範囲のどの点に合わせるか
 enum class DrawAnchor : uint8 {
-  /// 形状の中心
+  /// 描画範囲の中心
   Center,
-  /// 形状の下端中央
+  /// 描画範囲の下端中央
   BottomCenter,
-  /// 形状の左上
+  /// 描画範囲の左上
   TopLeft,
 };
 
@@ -41,6 +41,6 @@ struct TextDrawable {
   DrawAnchor anchor = DrawAnchor::Center;
 };
 
-/// @brief 描画コンポーネント（描画形状の variant）
+/// @brief 描画コンポーネント（描画データの variant）
 using Drawable =
     std::variant<RectDrawable, CircleDrawable, TextureDrawable, TextDrawable>;

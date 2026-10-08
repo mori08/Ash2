@@ -523,7 +523,7 @@ TEST_CASE("EnemyMotionSystem - Knockback transitions to Idle on expiry") {
 
 TEST_CASE("EnemyMotionSystem - Defeated fades DrawColor::color.a") {
   // 残り時間比（remaining / defeatedSec）で DrawColor::color.a
-  // をフェードさせる（Drawable の形状は問わない）
+  // をフェードさせる（Drawable の種類は問わない）
   entt::registry registry;
   SetupContext(registry);
   const auto enemy =

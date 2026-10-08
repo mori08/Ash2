@@ -273,7 +273,7 @@
     <ClCompile Include="System\DrawSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
-    <ClCompile Include="System\DrawShape.cpp">
+    <ClCompile Include="System\DrawOne.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
     <ClCompile Include="System\HudSystem.cpp">
@@ -1151,7 +1151,7 @@
     <ClInclude Include="System\DrawSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="System\DrawShape.hpp">
+    <ClInclude Include="System\DrawOne.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="System\DebugDrawSystem.hpp">
