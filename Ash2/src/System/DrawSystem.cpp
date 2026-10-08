@@ -5,12 +5,9 @@
 #include "Component/ScreenPos.hpp"
 #include "Component/WorldPos.hpp"
 #include "Screen.hpp"
-#include "System/DrawShape.hpp"
+#include "System/DrawOne.hpp"
 
 void DrawSystem::Draw(const entt::registry& registry) {
-  // HUD・フォント描画へ波及させないため、この関数のスコープに閉じる
-  const ScopedRenderStates2D sampler{SamplerState::ClampNearest};
-
   struct DrawEntry {
     DrawOrderKey order;
     std::reference_wrapper<const WorldPos> pos;
@@ -34,8 +31,6 @@ void DrawSystem::Draw(const entt::registry& registry) {
   std::ranges::sort(entries, DrawOrderLess, &DrawEntry::order);
 
   for (const auto& entry : entries) {
-    DrawShape(
-        entry.drawable.get(), WorldToScreen(entry.pos.get()), entry.color
-    );
+    DrawOne(entry.drawable.get(), WorldToScreen(entry.pos.get()), entry.color);
   }
 }

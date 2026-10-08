@@ -18,7 +18,7 @@
 | [`Boundary`](../Ash2/src/Component/Boundary.hpp) | アリーナ境界でのクランプ対象であることを示すタグ（データなし）。`BoundarySystem` が `WorldPos`+`Collider` と組み合わせて絞り込みに使う。弾（`Projectile`）には付与しない |
 | [`LocalOffset`](../Ash2/src/Component/LocalOffset.hpp) | 親からの相対座標（w/h/d、Hierarchy 付きエンティティのみ）。`WorldPos` とは別の型で、`toScreen()`・`isOnGround()` は持たない |
 | [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作） |
-| [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画形状の variant。詳細は下記「描画データ型」参照 |
+| [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画データの variant。詳細は下記「描画データ型」参照 |
 | [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`kDefaultDrawColor`）として扱われる |
 | [`ScreenPos`](../Ash2/src/Component/ScreenPos.hpp) | 画面固定の描画位置（px）と `layer`（前後関係、大きいほど手前）。`Drawable` と組み合わせ、`HudSystem` が画面座標へ直接描く対象であることを示す（`WorldPos` + `Drawable` は `DrawSystem` が描く） |
 | [`HpGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Hp` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
@@ -51,7 +51,7 @@
 
 [`Component/Drawable.hpp`](../Ash2/src/Component/Drawable.hpp) が定義する。
 `Drawable` は `variant<RectDrawable, CircleDrawable, TextureDrawable, TextDrawable>`。
-色は形状側ではなく [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) が一括で持つ
+色は描画データ側ではなく [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) が一括で持つ
 （上記「コンポーネント一覧」参照）。
 
 | 名前 | 役割 |
@@ -60,7 +60,7 @@
 | `CircleDrawable` | 円描画（半径） |
 | `TextureDrawable` | テクスチャ描画（`TextureRegion`・描画オフセット・`DrawAnchor`） |
 | `TextDrawable` | 文字描画（文字列・`Font`・`DrawAnchor`） |
-| `DrawAnchor` | `WorldPos`（または `ScreenPos`）を形状のどこに合わせるか（`Center` / `BottomCenter` / `TopLeft`）。`RectDrawable`・`TextureDrawable`・`TextDrawable` が持ち、既定は `Center` |
+| `DrawAnchor` | `WorldPos`（または `ScreenPos`）を描画範囲のどこに合わせるか（`Center` / `BottomCenter` / `TopLeft`）。`RectDrawable`・`TextureDrawable`・`TextDrawable` が持ち、既定は `Center` |
 
 ---
 
@@ -185,10 +185,10 @@
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | BattleSystem 内（ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外で `Hierarchy::DestroyWithChildren` によりまとめて破棄する（`LockOn` のレティクルが子として付いていても連動して消える） |
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | BattleSystem 内（EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | `BattleSystem::Update`・`UpdateAftermath` 内（いずれも FadeOutSystem の後）＋各 Factory（生成直後）＋ AnimationViewerPhase（単体確認用） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
-| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | `WorldPos`+`Drawable`（`ScreenPos` を持つものは `exclude`）を奥行き順にソートして描画。`d` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。カメラは `WorldOrigin()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。形状ごとの描画は `DrawShape` に委ね、関数スコープに閉じた `ScopedRenderStates2D` で最近傍サンプラーを適用する |
+| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | `WorldPos`+`Drawable`（`ScreenPos` を持つものは `exclude`）を奥行き順にソートして描画。`d` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。カメラは `WorldOrigin()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。種類ごとの描画は `DrawOne` に委ねる |
 | [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
 | [`DebugDrawSystem::DrawBoundary`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DrawColliders` と同じ F2 トグルで `DrawColliders` の直後に呼ばれる） | `ArenaConfig` の半幅から4隅を `h = 0` の平面上で `WorldToScreen` へ投影し、対角2点から組んだ `RectF` の輪郭を描く（平行投影のため長方形のまま映る） |
-| [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | `ScreenPos`+`Drawable` を `(layer, entity)` の昇順にソートして `DrawShape` で描く。`layer` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。色は `DrawColor`（未所持は `kDefaultDrawColor`）から取る |
+| [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | `ScreenPos`+`Drawable` を `(layer, entity)` の昇順にソートして `DrawOne` で描く。`layer` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。色は `DrawColor`（未所持は `kDefaultDrawColor`）から取る |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 
@@ -251,7 +251,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 | [`MotionState`](../Ash2/src/System/MotionSystem.hpp) | variant `M` の状態型 `S` が満たすべきコンセプト（ADL で解決される `Tick()` が `Optional<M>` を返すこと） |
 | [`DrawOrderKey`](../Ash2/src/System/DrawSystem.hpp) | `DrawOrderLess` の比較キー（`d` と `entity`） |
 | [`DrawOrderLess`](../Ash2/src/System/DrawSystem.hpp) | 描画順の比較関数（`d` の降順で奥が先。`d` が等しい場合は `entity` の昇順） |
-| [`DrawShape`](../Ash2/src/System/DrawShape.hpp) | `Drawable` 1件を画面座標・色で描く自由関数。`DrawSystem`・`HudSystem` が共有する |
+| [`DrawOne`](../Ash2/src/System/DrawOne.hpp) | `Drawable` 1件を画面座標・色で描く自由関数。`DrawSystem`・`HudSystem` が共有する |
 | [`NameLookup`](../Ash2/src/System/NameLookup.hpp) | 名前 → エンティティの `HashTable`。`registry.ctx()` に格納 |
 | [`ScreenCapsule`](../Ash2/src/System/LockOnSystem.hpp) | `LockOnSystem::Project` が返す、画面へ投影したカプセル（`start`/`end`/`radius`、床原点込みの画面座標）。`LockOnSystem::Contains` が判定に使う。ワールド空間ではなく投影後の画面空間で判定するため、奥行きは `kDepthScale` で圧縮された状態で扱われる（`radius` は圧縮しない） |
 
@@ -646,7 +646,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 ## 部品追加時の注意
 
 - `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren）経由で操作する。
-- `Drawable` の型変更は `std::visit` を使い、`DrawShape`・`HudSystem`・`AnimationSystem` への影響を確認する。
+- `Drawable` の型変更は `std::visit` を使い、`DrawOne`・`HudSystem`・`AnimationSystem` への影響を確認する。
 - 図形（`Drawable`）に `DrawColor` を付け忘れると白（`kDefaultDrawColor`）で描かれる。意図した色にしたい場合は忘れず付与すること。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。

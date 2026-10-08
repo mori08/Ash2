@@ -3,7 +3,7 @@
 #include "Component/DrawColor.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/ScreenPos.hpp"
-#include "System/DrawShape.hpp"
+#include "System/DrawOne.hpp"
 
 namespace {
 
@@ -36,7 +36,7 @@ void DrawScreenEntities(const entt::registry& registry) {
   });
 
   for (const auto& entry : entries) {
-    DrawShape(entry.drawable.get(), entry.pos.get().pos, entry.color);
+    DrawOne(entry.drawable.get(), entry.pos.get().pos, entry.color);
   }
 }
 
