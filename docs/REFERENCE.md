@@ -43,6 +43,9 @@
 | [`Hitstop`](../Ash2/src/Component/Hitstop.hpp) | ヒットストップ中であることを示す残り時間タイマー。`HitstopSystem` が減算・除去し、付与中は `MovementSystem`/`GravitySystem`/`AnimationSystem` の対象から除外される。`MotionSystem` は除外せず dt = 0 で呼ぶ |
 | [`Invincible`](../Ash2/src/Component/Invincible.hpp) | 無敵状態であることを示すタグ。`HitSystem` の被弾対象ビューから除外される。`PlayerMotion::Dash`（地上・空中いずれも）が構え・ダッシュ中は毎フレーム付与し、後隙入りで除去する。`PlayerMotion::Knockback`/`Downed` も毎フレーム付与し、`GetUp` への遷移時に除去する |
 | [`Dead`](../Ash2/src/Component/Dead.hpp) | 撃破され行動不能であることを示すタグ（データなし）。`PlayerMotion::Variant` が `PlayerMotion::Dead` へ遷移するのと同時に `HitReactionSystem` が付与する。`EnemyMotionSystem` の索敵（`FindPlayerPos`）が `entt::exclude<Dead>` で対象から外す。`LockOnSystem::Update` は `Dead` を持つプレイヤーの入力処理（`ApplyMouseRule`/`ApplyStickRule`）だけを止め、`target`/`halfTarget` を `entt::null`、`stickTilted` を `false` にする（ビュー自体は外さず、`SyncReticle` にレティクルを片付けさせる） |
+| [`Menu`](../Ash2/src/Component/Menu.hpp) | メニューの親エンティティ（`Hierarchy` と併用、子はボタンだけ）。選択なしで方向入力があったときに選ぶ子 `defaultButton` を持つ。`Button`/`Focused` と同じヘッダにまとめている |
+| [`Button`](../Ash2/src/Component/Menu.hpp) | メニューの子のボタン。`ScreenPos::pos` を中心とする当たり範囲 `size` と、上下左右の移動先 `up`/`down`/`left`/`right`（同じメニューの子、ない方向は `entt::null`）を持つ |
+| [`Focused`](../Ash2/src/Component/Menu.hpp) | 選択中のボタンに付けるタグ（データなし）。選択状態はここに一本化し、`Menu` には持たせない |
 | [`FadeOut`](../Ash2/src/Component/FadeOut.hpp) | 透過しながら消滅する途中であることを示すコンポーネント（`duration`/`remaining`）。`FadeOutSystem` が `DrawColor::color.a` を更新し、満了時にエンティティを破棄する |
 
 ---
@@ -178,6 +181,7 @@
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | BattleSystem 内（MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
 | [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | BattleSystem 内（GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `ArenaConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
 | [`GaugeSystem::Update`](../Ash2/src/System/GaugeSystem.hpp) | 毎フレーム（フェーズ後） | `HpGauge`/`StaminaGauge` + `GaugeSource` + `Drawable` を持つエンティティの `RectDrawable` 幅を、`GaugeSource` が指す `Hp`/`Stamina` の `current / max`（0〜1 にクランプ）× `fullWidth` に更新する。`max <= 0` は幅 0。参照先が無効、または `Hp`/`Stamina` を持たない場合は `assert` で止まる |
+| [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | フェーズ内（メニューを持つ Phase が毎フレーム呼出） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`ScreenPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（子が `Button` を持たない、`defaultButton`・移動先が子でない）は `assert` で止まる。見た目は扱わない |
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋BattleSystem 内（BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。BattleSystem では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
@@ -312,6 +316,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | [`EnemyFactory::Create`](../Ash2/src/Factory/EnemyFactory.hpp) | `EnemyConfig` に基づき、`Param::pos` の位置に敵エンティティを生成する |
 | [`EnemyFactory::Param::FromToml`](../Ash2/src/Factory/EnemyFactory.hpp) | TOML のテーブルから `Param` を生成する。`w` / `d` が必須で、`h` は持たない（接地で生成する）。`std::expected<Param, String>` を返す |
 | [`StageData`](../Ash2/src/Factory/StageData.hpp) | `Ash2/App/assets/config/stage.toml` から読むステージ定義（ステージ名 → `StageDefinition`。`enemies` に `EnemyFactory::Param` の配列を持つ）。`enemies` が欠落・空のステージは `FromToml` が失敗を返す。`EnemyFactory::Param` を持つため Config ではなく Factory に置く。`registry.ctx()` に載り、F5 で再読込される |
+| [`MenuFactory`](../Ash2/src/Factory/MenuFactory.hpp) | `SetupMenu`/`SetupButton` でメニューとボタンを設定する。`Create` の形ではなく、呼び出し側が先にまとめて作ったエンティティを受け取る（互いを参照する移動先を1回で設定するため）。`SetupButton` が付けるのは構造に必要な `Button`/`ScreenPos`/`Hierarchy::Attach` だけで、`Drawable` などの見た目は画面側で付ける |
 
 ---
 
@@ -452,6 +457,15 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 - `FromToml` は `TomlFields::check()` を通した後、両方が正であることを検証する
   （`Clamp` の下限が上限を超えるのを防ぐため）
 
+### [`InputConfig`](../Ash2/src/Config/InputConfig.hpp)
+
+- `Ash2/App/assets/config/input.toml` から読み込む入力層の調整値。F5 で再読込される
+- `deviceSwitchCursorDistance`（パッド側からキーボード・マウス側へ切り替えるカーソルの累計移動量、px）・
+  `navStickTilt`/`navStickRelease`（メニューの方向入力でスティックを倒した/離したとみなす閾値）を持つ
+- `FromToml` は `TomlFields::wrap` の後に `deviceSwitchCursorDistance >= 0` と
+  `0 < navStickRelease < navStickTilt <= 1` を検証する
+- `LockConfig` の `stickTilt`/`stickRelease` とは目的が違うため値を共有しない
+
 ### [`AnimationData`](../Ash2/src/Config/AnimationData.hpp)
 
 - スプライトシート単位のアニメーション共有データ（テクスチャキー・コマサイズ・描画オフセット・
@@ -482,6 +496,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `PlayerConfig` | プレイヤー設定 |
 | `EnemyConfig` | 敵設定 |
 | `ArenaConfig` | アリーナ境界の設定 |
+| `InputConfig` | 入力層の調整値（`Main` が毎フレーム取り出して `InputDeviceSelector::update` へ渡す） |
 | `StageData` | ステージ定義（`Ash2/App/assets/config/stage.toml`。ステージ名 → 敵の配置） |
 | `AnimationDataRegistry` | アニメーション共有データ |
 | `ScenarioData` | シナリオデータ |
@@ -492,10 +507,10 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 
 | クラス | 役割 |
 |---|---|
-| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（`moveAxis`/`jumpDown`/`attackDown`/`rangedAttackDown`/`dashDown`/`lockAxis`/`pointerPos`）。`Key`/`TOMLValue` 等のテストしづらい型は持ち込まないが、`Vec2`/`Optional<Vec2>` 等の単純な数学型は許容する |
-| [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換（デフォルト: 矢印/WASD 移動、Space ジャンプ、左クリック近距離、右クリック遠距離、Shift ダッシュ）。`pointerPos` に `Cursor::PosF()` を詰める |
-| [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー（プレイヤー0）→ InputState 変換（左スティック+十字ボタンで移動、A/B/X/Y でジャンプ/近距離/遠距離/ダッシュ）。`lockAxis` には右スティックを `Vec2{rightThumbX, -rightThumbY}`（画面座標系、y 反転）としてデッドゾーンを掛けずに渡す |
-| [`InputDeviceSelector`](../Ash2/src/Input/InputDeviceSelector.hpp) | 毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える（ボタン入力に加え、左右どちらかのスティックがデッドゾーンを超えて傾いた場合もゲームパッドへの切り替え条件とする）。切断時はキーボードへ自動フォールバック |
+| [`InputState`](../Ash2/src/Input/InputState.hpp) | フレームの論理入力（`moveAxis`/`jumpDown`/`attackDown`/`rangedAttackDown`/`dashDown`/`lockAxis`/`pointerPos`、メニュー操作の `navigate`/`confirmDown`/`clickDown`/`pointerMoved`）。`Key`/`TOMLValue` 等のテストしづらい型は持ち込まないが、`Vec2`/`Optional<Vec2>` 等の単純な数学型は許容する。同ヘッダが方向 `NavDirection`（`Up`/`Down`/`Left`/`Right`）を定義する |
+| [`KeyboardInputAction`](../Ash2/src/Input/KeyboardInputAction.hpp) | キーボード/マウス → InputState 変換（デフォルト: 矢印/WASD 移動、Space ジャンプ、左クリック近距離、右クリック遠距離、Shift ダッシュ）。`pointerPos` に `Cursor::PosF()` を詰める。メニュー用に `clickDown`（`MouseL.down()`）と `pointerMoved`（`PointerMoved`: `Cursor::DeltaRaw()` が非ゼロのフレームだけ現在位置）を埋める。キーボードのキーではメニューを操作しない（`navigate`/`confirmDown` は埋めない） |
+| [`XInputAction`](../Ash2/src/Input/XInputAction.hpp) | XInput コントローラー（プレイヤー0）→ InputState 変換（左スティック+十字ボタンで移動、A/B/X/Y でジャンプ/近距離/遠距離/ダッシュ）。`lockAxis` には右スティックを `Vec2{rightThumbX, -rightThumbY}`（画面座標系、y 反転）としてデッドゾーンを掛けずに渡す。メニュー用に `navigate`・`confirmDown`（A）を埋める。スティックの前フレームの方向を持つ状態ありの型で、`toInputState(const InputConfig&)` を毎フレーム呼ぶ。純粋関数 `StickDirection`/`HeldStickDirection` が傾き→方向（傾きの大きい軸、同値なら縦優先）とヒステリシスを担う |
+| [`InputDeviceSelector`](../Ash2/src/Input/InputDeviceSelector.hpp) | 毎フレームデバイス入力を検出し、最後にアクティブだったデバイスに切り替える（ボタン入力に加え、左右どちらかのスティックがデッドゾーンを超えて傾いた場合もゲームパッドへの切り替え条件とする）。切断時はキーボードへ自動フォールバック。パッド側にいる間のカーソル移動量（`Cursor::DeltaRaw()`）を積算し、`InputConfig::deviceSwitchCursorDistance` を超えたらキーボード・マウス側へ切り替える。切り替えの判定は純粋関数 `ChooseDevice` に切り出している。`update(const InputConfig&)` は両デバイスを毎フレーム評価してから片方を返す |
 
 **移動入力の正規化方針：** `InputState::moveAxis`（`Vec2`、x=横方向/y=奥行き方向）は「常に長さ 1.0
 以下に正規化済み」という不変条件を持つ。この保証の責任は `toInputState()` を実装する各入力レイヤー側に
@@ -509,6 +524,14 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 `LockOnSystem` 側（`LockConfig`）で効かせる。`pointerPos` はマウスカーソルの画面座標
 （`Optional<Vec2>`）で、ゲームパッド操作中は `none`。デバイス切替の判定（`InputDeviceSelector`
 のデッドゾーン）とゲームプレイ上の傾き判定（`LockConfig`）は目的が別のため閾値を共有しない。
+
+**メニュー入力の方針：** 選択の規則は `MenuSystem`（システム一覧参照）。`navigate` は押した瞬間だけ値を持ち、十字ボタンを
+スティックより優先する（同時に複数押されたら上→下→左→右の順で1つ）。スティックの方向入力は
+`InputConfig` の `navStickTilt`（倒した）/`navStickRelease`（離した）のヒステリシスで、方向が
+「なし」から、または別の方向へ変わった瞬間だけ出す（押しっぱなしの連続移動はしない）。
+`pointerMoved` はカーソルが動いたフレームだけ値を持ち、クリックの位置は `pointerPos` を使う。
+`InputConfig` は入力層が `registry` を読まない方針を保つため、`Main` が毎フレーム
+`InputDeviceSelector::update` へ引数で渡す（F5 の再読込が反映される）。
 
 **フェーズの直接キー入力：** `TestMenuPhase`（↑↓/Enter）・
 `AnimationViewerPhase`（Esc/←→/F/R）は `InputState` を経由せず Siv3D の `Key*` を直接参照している。
@@ -543,12 +566,12 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 
 | 名前 | 役割 |
 |---|---|
-| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
+| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `InputDeviceSelector::update`（`registry.ctx()` の `InputConfig` を渡す）→ `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
 | [`FatalError`](../Ash2/src/FatalError.hpp) | 続行できない失敗を表す型。分類（`FatalReason`）と開発者向けの `detail` を持つ |
 | [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
 | [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
 | [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、アセット・フォント登録の失敗を呼び出し元（`Main`）へ渡す。`ApplyWindowPreset` の失敗は `APP_LOG` に出して続行する |
-| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config / `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
+| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config（`InputConfig` を含む）/ `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
 | [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
 | [`WorldToScreen`](../Ash2/src/Screen.hpp) | `WorldPos` を床原点（`WorldOrigin()`）込みの画面座標へ変換するインライン関数。`DrawSystem`・`ProjectileSystem`・`DebugDrawSystem`・`LockOnSystem` が参照する |
@@ -640,6 +663,10 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `TestStagePhase.cpp` | `StagePhase::onAfterPush` の未登録 `stageName` 検証 |
 | `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset |
 | `TestWaitPhase.cpp` | `WaitPhase` |
+| `TestInputConfig.cpp` | `InputConfig::FromToml`（欠落・範囲の検証） |
+| `TestInputDeviceSelector.cpp` | `InputDeviceSelector::ChooseDevice`（カーソル移動の積算による切り替え・切断フォールバック） |
+| `TestXInputAction.cpp` | `XInputAction::StickDirection`/`HeldStickDirection`（スティック→方向、ヒステリシス） |
+| `TestMenuSystem.cpp` | `MenuSystem::Update` の選択の規則（カーソル・方向・決定・クリック）。`MenuFactory` で組んだメニューを使う |
 
 ---
 

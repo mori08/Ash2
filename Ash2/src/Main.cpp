@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 #include <exception>
 
+#include "Config/InputConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "CrashHandler.hpp"
 #include "DebugOnly.hpp"
@@ -26,7 +27,7 @@ void RunGameLoop(
   while (System::Update()) {
     const FrameData frameData{
         .dt = Scene::DeltaTime(),
-        .input = inputSelector.update(),
+        .input = inputSelector.update(registry.ctx().get<InputConfig>()),
     };
     DebugOnly::UpdateConfigReload(registry);
     phaseStack.update(registry, frameData);

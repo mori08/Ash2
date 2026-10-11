@@ -126,8 +126,10 @@
     <ClCompile Include="src\Config\ReactionLevel.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\Config\ArenaConfig.cpp" />
+    <ClCompile Include="src\Config\InputConfig.cpp" />
     <ClCompile Include="src\Factory\PlayerFactory.cpp" />
     <ClCompile Include="src\Factory\EnemyFactory.cpp" />
+    <ClCompile Include="src\Factory\MenuFactory.cpp" />
     <ClCompile Include="src\Factory\StageData.cpp" />
     <ClCompile Include="src\CrashHandler.cpp" />
     <ClCompile Include="src\DebugOnly.cpp" />
@@ -168,6 +170,7 @@
     <ClCompile Include="src\System\DrawOne.cpp" />
     <ClCompile Include="src\System\HudSystem.cpp" />
     <ClCompile Include="src\System\GaugeSystem.cpp" />
+    <ClCompile Include="src\System\MenuSystem.cpp" />
     <ClCompile Include="src\System\DebugDrawSystem.cpp" />
     <ClCompile Include="src\System\HitstopSystem.cpp" />
     <ClCompile Include="src\System\StaminaSystem.cpp" />
@@ -193,6 +196,10 @@
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
     <ClCompile Include="tests\TestArenaConfig.cpp" />
+    <ClCompile Include="tests\TestMenuSystem.cpp" />
+    <ClCompile Include="tests\TestXInputAction.cpp" />
+    <ClCompile Include="tests\TestInputDeviceSelector.cpp" />
+    <ClCompile Include="tests\TestInputConfig.cpp" />
     <ClCompile Include="tests\TestBoundarySystem.cpp" />
     <ClCompile Include="tests\TestMotionTimeline.cpp" />
     <ClCompile Include="tests\TestMovementSystem.cpp" />
@@ -414,6 +421,7 @@
     <ClInclude Include="src\Component\Drawable.hpp" />
     <ClInclude Include="src\Component\ScreenPos.hpp" />
     <ClInclude Include="src\Component\Gauge.hpp" />
+    <ClInclude Include="src\Component\Menu.hpp" />
     <ClInclude Include="src\Component\SpriteAnimation.hpp" />
     <ClInclude Include="src\Component\Hierarchy.hpp" />
     <ClInclude Include="src\Component\LocalOffset.hpp" />
@@ -441,9 +449,11 @@
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
     <ClInclude Include="src\Config\ArenaConfig.hpp" />
+    <ClInclude Include="src\Config\InputConfig.hpp" />
     <ClInclude Include="src\Config\TomlFields.hpp" />
     <ClInclude Include="src\Factory\PlayerFactory.hpp" />
     <ClInclude Include="src\Factory\EnemyFactory.hpp" />
+    <ClInclude Include="src\Factory\MenuFactory.hpp" />
     <ClInclude Include="src\Factory\StageData.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />
@@ -483,6 +493,7 @@
     <ClInclude Include="src\System\HitReactionSystem.hpp" />
     <ClInclude Include="src\System\HudSystem.hpp" />
     <ClInclude Include="src\System\GaugeSystem.hpp" />
+    <ClInclude Include="src\System\MenuSystem.hpp" />
     <ClInclude Include="src\System\ProjectileSystem.hpp" />
     <ClInclude Include="src\System\EnemyMotionSystem.hpp" />
     <ClInclude Include="src\System\EnemySystem.hpp" />

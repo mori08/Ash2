@@ -9,6 +9,7 @@
 #include "Asset.hpp"
 #include "Config/ArenaConfig.hpp"
 #include "Config/EnemyConfig.hpp"
+#include "Config/InputConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "CrashHandler.hpp"
 #include "Debug.hpp"
@@ -65,6 +66,17 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
 
+  auto inputToml = OpenToml(U"assets/config/input.toml");
+  if (!inputToml) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + inputToml.error());
+    return;
+  }
+  auto input = InputConfig::FromToml(*inputToml);
+  if (!input) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + input.error());
+    return;
+  }
+
   auto stageToml = OpenToml(U"assets/config/stage.toml");
   if (!stageToml) {
     APP_LOG(U"ReloadConfig: 旧データを維持 / " + stageToml.error());
@@ -85,6 +97,7 @@ void ReloadConfig(entt::registry& registry) {
   registry.ctx().get<PlayerConfig>() = *std::move(player);
   registry.ctx().get<EnemyConfig>() = *std::move(enemy);
   registry.ctx().get<ArenaConfig>() = *std::move(arena);
+  registry.ctx().get<InputConfig>() = *std::move(input);
   registry.ctx().get<StageData>() = *std::move(stage);
   registry.ctx().get<AnimationDataRegistry>() = *std::move(anims);
 }
