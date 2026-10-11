@@ -198,6 +198,9 @@
     <ClCompile Include="Config\ArenaConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
+    <ClCompile Include="Config\InputConfig.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
     <ClCompile Include="Phase\ScenarioPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
@@ -282,6 +285,9 @@
     <ClCompile Include="System\GaugeSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\MenuSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\DebugDrawSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -298,6 +304,9 @@
       <Filter>Source Files\Factory</Filter>
     </ClCompile>
     <ClCompile Include="Factory\EnemyFactory.cpp">
+      <Filter>Source Files\Factory</Filter>
+    </ClCompile>
+    <ClCompile Include="Factory\MenuFactory.cpp">
       <Filter>Source Files\Factory</Filter>
     </ClCompile>
     <ClCompile Include="Factory\StageData.cpp">
@@ -424,6 +433,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestArenaConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestMenuSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestXInputAction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestInputDeviceSelector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestInputConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestBoundarySystem.cpp">
@@ -1115,6 +1136,9 @@
     <ClInclude Include="Component\Gauge.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Menu.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Component\SpriteAnimation.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
@@ -1173,6 +1197,9 @@
       <Filter>Header Files\Config</Filter>
     </ClInclude>
     <ClInclude Include="Config\ArenaConfig.hpp">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\InputConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
     <ClInclude Include="Config\PlayerConfig.hpp">
@@ -1301,6 +1328,9 @@
     <ClInclude Include="System\GaugeSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
+    <ClInclude Include="System\MenuSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
     <ClInclude Include="System\ProjectileSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
@@ -1356,6 +1386,9 @@
       <Filter>Header Files\Factory</Filter>
     </ClInclude>
     <ClInclude Include="Factory\EnemyFactory.hpp">
+      <Filter>Header Files\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="Factory\MenuFactory.hpp">
       <Filter>Header Files\Factory</Filter>
     </ClInclude>
     <ClInclude Include="Factory\StageData.hpp">

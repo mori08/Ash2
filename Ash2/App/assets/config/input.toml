@@ -1,0 +1,8 @@
+# パッド側からキーボード・マウス側へ切り替える、カーソルの累計移動量（px）
+device_switch_cursor_distance = 8.0
+
+# メニューの方向入力でスティックを倒したとみなす閾値（0 より大きく 1 以下）
+nav_stick_tilt = 0.5
+
+# メニューの方向入力でスティックを離したとみなす閾値（0 より大きく nav_stick_tilt 未満）
+nav_stick_release = 0.24

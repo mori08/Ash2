@@ -5,6 +5,7 @@
 #include "Asset.hpp"
 #include "Config/ArenaConfig.hpp"
 #include "Config/EnemyConfig.hpp"
+#include "Config/InputConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Debug.hpp"
@@ -109,6 +110,16 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
     return std::unexpected{std::move(arena).error()};
   }
   registry.ctx().emplace<ArenaConfig>(*std::move(arena));
+
+  auto inputToml = OpenToml(U"assets/config/input.toml");
+  if (!inputToml) {
+    return std::unexpected{std::move(inputToml).error()};
+  }
+  auto input = InputConfig::FromToml(*inputToml);
+  if (!input) {
+    return std::unexpected{std::move(input).error()};
+  }
+  registry.ctx().emplace<InputConfig>(*std::move(input));
 
   auto stageToml = OpenToml(U"assets/config/stage.toml");
   if (!stageToml) {
