@@ -8,6 +8,7 @@
 #include "Config/InputConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
+#include "Config/TitleConfig.hpp"
 #include "Debug.hpp"
 #include "Factory/StageData.hpp"
 #include "Phase/PhaseLoaders.hpp"
@@ -110,6 +111,16 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
     return std::unexpected{std::move(arena).error()};
   }
   registry.ctx().emplace<ArenaConfig>(*std::move(arena));
+
+  auto titleToml = OpenToml(U"assets/config/title.toml");
+  if (!titleToml) {
+    return std::unexpected{std::move(titleToml).error()};
+  }
+  auto title = TitleConfig::FromToml(*titleToml);
+  if (!title) {
+    return std::unexpected{std::move(title).error()};
+  }
+  registry.ctx().emplace<TitleConfig>(*std::move(title));
 
   auto inputToml = OpenToml(U"assets/config/input.toml");
   if (!inputToml) {

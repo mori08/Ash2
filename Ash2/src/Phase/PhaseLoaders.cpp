@@ -4,6 +4,7 @@
 #include "Phase/ScenarioPhase.hpp"
 #include "Phase/StagePhase.hpp"
 #include "Phase/TestMenuPhase.hpp"
+#include "Phase/TitlePhase.hpp"
 #include "Phase/WaitPhase.hpp"
 
 namespace {
@@ -66,6 +67,12 @@ const PhaseLoaderTable& GetPhaseLoaders() {
        MakeLoader<TestMenuPhase>(
            [](const TOMLValue&) -> std::expected<TestMenuPhase::Param, String> {
              return TestMenuPhase::Param{};
+           }
+       )},
+      {U"title",
+       MakeLoader<TitlePhase>(
+           [](const TOMLValue&) -> std::expected<TitlePhase::Param, String> {
+             return TitlePhase::Param{};
            }
        )},
       {U"animation_viewer",

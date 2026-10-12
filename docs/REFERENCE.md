@@ -344,6 +344,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
+| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextDrawable` の仮タイトル「沼に焚べ」を `HudSystem` に描かせる。ロゴの y 座標は `TitleConfig::logoY`、x 座標は画面中央。遷移は持たない（骨組み） |
 | [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `FatalError{FatalReason::ConfigInvalid, ...}` を投げる。Esc の Pop は持たない |
 | [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |
@@ -355,6 +356,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | フェーズ名 | 生成される型 | TOML パラメータ |
 |---|---|---|
 | `test_menu` | `TestMenuPhase` | なし |
+| `title` | `TitlePhase` | なし |
 | `animation_viewer` | `AnimationViewerPhase` | `param`（`AnimationDataRegistry` のキー） |
 | `stage` | `StagePhase` | `param`（`StageData` のステージ名） |
 | `scenario` | `ScenarioPhase` | `param`（セクション名） |
@@ -457,6 +459,12 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 - `FromToml` は `TomlFields::check()` を通した後、両方が正であることを検証する
   （`Clamp` の下限が上限を超えるのを防ぐため）
 
+### [`TitleConfig`](../Ash2/src/Config/TitleConfig.hpp)
+
+- `Ash2/App/assets/config/title.toml` から読み込むタイトル画面の配置の設定。F5 で再読込される
+- ロゴの y 座標 `logoY` を持つ。x 座標は画面中央固定のため持たない
+- `TitlePhase::onAfterPush` で一度だけ読むため、F5 再読込は表示中のロゴには反映されない
+
 ### [`InputConfig`](../Ash2/src/Config/InputConfig.hpp)
 
 - `Ash2/App/assets/config/input.toml` から読み込む入力層の調整値。F5 で再読込される
@@ -496,6 +504,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `PlayerConfig` | プレイヤー設定 |
 | `EnemyConfig` | 敵設定 |
 | `ArenaConfig` | アリーナ境界の設定 |
+| `TitleConfig` | タイトル画面の配置の設定 |
 | `InputConfig` | 入力層の調整値（`Main` が毎フレーム取り出して `InputDeviceSelector::update` へ渡す） |
 | `StageData` | ステージ定義（`Ash2/App/assets/config/stage.toml`。ステージ名 → 敵の配置） |
 | `AnimationDataRegistry` | アニメーション共有データ |
@@ -656,6 +665,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
 | `TestEnemyConfig.cpp` | `EnemyConfig::FromToml` |
 | `TestArenaConfig.cpp` | `ArenaConfig::FromToml` |
+| `TestTitleConfig.cpp` | `TitleConfig::FromToml` |
 | `TestAnimationData.cpp` | `AnimationData::FromToml` |
 | `TestScenarioData.cpp` | `ScenarioData::FromToml` |
 | `TestStageData.cpp` | `StageData::FromToml`（`EnemyFactory::Param::FromToml` を含む） |

@@ -198,6 +198,9 @@
     <ClCompile Include="Config\ArenaConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
+    <ClCompile Include="Config\TitleConfig.cpp">
+      <Filter>Source Files\Config</Filter>
+    </ClCompile>
     <ClCompile Include="Config\InputConfig.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
@@ -336,6 +339,9 @@
     <ClCompile Include="Phase\TestMenuPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
+    <ClCompile Include="Phase\TitlePhase.cpp">
+      <Filter>Source Files\Phase</Filter>
+    </ClCompile>
     <ClCompile Include="Phase\AnimationViewerPhase.cpp">
       <Filter>Source Files\Phase</Filter>
     </ClCompile>
@@ -433,6 +439,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestArenaConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestTitleConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestMenuSystem.cpp">
@@ -1199,6 +1208,9 @@
     <ClInclude Include="Config\ArenaConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
+    <ClInclude Include="Config\TitleConfig.hpp">
+      <Filter>Header Files\Config</Filter>
+    </ClInclude>
     <ClInclude Include="Config\InputConfig.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
@@ -1257,6 +1269,9 @@
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Phase\TestMenuPhase.hpp">
+      <Filter>Header Files\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Phase\TitlePhase.hpp">
       <Filter>Header Files\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Phase\AnimationViewerPhase.hpp">
