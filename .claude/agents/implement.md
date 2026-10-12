@@ -27,8 +27,9 @@ When a rule section links to a docs file (e.g. `docs/coding_style/COMMENT.md`,
 (comments, error handling, …).
 
 From the plan, focus on:
-- `## § 実装方針` — what to implement, design decisions, and the files to change
-- `## § 手順` — the order to follow
+- The stage sections (e.g. `## § 大枠`, `## § 構成`, `## § 細部`) — the decided spec,
+  adopted design, and rejected options
+- `## § 手順` — the files to change and the order to follow
 - `## § 注意点` — constraints and risks
 - `## § 影響` — affected and confirmed-unaffected areas
 - `## § 修正 N回目` — any fix instructions appended by the implement-issue loop
