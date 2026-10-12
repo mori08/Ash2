@@ -126,6 +126,7 @@
     <ClCompile Include="src\Config\ReactionLevel.cpp" />
     <ClCompile Include="src\Config\ScenarioData.cpp" />
     <ClCompile Include="src\Config\ArenaConfig.cpp" />
+    <ClCompile Include="src\Config\TitleConfig.cpp" />
     <ClCompile Include="src\Config\InputConfig.cpp" />
     <ClCompile Include="src\Factory\PlayerFactory.cpp" />
     <ClCompile Include="src\Factory\EnemyFactory.cpp" />
@@ -140,6 +141,7 @@
     <ClCompile Include="src\Phase\StageClearPhase.cpp" />
     <ClCompile Include="src\Phase\StageGameOverPhase.cpp" />
     <ClCompile Include="src\Phase\TestMenuPhase.cpp" />
+    <ClCompile Include="src\Phase\TitlePhase.cpp" />
     <ClCompile Include="src\Phase\AnimationViewerPhase.cpp" />
     <ClCompile Include="src\Phase\WaitPhase.cpp" />
     <ClCompile Include="src\Phase\PhaseLoaders.cpp" />
@@ -196,6 +198,7 @@
     <ClCompile Include="tests\TestPlayerMotionSystem.cpp" />
     <ClCompile Include="tests\TestProjectileSystem.cpp" />
     <ClCompile Include="tests\TestArenaConfig.cpp" />
+    <ClCompile Include="tests\TestTitleConfig.cpp" />
     <ClCompile Include="tests\TestMenuSystem.cpp" />
     <ClCompile Include="tests\TestXInputAction.cpp" />
     <ClCompile Include="tests\TestInputDeviceSelector.cpp" />
@@ -449,6 +452,7 @@
     <ClInclude Include="src\Config\PlayerConfig.hpp" />
     <ClInclude Include="src\Config\ScenarioData.hpp" />
     <ClInclude Include="src\Config\ArenaConfig.hpp" />
+    <ClInclude Include="src\Config\TitleConfig.hpp" />
     <ClInclude Include="src\Config\InputConfig.hpp" />
     <ClInclude Include="src\Config\TomlFields.hpp" />
     <ClInclude Include="src\Factory\PlayerFactory.hpp" />
@@ -473,6 +477,7 @@
     <ClInclude Include="src\Phase\StageClearPhase.hpp" />
     <ClInclude Include="src\Phase\StageGameOverPhase.hpp" />
     <ClInclude Include="src\Phase\TestMenuPhase.hpp" />
+    <ClInclude Include="src\Phase\TitlePhase.hpp" />
     <ClInclude Include="src\Phase\AnimationViewerPhase.hpp" />
     <ClInclude Include="src\Phase\IPhase.hpp" />
     <ClInclude Include="src\Phase\PhaseStack.hpp" />

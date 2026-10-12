@@ -11,6 +11,7 @@
 #include "Config/EnemyConfig.hpp"
 #include "Config/InputConfig.hpp"
 #include "Config/PlayerConfig.hpp"
+#include "Config/TitleConfig.hpp"
 #include "CrashHandler.hpp"
 #include "Debug.hpp"
 #include "Factory/StageData.hpp"
@@ -66,6 +67,17 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
 
+  auto titleToml = OpenToml(U"assets/config/title.toml");
+  if (!titleToml) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + titleToml.error());
+    return;
+  }
+  auto title = TitleConfig::FromToml(*titleToml);
+  if (!title) {
+    APP_LOG(U"ReloadConfig: 旧データを維持 / " + title.error());
+    return;
+  }
+
   auto inputToml = OpenToml(U"assets/config/input.toml");
   if (!inputToml) {
     APP_LOG(U"ReloadConfig: 旧データを維持 / " + inputToml.error());
@@ -97,6 +109,7 @@ void ReloadConfig(entt::registry& registry) {
   registry.ctx().get<PlayerConfig>() = *std::move(player);
   registry.ctx().get<EnemyConfig>() = *std::move(enemy);
   registry.ctx().get<ArenaConfig>() = *std::move(arena);
+  registry.ctx().get<TitleConfig>() = *std::move(title);
   registry.ctx().get<InputConfig>() = *std::move(input);
   registry.ctx().get<StageData>() = *std::move(stage);
   registry.ctx().get<AnimationDataRegistry>() = *std::move(anims);
