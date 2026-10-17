@@ -3,6 +3,22 @@
 
 #include <expected>
 
+/// @brief TOML テーブルから単一キーの値を引く
+///
+/// ドット区切りのパスは扱わない（単一のキー名のみ）。
+/// operator[] は欠落時にライブラリ内部で例外を使うため、
+/// hasMember で存在を確かめてから引く。
+/// @return テーブルでない、またはキーが欠落しているとき空の TOMLValue
+[[nodiscard]] inline TOMLValue TomlMember(
+    const TOMLValue& table, StringView key
+) {
+  const String name{key};
+  if (!table.isTable() || !table.hasMember(name)) {
+    return TOMLValue{};
+  }
+  return table[name];
+}
+
 /// @brief TOML テーブルのキーを読み、必須キーの欠落をまとめて記録する
 ///
 /// 1インスタンスが1テーブル・1プレフィックスを担当する。get() は欠落時に
@@ -20,7 +36,7 @@ class TomlFields {
   /// @return 欠落時は T{}（キー名を記録して読み進める）
   template <class T>
   [[nodiscard]] T get(StringView key) {
-    if (auto value = m_table[String{key}].getOpt<T>()) {
+    if (auto value = TomlMember(m_table, key).getOpt<T>()) {
       return *std::move(value);
     }
     m_missing.push_back(
@@ -33,7 +49,7 @@ class TomlFields {
   /// @return 欠落時は defaultValue（欠落を記録しない）
   template <class T>
   [[nodiscard]] T getOr(StringView key, T defaultValue) const {
-    return m_table[String{key}].getOr<T>(std::move(defaultValue));
+    return TomlMember(m_table, key).getOr<T>(std::move(defaultValue));
   }
 
   /// @brief 記録した欠落を確認する
