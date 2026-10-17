@@ -391,7 +391,8 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 
 [`TomlFields`](../Ash2/src/Config/TomlFields.hpp) は1テーブル分の必須キー読み出しと
 欠落キーの記録をまとめるヘルパーで、上記3設定の `FromToml`（`PlayerConfig` は下位の
-`Parse` 系関数）が共通で使う。
+`Parse` 系関数）が共通で使う。同ヘッダの自由関数 `TomlMember(table, key)` は
+`TOMLValue` のキー参照を例外なしで行い、欠落時は空の値を返す。`operator[]` の代わりに使う。
 
 ### [`PlayerConfig`](../Ash2/src/Config/PlayerConfig.hpp)
 

@@ -1,10 +1,12 @@
 #include "Factory/StageData.hpp"
 
+#include "Config/TomlFields.hpp"
+
 std::expected<StageData, String> StageData::FromToml(const TOMLValue& toml) {
   StageData data;
 
   for (const auto& member : toml.tableView()) {
-    const auto& enemiesValue = member.value[U"enemies"];
+    const auto& enemiesValue = TomlMember(member.value, U"enemies");
     // 配列でない値に tableArrayView() を呼ぶと例外になりうるため先に確かめる
     if (!enemiesValue.isTableArray()) {
       return std::unexpected{

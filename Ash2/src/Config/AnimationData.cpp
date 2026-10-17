@@ -33,7 +33,8 @@ std::expected<AnimationData, String> AnimationData::FromToml(
   // offset.check() が先に欠落を報告し、f 側の欠落チェックは後続の
   // f.wrap() 呼び出しで別途行われる。
   TomlFields offset{
-      toml[U"draw_offset"], U"AnimationData::FromToml", U"draw_offset"
+      TomlMember(toml, U"draw_offset"), U"AnimationData::FromToml",
+      U"draw_offset"
   };
   const Vec2 drawOffset = {offset.get<double>(U"x"), offset.get<double>(U"y")};
   if (auto result = offset.check(); !result) {

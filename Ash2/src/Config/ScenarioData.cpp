@@ -1,5 +1,7 @@
 #include "Config/ScenarioData.hpp"
 
+#include "Config/TomlFields.hpp"
+
 namespace {
 
 /// @brief ParseStep の結果：ステップと、それが参照するセクション名
@@ -14,13 +16,13 @@ struct ParsedStep {
 [[nodiscard]] std::expected<ParsedStep, String> ParseStep(
     const TOMLValue& step, const PhaseLoaderTable& loaders
 ) {
-  const auto action = step[U"action"].getOpt<String>();
+  const auto action = TomlMember(step, U"action").getOpt<String>();
   if (!action) {
     return std::unexpected{U"ScenarioData::ParseStep: action がありません"};
   }
 
   if (*action == U"push" || *action == U"reset") {
-    const auto phaseName = step[U"phase"].getOpt<String>();
+    const auto phaseName = TomlMember(step, U"phase").getOpt<String>();
     if (!phaseName) {
       return std::unexpected{U"ScenarioData::ParseStep: phase がありません"};
     }

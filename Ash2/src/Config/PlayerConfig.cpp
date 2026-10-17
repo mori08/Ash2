@@ -123,10 +123,11 @@ namespace {
     const TOMLValue& m
 ) {
   Array<MeleeSwingConfig> chain;
-  // Why not: m[U"chain"] がテーブル配列として存在しない場合に
+  // Why not: TomlMember(m, U"chain") がテーブル配列として存在しない場合に
   // tableArrayView() を呼ぶと不正アクセスになるため、
   // 事前に isTableArray() で存在確認する。
-  if (const auto& chainValue = m[U"chain"]; chainValue.isTableArray()) {
+  if (const auto& chainValue = TomlMember(m, U"chain");
+      chainValue.isTableArray()) {
     size_t index = 0;
     for (const auto& chainToml : chainValue.tableArrayView()) {
       auto swing =
@@ -146,7 +147,7 @@ namespace {
     };
   }
 
-  auto finisher = ParseMeleeFinisher(m[U"finisher"]);
+  auto finisher = ParseMeleeFinisher(TomlMember(m, U"finisher"));
   if (!finisher) {
     return std::unexpected{std::move(finisher).error()};
   }
@@ -362,43 +363,43 @@ namespace {
 std::expected<PlayerConfig, String> PlayerConfig::FromToml(
     const TOMLValue& toml
 ) {
-  auto melee = ParseMelee(toml[U"melee"]);
+  auto melee = ParseMelee(TomlMember(toml, U"melee"));
   if (!melee) {
     return std::unexpected{std::move(melee).error()};
   }
-  auto ranged = ParseRanged(toml[U"ranged"]);
+  auto ranged = ParseRanged(TomlMember(toml, U"ranged"));
   if (!ranged) {
     return std::unexpected{std::move(ranged).error()};
   }
-  auto dash = ParseDash(toml[U"dash"]);
+  auto dash = ParseDash(TomlMember(toml, U"dash"));
   if (!dash) {
     return std::unexpected{std::move(dash).error()};
   }
-  auto dashAttack = ParseDashAttack(toml[U"dash_attack"]);
+  auto dashAttack = ParseDashAttack(TomlMember(toml, U"dash_attack"));
   if (!dashAttack) {
     return std::unexpected{std::move(dashAttack).error()};
   }
-  auto airAttack = ParseAirAttack(toml[U"air_attack"]);
+  auto airAttack = ParseAirAttack(TomlMember(toml, U"air_attack"));
   if (!airAttack) {
     return std::unexpected{std::move(airAttack).error()};
   }
-  auto stamina = ParseStamina(toml[U"stamina"]);
+  auto stamina = ParseStamina(TomlMember(toml, U"stamina"));
   if (!stamina) {
     return std::unexpected{std::move(stamina).error()};
   }
-  auto landing = ParseLanding(toml[U"landing"]);
+  auto landing = ParseLanding(TomlMember(toml, U"landing"));
   if (!landing) {
     return std::unexpected{std::move(landing).error()};
   }
-  auto attackEffect = ParseAttackEffect(toml[U"attack_effect"]);
+  auto attackEffect = ParseAttackEffect(TomlMember(toml, U"attack_effect"));
   if (!attackEffect) {
     return std::unexpected{std::move(attackEffect).error()};
   }
-  auto damage = ParseDamage(toml[U"damage"]);
+  auto damage = ParseDamage(TomlMember(toml, U"damage"));
   if (!damage) {
     return std::unexpected{std::move(damage).error()};
   }
-  auto lock = ParseLock(toml[U"lock"]);
+  auto lock = ParseLock(TomlMember(toml, U"lock"));
   if (!lock) {
     return std::unexpected{std::move(lock).error()};
   }

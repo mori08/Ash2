@@ -1,5 +1,6 @@
 #include "Phase/PhaseLoaders.hpp"
 
+#include "Config/TomlFields.hpp"
 #include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/ScenarioPhase.hpp"
 #include "Phase/StagePhase.hpp"
@@ -79,7 +80,7 @@ const PhaseLoaderTable& GetPhaseLoaders() {
        MakeLoader<AnimationViewerPhase>(
            [](const TOMLValue& step)
                -> std::expected<AnimationViewerPhase::Param, String> {
-             const auto dataKey = step[U"param"].getOpt<String>();
+             const auto dataKey = TomlMember(step, U"param").getOpt<String>();
              if (!dataKey) {
                return std::unexpected{
                    U"ScenarioData::ParseStep: animation_viewer に param があ"
@@ -93,7 +94,7 @@ const PhaseLoaderTable& GetPhaseLoaders() {
        MakeLoader<StagePhase>(
            [](const TOMLValue& step)
                -> std::expected<StagePhase::Param, String> {
-             const auto stageName = step[U"param"].getOpt<String>();
+             const auto stageName = TomlMember(step, U"param").getOpt<String>();
              if (!stageName) {
                return std::unexpected{
                    U"ScenarioData::ParseStep: stage に param がありません"
@@ -106,7 +107,8 @@ const PhaseLoaderTable& GetPhaseLoaders() {
        MakeLoader<ScenarioPhase>(
            [](const TOMLValue& step)
                -> std::expected<ScenarioPhase::Param, String> {
-             const auto sectionName = step[U"param"].getOpt<String>();
+             const auto sectionName =
+                 TomlMember(step, U"param").getOpt<String>();
              if (!sectionName) {
                return std::unexpected{
                    U"ScenarioData::ParseStep: scenario に param がありません"
@@ -119,7 +121,8 @@ const PhaseLoaderTable& GetPhaseLoaders() {
        MakeLoader<WaitPhase>(
            [](const TOMLValue& step)
                -> std::expected<WaitPhase::Param, String> {
-             const auto duration = step[U"duration"].getOpt<double>();
+             const auto duration =
+                 TomlMember(step, U"duration").getOpt<double>();
              if (!duration) {
                return std::unexpected{
                    U"ScenarioData::ParseStep: wait に duration がありません"

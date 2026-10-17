@@ -180,6 +180,17 @@ TEST_CASE("PlayerConfig::FromToml - missing speed returns unexpected") {
   REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
 }
 
+TEST_CASE("PlayerConfig::FromToml - missing ranged table returns unexpected") {
+  std::string toml{kFullToml};
+  const auto begin = toml.find("[ranged]\n");
+  const auto end = toml.find("[dash]\n");
+  REQUIRE(begin != std::string::npos);
+  REQUIRE(end != std::string::npos);
+  toml.erase(begin, end - begin);
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+}
+
 TEST_CASE(
     "PlayerConfig::FromToml - missing melee.chain trajectory returns "
     "unexpected (not \"unknown value\")"

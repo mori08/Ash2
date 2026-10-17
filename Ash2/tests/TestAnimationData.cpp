@@ -66,6 +66,15 @@ TEST_CASE("AnimationData::FromToml - missing width returns unexpected") {
   REQUIRE_FALSE(AnimationData::FromToml(reader).has_value());
 }
 
+TEST_CASE("AnimationData::FromToml - missing draw_offset returns unexpected") {
+  constexpr std::string_view kToml =
+      "texture = \"assets/images/player.png\"\n"
+      "width = 32\n"
+      "height = 64\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_FALSE(AnimationData::FromToml(reader).has_value());
+}
+
 TEST_CASE("AnimationData::FromToml - missing clip row returns unexpected") {
   constexpr std::string_view kToml =
       "texture = \"assets/images/player.png\"\n"
