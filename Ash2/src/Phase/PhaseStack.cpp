@@ -1,7 +1,5 @@
 #include "Phase/PhaseStack.hpp"
 
-#include <cassert>
-
 #include "Util/Overloaded.hpp"
 
 PhaseStack::PhaseStack(
@@ -43,7 +41,9 @@ void PhaseStack::pop(entt::registry& registry) {
 void PhaseStack::push(
     entt::registry& registry, std::unique_ptr<IPhase>&& phase
 ) {
-  assert(phase != nullptr && "積むフェーズは nullptr であってはならない");
+  if (phase == nullptr) {
+    throw Error{U"積むフェーズが nullptr"};
+  }
   m_stack.push_back(std::move(phase));
   m_stack.back()->onAfterPush(registry);
 }

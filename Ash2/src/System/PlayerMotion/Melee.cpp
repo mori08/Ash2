@@ -1,6 +1,5 @@
 #include <Siv3D.hpp>
 
-#include <cassert>
 #include <functional>
 
 #include "Component/Stamina.hpp"
@@ -102,7 +101,9 @@ void UpdateMeleeHitbox(
 double MeleeLightSpread(
     double progress, const MeleeFinisherConfig& finisher, int32 index
 ) {
-  assert(finisher.lightCount >= 2 && "締め段の光は2つ以上でなければならない");
+  if (finisher.lightCount < 2) {
+    throw Error{U"締め段の光が2つ未満"};
+  }
   const double t = Clamp(progress, 0.0, 1.0);
   // 中心軌道と同じ EaseOutQuad で閉じると序盤で間隔が詰まりきってしまい、
   // 光が2つに見える時間がほとんど残らない。踏み込む間は開いたままにして、
@@ -151,10 +152,9 @@ Optional<Variant> Tick(
 
   const auto& cfg = registry.ctx().get<PlayerConfig>();
   const auto& melee = cfg.melee;
-  assert(
-      state.stage < melee.chain.size() &&
-      "state.stage は melee.chain の範囲内でなければならない"
-  );
+  if (state.stage >= melee.chain.size()) {
+    throw Error{U"連撃の段が設定の範囲外"};
+  }
   const auto& swing = melee.chain[state.stage];
   const auto& timeline = swing.timeline;
   const auto& input = frameData.input;

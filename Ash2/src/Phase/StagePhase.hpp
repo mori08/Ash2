@@ -20,7 +20,7 @@ class StagePhase : public IPhase {
 
   /// @brief プレイヤーとステージ定義の敵、プレイヤーの HP / スタミナゲージを
   /// 生成する
-  /// @note stageName が StageData に無ければ FatalError を投げる
+  /// @note stageName が StageData に無ければ Error を投げる
   void onAfterPush(entt::registry& registry) override;
 
   /// @brief 戦闘を更新し、決着したら結果フェーズを Push する

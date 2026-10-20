@@ -9,7 +9,6 @@
 #include "Factory/EnemyFactory.hpp"
 #include "Factory/PlayerFactory.hpp"
 #include "Factory/StageData.hpp"
-#include "FatalError.hpp"
 #include "FrameData.hpp"
 #include "Phase/StageClearPhase.hpp"
 #include "Phase/StageGameOverPhase.hpp"
@@ -70,12 +69,7 @@ void StagePhase::onAfterPush(entt::registry& registry) {
   const auto& stageData = registry.ctx().get<StageData>();
   const auto it = stageData.stages.find(m_stageName);
   if (it == stageData.stages.end()) {
-    throw FatalError{
-        .reason = FatalReason::ConfigInvalid,
-        .detail =
-            U"StagePhase::onAfterPush: stageName '{}' が StageData "
-            U"にありません"_fmt(m_stageName),
-    };
+    throw Error{U"指定されたステージ名が StageData にない"};
   }
 
   m_playerRoot = PlayerFactory::Create(registry, {});

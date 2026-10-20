@@ -107,7 +107,7 @@ namespace {
   }
 
   // parse 時に不変条件（光は2つ以上）を確定させ、MeleeLightSpread
-  // 側では assert のみで済むようにする
+  // 側では throw のみで済むようにする
   if (finisher->lightCount < 2) {
     return std::unexpected{
         U"PlayerConfig::ParseMeleeFinisher: melee.finisher.light_count は "
