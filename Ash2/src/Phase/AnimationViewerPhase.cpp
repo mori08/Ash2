@@ -5,7 +5,6 @@
 #include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/AnimationData.hpp"
-#include "FatalError.hpp"
 #include "FrameData.hpp"
 #include "System/AnimationSystem.hpp"
 #include "UiFonts.hpp"
@@ -25,12 +24,7 @@ void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
   const auto& animRegistry = registry.ctx().get<AnimationDataRegistry>();
   const auto it = animRegistry.find(m_dataKey);
   if (it == animRegistry.end()) {
-    throw FatalError{
-        .reason = FatalReason::ConfigInvalid,
-        .detail =
-            U"AnimationViewerPhase::onAfterPush: dataKey '{}' が "
-            U"AnimationDataRegistry にありません"_fmt(m_dataKey),
-    };
+    throw Error{U"指定されたデータキーが AnimationDataRegistry にない"};
   }
 
   const auto& data = it->second;

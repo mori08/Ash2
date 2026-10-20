@@ -3,12 +3,10 @@
 #include <entt/entt.hpp>
 
 #include "Config/AnimationData.hpp"
-#include "FatalError.hpp"
 #include "Phase/AnimationViewerPhase.hpp"
 
 TEST_CASE(
-    "AnimationViewerPhase::onAfterPush - throws FatalError for unregistered "
-    "dataKey"
+    "AnimationViewerPhase::onAfterPush - throws Error for unregistered dataKey"
 ) {
   // AnimationDataRegistry を空のまま登録し、未登録キーで呼び出す
   entt::registry registry;
@@ -17,7 +15,7 @@ TEST_CASE(
   AnimationViewerPhase phase{
       AnimationViewerPhase::Param{.dataKey = U"unknown"}
   };
-  REQUIRE_THROWS_AS(phase.onAfterPush(registry), FatalError);
+  REQUIRE_THROWS_AS(phase.onAfterPush(registry), Error);
 }
 
 #endif

@@ -5,6 +5,7 @@
 #include <Siv3D.hpp>
 
 #include <cstdlib>
+#include <iostream>
 
 #include "Asset.hpp"
 #include "Config/ArenaConfig.hpp"
@@ -12,7 +13,6 @@
 #include "Config/InputConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/TitleConfig.hpp"
-#include "CrashHandler.hpp"
 #include "Debug.hpp"
 #include "Factory/StageData.hpp"
 #include "GameSetup.hpp"
@@ -126,7 +126,11 @@ void RunTestsIfRequested() {
   }
   AppDebug::testMode = true;
   const int32 result = Catch::Session().run();
-  ExitImmediately(result == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+  // std::exit() は s3d のスレッドと噛み合って終了しない
+  // _Exit() は出力を流さないため、先に明示的に流す
+  // TODO(#278): 終了コードを設定する手段がなく _Exit に頼っている
+  std::cout.flush();
+  std::_Exit(result);
 }
 
 void OpenDebugConsole() {

@@ -180,8 +180,8 @@
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | BattleSystem 内（StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | BattleSystem 内（MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
 | [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | BattleSystem 内（GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `ArenaConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
-| [`GaugeSystem::Update`](../Ash2/src/System/GaugeSystem.hpp) | 毎フレーム（フェーズ後） | `HpGauge`/`StaminaGauge` + `GaugeSource` + `Drawable` を持つエンティティの `RectDrawable` 幅を、`GaugeSource` が指す `Hp`/`Stamina` の `current / max`（0〜1 にクランプ）× `fullWidth` に更新する。`max <= 0` は幅 0。参照先が無効、または `Hp`/`Stamina` を持たない場合は `assert` で止まる |
-| [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | フェーズ内（メニューを持つ Phase が毎フレーム呼出） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`ScreenPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（子が `Button` を持たない、`defaultButton`・移動先が子でない）は `assert` で止まる。見た目は扱わない |
+| [`GaugeSystem::Update`](../Ash2/src/System/GaugeSystem.hpp) | 毎フレーム（フェーズ後） | `HpGauge`/`StaminaGauge` + `GaugeSource` + `Drawable` を持つエンティティの `RectDrawable` 幅を、`GaugeSource` が指す `Hp`/`Stamina` の `current / max`（0〜1 にクランプ）× `fullWidth` に更新する。`max <= 0` は幅 0。参照先が無効、または自身の `Drawable` が `RectDrawable` でない場合は `Error` を投げる |
+| [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | フェーズ内（メニューを持つ Phase が毎フレーム呼出） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`ScreenPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（子が `Button` を持たない、`defaultButton`・移動先が子でない）は `Error` を投げる。見た目は扱わない |
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋BattleSystem 内（BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。BattleSystem では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
@@ -345,10 +345,10 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
 | [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextDrawable` の仮タイトル「沼に焚べ」を `HudSystem` に描かせる。ロゴの y 座標は `TitleConfig::logoY`、x 座標は画面中央。遷移は持たない（骨組み） |
-| [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `FatalError{FatalReason::ConfigInvalid, ...}` を投げる。Esc の Pop は持たない |
+| [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `Error` を投げる。Esc の Pop は持たない |
 | [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |
-| [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop）。`dataKey` が `AnimationDataRegistry` に未登録なら `FatalError{FatalReason::ConfigInvalid, ...}` を投げる |
+| [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop）。`dataKey` が `AnimationDataRegistry` に未登録なら `Error` を投げる |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
 
 ### シナリオ TOML から生成できるフェーズ名
@@ -387,7 +387,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 `Ash2/src/Config/` 配下。TOML から `FromToml()` で構築し、`registry.ctx()` に格納する。
 `PlayerConfig`/`EnemyConfig`/`AnimationData`/`ScenarioData` はいずれも、`FromToml` 自身が
 `std::expected<T, String>` を返す。必須キーの欠落は失敗として伝播し、終了を決めるのは
-呼び出し元（`Run()` が `FatalError{FatalReason::ConfigInvalid, ...}` に変える）である。
+呼び出し元（`Run()` が `Error` に変えて投げる）である。
 
 [`TomlFields`](../Ash2/src/Config/TomlFields.hpp) は1テーブル分の必須キー読み出しと
 欠落キーの記録をまとめるヘルパーで、上記3設定の `FromToml`（`PlayerConfig` は下位の
@@ -560,7 +560,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 - `.png` → `TextureAsset`、`.mp3` → `AudioAsset` としてキー（相対パス）で登録
 - アニメーション設定: `Ash2/App/assets/config/animation/*.toml`（起動時に全ファイルをスキャン）
 - `asset_list` を開けない場合は起動しない（`GetAssetList` → `RegisterAssets` → `InitializeEngine`
-  が `std::expected` で失敗を伝え、`Run()` が `FatalError{FatalReason::AssetMissing, ...}` に変えて投げる）
+  が `std::expected` で失敗を伝え、`Run()` が `Error` に変えて投げる）
 - UI フォントは `FontAsset` に登録し、起動時に `Load` まで確かめる（`UiFonts::Register`）
 - TOML の読み込みは `OpenToml` を単一の入口とする。開けない場合はパスを含むメッセージの
   `std::expected` で失敗を返す（中身が空の TOML は「開けている」として扱い、キー欠落は
@@ -576,10 +576,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 
 | 名前 | 役割 |
 |---|---|
-| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `InputDeviceSelector::update`（`registry.ctx()` の `InputConfig` を渡す）→ `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` の失敗は `FatalError{FatalReason::AssetMissing, ...}` に、`InitializeRegistry` の失敗は `FatalError{FatalReason::ConfigInvalid, ...}` に変えて投げる。例外は `FatalError` / `s3d::Error` / `std::exception` / `...` の4種を捕捉し `ExitWithFatal` へ渡す。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
-| [`FatalError`](../Ash2/src/FatalError.hpp) | 続行できない失敗を表す型。分類（`FatalReason`）と開発者向けの `detail` を持つ |
-| [`ExitWithFatal`](../Ash2/src/CrashHandler.hpp) | 致命エラーを `crash.log` に記録し、Release では分類に応じた文言を表示して終了する |
-| [`ExitImmediately`](../Ash2/src/CrashHandler.hpp) | 標準出力を流してから `std::_Exit` でプロセスを終了する。致命エラー終了とテスト実行後の終了で共有する |
+| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `InputDeviceSelector::update`（`registry.ctx()` の `InputConfig` を渡す）→ `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` と `InitializeRegistry` の失敗は `Error` に変えて投げる。例外は `catch (...)` ですべて受け、何もせずに終える。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
 | [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、アセット・フォント登録の失敗を呼び出し元（`Main`）へ渡す。`ApplyWindowPreset` の失敗は `APP_LOG` に出して続行する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config（`InputConfig` を含む）/ `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
@@ -602,7 +599,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 ## アニメーションクリップ名
 
 `Ash2/App/assets/config/animation/*.toml` のクリップ名としてコードから参照されるもの。
-クリップ名の欠落は `AnimationSystem` の `assert` で検出される。
+クリップ名の欠落は `AnimationSystem` が `Error` を投げて検出する。
 
 `player.toml`（`dataKey = player`）:
 
@@ -693,7 +690,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 - 新しい Config を追加し F5 で差し替えたいときは、`GameSetup::InitializeRegistry` だけでなく `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）にも追加する。
 - アセットファイルを追加・削除したときは `tools/sync-assets.sh` を実行する。`Ash2/App/assets/asset_list` と `Ash2/App/Resource.rc` はその生成物で、手書きしない。
 - 新フェーズを追加し TOML から `push`/`reset` できるようにするときは、`Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()` にもエントリを追加する。
-- 新しいアニメーションクリップを参照するときは `Ash2/App/assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` の `assert` で落ちる）。
+- 新しいアニメーションクリップを参照するときは `Ash2/App/assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` が `Error` を投げて落ちる）。
 - アニメーションクリップは既定で一発再生（最終コマで停止）。ループさせたいクリップにのみ `loop = true` を明記する。
-- 攻撃判定・被弾判定を持つエンティティ（本体・ヒットボックス・弾）には `Team` を付与する。持たない側は `HitSystem` の同陣営スキップに参加せず、静かに当たる（`assert` では捕まえない仕様）。新しい攻撃エンティティの生成時は `Team` を付与する。
+- 攻撃判定・被弾判定を持つエンティティ（本体・ヒットボックス・弾）には `Team` を付与する。持たない側は `HitSystem` の同陣営スキップに参加せず、静かに当たる（エラーでは捕まえない仕様）。新しい攻撃エンティティの生成時は `Team` を付与する。
 - 戦闘に参加する新しいシステムは `BattleSystem::Update` に並べる。フェーズの `update` に直接並べない（呼び出し順の制約は上記「呼び出し順の制約」参照）。

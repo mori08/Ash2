@@ -55,8 +55,6 @@ Ash2/src/
 ├── WindowPreset.hpp      # ウィンドウサイズのプリセットと適用
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ
 ├── DebugOnly.hpp/.cpp    # Debug ビルドにのみ存在する機能とそのキー判定
-├── FatalError.hpp        # 致命エラーの型（分類と詳細）
-├── CrashHandler.hpp/.cpp # 致命エラーの記録・表示・終了
 ├── Component/            # ECS コンポーネント（データのみ）
 ├── Config/               # TOML 設定データ（FromToml 付き構造体）と、それが持つ enum
 ├── Input/                # 入力抽象化

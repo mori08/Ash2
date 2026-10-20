@@ -1,11 +1,9 @@
 #include <Siv3D.hpp>
 
 #include <entt/entt.hpp>
-#include <exception>
 
 #include "Config/InputConfig.hpp"
 #include "Config/ScenarioData.hpp"
-#include "CrashHandler.hpp"
 #include "DebugOnly.hpp"
 #include "FrameData.hpp"
 #include "GameSetup.hpp"
@@ -43,18 +41,12 @@ void RunGameLoop(
 /// @brief ゲームに必要な状態を構築し、ゲームループへ渡す
 void Run() {
   if (auto result = InitializeEngine(); !result) {
-    throw FatalError{
-        .reason = FatalReason::AssetMissing,
-        .detail = std::move(result).error(),
-    };
+    throw Error{std::move(result).error()};
   }
 
   entt::registry registry;
   if (auto result = InitializeRegistry(registry); !result) {
-    throw FatalError{
-        .reason = FatalReason::ConfigInvalid,
-        .detail = std::move(result).error(),
-    };
+    throw Error{std::move(result).error()};
   }
 
   InputDeviceSelector inputSelector;
@@ -69,33 +61,6 @@ void Run() {
   RunGameLoop(registry, inputSelector, phaseStack);
 }
 
-/// @brief 現在処理中の例外を分類し、記録・表示して終了する
-/// @note catch (...) の中からのみ呼ぶ
-[[noreturn]] void ExitWithCurrentException() {
-  // 型ごとの catch を一箇所に集めるため、処理中の例外を再送出して振り分ける
-  try {
-    throw;
-  } catch (const FatalError& e) {
-    ExitWithFatal(e);
-  } catch (const Error& e) {
-    // s3d::Error は std::exception を継承しないため独立して受ける
-    ExitWithFatal({
-        .reason = FatalReason::Unknown,
-        .detail = U"{}: {}"_fmt(e.type(), e.what()),
-    });
-  } catch (const std::exception& e) {
-    ExitWithFatal({
-        .reason = FatalReason::Unknown,
-        .detail = Unicode::Widen(e.what()),
-    });
-  } catch (...) {
-    ExitWithFatal({
-        .reason = FatalReason::Unknown,
-        .detail = U"未知の例外",
-    });
-  }
-}
-
 }  // namespace
 
 void Main() {
@@ -104,7 +69,8 @@ void Main() {
 
   try {
     Run();
-  } catch (...) {
-    ExitWithCurrentException();
+  } catch (...) {  // NOLINT(bugprone-empty-catch)
+    // Siv3D に任せると what() の内容がダイアログに出るため、受け止めて終える
+    // 記録はデバッガが投げた時点で取っている
   }
 }

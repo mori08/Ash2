@@ -10,8 +10,9 @@ description: Run the app (tools/run.sh) in the background and monitor output. Us
 1. `run_in_background: true` を指定して `./tools/run.sh` を Bash で起動する
 2. Monitor ツールでプロセスの出力ストリームを監視する
 3. ゲームが終了したら Monitor の出力を確認してユーザーに報告する
-   - 正常終了なら終了コードは 0
-   - 異常終了なら `ERROR: アプリが異常終了しました` と `crash.log` の内容が出力される
+   - 例外で終了した場合も終了コードは 0 になり、出力からは正常終了と見分けられない
+   - ユーザーが閉じる前にゲームが終了したら、ユーザーに確認する
+   - クラッシュなら `ERROR: アプリが異常終了しました` が出力される
 
 ## 注意
 

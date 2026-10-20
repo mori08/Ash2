@@ -132,7 +132,6 @@
     <ClCompile Include="src\Factory\EnemyFactory.cpp" />
     <ClCompile Include="src\Factory\MenuFactory.cpp" />
     <ClCompile Include="src\Factory\StageData.cpp" />
-    <ClCompile Include="src\CrashHandler.cpp" />
     <ClCompile Include="src\DebugOnly.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -469,8 +468,6 @@
     <ClInclude Include="src\Debug.hpp" />
     <ClInclude Include="src\Screen.hpp" />
     <ClInclude Include="src\DebugOnly.hpp" />
-    <ClInclude Include="src\CrashHandler.hpp" />
-    <ClInclude Include="src\FatalError.hpp" />
     <ClInclude Include="src\GameSetup.hpp" />
     <ClInclude Include="src\Component\WorldPos.hpp" />
     <ClInclude Include="src\Phase\StagePhase.hpp" />

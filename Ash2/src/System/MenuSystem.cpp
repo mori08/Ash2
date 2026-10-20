@@ -1,7 +1,5 @@
 #include "System/MenuSystem.hpp"
 
-#include <cassert>
-
 #include "Component/Hierarchy.hpp"
 #include "Component/Menu.hpp"
 #include "Component/ScreenPos.hpp"
@@ -25,15 +23,13 @@ Array<entt::entity> ChildrenOf(
 }
 
 /// @brief entity がメニューの子か
-[[maybe_unused]] bool IsChildOf(
-    const Array<entt::entity>& children, entt::entity entity
-) {
+bool IsChildOf(const Array<entt::entity>& children, entt::entity entity) {
   return children.contains(entity);
 }
 
 /// @brief メニューの構造が契約を満たすか
 // 全ボタンを設定し終えるまで検査できないため、Setup 側では行わない
-[[maybe_unused]] bool IsValidStructure(
+bool IsValidStructure(
     const entt::registry& registry, entt::entity menuEntity,
     const Array<entt::entity>& children
 ) {
@@ -122,11 +118,12 @@ Optional<entt::entity> MenuSystem::Update(
     entt::registry& registry, const InputState& input, entt::entity menuEntity
 ) {
   const Array<entt::entity> children = ChildrenOf(registry, menuEntity);
-  assert(
-      IsValidStructure(registry, menuEntity, children) &&
-      "メニューの構造が不正です（子が Button+ScreenPos を持たない、"
-      "または defaultButton・移動先が子でない）"
-  );
+  if (!IsValidStructure(registry, menuEntity, children)) {
+    throw Error{
+        U"メニューの構造が不正（子が Button と ScreenPos を持たない、"
+        U"または defaultButton・移動先が子でない）"
+    };
+  }
 
   if (input.pointerMoved) {
     Focus(registry, children, HitTest(registry, children, *input.pointerMoved));
