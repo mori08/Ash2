@@ -26,7 +26,7 @@ review:
 s3d の型・関数は `s3d::` を省略して書く（`Vec2`、`Circle`、`Max` など）。
 
 `std` と `s3d` の両方に同等の型・関数がある場合は s3d 側を優先する（例: `std::max` → `Max`、`std::optional` → `Optional`）。
-s3d に相当がないものは `std` をそのまま使う（例: `std::expected`）。
+s3d に相当がないものは `std` をそのまま使う（例: `std::unique_ptr`）。
 
 組み込みの数値型は以下を使う。
 
@@ -47,17 +47,16 @@ s3d に相当がないものは `std` をそのまま使う（例: `std::expecte
 ## エラー処理
 
 - 条件：エラーを扱うコードを書く・レビューする前
-- 必読：[docs/coding_style/ERROR_HANDLING.md](../../docs/coding_style/ERROR_HANDLING.md)（手段の選び方と終了の決め方）
+- 必読：[docs/coding_style/ERROR_HANDLING.md](../../docs/coding_style/ERROR_HANDLING.md)（throw の意味・手段の選び方・外部 API の扱い）
 
 | 状況 | 手段 |
 |------|------|
-| コードが正しければ起きない（不変条件・契約違反） | `assert(条件 && "日本語メッセージ")` |
 | 「値がない」ことが正常系 | `Optional<T>` |
-| それ以外の失敗 | `std::expected<T, E>` |
-| 受け取った失敗に対して終了を決める | `throw FatalError{...}` |
+| それ以外（失敗、不変条件・契約違反） | `throw Error{U"日本語メッセージ"}` |
 
-`Optional` / `expected` を返す関数には `[[nodiscard]]` を付ける。
-`Optional` / `expected` を返せる関数の中では終了を決めない。
+`assert` は使わない。
+`Optional` を返す関数には `[[nodiscard]]` を付ける。
+`catch` は `Main` にだけ書く。
 
 ## コメント
 
