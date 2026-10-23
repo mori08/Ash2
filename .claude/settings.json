@@ -22,6 +22,7 @@
       "Bash(./tools/build.sh *)",
       "Bash(./tools/run-tests.sh *)",
       "Bash(./tools/run.sh *)",
+      "Bash(./tools/run-cdb.sh *)",
       "Edit(tmp/*)",
       "Bash(rm tmp/*)"
     ]
