@@ -16,6 +16,7 @@
 | Python 3 | `tools/sync-assets.sh` が使用（ビルド時に自動実行） | `winget install Python.Python.3.12` |
 | clang-format / clang-tidy | 整形・静的解析 | `pip install`（下記参照） |
 | GitHub CLI（gh） | PR・issue 操作 | `winget install GitHub.cli` |
+| WinDbg（cdb） | クラッシュの捕捉とダンプの記録（`tools/run-cdb.sh`・`/run` スキル） | `winget install Microsoft.WinDbg` |
 | Claude Code | 開発フローの中心（`.claude/` のスキル・エージェントを実行） | 下記参照 |
 
 ## セットアップ手順
@@ -94,7 +95,28 @@ gh auth login
 
 PR・issue 操作（`/create-pr` スキルや CI 連携）で使用する。
 
-### 7. Claude Code
+### 7. WinDbg（cdb）
+
+`tools/run-cdb.sh`（`/run` スキルが使用）が、コマンドラインデバッガ cdb でゲームを起動する。
+cdb は WinDbg に同梱されている。Windows SDK は不要。
+
+```bash
+winget install Microsoft.WinDbg
+```
+
+cdb は実行エイリアス `cdbX64.exe` として PATH に入る。新しいターミナルで確認する:
+
+```bash
+cdbX64.exe -version
+```
+
+見つからない場合は、Windows の設定「アプリ → アプリの詳細設定 → アプリ実行エイリアス」で
+`cdbX64.exe` がオンになっているか確認する。
+
+初回の実行時に、Windows の DLL のシンボルを Microsoft のシンボルサーバからダウンロードする。
+保存先は `C:\ProgramData\dbg\sym\`。
+
+### 8. Claude Code
 
 このプロジェクトは Issue の解決から PR 作成までを Claude Code のスキル
 （`/resolve-issue`・`/run`・`/create-pr` など、`.claude/` 配下）で回す前提になっている。
@@ -102,7 +124,7 @@ PR・issue 操作（`/create-pr` スキルや CI 連携）で使用する。
 [公式ドキュメント](https://code.claude.com/docs)を参照してインストールし、
 リポジトリのルートで `claude` を起動してログインする。
 
-### 8. Plan Links 拡張機能（任意）
+### 9. Plan Links 拡張機能（任意）
 
 `tmp/plan-*.md`（計画ファイル）内のバッククォート囲みパスを Ctrl+Click で
 開けるようにする VS Code 拡張機能。ビルド・テスト・実行には不要。
@@ -117,6 +139,7 @@ PR・issue 操作（`/create-pr` スキルや CI 連携）で使用する。
 ./tools/build.sh        # アセット同期 → MSBuild（初回は vcpkg が entt を取得）
 ./tools/run-tests.sh    # Catch2 テスト実行
 ./tools/run.sh          # ゲーム起動
+./tools/run-cdb.sh      # cdb の下でゲーム起動（クラッシュ時は logs/crash.dmp を残す）
 ```
 
 整形・静的解析の確認:

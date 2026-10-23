@@ -33,4 +33,7 @@ mkdir -p "$REPO_ROOT/logs"
   -nologo \
   -fl "-flp:logfile=$REPO_ROOT/logs/build.log;verbosity=detailed"
 
+# PDB が作り直され、それ以前のダンプは読めなくなるため消す
+rm -f "$REPO_ROOT/logs/crash.dmp"
+
 echo "Build SUCCEEDED"
