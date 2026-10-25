@@ -1,427 +1,223 @@
 #include "PlayerConfig.hpp"
 
-#include "Config/TomlFields.hpp"
+#include "Config/TomlTable.hpp"
 
 namespace {
 
 /// @brief TOML 値から MotionTimeline を生成する
-/// @param section 欠落キーのメッセージに前置するテーブル名
 /// @note windup_sec/active_sec/recovery_a_sec/recovery_b_sec
 /// の4キーを持つテーブルであればよく、melee の段テーブルのように
 /// 他のキーを併せ持っていても構わない
-[[nodiscard]] std::expected<MotionTimeline, String> ParseTimeline(
-    const TOMLValue& toml, StringView section
-) {
-  TomlFields f{toml, U"PlayerConfig::ParseTimeline", String{section}};
-  return f.wrap(
-      MotionTimeline{
-          .windupSec = f.get<double>(U"windup_sec"),
-          .activeSec = f.get<double>(U"active_sec"),
-          .recoveryASec = f.get<double>(U"recovery_a_sec"),
-          .recoveryBSec = f.get<double>(U"recovery_b_sec"),
-      }
-  );
-}
-
-/// @brief TOML の trajectory 文字列を MeleeTrajectory へ変換する
-[[nodiscard]] std::expected<MeleeTrajectory, String> ParseMeleeTrajectory(
-    const String& value
-) {
-  if (value == U"thrust") return MeleeTrajectory::Thrust;
-  if (value == U"slash") return MeleeTrajectory::Slash;
-  return std::unexpected{
-      U"PlayerConfig::ParseMeleeTrajectory: 不明な melee "
-      U"trajectory \"" +
-      value + U"\""
+[[nodiscard]] MotionTimeline ParseTimeline(const TOMLValue& toml) {
+  const TomlTable t{toml};
+  return MotionTimeline{
+      .windupSec = t.get<double>(U"windup_sec"),
+      .activeSec = t.get<double>(U"active_sec"),
+      .recoveryASec = t.get<double>(U"recovery_a_sec"),
+      .recoveryBSec = t.get<double>(U"recovery_b_sec"),
   };
 }
 
+/// @brief TOML の trajectory 文字列を MeleeTrajectory へ変換する
+[[nodiscard]] MeleeTrajectory ParseMeleeTrajectory(const String& value) {
+  if (value == U"thrust") return MeleeTrajectory::Thrust;
+  if (value == U"slash") return MeleeTrajectory::Slash;
+  throw Error{U"melee の trajectory が不明な値"};
+}
+
 /// @brief TOML から近接1振り分の MeleeSwingConfig を生成する
-/// @param section 欠落キーのメッセージに前置するテーブル名
-[[nodiscard]] std::expected<MeleeSwingConfig, String> ParseMeleeSwing(
-    const TOMLValue& swingToml, StringView section
-) {
-  auto timeline = ParseTimeline(swingToml, section);
-  if (!timeline) {
-    return std::unexpected{std::move(timeline).error()};
-  }
-
-  TomlFields f{swingToml, U"PlayerConfig::ParseMeleeSwing", String{section}};
-  const auto radius = f.get<double>(U"radius");
-  const auto trajectoryStr = f.get<String>(U"trajectory");
-  const auto slashRiseHeight = f.get<double>(U"slash_rise_height");
-  const auto slashCurve = f.get<double>(U"slash_curve");
-  const auto hitstopSec = f.get<double>(U"hitstop_sec");
-  const auto reactionStr = f.get<String>(U"reaction");
-  const auto staminaCost = f.get<int32>(U"stamina_cost");
-  // Why not: trajectory/reaction の変換前に check() で欠落を確定させる。変換を
-  // 先に行うと、欠落時の既定値 String{}（空文字列）が「不明な
-  // trajectory/reaction」と誤報されてしまうため。
-  if (auto result = f.check(); !result) {
-    return std::unexpected{std::move(result).error()};
-  }
-
-  auto trajectory = ParseMeleeTrajectory(trajectoryStr);
-  if (!trajectory) {
-    return std::unexpected{std::move(trajectory).error()};
-  }
-
-  auto reaction = ParseReactionLevel(reactionStr);
-  if (!reaction) {
-    return std::unexpected{std::move(reaction).error()};
-  }
-
+[[nodiscard]] MeleeSwingConfig ParseMeleeSwing(const TOMLValue& swingToml) {
+  const TomlTable t{swingToml};
   return MeleeSwingConfig{
-      .timeline = *std::move(timeline),
-      .radius = radius,
-      .trajectory = *trajectory,
-      .slashRiseHeight = slashRiseHeight,
-      .slashCurve = slashCurve,
-      .hitstopSec = hitstopSec,
-      .reaction = *reaction,
-      .staminaCost = staminaCost,
+      .timeline = ParseTimeline(swingToml),
+      .radius = t.get<double>(U"radius"),
+      .trajectory = ParseMeleeTrajectory(t.get<String>(U"trajectory")),
+      .slashRiseHeight = t.get<double>(U"slash_rise_height"),
+      .slashCurve = t.get<double>(U"slash_curve"),
+      .hitstopSec = t.get<double>(U"hitstop_sec"),
+      .reaction = ParseReactionLevel(t.get<String>(U"reaction")),
+      .staminaCost = t.get<int32>(U"stamina_cost"),
   };
 }
 
 /// @brief TOML から締め段の MeleeFinisherConfig を生成する
-[[nodiscard]] std::expected<MeleeFinisherConfig, String> ParseMeleeFinisher(
+[[nodiscard]] MeleeFinisherConfig ParseMeleeFinisher(
     const TOMLValue& finisherToml
 ) {
-  auto swing = ParseMeleeSwing(finisherToml, U"melee.finisher");
-  if (!swing) {
-    return std::unexpected{std::move(swing).error()};
-  }
-
-  TomlFields f{
-      finisherToml, U"PlayerConfig::ParseMeleeFinisher", U"melee.finisher"
+  const TomlTable t{finisherToml};
+  MeleeFinisherConfig finisher{
+      .swing = ParseMeleeSwing(finisherToml),
+      .lightCount = t.get<int32>(U"light_count"),
+      .lightGap = t.get<double>(U"light_gap"),
   };
-  auto finisher = f.wrap(
-      MeleeFinisherConfig{
-          .swing = *std::move(swing),
-          .lightCount = f.get<int32>(U"light_count"),
-          .lightGap = f.get<double>(U"light_gap"),
-      }
-  );
-  if (!finisher) {
-    return std::unexpected{std::move(finisher).error()};
-  }
 
   // parse 時に不変条件（光は2つ以上）を確定させ、MeleeLightSpread
   // 側では throw のみで済むようにする
-  if (finisher->lightCount < 2) {
-    return std::unexpected{
-        U"PlayerConfig::ParseMeleeFinisher: melee.finisher.light_count は "
-        U"2以上でなければなりません"
-    };
+  if (finisher.lightCount < 2) {
+    throw Error{U"締め段の光が2つ未満"};
   }
 
   return finisher;
 }
 
 /// @brief TOML から近接攻撃の設定値を生成する
-[[nodiscard]] std::expected<MeleeConfig, String> ParseMelee(
-    const TOMLValue& m
-) {
+[[nodiscard]] MeleeConfig ParseMelee(const TOMLValue& m) {
   Array<MeleeSwingConfig> chain;
   // Why not: TomlMember(m, U"chain") がテーブル配列として存在しない場合に
   // tableArrayView() を呼ぶと不正アクセスになるため、
   // 事前に isTableArray() で存在確認する。
   if (const auto& chainValue = TomlMember(m, U"chain");
       chainValue.isTableArray()) {
-    size_t index = 0;
     for (const auto& chainToml : chainValue.tableArrayView()) {
-      auto swing =
-          ParseMeleeSwing(chainToml, U"melee.chain[" + Format(index) + U"]");
-      if (!swing) {
-        return std::unexpected{std::move(swing).error()};
-      }
-      chain.push_back(*std::move(swing));
-      ++index;
+      chain.push_back(ParseMeleeSwing(chainToml));
     }
   }
   // chain が空だと Tick(MeleeChain&, ...) の chain[state.stage] アクセスが
   // 不正になるため許容しない
   if (chain.isEmpty()) {
-    return std::unexpected{
-        U"PlayerConfig::ParseMelee: melee.chain がありません"
-    };
+    throw Error{U"melee.chain が空"};
   }
 
-  auto finisher = ParseMeleeFinisher(TomlMember(m, U"finisher"));
-  if (!finisher) {
-    return std::unexpected{std::move(finisher).error()};
-  }
-
-  TomlFields f{m, U"PlayerConfig::ParseMelee", U"melee"};
-  return f.wrap(
-      MeleeConfig{
-          .capMidH = f.get<double>(U"cap_mid_h"),
-          .reach = f.get<double>(U"reach"),
-          .damage = f.get<int32>(U"damage"),
-          .chain = std::move(chain),
-          .finisher = *std::move(finisher),
-      }
-  );
+  const TomlTable t{m};
+  return MeleeConfig{
+      .capMidH = t.get<double>(U"cap_mid_h"),
+      .reach = t.get<double>(U"reach"),
+      .damage = t.get<int32>(U"damage"),
+      .chain = std::move(chain),
+      .finisher = ParseMeleeFinisher(TomlMember(m, U"finisher")),
+  };
 }
 
 /// @brief TOML から遠距離攻撃の設定値を生成する
-[[nodiscard]] std::expected<RangedConfig, String> ParseRanged(
-    const TOMLValue& r
-) {
-  TomlFields f{r, U"PlayerConfig::ParseRanged", U"ranged"};
-  return f.wrap(
-      RangedConfig{
-          .reach = f.get<double>(U"reach"),
-          .radius = f.get<double>(U"radius"),
-          .damage = f.get<int32>(U"damage"),
-          .bulletSpeed = f.get<double>(U"bullet_speed"),
-          .spawnHeight = f.get<double>(U"spawn_height"),
-          .staminaCost = f.get<int32>(U"stamina_cost"),
-          .recoverySec = f.get<double>(U"recovery_sec"),
-      }
-  );
+[[nodiscard]] RangedConfig ParseRanged(const TOMLValue& r) {
+  const TomlTable t{r};
+  return RangedConfig{
+      .reach = t.get<double>(U"reach"),
+      .radius = t.get<double>(U"radius"),
+      .damage = t.get<int32>(U"damage"),
+      .bulletSpeed = t.get<double>(U"bullet_speed"),
+      .spawnHeight = t.get<double>(U"spawn_height"),
+      .staminaCost = t.get<int32>(U"stamina_cost"),
+      .recoverySec = t.get<double>(U"recovery_sec"),
+  };
 }
 
 /// @brief TOML からダッシュの設定値を生成する
-[[nodiscard]] std::expected<DashConfig, String> ParseDash(const TOMLValue& d) {
-  auto timeline = ParseTimeline(d, U"dash");
-  if (!timeline) {
-    return std::unexpected{std::move(timeline).error()};
-  }
-
-  TomlFields f{d, U"PlayerConfig::ParseDash", U"dash"};
-  return f.wrap(
-      DashConfig{
-          .speed = f.get<double>(U"speed"),
-          .timeline = *std::move(timeline),
-          .staminaCost = f.get<int32>(U"stamina_cost"),
-      }
-  );
+[[nodiscard]] DashConfig ParseDash(const TOMLValue& d) {
+  const TomlTable t{d};
+  return DashConfig{
+      .speed = t.get<double>(U"speed"),
+      .timeline = ParseTimeline(d),
+      .staminaCost = t.get<int32>(U"stamina_cost"),
+  };
 }
 
 /// @brief TOML からダッシュ攻撃の設定値を生成する
-[[nodiscard]] std::expected<DashAttackConfig, String> ParseDashAttack(
-    const TOMLValue& da
-) {
-  auto timeline = ParseTimeline(da, U"dash_attack");
-  if (!timeline) {
-    return std::unexpected{std::move(timeline).error()};
-  }
-
-  TomlFields f{da, U"PlayerConfig::ParseDashAttack", U"dash_attack"};
-  const auto speed = f.get<double>(U"speed");
-  const auto orbitRadius = f.get<double>(U"orbit_radius");
-  const auto radius = f.get<double>(U"radius");
-  const auto damage = f.get<int32>(U"damage");
-  const auto hitstopSec = f.get<double>(U"hitstop_sec");
-  const auto staminaCost = f.get<int32>(U"stamina_cost");
-  const auto reactionStr = f.get<String>(U"reaction");
-  // Why not: reaction の変換前に check() で欠落を確定させる。変換を先に
-  // 行うと、欠落時の既定値 String{}（空文字列）が「不明な reaction」と
-  // 誤報されてしまうため。
-  if (auto result = f.check(); !result) {
-    return std::unexpected{std::move(result).error()};
-  }
-
-  auto reaction = ParseReactionLevel(reactionStr);
-  if (!reaction) {
-    return std::unexpected{std::move(reaction).error()};
-  }
-
+[[nodiscard]] DashAttackConfig ParseDashAttack(const TOMLValue& da) {
+  const TomlTable t{da};
   return DashAttackConfig{
-      .timeline = *std::move(timeline),
-      .speed = speed,
-      .orbitRadius = orbitRadius,
-      .radius = radius,
-      .damage = damage,
-      .hitstopSec = hitstopSec,
-      .reaction = *reaction,
-      .staminaCost = staminaCost,
+      .timeline = ParseTimeline(da),
+      .speed = t.get<double>(U"speed"),
+      .orbitRadius = t.get<double>(U"orbit_radius"),
+      .radius = t.get<double>(U"radius"),
+      .damage = t.get<int32>(U"damage"),
+      .hitstopSec = t.get<double>(U"hitstop_sec"),
+      .reaction = ParseReactionLevel(t.get<String>(U"reaction")),
+      .staminaCost = t.get<int32>(U"stamina_cost"),
   };
 }
 
 /// @brief TOML から空中攻撃の設定値を生成する
-[[nodiscard]] std::expected<AirAttackConfig, String> ParseAirAttack(
-    const TOMLValue& aa
-) {
-  auto timeline = ParseTimeline(aa, U"air_attack");
-  if (!timeline) {
-    return std::unexpected{std::move(timeline).error()};
-  }
-
-  TomlFields f{aa, U"PlayerConfig::ParseAirAttack", U"air_attack"};
-  const auto driftRatio = f.get<double>(U"drift_ratio");
-  const auto orbitRadius = f.get<double>(U"orbit_radius");
-  const auto orbitStartDeg = f.get<double>(U"orbit_start_deg");
-  const auto orbitEndDeg = f.get<double>(U"orbit_end_deg");
-  const auto radius = f.get<double>(U"radius");
-  const auto damage = f.get<int32>(U"damage");
-  const auto hitstopSec = f.get<double>(U"hitstop_sec");
-  const auto staminaCost = f.get<int32>(U"stamina_cost");
-  const auto reactionStr = f.get<String>(U"reaction");
-  // Why not: reaction の変換前に check() で欠落を確定させる。変換を先に
-  // 行うと、欠落時の既定値 String{}（空文字列）が「不明な reaction」と
-  // 誤報されてしまうため。
-  if (auto result = f.check(); !result) {
-    return std::unexpected{std::move(result).error()};
-  }
-
-  auto reaction = ParseReactionLevel(reactionStr);
-  if (!reaction) {
-    return std::unexpected{std::move(reaction).error()};
-  }
-
+[[nodiscard]] AirAttackConfig ParseAirAttack(const TOMLValue& aa) {
+  const TomlTable t{aa};
   return AirAttackConfig{
-      .timeline = *std::move(timeline),
-      .driftRatio = driftRatio,
-      .orbitRadius = orbitRadius,
-      .orbitStartDeg = orbitStartDeg,
-      .orbitEndDeg = orbitEndDeg,
-      .radius = radius,
-      .damage = damage,
-      .hitstopSec = hitstopSec,
-      .reaction = *reaction,
-      .staminaCost = staminaCost,
+      .timeline = ParseTimeline(aa),
+      .driftRatio = t.get<double>(U"drift_ratio"),
+      .orbitRadius = t.get<double>(U"orbit_radius"),
+      .orbitStartDeg = t.get<double>(U"orbit_start_deg"),
+      .orbitEndDeg = t.get<double>(U"orbit_end_deg"),
+      .radius = t.get<double>(U"radius"),
+      .damage = t.get<int32>(U"damage"),
+      .hitstopSec = t.get<double>(U"hitstop_sec"),
+      .reaction = ParseReactionLevel(t.get<String>(U"reaction")),
+      .staminaCost = t.get<int32>(U"stamina_cost"),
   };
 }
 
 /// @brief TOML からスタミナ回復の設定値を生成する
-[[nodiscard]] std::expected<StaminaConfig, String> ParseStamina(
-    const TOMLValue& s
-) {
-  TomlFields f{s, U"PlayerConfig::ParseStamina", U"stamina"};
-  return f.wrap(
-      StaminaConfig{
-          .max = f.get<int32>(U"max"),
-          .recoveryDelay = f.get<double>(U"recovery_delay"),
-          .recoveryRate = f.get<double>(U"recovery_rate"),
-      }
-  );
+[[nodiscard]] StaminaConfig ParseStamina(const TOMLValue& s) {
+  const TomlTable t{s};
+  return StaminaConfig{
+      .max = t.get<int32>(U"max"),
+      .recoveryDelay = t.get<double>(U"recovery_delay"),
+      .recoveryRate = t.get<double>(U"recovery_rate"),
+  };
 }
 
 /// @brief TOML から着地硬直の設定値を生成する
-[[nodiscard]] std::expected<LandingConfig, String> ParseLanding(
-    const TOMLValue& l
-) {
-  TomlFields f{l, U"PlayerConfig::ParseLanding", U"landing"};
-  return f.wrap(
-      LandingConfig{
-          .recoverySec = f.get<double>(U"recovery_sec"),
-      }
-  );
+[[nodiscard]] LandingConfig ParseLanding(const TOMLValue& l) {
+  const TomlTable t{l};
+  return LandingConfig{
+      .recoverySec = t.get<double>(U"recovery_sec"),
+  };
 }
 
 /// @brief TOML から攻撃演出共通の設定値を生成する
-[[nodiscard]] std::expected<AttackEffectConfig, String> ParseAttackEffect(
-    const TOMLValue& ae
-) {
-  TomlFields f{ae, U"PlayerConfig::ParseAttackEffect", U"attack_effect"};
-  return f.wrap(
-      AttackEffectConfig{
-          .fadeSec = f.get<double>(U"fade_sec"),
-      }
-  );
+[[nodiscard]] AttackEffectConfig ParseAttackEffect(const TOMLValue& ae) {
+  const TomlTable t{ae};
+  return AttackEffectConfig{
+      .fadeSec = t.get<double>(U"fade_sec"),
+  };
 }
 
 /// @brief TOML から被弾リアクションの設定値を生成する
-[[nodiscard]] std::expected<DamageConfig, String> ParseDamage(
-    const TOMLValue& d
-) {
-  TomlFields f{d, U"PlayerConfig::ParseDamage", U"damage"};
-  return f.wrap(
-      DamageConfig{
-          .staggerSec = f.get<double>(U"stagger_sec"),
-          .knockbackSpeedW = f.get<double>(U"knockback_speed_w"),
-          .knockbackSpeedH = f.get<double>(U"knockback_speed_h"),
-          .downSec = f.get<double>(U"down_sec"),
-          .getUpSec = f.get<double>(U"get_up_sec"),
-      }
-  );
+[[nodiscard]] DamageConfig ParseDamage(const TOMLValue& d) {
+  const TomlTable t{d};
+  return DamageConfig{
+      .staggerSec = t.get<double>(U"stagger_sec"),
+      .knockbackSpeedW = t.get<double>(U"knockback_speed_w"),
+      .knockbackSpeedH = t.get<double>(U"knockback_speed_h"),
+      .downSec = t.get<double>(U"down_sec"),
+      .getUpSec = t.get<double>(U"get_up_sec"),
+  };
 }
 
 /// @brief TOML からロック（遠距離照準）の設定値を生成する
-[[nodiscard]] std::expected<LockConfig, String> ParseLock(const TOMLValue& l) {
-  TomlFields f{l, U"PlayerConfig::ParseLock", U"lock"};
-  return f.wrap(
-      LockConfig{
-          .capsuleScale = f.get<double>(U"capsule_scale"),
-          .angleLimitDeg = f.get<double>(U"angle_limit_deg"),
-          .angleWeight = f.get<double>(U"angle_weight"),
-          .stickTilt = f.get<double>(U"stick_tilt"),
-          .stickRelease = f.get<double>(U"stick_release"),
-          .lockedColor = f.get<ColorF>(U"locked_color"),
-          .lockedAlpha = f.get<double>(U"locked_alpha"),
-          .warningAlpha = f.get<double>(U"warning_alpha"),
-          .halfColor = f.get<ColorF>(U"half_color"),
-          .halfAlpha = f.get<double>(U"half_alpha"),
-      }
-  );
+[[nodiscard]] LockConfig ParseLock(const TOMLValue& l) {
+  const TomlTable t{l};
+  return LockConfig{
+      .capsuleScale = t.get<double>(U"capsule_scale"),
+      .angleLimitDeg = t.get<double>(U"angle_limit_deg"),
+      .angleWeight = t.get<double>(U"angle_weight"),
+      .stickTilt = t.get<double>(U"stick_tilt"),
+      .stickRelease = t.get<double>(U"stick_release"),
+      .lockedColor = t.get<ColorF>(U"locked_color"),
+      .lockedAlpha = t.get<double>(U"locked_alpha"),
+      .warningAlpha = t.get<double>(U"warning_alpha"),
+      .halfColor = t.get<ColorF>(U"half_color"),
+      .halfAlpha = t.get<double>(U"half_alpha"),
+  };
 }
 
 }  // namespace
 
-std::expected<PlayerConfig, String> PlayerConfig::FromToml(
-    const TOMLValue& toml
-) {
-  auto melee = ParseMelee(TomlMember(toml, U"melee"));
-  if (!melee) {
-    return std::unexpected{std::move(melee).error()};
-  }
-  auto ranged = ParseRanged(TomlMember(toml, U"ranged"));
-  if (!ranged) {
-    return std::unexpected{std::move(ranged).error()};
-  }
-  auto dash = ParseDash(TomlMember(toml, U"dash"));
-  if (!dash) {
-    return std::unexpected{std::move(dash).error()};
-  }
-  auto dashAttack = ParseDashAttack(TomlMember(toml, U"dash_attack"));
-  if (!dashAttack) {
-    return std::unexpected{std::move(dashAttack).error()};
-  }
-  auto airAttack = ParseAirAttack(TomlMember(toml, U"air_attack"));
-  if (!airAttack) {
-    return std::unexpected{std::move(airAttack).error()};
-  }
-  auto stamina = ParseStamina(TomlMember(toml, U"stamina"));
-  if (!stamina) {
-    return std::unexpected{std::move(stamina).error()};
-  }
-  auto landing = ParseLanding(TomlMember(toml, U"landing"));
-  if (!landing) {
-    return std::unexpected{std::move(landing).error()};
-  }
-  auto attackEffect = ParseAttackEffect(TomlMember(toml, U"attack_effect"));
-  if (!attackEffect) {
-    return std::unexpected{std::move(attackEffect).error()};
-  }
-  auto damage = ParseDamage(TomlMember(toml, U"damage"));
-  if (!damage) {
-    return std::unexpected{std::move(damage).error()};
-  }
-  auto lock = ParseLock(TomlMember(toml, U"lock"));
-  if (!lock) {
-    return std::unexpected{std::move(lock).error()};
-  }
-
-  TomlFields f{toml, U"PlayerConfig::FromToml"};
-  return f.wrap(
-      PlayerConfig{
-          .speed = f.get<double>(U"speed"),
-          .jumpSpeed = f.get<double>(U"jump_speed"),
-          .gravity = f.get<double>(U"gravity"),
-          .capsuleRadius = f.get<double>(U"capsule_radius"),
-          .capsuleHeight = f.get<double>(U"capsule_height"),
-          .melee = *std::move(melee),
-          .ranged = *std::move(ranged),
-          .dash = *std::move(dash),
-          .dashAttack = *std::move(dashAttack),
-          .airAttack = *std::move(airAttack),
-          .stamina = *std::move(stamina),
-          .landing = *std::move(landing),
-          .attackEffect = *std::move(attackEffect),
-          .damage = *std::move(damage),
-          .lock = *std::move(lock),
-      }
-  );
+PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
+  const TomlTable t{toml};
+  return PlayerConfig{
+      .speed = t.get<double>(U"speed"),
+      .jumpSpeed = t.get<double>(U"jump_speed"),
+      .gravity = t.get<double>(U"gravity"),
+      .capsuleRadius = t.get<double>(U"capsule_radius"),
+      .capsuleHeight = t.get<double>(U"capsule_height"),
+      .melee = ParseMelee(TomlMember(toml, U"melee")),
+      .ranged = ParseRanged(TomlMember(toml, U"ranged")),
+      .dash = ParseDash(TomlMember(toml, U"dash")),
+      .dashAttack = ParseDashAttack(TomlMember(toml, U"dash_attack")),
+      .airAttack = ParseAirAttack(TomlMember(toml, U"air_attack")),
+      .stamina = ParseStamina(TomlMember(toml, U"stamina")),
+      .landing = ParseLanding(TomlMember(toml, U"landing")),
+      .attackEffect = ParseAttackEffect(TomlMember(toml, U"attack_effect")),
+      .damage = ParseDamage(TomlMember(toml, U"damage")),
+      .lock = ParseLock(TomlMember(toml, U"lock")),
+  };
 }

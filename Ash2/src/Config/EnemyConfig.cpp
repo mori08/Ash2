@@ -33,10 +33,7 @@ std::expected<EnemyConfig, String> EnemyConfig::FromToml(
     return std::unexpected{std::move(result).error()};
   }
 
-  auto attackReaction = ParseReactionLevel(attackReactionStr);
-  if (!attackReaction) {
-    return std::unexpected{std::move(attackReaction).error()};
-  }
+  const auto attackReaction = ParseReactionLevel(attackReactionStr);
 
   return EnemyConfig{
       .maxHp = maxHp,
@@ -58,6 +55,6 @@ std::expected<EnemyConfig, String> EnemyConfig::FromToml(
       .landingSec = landingSec,
       .attackDamage = attackDamage,
       .attackHitstopSec = attackHitstopSec,
-      .attackReaction = *attackReaction,
+      .attackReaction = attackReaction,
   };
 }

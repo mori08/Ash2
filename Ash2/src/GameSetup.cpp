@@ -86,11 +86,7 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   if (!playerToml) {
     return std::unexpected{std::move(playerToml).error()};
   }
-  auto player = PlayerConfig::FromToml(*playerToml);
-  if (!player) {
-    return std::unexpected{std::move(player).error()};
-  }
-  registry.ctx().emplace<PlayerConfig>(*std::move(player));
+  registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(*playerToml));
 
   auto enemyToml = OpenToml(U"assets/config/enemy.toml");
   if (!enemyToml) {

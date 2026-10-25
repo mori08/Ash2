@@ -385,14 +385,19 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 ## 設定（Config）
 
 `Ash2/src/Config/` 配下。TOML から `FromToml()` で構築し、`registry.ctx()` に格納する。
-`PlayerConfig`/`EnemyConfig`/`AnimationData`/`ScenarioData` はいずれも、`FromToml` 自身が
-`std::expected<T, String>` を返す。必須キーの欠落は失敗として伝播し、終了を決めるのは
-呼び出し元（`Run()` が `Error` に変えて投げる）である。
+`PlayerConfig::FromToml` は `PlayerConfig` を直接返し、必須キーの欠落・型違い・不正な値は
+`throw Error` で表す。`EnemyConfig`/`AnimationData`/`ScenarioData` などの `FromToml` は
+`std::expected<T, String>` を返し、失敗は伝播して終了を決めるのは呼び出し元
+（`Run()` が `Error` に変えて投げる）である。
 
-[`TomlFields`](../Ash2/src/Config/TomlFields.hpp) は1テーブル分の必須キー読み出しと
-欠落キーの記録をまとめるヘルパーで、上記3設定の `FromToml`（`PlayerConfig` は下位の
-`Parse` 系関数）が共通で使う。同ヘッダの自由関数 `TomlMember(table, key)` は
-`TOMLValue` のキー参照を例外なしで行い、欠落時は空の値を返す。`operator[]` の代わりに使う。
+[`TomlTable`](../Ash2/src/Config/TomlTable.hpp) は1テーブル分のキー読み出しで、
+`get<T>`（必須。欠落・型違いで throw）・`getOr<T>`（既定値）・`getOpt<T>`（`Optional`）を持つ。
+Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。`PlayerConfig` の `Parse` 系関数が使う。
+同ヘッダの自由関数 `TomlMember(table, key)` は `TOMLValue` のキー参照を例外なしで行い、
+欠落時は空の値を返す。`operator[]` の代わりに使う。
+
+[`TomlFields`](../Ash2/src/Config/TomlFields.hpp) は必須キー読み出しと欠落キーの記録をまとめる
+ヘルパーで、`TomlTable` へ移行していない Config の `FromToml` が使う（移行は #367 / #368）。
 
 ### [`PlayerConfig`](../Ash2/src/Config/PlayerConfig.hpp)
 
@@ -410,7 +415,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|
 | `MotionTimeline` | 攻撃・ダッシュ系共通の4区間タイムライン（windup / active / 後隙A＝キャンセル不可 / 後隙B＝キャンセル可）。`activeStart`/`activeEnd`/`recoveryAEnd`/`recoveryBEnd` と `isActive`/`isCancelable`/`isFinished`/`activeProgress` を提供する。`DashConfig`/`DashAttackConfig`/`AirAttackConfig`/`MeleeSwingConfig` が共通で持つ |
 | `ReactionLevel` | 被弾側に生じるリアクションの強さ（`None`/`Stagger`/`Repel`/`Blow` の4値、Lv0〜Lv3に対応）。`Config/ReactionLevel.hpp` に置き、`Config`（各攻撃の `reaction`）と `Component`（`Attack.reaction`）の双方から参照される |
-| `ParseReactionLevel` | TOML の reaction 文字列（`"none"`/`"stagger"`/`"repel"`/`"blow"`）を `ReactionLevel` へ変換する。`Config/ReactionLevel.hpp`/`.cpp` に定義し、`PlayerConfig::FromToml`/`EnemyConfig::FromToml` の双方が共有する |
+| `ParseReactionLevel` | TOML の reaction 文字列（`"none"`/`"stagger"`/`"repel"`/`"blow"`）を `ReactionLevel` へ変換する。不明な値は `throw Error`。`Config/ReactionLevel.hpp`/`.cpp` に定義し、`PlayerConfig::FromToml`/`EnemyConfig::FromToml` の双方が共有する |
 | `MeleeTrajectory` | 近接攻撃の軌道パターン（`Thrust` 突き出し / `Slash` 斬り上げ。`Slash` は `slashCurve` で弧の曲がり具合を指定し、0 なら直線になる） |
 | `MeleeSwingConfig` | 近接1振り分の共通設定（`timeline`/`radius`/`trajectory`/`slashRiseHeight`/`slashCurve`/`hitstopSec`/`reaction`/`staminaCost`）。継続段・締め段の両方が持つ |
 | `MeleeFinisherConfig` | 締め段の設定。`MeleeSwingConfig swing` を集約し、見た目の光の数 `lightCount`（2以上、parse 時に検証）と間隔 `lightGap` を足す |
@@ -435,7 +440,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
   `AirAttackConfig` も持つ）は `MakeMeleeChain`/`MakeMeleeFinisher`/`MakeDashAttack`/
   `MakeAirAttack` が消費する。ダッシュ攻撃は直前のダッシュ（`DashConfig::staminaCost`）とは
   別に消費する
-- `[[melee.chain]]` が0件（欠落含む）の場合、`FromToml` は失敗を返す
+- `[[melee.chain]]` が0件（欠落含む）の場合、`FromToml` は `throw Error` する
   （`Tick(MeleeChain&, ...)` の `chain[state.stage]` アクセスを不正にしないため）
 
 ### [`EnemyConfig`](../Ash2/src/Config/EnemyConfig.hpp)
@@ -580,7 +585,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、アセット・フォント登録の失敗を呼び出し元（`Main`）へ渡す。`ApplyWindowPreset` の失敗は `APP_LOG` に出して続行する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config（`InputConfig` を含む）/ `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
-| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。失敗時は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
+| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。`PlayerConfig` の失敗は throw でゲームが終了し、それ以外の失敗は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
 | [`WorldToScreen`](../Ash2/src/Screen.hpp) | `WorldPos` を床原点（`WorldOrigin()`）込みの画面座標へ変換するインライン関数。`DrawSystem`・`ProjectileSystem`・`DebugDrawSystem`・`LockOnSystem` が参照する |
 | [`WorldOrigin`](../Ash2/src/Screen.hpp) | ワールド原点の画面座標（床原点）を返すインライン関数。`Scene::Center()` から `kFloorOriginOffsetY` だけ下にずらす |
 | [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。`std::expected<Array<FilePath>, String>` を返し、開けなければ失敗を返す |
@@ -661,6 +666,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件（着弾・最大射程超・射程内での存続） |
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
+| `TestTomlTable.cpp` | `TomlTable`（`get` / `getOr` / `getOpt`） |
 | `TestEnemyConfig.cpp` | `EnemyConfig::FromToml` |
 | `TestArenaConfig.cpp` | `ArenaConfig::FromToml` |
 | `TestTitleConfig.cpp` | `TitleConfig::FromToml` |
