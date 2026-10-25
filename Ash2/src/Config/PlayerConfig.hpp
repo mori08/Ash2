@@ -1,8 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <expected>
-
 #include "Config/ReactionLevel.hpp"
 
 /// @brief 攻撃・ダッシュ系アクション共通の4区間タイムライン
@@ -264,7 +262,6 @@ struct PlayerConfig {
   LockConfig lock;
 
   /// @brief TOML からプレイヤー設定を生成する
-  [[nodiscard]] static std::expected<PlayerConfig, String> FromToml(
-      const TOMLValue& toml
-  );
+  /// @throw Error 必須キーの欠落・型違い・不正な値があるとき
+  [[nodiscard]] static PlayerConfig FromToml(const TOMLValue& toml);
 };

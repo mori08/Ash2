@@ -115,72 +115,71 @@ constexpr std::string_view kFullToml =
 TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   const TOMLReader reader{MemoryViewReader{kFullToml.data(), kFullToml.size()}};
   const auto cfg = PlayerConfig::FromToml(reader);
-  REQUIRE(cfg.has_value());
-  REQUIRE(cfg->speed == 150.0);
-  REQUIRE(cfg->jumpSpeed == 400.0);
-  REQUIRE(cfg->gravity == 900.0);
-  REQUIRE(cfg->capsuleRadius == 20.0);
-  REQUIRE(cfg->capsuleHeight == 60.0);
-  REQUIRE(cfg->melee.capMidH == 30.0);
-  REQUIRE(cfg->melee.reach == 60.0);
-  REQUIRE(cfg->melee.damage == 20);
-  REQUIRE(cfg->melee.chain.size() == 1);
-  REQUIRE(cfg->melee.chain[0].trajectory == MeleeTrajectory::Thrust);
-  REQUIRE(cfg->melee.chain[0].radius == 20.0);
-  REQUIRE(cfg->melee.chain[0].reaction == ReactionLevel::Stagger);
-  REQUIRE(cfg->melee.chain[0].staminaCost == 2);
-  REQUIRE(cfg->melee.finisher.swing.trajectory == MeleeTrajectory::Thrust);
-  REQUIRE(cfg->melee.finisher.swing.radius == 25.0);
-  REQUIRE(cfg->melee.finisher.swing.reaction == ReactionLevel::Blow);
-  REQUIRE(cfg->melee.finisher.swing.staminaCost == 5);
-  REQUIRE(cfg->melee.finisher.lightCount == 2);
-  REQUIRE(cfg->melee.finisher.lightGap == 36.0);
-  REQUIRE(cfg->ranged.damage == 15);
-  REQUIRE(cfg->ranged.recoverySec == 0.15);
-  REQUIRE(cfg->dash.speed == 600.0);
-  REQUIRE(cfg->dashAttack.damage == 25);
-  REQUIRE(cfg->dashAttack.reaction == ReactionLevel::Repel);
-  REQUIRE(cfg->dashAttack.staminaCost == 12);
-  REQUIRE(cfg->airAttack.damage == 25);
-  REQUIRE(cfg->airAttack.driftRatio == 0.5);
-  REQUIRE(cfg->airAttack.reaction == ReactionLevel::Repel);
-  REQUIRE(cfg->airAttack.staminaCost == 12);
-  REQUIRE(cfg->stamina.max == 100);
-  REQUIRE(cfg->stamina.recoveryRate == 0.5);
-  REQUIRE(cfg->landing.recoverySec == 0.20);
-  REQUIRE(cfg->attackEffect.fadeSec == 0.30);
-  REQUIRE(cfg->damage.staggerSec == 0.25);
-  REQUIRE(cfg->damage.knockbackSpeedW == 300.0);
-  REQUIRE(cfg->damage.knockbackSpeedH == 350.0);
-  REQUIRE(cfg->damage.downSec == 0.60);
-  REQUIRE(cfg->damage.getUpSec == 0.30);
-  REQUIRE(cfg->lock.capsuleScale == 2.0);
-  REQUIRE(cfg->lock.angleLimitDeg == 60.0);
-  REQUIRE(cfg->lock.stickTilt == 0.5);
-  REQUIRE(cfg->lock.stickRelease == 0.24);
-  REQUIRE(cfg->lock.lockedColor == ColorF{U"#ff5050"});
-  REQUIRE(cfg->lock.halfAlpha == 0.6);
+  REQUIRE(cfg.speed == 150.0);
+  REQUIRE(cfg.jumpSpeed == 400.0);
+  REQUIRE(cfg.gravity == 900.0);
+  REQUIRE(cfg.capsuleRadius == 20.0);
+  REQUIRE(cfg.capsuleHeight == 60.0);
+  REQUIRE(cfg.melee.capMidH == 30.0);
+  REQUIRE(cfg.melee.reach == 60.0);
+  REQUIRE(cfg.melee.damage == 20);
+  REQUIRE(cfg.melee.chain.size() == 1);
+  REQUIRE(cfg.melee.chain[0].trajectory == MeleeTrajectory::Thrust);
+  REQUIRE(cfg.melee.chain[0].radius == 20.0);
+  REQUIRE(cfg.melee.chain[0].reaction == ReactionLevel::Stagger);
+  REQUIRE(cfg.melee.chain[0].staminaCost == 2);
+  REQUIRE(cfg.melee.finisher.swing.trajectory == MeleeTrajectory::Thrust);
+  REQUIRE(cfg.melee.finisher.swing.radius == 25.0);
+  REQUIRE(cfg.melee.finisher.swing.reaction == ReactionLevel::Blow);
+  REQUIRE(cfg.melee.finisher.swing.staminaCost == 5);
+  REQUIRE(cfg.melee.finisher.lightCount == 2);
+  REQUIRE(cfg.melee.finisher.lightGap == 36.0);
+  REQUIRE(cfg.ranged.damage == 15);
+  REQUIRE(cfg.ranged.recoverySec == 0.15);
+  REQUIRE(cfg.dash.speed == 600.0);
+  REQUIRE(cfg.dashAttack.damage == 25);
+  REQUIRE(cfg.dashAttack.reaction == ReactionLevel::Repel);
+  REQUIRE(cfg.dashAttack.staminaCost == 12);
+  REQUIRE(cfg.airAttack.damage == 25);
+  REQUIRE(cfg.airAttack.driftRatio == 0.5);
+  REQUIRE(cfg.airAttack.reaction == ReactionLevel::Repel);
+  REQUIRE(cfg.airAttack.staminaCost == 12);
+  REQUIRE(cfg.stamina.max == 100);
+  REQUIRE(cfg.stamina.recoveryRate == 0.5);
+  REQUIRE(cfg.landing.recoverySec == 0.20);
+  REQUIRE(cfg.attackEffect.fadeSec == 0.30);
+  REQUIRE(cfg.damage.staggerSec == 0.25);
+  REQUIRE(cfg.damage.knockbackSpeedW == 300.0);
+  REQUIRE(cfg.damage.knockbackSpeedH == 350.0);
+  REQUIRE(cfg.damage.downSec == 0.60);
+  REQUIRE(cfg.damage.getUpSec == 0.30);
+  REQUIRE(cfg.lock.capsuleScale == 2.0);
+  REQUIRE(cfg.lock.angleLimitDeg == 60.0);
+  REQUIRE(cfg.lock.stickTilt == 0.5);
+  REQUIRE(cfg.lock.stickRelease == 0.24);
+  REQUIRE(cfg.lock.lockedColor == ColorF{U"#ff5050"});
+  REQUIRE(cfg.lock.halfAlpha == 0.6);
 }
 
-TEST_CASE("PlayerConfig::FromToml - missing melee.chain returns unexpected") {
+TEST_CASE("PlayerConfig::FromToml - missing melee.chain throws") {
   constexpr std::string_view kToml =
       "speed = 150.0\n"
       "jump_speed = 400.0\n"
       "gravity = 900.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
-TEST_CASE("PlayerConfig::FromToml - missing speed returns unexpected") {
+TEST_CASE("PlayerConfig::FromToml - missing speed throws") {
   std::string toml{kFullToml};
   const auto pos = toml.find("speed = 150.0\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"speed = 150.0\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
-TEST_CASE("PlayerConfig::FromToml - missing ranged table returns unexpected") {
+TEST_CASE("PlayerConfig::FromToml - missing ranged table throws") {
   std::string toml{kFullToml};
   const auto begin = toml.find("[ranged]\n");
   const auto end = toml.find("[dash]\n");
@@ -188,27 +187,11 @@ TEST_CASE("PlayerConfig::FromToml - missing ranged table returns unexpected") {
   REQUIRE(end != std::string::npos);
   toml.erase(begin, end - begin);
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - missing melee.chain trajectory returns "
-    "unexpected (not \"unknown value\")"
-) {
-  std::string toml{kFullToml};
-  const auto pos = toml.find("trajectory = \"thrust\"\n");
-  REQUIRE(pos != std::string::npos);
-  toml.erase(pos, std::string_view{"trajectory = \"thrust\"\n"}.size());
-  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  const auto result = PlayerConfig::FromToml(reader);
-  REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error().contains(U"キーがありません"));
-  REQUIRE_FALSE(result.error().contains(U"不明な"));
-}
-
-TEST_CASE(
-    "PlayerConfig::FromToml - unknown melee.chain trajectory value returns "
-    "unexpected"
+    "PlayerConfig::FromToml - unknown melee.chain trajectory value throws"
 ) {
   std::string toml{kFullToml};
   const auto pos = toml.find("trajectory = \"thrust\"\n");
@@ -218,27 +201,11 @@ TEST_CASE(
       "trajectory = \"spin\"\n"
   );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - missing melee.chain reaction returns "
-    "unexpected (not \"unknown value\")"
-) {
-  std::string toml{kFullToml};
-  const auto pos = toml.find("reaction = \"stagger\"\n");
-  REQUIRE(pos != std::string::npos);
-  toml.erase(pos, std::string_view{"reaction = \"stagger\"\n"}.size());
-  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  const auto result = PlayerConfig::FromToml(reader);
-  REQUIRE_FALSE(result.has_value());
-  REQUIRE(result.error().contains(U"キーがありません"));
-  REQUIRE_FALSE(result.error().contains(U"不明な"));
-}
-
-TEST_CASE(
-    "PlayerConfig::FromToml - unknown melee.chain reaction value returns "
-    "unexpected"
+    "PlayerConfig::FromToml - unknown melee.chain reaction value throws"
 ) {
   std::string toml{kFullToml};
   const auto pos = toml.find("reaction = \"stagger\"\n");
@@ -248,12 +215,11 @@ TEST_CASE(
       "reaction = \"heavy\"\n"
   );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
 TEST_CASE(
-    "PlayerConfig::FromToml - melee.finisher light_count below 2 returns "
-    "unexpected"
+    "PlayerConfig::FromToml - melee.finisher light_count below 2 throws"
 ) {
   std::string toml{kFullToml};
   const auto pos = toml.find("light_count = 2\n");
@@ -262,51 +228,43 @@ TEST_CASE(
       pos, std::string_view{"light_count = 2\n"}.size(), "light_count = 1\n"
   );
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
-TEST_CASE(
-    "PlayerConfig::FromToml - missing damage.stagger_sec returns unexpected"
-) {
+TEST_CASE("PlayerConfig::FromToml - missing damage.stagger_sec throws") {
   std::string toml{kFullToml};
   const auto pos = toml.find("stagger_sec = 0.25\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"stagger_sec = 0.25\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
-TEST_CASE(
-    "PlayerConfig::FromToml - missing capsule_radius returns unexpected"
-) {
+TEST_CASE("PlayerConfig::FromToml - missing capsule_radius throws") {
   std::string toml{kFullToml};
   const auto pos = toml.find("capsule_radius = 20.0\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"capsule_radius = 20.0\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
-TEST_CASE(
-    "PlayerConfig::FromToml - missing lock.capsule_scale returns unexpected"
-) {
+TEST_CASE("PlayerConfig::FromToml - missing lock.capsule_scale throws") {
   std::string toml{kFullToml};
   const auto pos = toml.find("capsule_scale = 2.0\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"capsule_scale = 2.0\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
-TEST_CASE(
-    "PlayerConfig::FromToml - missing lock.locked_color returns unexpected"
-) {
+TEST_CASE("PlayerConfig::FromToml - missing lock.locked_color throws") {
   std::string toml{kFullToml};
   const auto pos = toml.find("locked_color = \"#ff5050\"\n");
   REQUIRE(pos != std::string::npos);
   toml.erase(pos, std::string_view{"locked_color = \"#ff5050\"\n"}.size());
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
-  REQUIRE_FALSE(PlayerConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
 #endif

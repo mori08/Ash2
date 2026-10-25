@@ -3,26 +3,14 @@
 
 #include <expected>
 
-/// @brief TOML テーブルから単一キーの値を引く
-///
-/// ドット区切りのパスは扱わない（単一のキー名のみ）。
-/// operator[] は欠落時にライブラリ内部で例外を使うため、
-/// hasMember で存在を確かめてから引く。
-/// @return テーブルでない、またはキーが欠落しているとき空の TOMLValue
-[[nodiscard]] inline TOMLValue TomlMember(
-    const TOMLValue& table, StringView key
-) {
-  const String name{key};
-  if (!table.isTable() || !table.hasMember(name)) {
-    return TOMLValue{};
-  }
-  return table[name];
-}
+#include "Config/TomlTable.hpp"
 
 /// @brief TOML テーブルのキーを読み、必須キーの欠落をまとめて記録する
 ///
 /// 1インスタンスが1テーブル・1プレフィックスを担当する。get() は欠落時に
 /// 既定値 T{} を返して読み進め、check()/wrap() でまとめて失敗に畳む。
+// TODO(#367): 欠落を溜めて最後にまとめて報告する仕組みが throw 方針と
+// 食い違う。
 class TomlFields {
  public:
   /// @param context メッセージ先頭に付ける関数名

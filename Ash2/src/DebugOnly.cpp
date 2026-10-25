@@ -32,7 +32,8 @@ constexpr Input kColliderDrawKey = KeyF2;
 bool colliderDrawEnabled = false;
 
 /// @brief 設定を再読込する
-/// @note 失敗時は旧データを維持して戻る
+/// @note PlayerConfig 以外は失敗時に旧データを維持して戻る
+/// PlayerConfig は読み込みに失敗すると throw するため、ゲームが終了する
 void ReloadConfig(entt::registry& registry) {
   auto playerToml = OpenToml(U"assets/config/player.toml");
   if (!playerToml) {
@@ -40,10 +41,6 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
   auto player = PlayerConfig::FromToml(*playerToml);
-  if (!player) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + player.error());
-    return;
-  }
 
   auto enemyToml = OpenToml(U"assets/config/enemy.toml");
   if (!enemyToml) {
@@ -106,7 +103,7 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
 
-  registry.ctx().get<PlayerConfig>() = *std::move(player);
+  registry.ctx().get<PlayerConfig>() = std::move(player);
   registry.ctx().get<EnemyConfig>() = *std::move(enemy);
   registry.ctx().get<ArenaConfig>() = *std::move(arena);
   registry.ctx().get<TitleConfig>() = *std::move(title);

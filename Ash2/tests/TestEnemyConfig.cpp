@@ -80,9 +80,7 @@ TEST_CASE("EnemyConfig::FromToml - missing max_hp returns unexpected") {
   REQUIRE_FALSE(EnemyConfig::FromToml(reader).has_value());
 }
 
-TEST_CASE(
-    "EnemyConfig::FromToml - unknown attack_reaction returns unexpected"
-) {
+TEST_CASE("EnemyConfig::FromToml - unknown attack_reaction throws") {
   constexpr std::string_view kToml =
       "max_hp = 100\n"
       "capsule_radius = 24.0\n"
@@ -105,7 +103,7 @@ TEST_CASE(
       "attack_hitstop_sec = 0.05\n"
       "attack_reaction = \"unknown\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(EnemyConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)EnemyConfig::FromToml(reader), Error);
 }
 
 #endif

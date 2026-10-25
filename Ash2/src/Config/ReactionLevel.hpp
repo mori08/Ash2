@@ -1,8 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <expected>
-
 /// @brief 被弾側に生じるリアクションの強さ
 enum class ReactionLevel : uint8 {
   /// Lv0: ひるまない（既定値）
@@ -16,6 +14,5 @@ enum class ReactionLevel : uint8 {
 };
 
 /// @brief TOML の reaction 文字列を ReactionLevel へ変換する
-[[nodiscard]] std::expected<ReactionLevel, String> ParseReactionLevel(
-    const String& value
-);
+/// @throw Error 不明な値のとき
+[[nodiscard]] ReactionLevel ParseReactionLevel(const String& value);
