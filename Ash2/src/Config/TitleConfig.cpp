@@ -1,10 +1,8 @@
 #include "TitleConfig.hpp"
 
-#include "Config/TomlFields.hpp"
+#include "Config/TomlTable.hpp"
 
-std::expected<TitleConfig, String> TitleConfig::FromToml(
-    const TOMLValue& toml
-) {
-  TomlFields f{toml, U"TitleConfig::FromToml"};
-  return f.wrap(TitleConfig{.logoY = f.get<double>(U"logo_y")});
+TitleConfig TitleConfig::FromToml(const TOMLValue& toml) {
+  const TomlTable t{toml};
+  return TitleConfig{.logoY = t.get<double>(U"logo_y")};
 }

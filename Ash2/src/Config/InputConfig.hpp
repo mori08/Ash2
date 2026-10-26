@@ -1,8 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <expected>
-
 /// @brief 入力層の調整値
 struct InputConfig {
   /// パッド側からキーボード・マウス側へ切り替える、カーソルの累計移動量（px）
@@ -15,7 +13,6 @@ struct InputConfig {
   /// @brief TOML から入力設定を生成する
   /// @note `0 < nav_stick_release < nav_stick_tilt <= 1` と
   /// `device_switch_cursor_distance >= 0` を検証する
-  [[nodiscard]] static std::expected<InputConfig, String> FromToml(
-      const TOMLValue& toml
-  );
+  /// @throw Error 必須キーの欠落・型違い・不正な値があるとき
+  [[nodiscard]] static InputConfig FromToml(const TOMLValue& toml);
 };

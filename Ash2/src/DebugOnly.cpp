@@ -32,8 +32,12 @@ constexpr Input kColliderDrawKey = KeyF2;
 bool colliderDrawEnabled = false;
 
 /// @brief 設定を再読込する
-/// @note PlayerConfig 以外は失敗時に旧データを維持して戻る
-/// PlayerConfig は読み込みに失敗すると throw するため、ゲームが終了する
+/// @note Config（Player / Enemy / Arena / Title / Input / AnimationData）の
+/// 読み込みに失敗すると throw するため、ゲームが終了する。
+/// それ以外（TOML を開けない、StageData、アニメーションのテクスチャ）は
+/// 失敗時に旧データを維持して戻る
+// TODO(#368): StageData と LoadAnimations
+// のテクスチャは失敗時に旧データを維持し、 Config と挙動が混在している
 void ReloadConfig(entt::registry& registry) {
   auto playerToml = OpenToml(U"assets/config/player.toml");
   if (!playerToml) {
@@ -48,10 +52,6 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
   auto enemy = EnemyConfig::FromToml(*enemyToml);
-  if (!enemy) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + enemy.error());
-    return;
-  }
 
   auto arenaToml = OpenToml(U"assets/config/arena.toml");
   if (!arenaToml) {
@@ -59,10 +59,6 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
   auto arena = ArenaConfig::FromToml(*arenaToml);
-  if (!arena) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + arena.error());
-    return;
-  }
 
   auto titleToml = OpenToml(U"assets/config/title.toml");
   if (!titleToml) {
@@ -70,10 +66,6 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
   auto title = TitleConfig::FromToml(*titleToml);
-  if (!title) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + title.error());
-    return;
-  }
 
   auto inputToml = OpenToml(U"assets/config/input.toml");
   if (!inputToml) {
@@ -81,10 +73,6 @@ void ReloadConfig(entt::registry& registry) {
     return;
   }
   auto input = InputConfig::FromToml(*inputToml);
-  if (!input) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + input.error());
-    return;
-  }
 
   auto stageToml = OpenToml(U"assets/config/stage.toml");
   if (!stageToml) {
@@ -104,10 +92,10 @@ void ReloadConfig(entt::registry& registry) {
   }
 
   registry.ctx().get<PlayerConfig>() = std::move(player);
-  registry.ctx().get<EnemyConfig>() = *std::move(enemy);
-  registry.ctx().get<ArenaConfig>() = *std::move(arena);
-  registry.ctx().get<TitleConfig>() = *std::move(title);
-  registry.ctx().get<InputConfig>() = *std::move(input);
+  registry.ctx().get<EnemyConfig>() = enemy;
+  registry.ctx().get<ArenaConfig>() = arena;
+  registry.ctx().get<TitleConfig>() = title;
+  registry.ctx().get<InputConfig>() = input;
   registry.ctx().get<StageData>() = *std::move(stage);
   registry.ctx().get<AnimationDataRegistry>() = *std::move(anims);
 }

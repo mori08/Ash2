@@ -14,31 +14,30 @@ TEST_CASE("ArenaConfig::FromToml - parses all fields correctly") {
       MemoryViewReader{kValidToml.data(), kValidToml.size()}
   };
   const auto cfg = ArenaConfig::FromToml(reader);
-  REQUIRE(cfg.has_value());
-  REQUIRE(cfg->halfW == 380.0);
-  REQUIRE(cfg->halfD == 280.0);
+  REQUIRE(cfg.halfW == 380.0);
+  REQUIRE(cfg.halfD == 280.0);
 }
 
-TEST_CASE("ArenaConfig::FromToml - missing half_w returns unexpected") {
+TEST_CASE("ArenaConfig::FromToml - missing half_w throws") {
   constexpr std::string_view kToml = "half_d = 280.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ArenaConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)ArenaConfig::FromToml(reader), Error);
 }
 
-TEST_CASE("ArenaConfig::FromToml - non-positive half_w returns unexpected") {
+TEST_CASE("ArenaConfig::FromToml - non-positive half_w throws") {
   constexpr std::string_view kToml =
       "half_w = 0.0\n"
       "half_d = 280.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ArenaConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)ArenaConfig::FromToml(reader), Error);
 }
 
-TEST_CASE("ArenaConfig::FromToml - non-positive half_d returns unexpected") {
+TEST_CASE("ArenaConfig::FromToml - non-positive half_d throws") {
   constexpr std::string_view kToml =
       "half_w = 380.0\n"
       "half_d = -1.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ArenaConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)ArenaConfig::FromToml(reader), Error);
 }
 
 #endif

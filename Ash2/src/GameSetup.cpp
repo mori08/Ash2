@@ -38,24 +38,21 @@ std::expected<AnimationDataRegistry, String> LoadAnimations() {
       return std::unexpected{std::move(toml).error()};
     }
     auto data = AnimationData::FromToml(*toml);
-    if (!data) {
-      return std::unexpected{path + U": " + std::move(data).error()};
-    }
-    if (!TextureAsset::IsRegistered(data->textureKey)) {
+    if (!TextureAsset::IsRegistered(data.textureKey)) {
       return std::unexpected{
           U"LoadAnimations: {} の texture '{}' が未登録です"_fmt(
-              path, data->textureKey
+              path, data.textureKey
           )
       };
     }
-    if (!TextureAsset::Load(data->textureKey)) {
+    if (!TextureAsset::Load(data.textureKey)) {
       return std::unexpected{
           U"LoadAnimations: {} の texture '{}' を読み込めません"_fmt(
-              path, data->textureKey
+              path, data.textureKey
           )
       };
     }
-    animReg[FileSystem::BaseName(path)] = *std::move(data);
+    animReg[FileSystem::BaseName(path)] = std::move(data);
   }
   return animReg;
 }
@@ -92,41 +89,25 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
   if (!enemyToml) {
     return std::unexpected{std::move(enemyToml).error()};
   }
-  auto enemy = EnemyConfig::FromToml(*enemyToml);
-  if (!enemy) {
-    return std::unexpected{std::move(enemy).error()};
-  }
-  registry.ctx().emplace<EnemyConfig>(*std::move(enemy));
+  registry.ctx().emplace<EnemyConfig>(EnemyConfig::FromToml(*enemyToml));
 
   auto arenaToml = OpenToml(U"assets/config/arena.toml");
   if (!arenaToml) {
     return std::unexpected{std::move(arenaToml).error()};
   }
-  auto arena = ArenaConfig::FromToml(*arenaToml);
-  if (!arena) {
-    return std::unexpected{std::move(arena).error()};
-  }
-  registry.ctx().emplace<ArenaConfig>(*std::move(arena));
+  registry.ctx().emplace<ArenaConfig>(ArenaConfig::FromToml(*arenaToml));
 
   auto titleToml = OpenToml(U"assets/config/title.toml");
   if (!titleToml) {
     return std::unexpected{std::move(titleToml).error()};
   }
-  auto title = TitleConfig::FromToml(*titleToml);
-  if (!title) {
-    return std::unexpected{std::move(title).error()};
-  }
-  registry.ctx().emplace<TitleConfig>(*std::move(title));
+  registry.ctx().emplace<TitleConfig>(TitleConfig::FromToml(*titleToml));
 
   auto inputToml = OpenToml(U"assets/config/input.toml");
   if (!inputToml) {
     return std::unexpected{std::move(inputToml).error()};
   }
-  auto input = InputConfig::FromToml(*inputToml);
-  if (!input) {
-    return std::unexpected{std::move(input).error()};
-  }
-  registry.ctx().emplace<InputConfig>(*std::move(input));
+  registry.ctx().emplace<InputConfig>(InputConfig::FromToml(*inputToml));
 
   auto stageToml = OpenToml(U"assets/config/stage.toml");
   if (!stageToml) {
@@ -149,17 +130,14 @@ std::expected<void, String> InitializeRegistry(entt::registry& registry) {
     return std::unexpected{std::move(scenarioToml).error()};
   }
   auto scenario = ScenarioData::FromToml(*scenarioToml, GetPhaseLoaders());
-  if (!scenario) {
-    return std::unexpected{std::move(scenario).error()};
-  }
-  if (!scenario->sections.contains(String{kInitSectionName})) {
+  if (!scenario.sections.contains(String{kInitSectionName})) {
     return std::unexpected{
         U"InitializeRegistry: セクション \"{}\" がありません"_fmt(
             kInitSectionName
         )
     };
   }
-  registry.ctx().emplace<ScenarioData>(*std::move(scenario));
+  registry.ctx().emplace<ScenarioData>(std::move(scenario));
 
   return {};
 }

@@ -1,7 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <expected>
 #include <functional>
 #include <memory>
 #include <variant>
@@ -25,9 +24,8 @@ struct LoadedPhase {
   Optional<String> referencedSection;
 };
 
-/// @brief TOML 値から LoadedPhase を生成する関数の型
-using PhaseLoader =
-    std::function<std::expected<LoadedPhase, String>(const TOMLValue&)>;
+/// @brief TOML 値から LoadedPhase を生成する関数の型（失敗時は throw する）
+using PhaseLoader = std::function<LoadedPhase(const TOMLValue&)>;
 
 /// @brief フェーズ名 → PhaseLoader のマップ
 using PhaseLoaderTable = HashTable<String, PhaseLoader>;
@@ -55,7 +53,9 @@ struct ScenarioData {
 
   /// @brief TOML からシナリオデータを生成する
   /// @param loaders フェーズ名 → PhaseLoader のマップ（呼び出し元が用意する）
-  [[nodiscard]] static std::expected<ScenarioData, String> FromToml(
+  /// @throw Error 必須キーの欠落・型違い、未登録のフェーズ名、
+  /// 参照先セクションがないとき
+  [[nodiscard]] static ScenarioData FromToml(
       const TOMLValue& toml, const PhaseLoaderTable& loaders
   );
 };

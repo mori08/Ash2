@@ -1,8 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <expected>
-
 #include "Config/ReactionLevel.hpp"
 
 /// @brief 敵の設定値
@@ -56,7 +54,6 @@ struct EnemyConfig {
   ReactionLevel attackReaction;
 
   /// @brief TOML から敵設定を生成する
-  [[nodiscard]] static std::expected<EnemyConfig, String> FromToml(
-      const TOMLValue& toml
-  );
+  /// @throw Error 必須キーの欠落・型違い・不正な値があるとき
+  [[nodiscard]] static EnemyConfig FromToml(const TOMLValue& toml);
 };

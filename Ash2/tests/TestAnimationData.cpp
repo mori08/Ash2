@@ -14,12 +14,11 @@ TEST_CASE("AnimationData::FromToml - parses top-level fields correctly") {
       "y = -32.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = AnimationData::FromToml(reader);
-  REQUIRE(data.has_value());
-  REQUIRE(data->textureKey == U"assets/images/player.png");
-  REQUIRE(data->size.x == 32);
-  REQUIRE(data->size.y == 64);
-  REQUIRE(data->drawOffset.x == -8.0);
-  REQUIRE(data->drawOffset.y == -32.0);
+  REQUIRE(data.textureKey == U"assets/images/player.png");
+  REQUIRE(data.size.x == 32);
+  REQUIRE(data.size.y == 64);
+  REQUIRE(data.drawOffset.x == -8.0);
+  REQUIRE(data.drawOffset.y == -32.0);
 }
 
 TEST_CASE("AnimationData::FromToml - parses clip entries correctly") {
@@ -43,18 +42,17 @@ TEST_CASE("AnimationData::FromToml - parses clip entries correctly") {
       "speed = 12.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = AnimationData::FromToml(reader);
-  REQUIRE(data.has_value());
-  REQUIRE(data->clips.contains(U"idle"));
-  REQUIRE(data->clips.at(U"idle").row == 0);
-  REQUIRE(data->clips.at(U"idle").count == 4);
-  REQUIRE(data->clips.at(U"idle").speed == 8.0);
-  REQUIRE(data->clips.contains(U"walk"));
-  REQUIRE(data->clips.at(U"walk").row == 1);
-  REQUIRE(data->clips.at(U"walk").count == 6);
-  REQUIRE(data->clips.at(U"walk").speed == 12.0);
+  REQUIRE(data.clips.contains(U"idle"));
+  REQUIRE(data.clips.at(U"idle").row == 0);
+  REQUIRE(data.clips.at(U"idle").count == 4);
+  REQUIRE(data.clips.at(U"idle").speed == 8.0);
+  REQUIRE(data.clips.contains(U"walk"));
+  REQUIRE(data.clips.at(U"walk").row == 1);
+  REQUIRE(data.clips.at(U"walk").count == 6);
+  REQUIRE(data.clips.at(U"walk").speed == 12.0);
 }
 
-TEST_CASE("AnimationData::FromToml - missing width returns unexpected") {
+TEST_CASE("AnimationData::FromToml - missing width throws") {
   constexpr std::string_view kToml =
       "texture = \"assets/images/player.png\"\n"
       "height = 64\n"
@@ -63,19 +61,19 @@ TEST_CASE("AnimationData::FromToml - missing width returns unexpected") {
       "x = -8.0\n"
       "y = -32.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(AnimationData::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
 }
 
-TEST_CASE("AnimationData::FromToml - missing draw_offset returns unexpected") {
+TEST_CASE("AnimationData::FromToml - missing draw_offset throws") {
   constexpr std::string_view kToml =
       "texture = \"assets/images/player.png\"\n"
       "width = 32\n"
       "height = 64\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(AnimationData::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
 }
 
-TEST_CASE("AnimationData::FromToml - missing clip row returns unexpected") {
+TEST_CASE("AnimationData::FromToml - missing clip row throws") {
   constexpr std::string_view kToml =
       "texture = \"assets/images/player.png\"\n"
       "width = 32\n"
@@ -89,7 +87,7 @@ TEST_CASE("AnimationData::FromToml - missing clip row returns unexpected") {
       "count = 4\n"
       "speed = 8.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(AnimationData::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
 }
 
 TEST_CASE("AnimationData::FromToml - loop key omitted defaults to false") {
@@ -108,8 +106,7 @@ TEST_CASE("AnimationData::FromToml - loop key omitted defaults to false") {
       "speed = 8.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = AnimationData::FromToml(reader);
-  REQUIRE(data.has_value());
-  REQUIRE_FALSE(data->clips.at(U"idle").loop);
+  REQUIRE_FALSE(data.clips.at(U"idle").loop);
 }
 
 TEST_CASE("AnimationData::FromToml - loop = true is parsed") {
@@ -129,8 +126,7 @@ TEST_CASE("AnimationData::FromToml - loop = true is parsed") {
       "loop = true\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = AnimationData::FromToml(reader);
-  REQUIRE(data.has_value());
-  REQUIRE(data->clips.at(U"idle").loop);
+  REQUIRE(data.clips.at(U"idle").loop);
 }
 
 TEST_CASE(
@@ -172,11 +168,10 @@ TEST_CASE("AnimationData::FromToml - reserved keys are not treated as clips") {
       "y = 0.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = AnimationData::FromToml(reader);
-  REQUIRE(data.has_value());
-  REQUIRE_FALSE(data->clips.contains(U"texture"));
-  REQUIRE_FALSE(data->clips.contains(U"width"));
-  REQUIRE_FALSE(data->clips.contains(U"height"));
-  REQUIRE_FALSE(data->clips.contains(U"draw_offset"));
+  REQUIRE_FALSE(data.clips.contains(U"texture"));
+  REQUIRE_FALSE(data.clips.contains(U"width"));
+  REQUIRE_FALSE(data.clips.contains(U"height"));
+  REQUIRE_FALSE(data.clips.contains(U"draw_offset"));
 }
 
 #endif
