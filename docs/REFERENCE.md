@@ -378,26 +378,26 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 呼び出し元は `GameSetup` が `GetPhaseLoaders()` を渡して配線する。
 `FromToml` は全セクションを登録し終えた後、集めた `referencedSection` が実在するセクションを
 指すかまとめて検証する（前方参照を許すため、セクションごとのループの外で行う）。不在なら
-`unexpected` を返し、`ScenarioPhase::update` がゲームループ内で `at()` の例外を投げることはない。
+`throw Error` し、`ScenarioPhase::update` がゲームループ内で `at()` の例外を投げることはない。
 
 ---
 
 ## 設定（Config）
 
 `Ash2/src/Config/` 配下。TOML から `FromToml()` で構築し、`registry.ctx()` に格納する。
-`PlayerConfig::FromToml` は `PlayerConfig` を直接返し、必須キーの欠落・型違い・不正な値は
-`throw Error` で表す。`EnemyConfig`/`AnimationData`/`ScenarioData` などの `FromToml` は
-`std::expected<T, String>` を返し、失敗は伝播して終了を決めるのは呼び出し元
-（`Run()` が `Error` に変えて投げる）である。
+`PlayerConfig`/`EnemyConfig`/`ArenaConfig`/`TitleConfig`/`InputConfig`/`AnimationData`/`ScenarioData` の
+`FromToml` は値を直接返し、必須キーの欠落・型違い・不正な値は `throw Error` で表す。
+`StageData` などは #368 で移行するまで `std::expected<T, String>` を返し、失敗は伝播して
+終了を決めるのは呼び出し元（`Run()` が `Error` に変えて投げる）である。
 
 [`TomlTable`](../Ash2/src/Config/TomlTable.hpp) は1テーブル分のキー読み出しで、
 `get<T>`（必須。欠落・型違いで throw）・`getOr<T>`（既定値）・`getOpt<T>`（`Optional`）を持つ。
-Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。`PlayerConfig` の `Parse` 系関数が使う。
+Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。各 Config の `FromToml` と `PhaseLoader` が使う。
 同ヘッダの自由関数 `TomlMember(table, key)` は `TOMLValue` のキー参照を例外なしで行い、
 欠落時は空の値を返す。`operator[]` の代わりに使う。
 
 [`TomlFields`](../Ash2/src/Config/TomlFields.hpp) は必須キー読み出しと欠落キーの記録をまとめる
-ヘルパーで、`TomlTable` へ移行していない Config の `FromToml` が使う（移行は #367 / #368）。
+ヘルパーで、`TomlTable` へ移行していない `EnemyFactory::Param::FromToml` / `StageData::FromToml` が使う（移行は #368）。
 
 ### [`PlayerConfig`](../Ash2/src/Config/PlayerConfig.hpp)
 
@@ -462,7 +462,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。`P
 - `Ash2/App/assets/config/arena.toml` から読み込むアリーナ境界の設定
 - バトル用で全ステージ共通の移動範囲を表す（探索用の移動範囲とは別、#329 以降で扱う）
 - `w`/`d` 軸それぞれの境界の半幅 `halfW`/`halfD` を持つ
-- `FromToml` は `TomlFields::check()` を通した後、両方が正であることを検証する
+- `FromToml` は両方が正であることを検証し、違えば throw する
   （`Clamp` の下限が上限を超えるのを防ぐため）
 
 ### [`TitleConfig`](../Ash2/src/Config/TitleConfig.hpp)
@@ -476,7 +476,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。`P
 - `Ash2/App/assets/config/input.toml` から読み込む入力層の調整値。F5 で再読込される
 - `deviceSwitchCursorDistance`（パッド側からキーボード・マウス側へ切り替えるカーソルの累計移動量、px）・
   `navStickTilt`/`navStickRelease`（メニューの方向入力でスティックを倒した/離したとみなす閾値）を持つ
-- `FromToml` は `TomlFields::wrap` の後に `deviceSwitchCursorDistance >= 0` と
+- `FromToml` は `deviceSwitchCursorDistance >= 0` と
   `0 < navStickRelease < navStickTilt <= 1` を検証する
 - `LockConfig` の `stickTilt`/`stickRelease` とは目的が違うため値を共有しない
 
@@ -585,7 +585,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。`P
 | [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、アセット・フォント登録の失敗を呼び出し元（`Main`）へ渡す。`ApplyWindowPreset` の失敗は `APP_LOG` に出して続行する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config（`InputConfig` を含む）/ `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
-| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。`PlayerConfig` の失敗は throw でゲームが終了し、それ以外の失敗は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
+| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。Config（Player/Enemy/Arena/Title/Input/AnimationData）の失敗は throw でゲームが終了し、それ以外（TOML を開けない・`StageData`・アニメーションのテクスチャ）の失敗は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
 | [`WorldToScreen`](../Ash2/src/Screen.hpp) | `WorldPos` を床原点（`WorldOrigin()`）込みの画面座標へ変換するインライン関数。`DrawSystem`・`ProjectileSystem`・`DebugDrawSystem`・`LockOnSystem` が参照する |
 | [`WorldOrigin`](../Ash2/src/Screen.hpp) | ワールド原点の画面座標（床原点）を返すインライン関数。`Scene::Center()` から `kFloorOriginOffsetY` だけ下にずらす |
 | [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。`std::expected<Array<FilePath>, String>` を返し、開けなければ失敗を返す |

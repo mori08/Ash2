@@ -13,10 +13,9 @@ TEST_CASE("ScenarioData::FromToml - push action creates StepPush") {
       "duration = 1.5\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = ScenarioData::FromToml(reader, GetPhaseLoaders());
-  REQUIRE(data.has_value());
-  REQUIRE(data->sections.contains(U"intro"));
-  REQUIRE(data->sections.at(U"intro").size() == 1);
-  const auto& step = data->sections.at(U"intro")[0];
+  REQUIRE(data.sections.contains(U"intro"));
+  REQUIRE(data.sections.at(U"intro").size() == 1);
+  const auto& step = data.sections.at(U"intro")[0];
   REQUIRE(std::holds_alternative<StepPush>(step));
   const auto& maker = std::get<StepPush>(step).maker;
   REQUIRE(maker != nullptr);
@@ -32,10 +31,9 @@ TEST_CASE("ScenarioData::FromToml - reset action creates StepReset") {
       "duration = 2.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = ScenarioData::FromToml(reader, GetPhaseLoaders());
-  REQUIRE(data.has_value());
-  REQUIRE(data->sections.contains(U"intro"));
-  REQUIRE(data->sections.at(U"intro").size() == 1);
-  const auto& step = data->sections.at(U"intro")[0];
+  REQUIRE(data.sections.contains(U"intro"));
+  REQUIRE(data.sections.at(U"intro").size() == 1);
+  const auto& step = data.sections.at(U"intro")[0];
   REQUIRE(std::holds_alternative<StepReset>(step));
   const auto& maker = std::get<StepReset>(step).maker;
   REQUIRE(maker != nullptr);
@@ -43,54 +41,64 @@ TEST_CASE("ScenarioData::FromToml - reset action creates StepReset") {
   REQUIRE(dynamic_cast<WaitPhase*>(phase.get()) != nullptr);
 }
 
-TEST_CASE("ScenarioData::FromToml - unknown phase name returns unexpected") {
+TEST_CASE("ScenarioData::FromToml - unknown phase name throws") {
   constexpr std::string_view kToml =
       "[[intro]]\n"
       "action = \"push\"\n"
       "phase = \"nonexistent\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+  REQUIRE_THROWS_AS(
+      (void)ScenarioData::FromToml(reader, GetPhaseLoaders()), Error
+  );
 }
 
-TEST_CASE("ScenarioData::FromToml - unknown action returns unexpected") {
+TEST_CASE("ScenarioData::FromToml - unknown action throws") {
   constexpr std::string_view kToml =
       "[[intro]]\n"
       "action = \"fly\"\n"
       "phase = \"wait\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+  REQUIRE_THROWS_AS(
+      (void)ScenarioData::FromToml(reader, GetPhaseLoaders()), Error
+  );
 }
 
-TEST_CASE("ScenarioData::FromToml - missing duration returns unexpected") {
+TEST_CASE("ScenarioData::FromToml - missing duration throws") {
   constexpr std::string_view kToml =
       "[[intro]]\n"
       "action = \"push\"\n"
       "phase = \"wait\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+  REQUIRE_THROWS_AS(
+      (void)ScenarioData::FromToml(reader, GetPhaseLoaders()), Error
+  );
 }
 
-TEST_CASE("ScenarioData::FromToml - missing param returns unexpected") {
+TEST_CASE("ScenarioData::FromToml - missing param throws") {
   constexpr std::string_view kToml =
       "[[intro]]\n"
       "action = \"push\"\n"
       "phase = \"scenario\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+  REQUIRE_THROWS_AS(
+      (void)ScenarioData::FromToml(reader, GetPhaseLoaders()), Error
+  );
 }
 
-TEST_CASE("ScenarioData::FromToml - stage without param returns unexpected") {
+TEST_CASE("ScenarioData::FromToml - stage without param throws") {
   constexpr std::string_view kToml =
       "[[intro]]\n"
       "action = \"push\"\n"
       "phase = \"stage\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+  REQUIRE_THROWS_AS(
+      (void)ScenarioData::FromToml(reader, GetPhaseLoaders()), Error
+  );
 }
 
 TEST_CASE(
-    "ScenarioData::FromToml - reference to nonexistent section returns "
-    "unexpected"
+    "ScenarioData::FromToml - reference to nonexistent section "
+    "throws"
 ) {
   constexpr std::string_view kToml =
       "[[intro]]\n"
@@ -98,7 +106,9 @@ TEST_CASE(
       "phase = \"scenario\"\n"
       "param = \"nonexistent\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+  REQUIRE_THROWS_AS(
+      (void)ScenarioData::FromToml(reader, GetPhaseLoaders()), Error
+  );
 }
 
 TEST_CASE(
@@ -114,7 +124,7 @@ TEST_CASE(
       "phase = \"wait\"\n"
       "duration = 1.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE(ScenarioData::FromToml(reader, GetPhaseLoaders()).has_value());
+  REQUIRE_NOTHROW((void)ScenarioData::FromToml(reader, GetPhaseLoaders()));
 }
 
 #endif

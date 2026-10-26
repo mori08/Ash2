@@ -32,30 +32,29 @@ TEST_CASE("EnemyConfig::FromToml - parses all fields correctly") {
       MemoryViewReader{kValidToml.data(), kValidToml.size()}
   };
   const auto cfg = EnemyConfig::FromToml(reader);
-  REQUIRE(cfg.has_value());
-  REQUIRE(cfg->maxHp == 100);
-  REQUIRE(cfg->capsuleRadius == 24.0);
-  REQUIRE(cfg->capsuleHeight == 56.0);
-  REQUIRE(cfg->staggerSec == 0.15);
-  REQUIRE(cfg->repelSpeed == 250.0);
-  REQUIRE(cfg->repelSec == 0.20);
-  REQUIRE(cfg->blowSpeedW == 300.0);
-  REQUIRE(cfg->blowSpeedH == 300.0);
-  REQUIRE(cfg->knockbackSec == 1.00);
-  REQUIRE(cfg->defeatedSec == 0.50);
-  REQUIRE(cfg->moveSpeed == 90.0);
-  REQUIRE(cfg->aggroRange == 400.0);
-  REQUIRE(cfg->leapRange == 180.0);
-  REQUIRE(cfg->windupSec == 0.50);
-  REQUIRE(cfg->leapSpeedW == 260.0);
-  REQUIRE(cfg->leapSpeedH == 350.0);
-  REQUIRE(cfg->landingSec == 0.60);
-  REQUIRE(cfg->attackDamage == 10);
-  REQUIRE(cfg->attackHitstopSec == 0.05);
-  REQUIRE(cfg->attackReaction == ReactionLevel::Stagger);
+  REQUIRE(cfg.maxHp == 100);
+  REQUIRE(cfg.capsuleRadius == 24.0);
+  REQUIRE(cfg.capsuleHeight == 56.0);
+  REQUIRE(cfg.staggerSec == 0.15);
+  REQUIRE(cfg.repelSpeed == 250.0);
+  REQUIRE(cfg.repelSec == 0.20);
+  REQUIRE(cfg.blowSpeedW == 300.0);
+  REQUIRE(cfg.blowSpeedH == 300.0);
+  REQUIRE(cfg.knockbackSec == 1.00);
+  REQUIRE(cfg.defeatedSec == 0.50);
+  REQUIRE(cfg.moveSpeed == 90.0);
+  REQUIRE(cfg.aggroRange == 400.0);
+  REQUIRE(cfg.leapRange == 180.0);
+  REQUIRE(cfg.windupSec == 0.50);
+  REQUIRE(cfg.leapSpeedW == 260.0);
+  REQUIRE(cfg.leapSpeedH == 350.0);
+  REQUIRE(cfg.landingSec == 0.60);
+  REQUIRE(cfg.attackDamage == 10);
+  REQUIRE(cfg.attackHitstopSec == 0.05);
+  REQUIRE(cfg.attackReaction == ReactionLevel::Stagger);
 }
 
-TEST_CASE("EnemyConfig::FromToml - missing max_hp returns unexpected") {
+TEST_CASE("EnemyConfig::FromToml - missing max_hp throws") {
   constexpr std::string_view kToml =
       "capsule_radius = 24.0\n"
       "capsule_height = 56.0\n"
@@ -77,7 +76,7 @@ TEST_CASE("EnemyConfig::FromToml - missing max_hp returns unexpected") {
       "attack_hitstop_sec = 0.05\n"
       "attack_reaction = \"stagger\"\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
-  REQUIRE_FALSE(EnemyConfig::FromToml(reader).has_value());
+  REQUIRE_THROWS_AS((void)EnemyConfig::FromToml(reader), Error);
 }
 
 TEST_CASE("EnemyConfig::FromToml - unknown attack_reaction throws") {

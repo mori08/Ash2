@@ -1,6 +1,6 @@
 #include "Phase/PhaseLoaders.hpp"
 
-#include "Config/TomlFields.hpp"
+#include "Config/TomlTable.hpp"
 #include "Phase/AnimationViewerPhase.hpp"
 #include "Phase/ScenarioPhase.hpp"
 #include "Phase/StagePhase.hpp"
@@ -39,22 +39,17 @@ class PhaseMaker : public IPhaseMaker {
 };
 
 /// @brief 型 T に対する PhaseLoader を生成するヘルパー
-/// @param parse TOML 値から T::Param を生成するラムダ（失敗時は
-/// unexpected でエラーメッセージを返す）
+/// @param parse TOML 値から T::Param を生成するラムダ（失敗時は throw する）
 template <PhaseWithParam T, typename F>
 PhaseLoader MakeLoader(F&& parse) {
-  return [p = std::forward<F>(parse)](const TOMLValue& step)
-             -> std::expected<LoadedPhase, String> {
+  return [p = std::forward<F>(parse)](const TOMLValue& step) -> LoadedPhase {
     auto param = p(step);
-    if (!param) {
-      return std::unexpected{std::move(param).error()};
-    }
     Optional<String> ref = none;
     if constexpr (SectionRefParam<typename T::Param>) {
-      ref = param->sectionName;
+      ref = param.sectionName;
     }
     return LoadedPhase{
-        .maker = std::make_shared<const PhaseMaker<T>>(*std::move(param)),
+        .maker = std::make_shared<const PhaseMaker<T>>(std::move(param)),
         .referencedSection = std::move(ref),
     };
   };
@@ -65,72 +60,41 @@ PhaseLoader MakeLoader(F&& parse) {
 const PhaseLoaderTable& GetPhaseLoaders() {
   static const PhaseLoaderTable loaders{
       {U"test_menu",
-       MakeLoader<TestMenuPhase>(
-           [](const TOMLValue&) -> std::expected<TestMenuPhase::Param, String> {
-             return TestMenuPhase::Param{};
-           }
-       )},
+       MakeLoader<TestMenuPhase>([](const TOMLValue&) -> TestMenuPhase::Param {
+         return TestMenuPhase::Param{};
+       })},
       {U"title",
-       MakeLoader<TitlePhase>(
-           [](const TOMLValue&) -> std::expected<TitlePhase::Param, String> {
-             return TitlePhase::Param{};
-           }
-       )},
+       MakeLoader<TitlePhase>([](const TOMLValue&) -> TitlePhase::Param {
+         return TitlePhase::Param{};
+       })},
       {U"animation_viewer",
        MakeLoader<AnimationViewerPhase>(
-           [](const TOMLValue& step)
-               -> std::expected<AnimationViewerPhase::Param, String> {
-             const auto dataKey = TomlMember(step, U"param").getOpt<String>();
-             if (!dataKey) {
-               return std::unexpected{
-                   U"ScenarioData::ParseStep: animation_viewer に param があ"
-                   U"りません"
-               };
-             }
-             return AnimationViewerPhase::Param{.dataKey = *dataKey};
+           [](const TOMLValue& step) -> AnimationViewerPhase::Param {
+             return AnimationViewerPhase::Param{
+                 .dataKey = TomlTable{step}.get<String>(U"param")
+             };
            }
        )},
       {U"stage",
-       MakeLoader<StagePhase>(
-           [](const TOMLValue& step)
-               -> std::expected<StagePhase::Param, String> {
-             const auto stageName = TomlMember(step, U"param").getOpt<String>();
-             if (!stageName) {
-               return std::unexpected{
-                   U"ScenarioData::ParseStep: stage に param がありません"
-               };
-             }
-             return StagePhase::Param{.stageName = *stageName};
-           }
-       )},
+       MakeLoader<StagePhase>([](const TOMLValue& step) -> StagePhase::Param {
+         return StagePhase::Param{
+             .stageName = TomlTable{step}.get<String>(U"param")
+         };
+       })},
       {U"scenario",
        MakeLoader<ScenarioPhase>(
-           [](const TOMLValue& step)
-               -> std::expected<ScenarioPhase::Param, String> {
-             const auto sectionName =
-                 TomlMember(step, U"param").getOpt<String>();
-             if (!sectionName) {
-               return std::unexpected{
-                   U"ScenarioData::ParseStep: scenario に param がありません"
-               };
-             }
-             return ScenarioPhase::Param{.sectionName = *sectionName};
+           [](const TOMLValue& step) -> ScenarioPhase::Param {
+             return ScenarioPhase::Param{
+                 .sectionName = TomlTable{step}.get<String>(U"param")
+             };
            }
        )},
       {U"wait",
-       MakeLoader<WaitPhase>(
-           [](const TOMLValue& step)
-               -> std::expected<WaitPhase::Param, String> {
-             const auto duration =
-                 TomlMember(step, U"duration").getOpt<double>();
-             if (!duration) {
-               return std::unexpected{
-                   U"ScenarioData::ParseStep: wait に duration がありません"
-               };
-             }
-             return WaitPhase::Param{.duration = *duration};
-           }
-       )},
+       MakeLoader<WaitPhase>([](const TOMLValue& step) -> WaitPhase::Param {
+         return WaitPhase::Param{
+             .duration = TomlTable{step}.get<double>(U"duration")
+         };
+       })},
   };
   return loaders;
 }
