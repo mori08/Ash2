@@ -32,72 +32,23 @@ constexpr Input kColliderDrawKey = KeyF2;
 bool colliderDrawEnabled = false;
 
 /// @brief 設定を再読込する
-/// @note Config（Player / Enemy / Arena / Title / Input / AnimationData）の
-/// 読み込みに失敗すると throw するため、ゲームが終了する。
-/// それ以外（TOML を開けない、StageData、アニメーションのテクスチャ）は
-/// 失敗時に旧データを維持して戻る
-// TODO(#368): StageData と LoadAnimations
-// のテクスチャは失敗時に旧データを維持し、 Config と挙動が混在している
+/// @note 読み込みに失敗すると throw し、ゲームが終了する
 void ReloadConfig(entt::registry& registry) {
-  auto playerToml = OpenToml(U"assets/config/player.toml");
-  if (!playerToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + playerToml.error());
-    return;
-  }
-  auto player = PlayerConfig::FromToml(*playerToml);
-
-  auto enemyToml = OpenToml(U"assets/config/enemy.toml");
-  if (!enemyToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + enemyToml.error());
-    return;
-  }
-  auto enemy = EnemyConfig::FromToml(*enemyToml);
-
-  auto arenaToml = OpenToml(U"assets/config/arena.toml");
-  if (!arenaToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + arenaToml.error());
-    return;
-  }
-  auto arena = ArenaConfig::FromToml(*arenaToml);
-
-  auto titleToml = OpenToml(U"assets/config/title.toml");
-  if (!titleToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + titleToml.error());
-    return;
-  }
-  auto title = TitleConfig::FromToml(*titleToml);
-
-  auto inputToml = OpenToml(U"assets/config/input.toml");
-  if (!inputToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + inputToml.error());
-    return;
-  }
-  auto input = InputConfig::FromToml(*inputToml);
-
-  auto stageToml = OpenToml(U"assets/config/stage.toml");
-  if (!stageToml) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + stageToml.error());
-    return;
-  }
-  auto stage = StageData::FromToml(*stageToml);
-  if (!stage) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + stage.error());
-    return;
-  }
-
+  auto player = PlayerConfig::FromToml(OpenToml(U"assets/config/player.toml"));
+  auto enemy = EnemyConfig::FromToml(OpenToml(U"assets/config/enemy.toml"));
+  auto arena = ArenaConfig::FromToml(OpenToml(U"assets/config/arena.toml"));
+  auto title = TitleConfig::FromToml(OpenToml(U"assets/config/title.toml"));
+  auto input = InputConfig::FromToml(OpenToml(U"assets/config/input.toml"));
+  auto stage = StageData::FromToml(OpenToml(U"assets/config/stage.toml"));
   auto anims = LoadAnimations();
-  if (!anims) {
-    APP_LOG(U"ReloadConfig: 旧データを維持 / " + anims.error());
-    return;
-  }
 
   registry.ctx().get<PlayerConfig>() = std::move(player);
   registry.ctx().get<EnemyConfig>() = enemy;
   registry.ctx().get<ArenaConfig>() = arena;
   registry.ctx().get<TitleConfig>() = title;
   registry.ctx().get<InputConfig>() = input;
-  registry.ctx().get<StageData>() = *std::move(stage);
-  registry.ctx().get<AnimationDataRegistry>() = *std::move(anims);
+  registry.ctx().get<StageData>() = std::move(stage);
+  registry.ctx().get<AnimationDataRegistry>() = std::move(anims);
 }
 
 }  // namespace

@@ -12,18 +12,15 @@
 #include "Component/Velocity.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
-#include "Config/TomlFields.hpp"
+#include "Config/TomlTable.hpp"
 #include "System/AnimationSystem.hpp"
 
-std::expected<EnemyFactory::Param, String> EnemyFactory::Param::FromToml(
-    const TOMLValue& toml
-) {
-  TomlFields f{toml, U"EnemyFactory::Param::FromToml"};
-  return f.wrap(
-      Param{
-          .pos = WorldPos{.w = f.get<double>(U"w"), .d = f.get<double>(U"d")},
-      }
-  );
+EnemyFactory::Param EnemyFactory::Param::FromToml(const TOMLValue& toml) {
+  const TomlTable table{toml};
+  return Param{
+      .pos =
+          WorldPos{.w = table.get<double>(U"w"), .d = table.get<double>(U"d")},
+  };
 }
 
 entt::entity EnemyFactory::Create(

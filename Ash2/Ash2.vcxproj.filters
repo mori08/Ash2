@@ -1220,9 +1220,6 @@
     <ClInclude Include="Config\ScenarioData.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>
-    <ClInclude Include="Config\TomlFields.hpp">
-      <Filter>Header Files\Config</Filter>
-    </ClInclude>
     <ClInclude Include="Config\TomlTable.hpp">
       <Filter>Header Files\Config</Filter>
     </ClInclude>

@@ -314,8 +314,8 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|
 | [`PlayerFactory::Create`](../Ash2/src/Factory/PlayerFactory.hpp) | プレイヤーエンティティ（ルート）を生成する。`Param::pos`（既定 `WorldPos{}`）を初期位置とし、HP はファクトリ内の定数 `kPlayerMaxHp`、コライダー寸法・重力は `PlayerConfig`（`registry.ctx()`）から読む |
 | [`EnemyFactory::Create`](../Ash2/src/Factory/EnemyFactory.hpp) | `EnemyConfig` に基づき、`Param::pos` の位置に敵エンティティを生成する |
-| [`EnemyFactory::Param::FromToml`](../Ash2/src/Factory/EnemyFactory.hpp) | TOML のテーブルから `Param` を生成する。`w` / `d` が必須で、`h` は持たない（接地で生成する）。`std::expected<Param, String>` を返す |
-| [`StageData`](../Ash2/src/Factory/StageData.hpp) | `Ash2/App/assets/config/stage.toml` から読むステージ定義（ステージ名 → `StageDefinition`。`enemies` に `EnemyFactory::Param` の配列を持つ）。`enemies` が欠落・空のステージは `FromToml` が失敗を返す。`EnemyFactory::Param` を持つため Config ではなく Factory に置く。`registry.ctx()` に載り、F5 で再読込される |
+| [`EnemyFactory::Param::FromToml`](../Ash2/src/Factory/EnemyFactory.hpp) | TOML のテーブルから `Param` を生成する。`w` / `d` が必須で、`h` は持たない（接地で生成する）。欠落・型違いは `throw Error` |
+| [`StageData`](../Ash2/src/Factory/StageData.hpp) | `Ash2/App/assets/config/stage.toml` から読むステージ定義（ステージ名 → `StageDefinition`。`enemies` に `EnemyFactory::Param` の配列を持つ）。`enemies` が欠落・配列でない・空のステージは `FromToml` が throw する。`EnemyFactory::Param` を持つため Config ではなく Factory に置く。`registry.ctx()` に載り、F5 で再読込される |
 | [`MenuFactory`](../Ash2/src/Factory/MenuFactory.hpp) | `SetupMenu`/`SetupButton` でメニューとボタンを設定する。`Create` の形ではなく、呼び出し側が先にまとめて作ったエンティティを受け取る（互いを参照する移動先を1回で設定するため）。`SetupButton` が付けるのは構造に必要な `Button`/`ScreenPos`/`Hierarchy::Attach` だけで、`Drawable` などの見た目は画面側で付ける |
 
 ---
@@ -385,19 +385,15 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 ## 設定（Config）
 
 `Ash2/src/Config/` 配下。TOML から `FromToml()` で構築し、`registry.ctx()` に格納する。
-`PlayerConfig`/`EnemyConfig`/`ArenaConfig`/`TitleConfig`/`InputConfig`/`AnimationData`/`ScenarioData` の
-`FromToml` は値を直接返し、必須キーの欠落・型違い・不正な値は `throw Error` で表す。
-`StageData` などは #368 で移行するまで `std::expected<T, String>` を返し、失敗は伝播して
-終了を決めるのは呼び出し元（`Run()` が `Error` に変えて投げる）である。
+`PlayerConfig`/`EnemyConfig`/`ArenaConfig`/`TitleConfig`/`InputConfig`/`AnimationData`/`ScenarioData`/
+`StageData`/`EnemyFactory::Param` の `FromToml` は値を直接返し、必須キーの欠落・型違い・不正な値は
+`throw Error` で表す。
 
 [`TomlTable`](../Ash2/src/Config/TomlTable.hpp) は1テーブル分のキー読み出しで、
 `get<T>`（必須。欠落・型違いで throw）・`getOr<T>`（既定値）・`getOpt<T>`（`Optional`）を持つ。
-Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。各 Config の `FromToml` と `PhaseLoader` が使う。
+Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。各 Config の `FromToml`・`EnemyFactory::Param::FromToml`・`PhaseLoader` が使う。
 同ヘッダの自由関数 `TomlMember(table, key)` は `TOMLValue` のキー参照を例外なしで行い、
 欠落時は空の値を返す。`operator[]` の代わりに使う。
-
-[`TomlFields`](../Ash2/src/Config/TomlFields.hpp) は必須キー読み出しと欠落キーの記録をまとめる
-ヘルパーで、`TomlTable` へ移行していない `EnemyFactory::Param::FromToml` / `StageData::FromToml` が使う（移行は #368）。
 
 ### [`PlayerConfig`](../Ash2/src/Config/PlayerConfig.hpp)
 
@@ -565,10 +561,10 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 - `.png` → `TextureAsset`、`.mp3` → `AudioAsset` としてキー（相対パス）で登録
 - アニメーション設定: `Ash2/App/assets/config/animation/*.toml`（起動時に全ファイルをスキャン）
 - `asset_list` を開けない場合は起動しない（`GetAssetList` → `RegisterAssets` → `InitializeEngine`
-  が `std::expected` で失敗を伝え、`Run()` が `Error` に変えて投げる）
+  が `throw Error` する）
 - UI フォントは `FontAsset` に登録し、起動時に `Load` まで確かめる（`UiFonts::Register`）
-- TOML の読み込みは `OpenToml` を単一の入口とする。開けない場合はパスを含むメッセージの
-  `std::expected` で失敗を返す（中身が空の TOML は「開けている」として扱い、キー欠落は
+- TOML の読み込みは `OpenToml` を単一の入口とする。開けない場合は
+  `throw Error` する（中身が空の TOML は「開けている」として扱い、キー欠落は
   各 `FromToml` 側の失敗として区別する）
 - アニメーション設定の `texture` キーはロード時（`LoadAnimations`）に
   `TextureAsset::IsRegistered`（未登録の検出）と `TextureAsset::Load`（実体読み込みの確定）で
@@ -581,19 +577,19 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 
 | 名前 | 役割 |
 |---|---|
-| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `InputDeviceSelector::update`（`registry.ctx()` の `InputConfig` を渡す）→ `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` と `InitializeRegistry` の失敗は `Error` に変えて投げる。例外は `catch (...)` ですべて受け、何もせずに終える。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
-| [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。`std::expected<void, String>` を返し、アセット・フォント登録の失敗を呼び出し元（`Main`）へ渡す。`ApplyWindowPreset` の失敗は `APP_LOG` に出して続行する |
-| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config（`InputConfig` を含む）/ `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。`std::expected<void, String>` を返し、失敗を呼び出し元（`Main`）へ渡す |
+| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `InputDeviceSelector::update`（`registry.ctx()` の `InputConfig` を渡す）→ `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` を回す。`InitializeEngine` と `InitializeRegistry` は失敗時に throw する。例外は `catch (...)` ですべて受け、何もせずに終える。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
+| [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。アセット・フォント登録・`ApplyWindowPreset` の失敗は `throw Error` する |
+| [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config（`InputConfig` を含む）/ `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。失敗は `throw Error` する |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
-| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。Config（Player/Enemy/Arena/Title/Input/AnimationData）の失敗は throw でゲームが終了し、それ以外（TOML を開けない・`StageData`・アニメーションのテクスチャ）の失敗は旧データを維持したまま `APP_LOG` に出して戻る）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
+| [`DebugOnly`](../Ash2/src/DebugOnly.hpp) | Debug ビルドにのみ存在する機能とそのキー判定の集約。`RunTestsIfRequested`（`ASH2_RUN_TESTS` によるテスト実行）・`OpenDebugConsole`・`UpdateConfigReload`（F5 設定リロード。読み込みに失敗すると throw でゲームが終了する）・`DrawColliders`（F2 で表示トグルし、表示中は `DebugDrawSystem::DrawColliders` を呼ぶ）を持つ。Release ビルドでは全関数が空の inline 関数になる |
 | [`WorldToScreen`](../Ash2/src/Screen.hpp) | `WorldPos` を床原点（`WorldOrigin()`）込みの画面座標へ変換するインライン関数。`DrawSystem`・`ProjectileSystem`・`DebugDrawSystem`・`LockOnSystem` が参照する |
 | [`WorldOrigin`](../Ash2/src/Screen.hpp) | ワールド原点の画面座標（床原点）を返すインライン関数。`Scene::Center()` から `kFloorOriginOffsetY` だけ下にずらす |
-| [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。`std::expected<Array<FilePath>, String>` を返し、開けなければ失敗を返す |
+| [`GetAssetList`](../Ash2/src/Asset.hpp) | `Ash2/App/assets/asset_list` を読んでアセットパス一覧を返す。開けなければ `throw Error` する |
 | [`AssetPath`](../Ash2/src/Asset.hpp) | Debug では `FilePath`、Release では `Resource` パスを返す |
-| [`RegisterAssets`](../Ash2/src/Asset.hpp) | `.png`/`.mp3` をアセットシステムに登録する。`std::expected<void, String>` を返し、失敗を呼び出し元（`InitializeEngine`）へ渡す |
-| [`OpenToml`](../Ash2/src/Asset.hpp) | `AssetPath()` を通してアセット配下の TOML を開く。`std::expected<TOMLReader, String>` を返し、開けなければパスを含むメッセージを返す |
-| [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画に使うフォントの `FontAsset` キー（`kLarge`/`kSmall`）と登録関数。使う側は `FontAsset{UiFonts::kLarge}` で取り出す。`Register()` は `std::expected<void, String>` を返し、`InitializeEngine` が `RegisterAssets` の後に呼ぶ |
-| [`WindowPreset`](../Ash2/src/WindowPreset.hpp) | ウィンドウの表示サイズの候補（`enum class`）。`kDefaultWindowPreset` が起動時の初期値、`ApplyWindowPreset` が `Window::Resize` で適用し `std::expected<void, String>` を返す。`InitializeEngine` が呼ぶ。拡張時は列挙子と `ApplyWindowPreset` の `switch` を更新する |
+| [`RegisterAssets`](../Ash2/src/Asset.hpp) | `.png`/`.mp3` をアセットシステムに登録する。登録に失敗すると `throw Error` する |
+| [`OpenToml`](../Ash2/src/Asset.hpp) | `AssetPath()` を通してアセット配下の TOML を開く。開けなければ `throw Error` する |
+| [`UiFonts`](../Ash2/src/UiFonts.hpp) | UI 描画に使うフォントの `FontAsset` キー（`kLarge`/`kSmall`）と登録関数。使う側は `FontAsset{UiFonts::kLarge}` で取り出す。`Register()` は失敗時に `throw Error` し、`InitializeEngine` が `RegisterAssets` の後に呼ぶ |
+| [`WindowPreset`](../Ash2/src/WindowPreset.hpp) | ウィンドウの表示サイズの候補（`enum class`）。`kDefaultWindowPreset` が起動時の初期値、`ApplyWindowPreset` が `Window::Resize` で適用し、失敗時は `throw Error` する。`InitializeEngine` が呼ぶ。拡張時は列挙子と `ApplyWindowPreset` の `switch` を更新する |
 | [`APP_LOG`](../Ash2/src/Debug.hpp) | Debug ビルドで `Console` に出力するログマクロ（Release では何もしない） |
 | [`FrameData`](../Ash2/src/FrameData.hpp) | フレームごとの更新データ（`dt` + `InputState`）。`Main` が組み立て、フェーズとシステムの双方が受け取る |
 | [`AppDebug::testMode`](../Ash2/src/Debug.hpp) | テスト実行中フラグ。true の間 `APP_LOG` を無効化する |

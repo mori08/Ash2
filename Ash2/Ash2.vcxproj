@@ -454,7 +454,6 @@
     <ClInclude Include="src\Config\ArenaConfig.hpp" />
     <ClInclude Include="src\Config\TitleConfig.hpp" />
     <ClInclude Include="src\Config\InputConfig.hpp" />
-    <ClInclude Include="src\Config\TomlFields.hpp" />
     <ClInclude Include="src\Config\TomlTable.hpp" />
     <ClInclude Include="src\Factory\PlayerFactory.hpp" />
     <ClInclude Include="src\Factory\EnemyFactory.hpp" />

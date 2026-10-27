@@ -1,42 +1,24 @@
 #include "Factory/StageData.hpp"
 
-#include "Config/TomlFields.hpp"
+#include "Config/TomlTable.hpp"
 
-std::expected<StageData, String> StageData::FromToml(const TOMLValue& toml) {
+StageData StageData::FromToml(const TOMLValue& toml) {
   StageData data;
 
   for (const auto& member : toml.tableView()) {
     const auto& enemiesValue = TomlMember(member.value, U"enemies");
     // 配列でない値に tableArrayView() を呼ぶと例外になりうるため先に確かめる
     if (!enemiesValue.isTableArray()) {
-      return std::unexpected{
-          U"StageData::FromToml: ステージ \"{}\" に enemies がありません"_fmt(
-              member.name
-          )
-      };
+      throw Error{U"ステージの enemies がないか、配列でない"};
     }
 
     StageDefinition stage;
-    size_t index = 0;
     for (const auto& enemyToml : enemiesValue.tableArrayView()) {
-      auto enemy = EnemyFactory::Param::FromToml(enemyToml);
-      if (!enemy) {
-        return std::unexpected{
-            U"StageData::FromToml: ステージ \"{}\" の enemies[{}]: {}"_fmt(
-                member.name, index, std::move(enemy).error()
-            )
-        };
-      }
-      stage.enemies.push_back(*std::move(enemy));
-      ++index;
+      stage.enemies.push_back(EnemyFactory::Param::FromToml(enemyToml));
     }
 
     if (stage.enemies.isEmpty()) {
-      return std::unexpected{
-          U"StageData::FromToml: ステージ \"{}\" の enemies が空です"_fmt(
-              member.name
-          )
-      };
+      throw Error{U"ステージの enemies が空"};
     }
     data.stages[member.name] = std::move(stage);
   }

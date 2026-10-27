@@ -2,7 +2,6 @@
 #include <Siv3D.hpp>
 
 #include <entt/entt.hpp>
-#include <expected>
 
 #include "Component/WorldPos.hpp"
 
@@ -16,9 +15,8 @@ class EnemyFactory {
 
     /// @brief TOML のテーブルから生成パラメータを生成する
     /// @note `w` / `d` が必須。`h` は持たない（敵は接地で生成する）
-    [[nodiscard]] static std::expected<Param, String> FromToml(
-        const TOMLValue& toml
-    );
+    /// @throw Error 必須キーの欠落・型違いがあるとき
+    [[nodiscard]] static Param FromToml(const TOMLValue& toml);
   };
 
   /// @brief EnemyConfig に基づき、指定位置に敵エンティティを生成する

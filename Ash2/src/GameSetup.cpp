@@ -9,7 +9,6 @@
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Config/TitleConfig.hpp"
-#include "Debug.hpp"
 #include "Factory/StageData.hpp"
 #include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
@@ -24,120 +23,63 @@ namespace {
 constexpr Size kSceneSize{1280, 720};
 }  // namespace
 
-std::expected<AnimationDataRegistry, String> LoadAnimations() {
-  auto list = GetAssetList();
-  if (!list) {
-    return std::unexpected{std::move(list).error()};
-  }
+AnimationDataRegistry LoadAnimations() {
   AnimationDataRegistry animReg;
-  for (const auto& path : *list) {
+  for (const auto& path : GetAssetList()) {
     if (FileSystem::Extension(path) != U"toml") continue;
     if (!path.starts_with(U"assets/config/animation/")) continue;
-    auto toml = OpenToml(path);
-    if (!toml) {
-      return std::unexpected{std::move(toml).error()};
-    }
-    auto data = AnimationData::FromToml(*toml);
+    const auto toml = OpenToml(path);
+    auto data = AnimationData::FromToml(toml);
     if (!TextureAsset::IsRegistered(data.textureKey)) {
-      return std::unexpected{
-          U"LoadAnimations: {} の texture '{}' が未登録です"_fmt(
-              path, data.textureKey
-          )
-      };
+      throw Error{U"アニメーションのテクスチャが未登録"};
     }
     if (!TextureAsset::Load(data.textureKey)) {
-      return std::unexpected{
-          U"LoadAnimations: {} の texture '{}' を読み込めません"_fmt(
-              path, data.textureKey
-          )
-      };
+      throw Error{U"アニメーションのテクスチャを読み込めない"};
     }
     animReg[FileSystem::BaseName(path)] = std::move(data);
   }
   return animReg;
 }
 
-std::expected<void, String> InitializeEngine() {
-  if (auto result = RegisterAssets(); !result) {
-    return std::unexpected{std::move(result).error()};
-  }
-  if (auto result = UiFonts::Register(); !result) {
-    return std::unexpected{std::move(result).error()};
-  }
+void InitializeEngine() {
+  RegisterAssets();
+  UiFonts::Register();
   Scene::SetResizeMode(ResizeMode::Keep);
   Scene::Resize(kSceneSize);
   Scene::SetTextureFilter(TextureFilter::Linear);
-  // Keep によりどの大きさでも描画は成り立つため、失敗しても起動を止めない
-  if (auto result = ApplyWindowPreset(kDefaultWindowPreset); !result) {
-    APP_LOG(std::move(result).error());
-  }
-  return {};
+  ApplyWindowPreset(kDefaultWindowPreset);
 }
 
-std::expected<void, String> InitializeRegistry(entt::registry& registry) {
+void InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<NameLookup>();
   NameLookupSystem::Connect(registry);
   HierarchySystem::Connect(registry);
 
-  auto playerToml = OpenToml(U"assets/config/player.toml");
-  if (!playerToml) {
-    return std::unexpected{std::move(playerToml).error()};
-  }
-  registry.ctx().emplace<PlayerConfig>(PlayerConfig::FromToml(*playerToml));
+  registry.ctx().emplace<PlayerConfig>(
+      PlayerConfig::FromToml(OpenToml(U"assets/config/player.toml"))
+  );
+  registry.ctx().emplace<EnemyConfig>(
+      EnemyConfig::FromToml(OpenToml(U"assets/config/enemy.toml"))
+  );
+  registry.ctx().emplace<ArenaConfig>(
+      ArenaConfig::FromToml(OpenToml(U"assets/config/arena.toml"))
+  );
+  registry.ctx().emplace<TitleConfig>(
+      TitleConfig::FromToml(OpenToml(U"assets/config/title.toml"))
+  );
+  registry.ctx().emplace<InputConfig>(
+      InputConfig::FromToml(OpenToml(U"assets/config/input.toml"))
+  );
+  registry.ctx().emplace<StageData>(
+      StageData::FromToml(OpenToml(U"assets/config/stage.toml"))
+  );
+  registry.ctx().emplace<AnimationDataRegistry>(LoadAnimations());
 
-  auto enemyToml = OpenToml(U"assets/config/enemy.toml");
-  if (!enemyToml) {
-    return std::unexpected{std::move(enemyToml).error()};
-  }
-  registry.ctx().emplace<EnemyConfig>(EnemyConfig::FromToml(*enemyToml));
-
-  auto arenaToml = OpenToml(U"assets/config/arena.toml");
-  if (!arenaToml) {
-    return std::unexpected{std::move(arenaToml).error()};
-  }
-  registry.ctx().emplace<ArenaConfig>(ArenaConfig::FromToml(*arenaToml));
-
-  auto titleToml = OpenToml(U"assets/config/title.toml");
-  if (!titleToml) {
-    return std::unexpected{std::move(titleToml).error()};
-  }
-  registry.ctx().emplace<TitleConfig>(TitleConfig::FromToml(*titleToml));
-
-  auto inputToml = OpenToml(U"assets/config/input.toml");
-  if (!inputToml) {
-    return std::unexpected{std::move(inputToml).error()};
-  }
-  registry.ctx().emplace<InputConfig>(InputConfig::FromToml(*inputToml));
-
-  auto stageToml = OpenToml(U"assets/config/stage.toml");
-  if (!stageToml) {
-    return std::unexpected{std::move(stageToml).error()};
-  }
-  auto stage = StageData::FromToml(*stageToml);
-  if (!stage) {
-    return std::unexpected{std::move(stage).error()};
-  }
-  registry.ctx().emplace<StageData>(*std::move(stage));
-
-  auto anims = LoadAnimations();
-  if (!anims) {
-    return std::unexpected{std::move(anims).error()};
-  }
-  registry.ctx().emplace<AnimationDataRegistry>(*std::move(anims));
-
-  auto scenarioToml = OpenToml(U"assets/config/scenario.toml");
-  if (!scenarioToml) {
-    return std::unexpected{std::move(scenarioToml).error()};
-  }
-  auto scenario = ScenarioData::FromToml(*scenarioToml, GetPhaseLoaders());
+  auto scenario = ScenarioData::FromToml(
+      OpenToml(U"assets/config/scenario.toml"), GetPhaseLoaders()
+  );
   if (!scenario.sections.contains(String{kInitSectionName})) {
-    return std::unexpected{
-        U"InitializeRegistry: セクション \"{}\" がありません"_fmt(
-            kInitSectionName
-        )
-    };
+    throw Error{U"シナリオに init セクションがない"};
   }
   registry.ctx().emplace<ScenarioData>(std::move(scenario));
-
-  return {};
 }
