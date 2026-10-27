@@ -1,8 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <expected>
-
 #include "Factory/EnemyFactory.hpp"
 
 /// @brief 1 ステージ分の定義
@@ -18,9 +16,7 @@ struct StageData {
   HashTable<String, StageDefinition> stages;
 
   /// @brief TOML からステージ定義を生成する
-  /// @note 1 セクションが 1 ステージ。`enemies`
-  /// が欠落・空のステージは失敗とする
-  [[nodiscard]] static std::expected<StageData, String> FromToml(
-      const TOMLValue& toml
-  );
+  /// @note 1 セクションが 1 ステージ
+  /// @throw Error `enemies` が欠落・配列でない・空のステージがあるとき
+  [[nodiscard]] static StageData FromToml(const TOMLValue& toml);
 };

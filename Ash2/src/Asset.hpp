@@ -1,8 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
 
-#include <expected>
-
 /// @brief デバッグ・リリース共通のアセットパスを返す
 /// @return デバッグ時は FilePath、リリース時は Resource パスを返す
 [[nodiscard]] inline FilePath AssetPath(StringView path) {
@@ -16,16 +14,12 @@
 /// @brief デバッグ・リリース共通のアセットリストを返す
 ///
 /// `tools/sync-assets.sh` で生成した `assets/asset_list` を読む。
-/// @return 失敗時は開けなかったパスを含むメッセージ
-[[nodiscard]] inline std::expected<Array<FilePath>, String> GetAssetList() {
-  const FilePath path = AssetPath(U"assets/asset_list");
-  TextReader reader(path);
+/// @throw Error アセットリストを開けないとき
+/// （`tools/sync-assets.sh` を実行していない可能性がある）
+[[nodiscard]] inline Array<FilePath> GetAssetList() {
+  TextReader reader(AssetPath(U"assets/asset_list"));
   if (not reader) {
-    return std::unexpected{
-        U"GetAssetList: {} を開けません / tools/sync-assets.sh を実行する"_fmt(
-            path
-        )
-    };
+    throw Error{U"アセットリストを開けない"};
   }
   Array<FilePath> list;
   while (const auto line = reader.readLine()) {
@@ -35,13 +29,11 @@
 }
 
 /// @brief アセット配下の TOML を開く
-/// @return 開けない場合はパスを含むメッセージ
-[[nodiscard]] inline std::expected<TOMLReader, String> OpenToml(
-    StringView path
-) {
+/// @throw Error TOML ファイルを開けないとき
+[[nodiscard]] inline TOMLReader OpenToml(StringView path) {
   TOMLReader toml{AssetPath(path)};
   if (not toml.isOpen()) {
-    return std::unexpected{U"OpenToml: {} を読み込めません"_fmt(path)};
+    throw Error{U"TOML ファイルを開けない"};
   }
   return toml;
 }
@@ -50,27 +42,18 @@
 ///
 /// `.png` を TextureAsset、`.mp3` を AudioAsset として登録する。
 /// キーはファイルの相対パス（例: `assets/images/player.png`）。
-/// @return 失敗時は登録できなかったパスを含むメッセージ
-[[nodiscard]] inline std::expected<void, String> RegisterAssets() {
-  auto list = GetAssetList();
-  if (!list) {
-    return std::unexpected{std::move(list).error()};
-  }
-  for (const auto& path : *list) {
+/// @throw Error アセットリストを開けない、または登録に失敗したとき
+inline void RegisterAssets() {
+  for (const auto& path : GetAssetList()) {
     const auto ext = FileSystem::Extension(path);
     if (ext == U"png") {
       if (!TextureAsset::Register(path, AssetPath(path))) {
-        return std::unexpected{
-            U"RegisterAssets: {} を登録できません"_fmt(path)
-        };
+        throw Error{U"テクスチャをアセットに登録できない"};
       }
     } else if (ext == U"mp3") {
       if (!AudioAsset::Register(path, AssetPath(path))) {
-        return std::unexpected{
-            U"RegisterAssets: {} を登録できません"_fmt(path)
-        };
+        throw Error{U"音声をアセットに登録できない"};
       }
     }
   }
-  return {};
 }

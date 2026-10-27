@@ -40,14 +40,10 @@ void RunGameLoop(
 
 /// @brief ゲームに必要な状態を構築し、ゲームループへ渡す
 void Run() {
-  if (auto result = InitializeEngine(); !result) {
-    throw Error{std::move(result).error()};
-  }
+  InitializeEngine();
 
   entt::registry registry;
-  if (auto result = InitializeRegistry(registry); !result) {
-    throw Error{std::move(result).error()};
-  }
+  InitializeRegistry(registry);
 
   InputDeviceSelector inputSelector;
 

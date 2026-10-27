@@ -2,7 +2,6 @@
 #include <Siv3D.hpp>
 
 #include <array>
-#include <expected>
 
 namespace UiFonts {
 
@@ -12,8 +11,8 @@ inline constexpr AssetNameView kLarge = U"ui/large";
 inline constexpr AssetNameView kSmall = U"ui/small";
 
 /// @brief UI フォントを FontAsset に登録し、読み込みまで済ませる
-/// @return 失敗時はキーとサイズを含むメッセージ
-[[nodiscard]] inline std::expected<void, String> Register() {
+/// @throw Error 登録または読み込みに失敗したとき
+inline void Register() {
   struct Entry {
     AssetNameView key;
     int32 size;
@@ -23,17 +22,12 @@ inline constexpr AssetNameView kSmall = U"ui/small";
   };
   for (const auto& [key, size] : kEntries) {
     if (!FontAsset::Register(key, size)) {
-      return std::unexpected{
-          U"UiFonts::Register: {} を登録できません"_fmt(key)
-      };
+      throw Error{U"UI フォントをアセットに登録できない"};
     }
     if (!FontAsset::Load(key)) {
-      return std::unexpected{
-          U"UiFonts::Register: {}（サイズ {}）を読み込めません"_fmt(key, size)
-      };
+      throw Error{U"UI フォントを読み込めない"};
     }
   }
-  return {};
 }
 
 }  // namespace UiFonts
