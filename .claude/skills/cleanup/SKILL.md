@@ -31,10 +31,10 @@ git remote prune origin
 
 ### 3. 一時ファイルの削除
 
-`tmp/plan-<number>.md` を削除する。
+`tmp/` 配下でファイル名に Issue 番号を含むものをすべて削除する。
 
 ```bash
-rm tmp/plan-<number>.md
+rm -f tmp/*-<number>.md tmp/*-<number>-*
 ```
 
 ### 4. 作業漏れの確認
