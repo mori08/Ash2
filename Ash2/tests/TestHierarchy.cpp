@@ -177,22 +177,4 @@ TEST_CASE("Hierarchy::DestroyWithChildren - leaves siblings of the subtree") {
   REQUIRE(registry.get<const WorldPos>(survivor).w == Approx(103.0));
 }
 
-TEST_CASE(
-    "Hierarchy::DestroyWithChildren - is safe on an already-destroyed entity"
-) {
-  entt::registry registry;
-  HierarchySystem::Connect(registry);
-  const auto parent = MakeNode(registry);
-  const auto child = MakeNode(registry);
-  Hierarchy::Attach(registry, parent, child);
-
-  Hierarchy::DestroyWithChildren(registry, parent);
-  // 破棄済みエンティティを再度渡してもクラッシュしない
-  Hierarchy::DestroyWithChildren(registry, parent);
-  Hierarchy::DestroyWithChildren(registry, child);
-
-  REQUIRE_FALSE(registry.valid(parent));
-  REQUIRE_FALSE(registry.valid(child));
-}
-
 #endif

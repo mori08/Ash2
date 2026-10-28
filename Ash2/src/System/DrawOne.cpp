@@ -19,11 +19,11 @@ void DrawOne(
                       Arg::topLeft(screenPos), data.size.x, data.size.y
                   };
                 case DrawAnchor::Center:
-                default:
                   return RectF{
                       Arg::center(screenPos), data.size.x, data.size.y
                   };
               }
+              throw Error{U"Rect の DrawAnchor が未知の列挙値"};
             }();
             rect.draw(color);
           },
@@ -37,15 +37,15 @@ void DrawOne(
             switch (data.anchor) {
               case DrawAnchor::BottomCenter:
                 data.region.draw(Arg::bottomCenter(anchorPos), color);
-                break;
+                return;
               case DrawAnchor::TopLeft:
                 data.region.draw(Arg::topLeft(anchorPos), color);
-                break;
+                return;
               case DrawAnchor::Center:
-              default:
                 data.region.draw(Arg::center(anchorPos), color);
-                break;
+                return;
             }
+            throw Error{U"Texture の DrawAnchor が未知の列挙値"};
           },
           [&screenPos, &color](const TextDrawable& data) {
             // テクスチャと同じく整数位置にして、にじみを防ぐ
@@ -53,15 +53,15 @@ void DrawOne(
             switch (data.anchor) {
               case DrawAnchor::BottomCenter:
                 data.font(data.text).draw(Arg::bottomCenter(anchorPos), color);
-                break;
+                return;
               case DrawAnchor::TopLeft:
                 data.font(data.text).draw(Arg::topLeft(anchorPos), color);
-                break;
+                return;
               case DrawAnchor::Center:
-              default:
                 data.font(data.text).draw(Arg::center(anchorPos), color);
-                break;
+                return;
             }
+            throw Error{U"Text の DrawAnchor が未知の列挙値"};
           },
       },
       drawable

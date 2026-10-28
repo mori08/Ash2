@@ -11,7 +11,12 @@ TEST_CASE("AnimationData::FromToml - parses top-level fields correctly") {
       "\n"
       "[draw_offset]\n"
       "x = -8.0\n"
-      "y = -32.0\n";
+      "y = -32.0\n"
+      "\n"
+      "[idle]\n"
+      "row = 0\n"
+      "count = 4\n"
+      "speed = 8.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = AnimationData::FromToml(reader);
   REQUIRE(data.textureKey == U"assets/images/player.png");
@@ -86,6 +91,91 @@ TEST_CASE("AnimationData::FromToml - missing clip row throws") {
       "[idle]\n"
       "count = 4\n"
       "speed = 8.0\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
+}
+
+TEST_CASE("AnimationData::FromToml - non-positive width throws") {
+  constexpr std::string_view kToml =
+      "texture = \"assets/images/player.png\"\n"
+      "width = 0\n"
+      "height = 64\n"
+      "\n"
+      "[draw_offset]\n"
+      "x = 0.0\n"
+      "y = 0.0\n"
+      "\n"
+      "[idle]\n"
+      "row = 0\n"
+      "count = 4\n"
+      "speed = 8.0\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
+}
+
+TEST_CASE("AnimationData::FromToml - negative clip row throws") {
+  constexpr std::string_view kToml =
+      "texture = \"assets/images/player.png\"\n"
+      "width = 32\n"
+      "height = 64\n"
+      "\n"
+      "[draw_offset]\n"
+      "x = 0.0\n"
+      "y = 0.0\n"
+      "\n"
+      "[idle]\n"
+      "row = -1\n"
+      "count = 4\n"
+      "speed = 8.0\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
+}
+
+TEST_CASE("AnimationData::FromToml - non-positive clip count throws") {
+  constexpr std::string_view kToml =
+      "texture = \"assets/images/player.png\"\n"
+      "width = 32\n"
+      "height = 64\n"
+      "\n"
+      "[draw_offset]\n"
+      "x = 0.0\n"
+      "y = 0.0\n"
+      "\n"
+      "[idle]\n"
+      "row = 0\n"
+      "count = 0\n"
+      "speed = 8.0\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
+}
+
+TEST_CASE("AnimationData::FromToml - non-positive clip speed throws") {
+  constexpr std::string_view kToml =
+      "texture = \"assets/images/player.png\"\n"
+      "width = 32\n"
+      "height = 64\n"
+      "\n"
+      "[draw_offset]\n"
+      "x = 0.0\n"
+      "y = 0.0\n"
+      "\n"
+      "[idle]\n"
+      "row = 0\n"
+      "count = 4\n"
+      "speed = 0.0\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
+}
+
+TEST_CASE("AnimationData::FromToml - no clips throws") {
+  constexpr std::string_view kToml =
+      "texture = \"assets/images/player.png\"\n"
+      "width = 32\n"
+      "height = 64\n"
+      "\n"
+      "[draw_offset]\n"
+      "x = 0.0\n"
+      "y = 0.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
 }
@@ -165,7 +255,12 @@ TEST_CASE("AnimationData::FromToml - reserved keys are not treated as clips") {
       "\n"
       "[draw_offset]\n"
       "x = 0.0\n"
-      "y = 0.0\n";
+      "y = 0.0\n"
+      "\n"
+      "[idle]\n"
+      "row = 0\n"
+      "count = 4\n"
+      "speed = 8.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto data = AnimationData::FromToml(reader);
   REQUIRE_FALSE(data.clips.contains(U"texture"));

@@ -25,6 +25,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "FrameData.hpp"
 #include "System/AttachmentSystem.hpp"
+#include "System/HierarchySystem.hpp"
 #include "System/HitSystem.hpp"
 #include "System/MotionSystem.hpp"
 #include "System/PlayerMotionSystem.hpp"
@@ -34,6 +35,8 @@ namespace {
 /// @brief テスト用の registry.ctx() セットアップ（PlayerConfig +
 /// AnimationDataRegistry）
 void SetupContext(entt::registry& registry) {
+  // 本番（InitializeRegistry）と同じく Hierarchy の破棄シグナルを登録する
+  HierarchySystem::Connect(registry);
   registry.ctx().emplace<PlayerConfig>(PlayerConfig{
       .speed = 100.0,
       .jumpSpeed = 300.0,
@@ -181,6 +184,7 @@ entt::entity MakePlayer(entt::registry& registry) {
   );
   registry.emplace<PlayerMotion::Variant>(player, PlayerMotion::Neutral{});
   registry.emplace<Stamina>(player, Stamina{.max = 100, .current = 100});
+  registry.emplace<LockOn>(player);
   return player;
 }
 
@@ -364,7 +368,7 @@ TEST_CASE("PlayerMotionSystem - ranged attack aims at the lock target") {
           .radius = 10.0,
       }
   );
-  registry.emplace<LockOn>(player, LockOn{.target = target});
+  registry.get<LockOn>(player).target = target;
 
   FrameData frameData{};
   frameData.input.rangedAttackDown = true;
@@ -397,7 +401,7 @@ TEST_CASE("PlayerMotionSystem - ranged attack turns to face the lock target") {
           .radius = 10.0,
       }
   );
-  registry.emplace<LockOn>(player, LockOn{.target = target});
+  registry.get<LockOn>(player).target = target;
 
   FrameData frameData{};
   frameData.input.rangedAttackDown = true;
@@ -444,9 +448,9 @@ TEST_CASE("PlayerMotionSystem - melee hitbox does not hit its owner") {
   REQUIRE(HitSystem::Update(registry).isEmpty());
   REQUIRE(registry.get<Hp>(player).current == 100);
 
-  // Team を外すと当たる。上のヒットなしが位置のすれ違いではなく
+  // 別陣営にすると当たる。上のヒットなしが位置のすれ違いではなく
   // 同陣営スキップによるものだと示す
-  registry.remove<Team>(hitbox);
+  registry.replace<Team>(hitbox, Team::Enemy);
   REQUIRE(HitSystem::Update(registry).size() == 1);
   REQUIRE(registry.get<Hp>(player).current < 100);
 }

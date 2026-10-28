@@ -35,17 +35,18 @@ class TomlTable {
   }
 
   /// @brief 省略可能キーを読む
-  /// @return 欠落時や型違いのとき defaultValue
+  /// @return キーが欠落しているとき defaultValue
+  /// @throw Error キーがあり、型が違うとき
   template <class T>
   [[nodiscard]] T getOr(StringView key, T defaultValue) const {
-    return TomlMember(m_table, key).getOr<T>(std::move(defaultValue));
-  }
-
-  /// @brief 省略可能キーを読む
-  /// @return 欠落時や型違いのとき none
-  template <class T>
-  [[nodiscard]] Optional<T> getOpt(StringView key) const {
-    return TomlMember(m_table, key).getOpt<T>();
+    const auto member = TomlMember(m_table, key);
+    if (member.isEmpty()) {
+      return defaultValue;
+    }
+    if (auto value = member.getOpt<T>()) {
+      return *std::move(value);
+    }
+    throw Error{U"TOML の省略可能キーの型が違う"};
   }
 
  private:

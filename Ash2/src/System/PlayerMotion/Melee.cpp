@@ -54,13 +54,13 @@ std::function<Vec3(double)> MakeMeleeOffsetFn(
         return MeleeSlashOffset(progress, facingRight, melee, swing);
       };
     case MeleeTrajectory::Thrust:
-    default:
       return [=, &melee](double progress) {
         return MeleeThrustOffset(
             progress, facingRight, melee.reach, melee.capMidH
         );
       };
   }
+  throw Error{U"近接の軌道が未知の列挙値"};
 }
 
 /// @brief クリップ名が同じでも再生位置を先頭へ強制的に戻す
@@ -101,9 +101,6 @@ void UpdateMeleeHitbox(
 double MeleeLightSpread(
     double progress, const MeleeFinisherConfig& finisher, int32 index
 ) {
-  if (finisher.lightCount < 2) {
-    throw Error{U"締め段の光が2つ未満"};
-  }
   const double t = Clamp(progress, 0.0, 1.0);
   // 中心軌道と同じ EaseOutQuad で閉じると序盤で間隔が詰まりきってしまい、
   // 光が2つに見える時間がほとんど残らない。踏み込む間は開いたままにして、

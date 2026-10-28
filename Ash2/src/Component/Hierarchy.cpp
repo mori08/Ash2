@@ -35,20 +35,20 @@ void Hierarchy::Detach(entt::registry& registry, entt::entity child) {
 
   auto& childNode = registry.get<Hierarchy>(child);
 
-  if (childNode.m_parent != entt::null && registry.valid(childNode.m_parent)) {
+  // 破棄済みを指すリンクは残らないため、親・兄弟の有効性は確かめない
+  // - 破棄時は on_destroy から必ず Detach が呼ばれる
+  // - 子を持つエンティティは DestroyWithChildren で子から先に破棄する
+  if (childNode.m_parent != entt::null) {
     if (childNode.m_prevSibling != entt::null) {
-      if (registry.valid(childNode.m_prevSibling)) {
-        registry.get<Hierarchy>(childNode.m_prevSibling).m_nextSibling =
-            childNode.m_nextSibling;
-      }
+      registry.get<Hierarchy>(childNode.m_prevSibling).m_nextSibling =
+          childNode.m_nextSibling;
     } else {
       registry.get<Hierarchy>(childNode.m_parent).m_firstChild =
           childNode.m_nextSibling;
     }
   }
 
-  if (childNode.m_nextSibling != entt::null &&
-      registry.valid(childNode.m_nextSibling)) {
+  if (childNode.m_nextSibling != entt::null) {
     registry.get<Hierarchy>(childNode.m_nextSibling).m_prevSibling =
         childNode.m_prevSibling;
   }
@@ -63,7 +63,9 @@ void Hierarchy::Detach(entt::registry& registry, entt::entity child) {
 void Hierarchy::DestroyWithChildren(
     entt::registry& registry, entt::entity entity
 ) {
-  if (!registry.valid(entity)) return;
+  if (!registry.valid(entity)) {
+    throw Error{U"DestroyWithChildren に無効なエンティティが渡された"};
+  }
   if (registry.all_of<Hierarchy>(entity)) {
     auto child = registry.get<const Hierarchy>(entity).m_firstChild;
     while (child != entt::null) {

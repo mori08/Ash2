@@ -35,8 +35,6 @@ PhaseCommand StageClearPhase::update(
 }
 
 void StageClearPhase::onBeforePop(entt::registry& registry) {
-  if (m_text != entt::null) {
-    registry.destroy(m_text);
-    m_text = entt::null;
-  }
+  registry.destroy(m_text);
+  m_text = entt::null;
 }

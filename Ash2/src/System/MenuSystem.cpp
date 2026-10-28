@@ -109,7 +109,7 @@ entt::entity DestinationOf(const Button& button, NavDirection direction) {
     case NavDirection::Right:
       return button.right;
   }
-  return entt::null;
+  throw Error{U"NavDirection が未知の列挙値"};
 }
 
 }  // namespace

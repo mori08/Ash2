@@ -53,7 +53,7 @@ PhaseCommand TestMenuPhase::update(
     m_selectedIndex = (m_selectedIndex + 1) % m_items.size();
   }
 
-  if (KeyEnter.down() && !m_items.empty()) {
+  if (KeyEnter.down()) {
     auto phase = m_items[m_selectedIndex].create(registry);
     return PhaseCommand::Push{.nextPhase = std::move(phase)};
   }

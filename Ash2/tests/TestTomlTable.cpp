@@ -37,11 +37,10 @@ TEST_CASE("TomlTable::getOr - returns the default when the key is missing") {
   REQUIRE(t.getOr<double>(U"speed", 7.0) == 150.0);
 }
 
-TEST_CASE("TomlTable::getOpt - returns none when the key is missing") {
+TEST_CASE("TomlTable::getOr - throws when the type differs") {
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const TomlTable t{reader};
-  REQUIRE_FALSE(t.getOpt<double>(U"missing").has_value());
-  REQUIRE(t.getOpt<double>(U"speed") == 150.0);
+  REQUIRE_THROWS_AS(t.getOr<double>(U"name", 7.0), Error);
 }
 
 #endif

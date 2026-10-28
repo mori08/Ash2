@@ -116,10 +116,8 @@ void StagePhase::onBeforePop(entt::registry& registry) {
   }
   m_gauges.clear();
 
-  if (m_playerRoot != entt::null) {
-    Hierarchy::DestroyWithChildren(registry, m_playerRoot);
-    m_playerRoot = entt::null;
-  }
+  Hierarchy::DestroyWithChildren(registry, m_playerRoot);
+  m_playerRoot = entt::null;
   for (const auto enemy : m_enemies) {
     if (registry.valid(enemy)) {
       // 敵に付いたレティクル（LockOn.target のアタッチ先）も連動して破棄する

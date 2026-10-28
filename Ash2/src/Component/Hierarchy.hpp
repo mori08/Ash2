@@ -31,6 +31,10 @@ class Hierarchy {
   static void Detach(entt::registry& registry, entt::entity child);
 
   /// @brief エンティティと全子孫を再帰的に破棄する
+  ///
+  /// 子を持つエンティティはこの関数で破棄する。
+  /// `registry.destroy` で直接破棄すると、子が破棄済みの親を指したまま残る。
+  /// @throw Error entity が無効なとき
   static void DestroyWithChildren(
       entt::registry& registry, entt::entity entity
   );

@@ -27,5 +27,5 @@ inline void ApplyWindowPreset(WindowPreset preset) {
       return;
     }
   }
-  std::unreachable();
+  throw Error{U"WindowPreset が未知の列挙値"};
 }

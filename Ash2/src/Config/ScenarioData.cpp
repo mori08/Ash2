@@ -59,6 +59,9 @@ ScenarioData ScenarioData::FromToml(
   Array<SectionRef> refs;
 
   for (const auto& member : toml.tableView()) {
+    if (!member.value.isTableArray()) {
+      throw Error{U"シナリオのセクションがテーブルの配列でない"};
+    }
     Array<ScenarioStep> steps;
     for (const auto& step : member.value.tableArrayView()) {
       auto parsed = ParseStep(step, loaders);

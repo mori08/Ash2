@@ -15,13 +15,6 @@ struct Segment {
   Vec3 end;
 };
 
-/// @brief 双方が Team を持ち、値が等しいか
-///
-/// 片方でも Team を持たない場合は false（陣営の判定に参加しない）
-[[nodiscard]] bool IsSameTeam(const Team* a, const Team* b) {
-  return a != nullptr && b != nullptr && *a == *b;
-}
-
 /// @brief 2線分間の最近接距離の二乗を返す
 [[nodiscard]] double SegmentDistSq(Segment segA, Segment segB) {
   // 線分の長さの二乗がこの値以下のとき点とみなす
@@ -75,24 +68,14 @@ Array<HitEvent> HitSystem::Update(entt::registry& registry) {
       registry.view<WorldPos, Collider, Hp>(entt::exclude<Invincible>);
 
   for (auto&& [attacker, aPos, aCol, atk] : attackers.each()) {
-    // root が設定されている場合はルートの Attack を参照してヒット管理する
-    const auto rootEntity = (atk.root != entt::null) ? atk.root : attacker;
-    // root は破棄済み・Attack 非保持の可能性があるため参照前に検証する
-    // （attacker 自身が root の場合は attackers
-    // ビューの走査対象なので必ず有効） valid
-    // を先に評価する短絡順序を維持し、破棄済みエンティティへの all_of/get
-    // 呼び出し（未定義動作）を避ける
-    if (!registry.valid(rootEntity) || !registry.all_of<Attack>(rootEntity))
-      continue;
-    auto& rootAtk = registry.get<Attack>(rootEntity);
-    const auto* attackerTeam = registry.try_get<Team>(attacker);
+    const auto& attackerTeam = registry.get<Team>(attacker);
 
     // 攻撃側本体（ヒットボックスの Hierarchy 親）を解決する。ヒットストップ
     // 付与と被弾側リアクションの位置判定の両方で使うため、HitEvent
     // に写しを持たせてヒット成立時点で確定させる（被弾処理の途中で攻撃側の
     // Attack が外れても、後続の反復で引き直さずに済む）
-    entt::entity attackerOwner = rootEntity;
-    if (const auto* hierarchy = registry.try_get<Hierarchy>(rootEntity);
+    entt::entity attackerOwner = attacker;
+    if (const auto* hierarchy = registry.try_get<Hierarchy>(attacker);
         hierarchy != nullptr && hierarchy->parent() != entt::null) {
       attackerOwner = hierarchy->parent();
     }
@@ -103,9 +86,8 @@ Array<HitEvent> HitSystem::Update(entt::registry& registry) {
 
     for (auto&& [target, tPos, tCol, hp] : targets.each()) {
       if (attacker == target) continue;
-      if (rootEntity == target) continue;
-      if (IsSameTeam(attackerTeam, registry.try_get<Team>(target))) continue;
-      if (rootAtk.hitTargets.contains(target)) continue;
+      if (attackerTeam == registry.get<Team>(target)) continue;
+      if (atk.hitTargets.contains(target)) continue;
 
       const Vec3 worldT{tPos.w, tPos.h, tPos.d};
       const Vec3 tp1 = worldT + tCol.segmentStart;
@@ -118,14 +100,14 @@ Array<HitEvent> HitSystem::Update(entt::registry& registry) {
           ) >= sumR * sumR)
         continue;
 
-      rootAtk.hitTargets.emplace(target);
-      hp.current = Max(0, hp.current - rootAtk.damage);
+      atk.hitTargets.emplace(target);
+      hp.current = Max(0, hp.current - atk.damage);
       hits.push_back(
           HitEvent{
               .target = target,
               .attackerOwner = attackerOwner,
-              .hitstopSec = rootAtk.hitstopSec,
-              .reaction = rootAtk.reaction,
+              .hitstopSec = atk.hitstopSec,
+              .reaction = atk.reaction,
           }
       );
     }

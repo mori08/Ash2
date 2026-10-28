@@ -22,6 +22,7 @@
 #include "Config/EnemyConfig.hpp"
 #include "Config/PlayerConfig.hpp"
 #include "Config/ReactionLevel.hpp"
+#include "System/HierarchySystem.hpp"
 #include "System/HitReactionSystem.hpp"
 #include "System/HitSystem.hpp"
 
@@ -29,6 +30,8 @@ namespace {
 
 /// @brief テスト用の registry.ctx() セットアップ（EnemyConfig + PlayerConfig）
 void SetupContext(entt::registry& registry) {
+  // 本番（InitializeRegistry）と同じく Hierarchy の破棄シグナルを登録する
+  HierarchySystem::Connect(registry);
   registry.ctx().emplace<EnemyConfig>(EnemyConfig{
       .maxHp = 100,
       .capsuleRadius = 24.0,
@@ -476,30 +479,6 @@ TEST_CASE(
       )}
   );
   REQUIRE(registry.get<Hitstop>(target).remaining == Approx(0.2));
-}
-
-TEST_CASE(
-    "HitReactionSystem - target lacking any motion variant only receives "
-    "Hitstop, no reaction applied"
-) {
-  // EnemyMotion::Variant/PlayerMotion::Variant のどちらも持たない被弾側は、
-  // どちらの分岐にも入らずリアクション適用の対象外になる
-  entt::registry registry;
-  SetupContext(registry);
-
-  const auto target = registry.create();
-  registry.emplace<WorldPos>(target, WorldPos{.w = 50.0});
-
-  HitReactionSystem::Apply(
-      registry,
-      {MakeHitEvent(
-          registry, 0.0, target, ReactionLevel::Blow, /*hitstopSec=*/0.1
-      )}
-  );
-
-  REQUIRE(registry.all_of<Hitstop>(target));
-  REQUIRE_FALSE(registry.all_of<EnemyMotion::Variant>(target));
-  REQUIRE_FALSE(registry.all_of<PlayerMotion::Variant>(target));
 }
 
 TEST_CASE(

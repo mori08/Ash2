@@ -41,11 +41,7 @@ void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
       m_entity, TextureDrawable{.anchor = DrawAnchor::BottomCenter}
   );
   registry.emplace<SpriteAnimation>(
-      m_entity,
-      SpriteAnimation{
-          .dataKey = m_dataKey,
-          .currentClip = m_clips.empty() ? U"" : m_clips[0]
-      }
+      m_entity, SpriteAnimation{.dataKey = m_dataKey, .currentClip = m_clips[0]}
   );
   AnimationSystem::Update(registry, 0.0);
 }
@@ -57,38 +53,27 @@ PhaseCommand AnimationViewerPhase::update(
     return PhaseCommand::Pop{};
   }
 
-  if (!m_clips.empty()) {
-    bool changed = false;
-    if (KeyLeft.down()) {
-      m_clipIndex = (m_clipIndex - 1 + m_clips.size()) % m_clips.size();
-      changed = true;
-    }
-    if (KeyRight.down()) {
-      m_clipIndex = (m_clipIndex + 1) % m_clips.size();
-      changed = true;
-    }
+  // クリップが1件以上あることは AnimationData::FromToml が保証する
+  bool changed = false;
+  if (KeyLeft.down()) {
+    m_clipIndex = (m_clipIndex - 1 + m_clips.size()) % m_clips.size();
+    changed = true;
+  }
+  if (KeyRight.down()) {
+    m_clipIndex = (m_clipIndex + 1) % m_clips.size();
+    changed = true;
+  }
 
-    if (changed && m_entity != entt::null) {
-      auto* anim = registry.try_get<SpriteAnimation>(m_entity);
-      if (anim) {
-        anim->currentClip = m_clips[m_clipIndex];
-        anim->elapsed = 0.0;
-      }
-    }
-
-    if (KeyF.down() && m_entity != entt::null) {
-      auto* anim = registry.try_get<SpriteAnimation>(m_entity);
-      if (anim) {
-        anim->facingRight = !anim->facingRight;
-      }
-    }
-
-    if (KeyR.down() && m_entity != entt::null) {
-      auto* anim = registry.try_get<SpriteAnimation>(m_entity);
-      if (anim) {
-        anim->elapsed = 0.0;
-      }
-    }
+  auto& anim = registry.get<SpriteAnimation>(m_entity);
+  if (changed) {
+    anim.currentClip = m_clips[m_clipIndex];
+    anim.elapsed = 0.0;
+  }
+  if (KeyF.down()) {
+    anim.facingRight = !anim.facingRight;
+  }
+  if (KeyR.down()) {
+    anim.elapsed = 0.0;
   }
 
   AnimationSystem::Update(registry, frameData.dt);
@@ -97,14 +82,12 @@ PhaseCommand AnimationViewerPhase::update(
 
   Scene::SetBackground(ColorF{kBgBrightness});
   font(U"AnimationViewer: {}"_fmt(m_dataKey)).draw(kTitleX, kTitleY);
-  if (!m_clips.empty()) {
-    font(
-        U"Clip [{}/{}]: {}"_fmt(
-            m_clipIndex + 1, m_clips.size(), m_clips[m_clipIndex]
-        )
-    )
-        .draw(kTitleX, kClipInfoY);
-  }
+  font(
+      U"Clip [{}/{}]: {}"_fmt(
+          m_clipIndex + 1, m_clips.size(), m_clips[m_clipIndex]
+      )
+  )
+      .draw(kTitleX, kClipInfoY);
   font(U"← → : clip  F : flip  R : replay  Esc : back")
       .draw(kTitleX, kHintY, Palette::Gray);
 
@@ -112,9 +95,6 @@ PhaseCommand AnimationViewerPhase::update(
 }
 
 void AnimationViewerPhase::onBeforePop(entt::registry& registry) {
-  if (m_entity == entt::null) {
-    return;
-  }
   Hierarchy::DestroyWithChildren(registry, m_entity);
   m_entity = entt::null;
 }

@@ -24,18 +24,21 @@ constexpr ColorF kBulletColor = {0.9, 0.9, 0.3};
 
 /// @brief owner の LockOn.target へ向かう単位ベクトルを返す
 /// @return ロック対象がなければ none
+/// @throw Error ロック対象が破棄済みのとき
 [[nodiscard]] Optional<Vec3> AimDirection(
     const entt::registry& registry, entt::entity owner, const WorldPos& spawnPos
 ) {
-  const auto* lockOn = registry.try_get<LockOn>(owner);
-  if (lockOn == nullptr || lockOn->target == entt::null ||
-      !registry.valid(lockOn->target)) {
+  const auto& lockOn = registry.get<LockOn>(owner);
+  if (lockOn.target == entt::null) {
     return none;
+  }
+  if (!registry.valid(lockOn.target)) {
+    throw Error{U"LockOn の対象が破棄されている"};
   }
 
   const auto aim = LockOnSystem::AimPoint(
-      registry.get<WorldPos>(lockOn->target),
-      registry.get<Collider>(lockOn->target)
+      registry.get<WorldPos>(lockOn.target),
+      registry.get<Collider>(lockOn.target)
   );
   const Vec3 toAim{aim.w - spawnPos.w, aim.h - spawnPos.h, aim.d - spawnPos.d};
   if (toAim.isZero()) return none;
