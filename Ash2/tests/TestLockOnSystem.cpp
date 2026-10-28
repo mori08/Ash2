@@ -12,6 +12,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "FrameData.hpp"
 #include "Screen.hpp"
+#include "System/HierarchySystem.hpp"
 #include "System/LockOnSystem.hpp"
 
 namespace {
@@ -39,6 +40,8 @@ const Collider kPointCollider{
 
 /// @brief テスト用の registry.ctx() セットアップ（PlayerConfig::lock のみ）
 void SetupContext(entt::registry& registry) {
+  // 本番（InitializeRegistry）と同じく Hierarchy の破棄シグナルを登録する
+  HierarchySystem::Connect(registry);
   registry.ctx().emplace<PlayerConfig>(PlayerConfig{.lock = kLockConfig});
 }
 

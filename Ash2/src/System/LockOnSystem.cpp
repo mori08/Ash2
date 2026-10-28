@@ -26,9 +26,8 @@ constexpr double kReticleDrawOrderEpsilon = 0.01;
     const entt::registry& registry, entt::entity e
 ) {
   if (e == entt::null || !registry.valid(e)) return false;
-  const auto* motion = registry.try_get<EnemyMotion::Variant>(e);
-  if (motion == nullptr) return false;
-  return !std::holds_alternative<EnemyMotion::Defeated>(*motion);
+  const auto& motion = registry.get<EnemyMotion::Variant>(e);
+  return !std::holds_alternative<EnemyMotion::Defeated>(motion);
 }
 
 /// @brief マウス規則でロック対象を決める

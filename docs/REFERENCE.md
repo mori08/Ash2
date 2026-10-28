@@ -31,12 +31,12 @@
 | [`Projectile`](../Ash2/src/Component/Projectile.hpp) | 飛翔体（弾）コンポーネント（発射位置 `origin`・最大射程 `maxRange`、既定は無制限）。`WorldPos`+`Velocity`+`Collider`+`Attack` と組み合わせ、`MovementSystem` が移動を、`ProjectileSystem` が消滅（着弾・画面外・最大射程超）を管理する対象を識別する |
 | [`LockOn`](../Ash2/src/Component/LockOn.hpp) | 遠距離照準のロック状態（プレイヤーへ付与）。確定/半ロック対象 `target`/`halfTarget`、追従レティクル `targetReticle`/`halfReticle`、スティック傾きのヒステリシス用 `stickTilted` を持つ |
 | [`Collider`](../Ash2/src/Component/Collider.hpp) | カプセル形状の当たり判定（形状のみ、役割はコンポーネントの組み合わせで表現） |
-| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、複数コライダー構成では `root` が代表エンティティを指す（本番コードでは未設定）。`reaction`（`ReactionLevel`、下記「設定（Config）」参照）の割り当て元と遷移先は下記「リアクションの対応」参照 |
+| [`Attack`](../Ash2/src/Component/Attack.hpp) | 攻撃中タグ兼攻撃力（`Collider` と組み合わせて攻撃判定が有効になる）。ヒット済みターゲット集合 `hitTargets` で重複ヒットを防ぎ、`reaction`（`ReactionLevel`、下記「設定（Config）」参照）の割り当て元と遷移先は下記「リアクションの対応」参照 |
 | [`AttackOrb`](../Ash2/src/Component/AttackOrb.hpp) | プレイヤーの攻撃判定・見た目用の珠エンティティ（`Hierarchy` で所有者の子）であることを示すタグ。`PlayerMotion::ReleaseAttackOrbs` が所有者の子から一括解放する対象の識別に使う。役割は必ず `AttackHitboxOrb`/`AttackLightOrb` のいずれかと組み合わせて表す |
 | [`AttackHitboxOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち攻撃判定を担う珠であることを示すタグ。`PlayerMotion::UpdateAttackHitbox` が生成済みかどうかの判定・解放対象の特定に子走査で使う |
 | [`AttackLightOrb`](../Ash2/src/Component/AttackOrb.hpp) | `AttackOrb` のうち見た目だけを担う光の珠であることを示すタグ。扇の並び順 `index`（0始まり）を持ち、`PlayerMotion::UpdateAttackLights` が `offsetFn` へ渡す（`Hierarchy::Attach` は先頭挿入のため子の走査順は生成順の逆になり、並び順の判断には使えない） |
 | [`Hp`](../Ash2/src/Component/Hp.hpp) | HP（`Collider` と組み合わせて被弾判定の対象になる） |
-| [`Team`](../Ash2/src/Component/Team.hpp) | エンティティの陣営を表す `enum class`（`Player`/`Enemy` の2値）。攻撃判定・被弾判定を持つエンティティに付与し、`HitSystem` が同じ値どうしのヒットを捨てる（自己ヒット・同士討ちの防止）。片方でも持たなければ判定に参加せず従来どおり当たる |
+| [`Team`](../Ash2/src/Component/Team.hpp) | エンティティの陣営を表す `enum class`（`Player`/`Enemy` の2値）。攻撃判定・被弾判定を持つエンティティに付与し、`HitSystem` が同じ値どうしのヒットを捨てる（自己ヒット・同士討ちの防止）。攻撃側・被弾側のどちらかが持たなければ `throw Error` |
 | [`Stamina`](../Ash2/src/Component/Stamina.hpp) | スタミナ（max / current の int32 フィールド、StaminaSystem が管理する回復端数累積 accum と回復ディレイ計測用 recoveryTimer を持つ） |
 | [`PlayerMotion::Variant`](../Ash2/src/Component/PlayerMotion.hpp) | プレイヤーの排他的な行動状態（`variant`）。状態ごとの詳細は下記「モーション状態型」参照 |
 | [`EnemyMotion::Variant`](../Ash2/src/Component/EnemyMotion.hpp) | 敵の排他的な行動状態（`variant`）。状態ごとの詳細は下記「モーション状態型」参照 |
@@ -75,7 +75,7 @@
 |---|---|
 | `Hierarchy::Attach` | 子を親の先頭に O(1) で挿入する。すでに別の親を持つ場合は先に Detach し、`Hierarchy` 未所持なら自動追加したうえで `LocalOffset` を設定する |
 | `Hierarchy::Detach` | 子を親から O(1) で切り離し、`LocalOffset` を除去する。`on_destroy<Hierarchy>` に接続されているため破棄時に自動で呼ばれる |
-| `Hierarchy::DestroyWithChildren` | エンティティと全子孫を再帰的に破棄する。破棄済みエンティティを渡しても安全 |
+| `Hierarchy::DestroyWithChildren` | エンティティと全子孫を再帰的に破棄する。無効なエンティティを渡すと `throw Error` |
 
 ---
 
@@ -183,8 +183,8 @@
 | [`GaugeSystem::Update`](../Ash2/src/System/GaugeSystem.hpp) | 毎フレーム（フェーズ後） | `HpGauge`/`StaminaGauge` + `GaugeSource` + `Drawable` を持つエンティティの `RectDrawable` 幅を、`GaugeSource` が指す `Hp`/`Stamina` の `current / max`（0〜1 にクランプ）× `fullWidth` に更新する。`max <= 0` は幅 0。参照先が無効、または自身の `Drawable` が `RectDrawable` でない場合は `Error` を投げる |
 | [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | フェーズ内（メニューを持つ Phase が毎フレーム呼出） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`ScreenPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（子が `Button` を持たない、`defaultButton`・移動先が子でない）は `Error` を投げる。見た目は扱わない |
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋BattleSystem 内（BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。BattleSystem では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
-| [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が `Team` を持ち値が等しいヒットはスキップする（片方でも持たなければ従来どおり当たる）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
-| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
+| [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が持つ `Team` の値が等しいヒットはスキップする（`Team` がなければ `throw Error`）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
+| [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。被弾側がどちらのモーションも持たなければ `throw Error`。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
 | [`ProjectileSystem::Update`](../Ash2/src/System/ProjectileSystem.hpp) | BattleSystem 内（HitReactionSystem の後） | Projectile の着弾（hitTargets 非空）/ 画面外 / 最大射程超（`origin` からの3軸距離が `maxRange` を超えた）での破棄 |
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | BattleSystem 内（ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外で `Hierarchy::DestroyWithChildren` によりまとめて破棄する（`LockOn` のレティクルが子として付いていても連動して消える） |
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | BattleSystem 内（EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
@@ -299,7 +299,7 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 | `MakeDash` | `Dash` を生成（スタミナ消費、`air` フラグ設定） | `Transition.hpp` / `Dash.cpp` |
 | `MakeDashAttack` | `DashAttack` を生成（スタミナ消費、`air`・`dashDir` を引き継ぐ） | `Transition.hpp` / `DashAttack.cpp` |
 | `MakeAirAttack` | `AirAttack` を生成（スタミナ消費） | `Transition.hpp` / `AirAttack.cpp` |
-| `SpawnProjectile` | 遠距離攻撃の弾エンティティを生成する（`WorldPos`+`Velocity`+`Collider`+`Attack`+`Drawable`+`Projectile`+`Team::Player`）。`owner` が `LockOn` を持ち `target` が有効なら狙点（`LockOnSystem::AimPoint`）へ向かう方向で撃ち `anim.facingRight` をその w 成分の符号で書き換える。ロックがなければ従来どおり `anim.facingRight` の正面へ撃つ。`Projectile.origin`/`maxRange` は発射位置・`RangedConfig::reach` から設定する | `Transition.hpp` / `Ranged.cpp` |
+| `SpawnProjectile` | 遠距離攻撃の弾エンティティを生成する（`WorldPos`+`Velocity`+`Collider`+`Attack`+`Drawable`+`Projectile`+`Team::Player`）。`owner` は `LockOn` を持つ前提で（なければ `throw Error`）、`target` が null でなければ狙点（`LockOnSystem::AimPoint`）へ向かう方向で撃ち（`target` が破棄済みなら `throw Error`）`anim.facingRight` をその w 成分の符号で書き換える。`target` が null なら従来どおり `anim.facingRight` の正面へ撃つ。`Projectile.origin`/`maxRange` は発射位置・`RangedConfig::reach` から設定する | `Transition.hpp` / `Ranged.cpp` |
 | `MakeDamaged` | 被弾による強制遷移を生成する。`ReleaseAttackOrbs` で上書き前の攻撃判定・光エンティティを後始末し、`Velocity` リセットと `Invincible` 除去のうえで `reaction`・接地状態に応じ `Stagger`/`Knockback` を返す | `Transition.hpp` / `Damaged.cpp` |
 
 ---
@@ -378,7 +378,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 呼び出し元は `GameSetup` が `GetPhaseLoaders()` を渡して配線する。
 `FromToml` は全セクションを登録し終えた後、集めた `referencedSection` が実在するセクションを
 指すかまとめて検証する（前方参照を許すため、セクションごとのループの外で行う）。不在なら
-`throw Error` し、`ScenarioPhase::update` がゲームループ内で `at()` の例外を投げることはない。
+`throw Error` するため、`ScenarioPhase::update` の `at()` は常に成功する。
 
 ---
 
@@ -390,7 +390,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 `throw Error` で表す。
 
 [`TomlTable`](../Ash2/src/Config/TomlTable.hpp) は1テーブル分のキー読み出しで、
-`get<T>`（必須。欠落・型違いで throw）・`getOr<T>`（既定値）・`getOpt<T>`（`Optional`）を持つ。
+`get<T>`（必須。欠落・型違いで throw）・`getOr<T>`（省略可能。欠落時のみ既定値を返し、型違いは throw）を持つ。
 Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。各 Config の `FromToml`・`EnemyFactory::Param::FromToml`・`PhaseLoader` が使う。
 同ヘッダの自由関数 `TomlMember(table, key)` は `TOMLValue` のキー参照を例外なしで行い、
 欠落時は空の値を返す。`operator[]` の代わりに使う。
@@ -570,6 +570,10 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
   `TextureAsset::IsRegistered`（未登録の検出）と `TextureAsset::Load`（実体読み込みの確定）で
   検証する。タイプミスや `asset_list` の漏れを起動時に検出するため、`AnimationSystem::Update`
   側では毎フレームの確認をしない
+- `AnimationData::FromToml` は `width`・`height` が正、各クリップの `row` が 0 以上、`count`・`speed` が正、
+  クリップが1件以上であることを読み込み時に検証する。`AnimationSystem::Update` は実行中に変わる
+  `dataKey`・`currentClip` の存在と、`Drawable` が `TextureDrawable` であることだけを毎フレーム確かめ、
+  満たさなければ `throw Error` する
 
 ---
 
@@ -662,7 +666,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件（着弾・最大射程超・射程内での存続） |
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
-| `TestTomlTable.cpp` | `TomlTable`（`get` / `getOr` / `getOpt`） |
+| `TestTomlTable.cpp` | `TomlTable`（`get` / `getOr`） |
 | `TestEnemyConfig.cpp` | `EnemyConfig::FromToml` |
 | `TestArenaConfig.cpp` | `ArenaConfig::FromToml` |
 | `TestTitleConfig.cpp` | `TitleConfig::FromToml` |
@@ -694,5 +698,5 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 - 新フェーズを追加し TOML から `push`/`reset` できるようにするときは、`Phase/PhaseLoaders.cpp` の `GetPhaseLoaders()` にもエントリを追加する。
 - 新しいアニメーションクリップを参照するときは `Ash2/App/assets/config/animation/*.toml` 側にも追加する（欠落は `AnimationSystem` が `Error` を投げて落ちる）。
 - アニメーションクリップは既定で一発再生（最終コマで停止）。ループさせたいクリップにのみ `loop = true` を明記する。
-- 攻撃判定・被弾判定を持つエンティティ（本体・ヒットボックス・弾）には `Team` を付与する。持たない側は `HitSystem` の同陣営スキップに参加せず、静かに当たる（エラーでは捕まえない仕様）。新しい攻撃エンティティの生成時は `Team` を付与する。
+- 攻撃判定・被弾判定を持つエンティティ（本体・ヒットボックス・弾）には `Team` を付与する。持たないと `HitSystem` が `throw Error` する。新しい攻撃エンティティの生成時は `Team` を付与する。
 - 戦闘に参加する新しいシステムは `BattleSystem::Update` に並べる。フェーズの `update` に直接並べない（呼び出し順の制約は上記「呼び出し順の制約」参照）。

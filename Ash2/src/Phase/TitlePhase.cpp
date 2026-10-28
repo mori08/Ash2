@@ -25,8 +25,6 @@ PhaseCommand TitlePhase::update(
 }
 
 void TitlePhase::onBeforePop(entt::registry& registry) {
-  if (m_logo != entt::null) {
-    registry.destroy(m_logo);
-    m_logo = entt::null;
-  }
+  registry.destroy(m_logo);
+  m_logo = entt::null;
 }

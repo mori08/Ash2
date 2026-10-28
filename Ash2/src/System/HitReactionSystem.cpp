@@ -162,6 +162,8 @@ void HitReactionSystem::Apply(
       ApplyEnemyReaction(registry, hit);
     } else if (registry.all_of<PlayerMotion::Variant>(hit.target)) {
       ApplyPlayerReaction(registry, hit);
+    } else {
+      throw Error{U"被弾側がモーションを持たない"};
     }
   }
 }

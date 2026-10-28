@@ -10,7 +10,7 @@ PhaseStack::PhaseStack(
 
 void PhaseStack::update(entt::registry& registry, const FrameData& frameData) {
   if (m_stack.empty()) {
-    return;
+    throw Error{U"フェーズスタックが空のまま更新された"};
   }
 
   auto command = m_stack.back()->update(registry, frameData);

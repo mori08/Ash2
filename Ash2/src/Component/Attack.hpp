@@ -13,9 +13,6 @@ struct Attack {
   /// 与えるダメージ量
   int32 damage = 0;
 
-  /// 複数コライダー構成時のルートエンティティ（単体の場合は entt::null）
-  entt::entity root = entt::null;
-
   /// 攻撃の生存期間中にヒット済みのターゲット（重複ヒット防止用）
   HashSet<entt::entity> hitTargets;
 

@@ -63,14 +63,12 @@ namespace {
 /// @brief TOML から近接攻撃の設定値を生成する
 [[nodiscard]] MeleeConfig ParseMelee(const TOMLValue& m) {
   Array<MeleeSwingConfig> chain;
-  // Why not: TomlMember(m, U"chain") がテーブル配列として存在しない場合に
-  // tableArrayView() を呼ぶと不正アクセスになるため、
-  // 事前に isTableArray() で存在確認する。
-  if (const auto& chainValue = TomlMember(m, U"chain");
-      chainValue.isTableArray()) {
-    for (const auto& chainToml : chainValue.tableArrayView()) {
-      chain.push_back(ParseMeleeSwing(chainToml));
-    }
+  const auto chainValue = TomlMember(m, U"chain");
+  if (!chainValue.isTableArray()) {
+    throw Error{U"melee.chain がテーブルの配列でない"};
+  }
+  for (const auto& chainToml : chainValue.tableArrayView()) {
+    chain.push_back(ParseMeleeSwing(chainToml));
   }
   // chain が空だと Tick(MeleeChain&, ...) の chain[state.stage] アクセスが
   // 不正になるため許容しない

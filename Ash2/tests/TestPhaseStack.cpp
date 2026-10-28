@@ -77,9 +77,6 @@ TEST_CASE("PhaseStack - Pop command calls onBeforePop and removes phase") {
   REQUIRE(spy->beforePopCount == 0);
   stack.update(registry, FrameData{});
   REQUIRE(spy->beforePopCount == 1);
-
-  stack.update(registry, FrameData{});
-  REQUIRE(spy->updateCount == 1);
 }
 
 TEST_CASE("PhaseStack - Push command calls onAfterPush on new phase") {
@@ -114,20 +111,6 @@ TEST_CASE("PhaseStack - Reset command pops all phases then pushes new phase") {
   stack.update(registry, FrameData{});
   REQUIRE(spy1->beforePopCount == 1);
   REQUIRE(spy2->afterPushCount == 1);
-}
-
-TEST_CASE("PhaseStack - update on empty stack does nothing") {
-  entt::registry registry;
-  auto spy = std::make_shared<PhaseSpy>();
-  PhaseStack stack{
-      std::make_unique<MockPhase>(spy, MockCommand::Pop), registry
-  };
-
-  stack.update(registry, FrameData{});
-  REQUIRE(spy->updateCount == 1);
-
-  stack.update(registry, FrameData{});
-  REQUIRE(spy->updateCount == 1);
 }
 
 #endif

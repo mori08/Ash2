@@ -170,6 +170,16 @@ TEST_CASE("PlayerConfig::FromToml - missing melee.chain throws") {
   REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 
+TEST_CASE("PlayerConfig::FromToml - melee.chain not an array throws") {
+  std::string toml{kFullToml};
+  constexpr std::string_view kArray = "[[melee.chain]]\n";
+  const auto pos = toml.find(kArray);
+  REQUIRE(pos != std::string::npos);
+  toml.replace(pos, kArray.size(), "[melee.chain]\n");
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
+}
+
 TEST_CASE("PlayerConfig::FromToml - missing speed throws") {
   std::string toml{kFullToml};
   const auto pos = toml.find("speed = 150.0\n");

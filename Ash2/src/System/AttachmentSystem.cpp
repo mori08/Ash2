@@ -12,16 +12,12 @@ void Propagate(
     const auto& node = registry.get<const Hierarchy>(child);
     if (registry.all_of<WorldPos>(child)) {
       auto& pos = registry.get<WorldPos>(child);
-      if (registry.all_of<LocalOffset>(child)) {
-        const auto& off = registry.get<const LocalOffset>(child);
-        pos = {
-            .w = parentPos.w + off.w,
-            .h = parentPos.h + off.h,
-            .d = parentPos.d + off.d
-        };
-      } else {
-        pos = parentPos;
-      }
+      const auto& off = registry.get<const LocalOffset>(child);
+      pos = {
+          .w = parentPos.w + off.w,
+          .h = parentPos.h + off.h,
+          .d = parentPos.d + off.d
+      };
       Propagate(registry, pos, node.firstChild());
     }
     child = node.nextSibling();

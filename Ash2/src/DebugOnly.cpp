@@ -57,7 +57,10 @@ namespace DebugOnly {
 
 void RunTestsIfRequested() {
   size_t envLen = 0;
-  if (getenv_s(&envLen, nullptr, 0, "ASH2_RUN_TESTS") != 0 || envLen == 0) {
+  if (getenv_s(&envLen, nullptr, 0, "ASH2_RUN_TESTS") != 0) {
+    throw Error{U"環境変数 ASH2_RUN_TESTS を読めない"};
+  }
+  if (envLen == 0) {
     return;
   }
   AppDebug::testMode = true;

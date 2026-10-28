@@ -10,38 +10,36 @@ void AnimationSystem::Update(entt::registry& registry, double dt) {
 
   auto view = registry.view<SpriteAnimation, Drawable>(entt::exclude<Hitstop>);
   for (auto [entity, anim, drawable] : view.each()) {
-    if (!dataRegistry.contains(anim.dataKey)) {
+    // dataKey・currentClip は実行中に変わるため、毎フレーム引いて確かめる
+    const auto dataIt = dataRegistry.find(anim.dataKey);
+    if (dataIt == dataRegistry.end()) {
       throw Error{U"AnimationDataRegistry にデータキーがない"};
     }
-    const auto& data = dataRegistry.at(anim.dataKey);
-    if (!data.clips.contains(anim.currentClip)) {
+    const auto& data = dataIt->second;
+    const auto clipIt = data.clips.find(anim.currentClip);
+    if (clipIt == data.clips.end()) {
       throw Error{U"アニメーションデータにクリップがない"};
     }
-    const auto& clip = data.clips.at(anim.currentClip);
+    const auto& clip = clipIt->second;
 
-    if (clip.count <= 0) {
-      throw Error{U"クリップのコマ数が正の値でない"};
+    auto* td = std::get_if<TextureDrawable>(&drawable);
+    if (td == nullptr) {
+      throw Error{U"SpriteAnimation の Drawable が TextureDrawable でない"};
     }
-    if (clip.speed <= 0.0) {
-      throw Error{U"クリップの速度が正の値でない"};
-    }
+
     anim.elapsed = clip.advance(anim.elapsed, dt);
     const int32 col = clip.columnAt(anim.elapsed);
     const Point cell{col, clip.row};
-    // data.textureKey の登録・読み込み済みは LoadAnimations（GameSetup.cpp）
-    // がロード時に保証する
-    if (!TextureAsset::IsRegistered(data.textureKey)) {
-      throw Error{U"TextureAsset にテクスチャのキーが登録されていない"};
-    }
+    // data.textureKey の登録・読み込み済みと、クリップの count・speed が
+    // 正であることは、ロード時（GameSetup.cpp・AnimationData::FromToml）が
+    // 保証する
     auto region = TextureAsset{data.textureKey}(cell * data.size, data.size);
 
     if (anim.facingRight) {
       region = region.mirrored();
     }
 
-    if (auto* td = std::get_if<TextureDrawable>(&drawable)) {
-      td->region = region;
-      td->drawOffset = data.drawOffset;
-    }
+    td->region = region;
+    td->drawOffset = data.drawOffset;
   }
 }

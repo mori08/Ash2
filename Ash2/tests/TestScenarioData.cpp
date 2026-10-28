@@ -52,6 +52,18 @@ TEST_CASE("ScenarioData::FromToml - unknown phase name throws") {
   );
 }
 
+TEST_CASE("ScenarioData::FromToml - section not an array throws") {
+  constexpr std::string_view kToml =
+      "[intro]\n"
+      "action = \"push\"\n"
+      "phase = \"wait\"\n"
+      "duration = 1.0\n";
+  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  REQUIRE_THROWS_AS(
+      (void)ScenarioData::FromToml(reader, GetPhaseLoaders()), Error
+  );
+}
+
 TEST_CASE("ScenarioData::FromToml - unknown action throws") {
   constexpr std::string_view kToml =
       "[[intro]]\n"
