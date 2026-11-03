@@ -46,6 +46,29 @@ TEST_CASE("AttachmentSystem - grandchild is updated correctly") {
   REQUIRE(registry.get<const WorldPos>(grandchild).w == 12.0);
 }
 
+TEST_CASE("AttachmentSystem - every sibling follows the parent") {
+  entt::registry registry;
+
+  auto parent = registry.create();
+  registry.emplace<WorldPos>(parent, WorldPos{.w = 100.0});
+
+  auto child1 = registry.create();
+  auto child2 = registry.create();
+  auto child3 = registry.create();
+  registry.emplace<WorldPos>(child1);
+  registry.emplace<WorldPos>(child2);
+  registry.emplace<WorldPos>(child3);
+  Hierarchy::Attach(registry, parent, child1, LocalOffset{.w = 1.0});
+  Hierarchy::Attach(registry, parent, child2, LocalOffset{.w = 2.0});
+  Hierarchy::Attach(registry, parent, child3, LocalOffset{.w = 3.0});
+
+  AttachmentSystem::UpdateTransform(registry);
+
+  REQUIRE(registry.get<const WorldPos>(child1).w == 101.0);
+  REQUIRE(registry.get<const WorldPos>(child2).w == 102.0);
+  REQUIRE(registry.get<const WorldPos>(child3).w == 103.0);
+}
+
 TEST_CASE("AttachmentSystem - zero offset child is at parent position") {
   entt::registry registry;
 

@@ -17,7 +17,7 @@
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
 | [`Boundary`](../Ash2/src/Component/Boundary.hpp) | アリーナ境界でのクランプ対象であることを示すタグ（データなし）。`BoundarySystem` が `WorldPos`+`Collider` と組み合わせて絞り込みに使う。弾（`Projectile`）には付与しない |
 | [`LocalOffset`](../Ash2/src/Component/LocalOffset.hpp) | 親からの相対座標（w/h/d、Hierarchy 付きエンティティのみ）。`WorldPos` とは別の型で、`toScreen()`・`isOnGround()` は持たない |
-| [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作） |
+| [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作）。子は `Hierarchy::Children` が返す範囲（`ChildRange`）で辿る |
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画データの variant。詳細は下記「描画データ型」参照 |
 | [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`kDefaultDrawColor`）として扱われる |
 | [`ScreenPos`](../Ash2/src/Component/ScreenPos.hpp) | 画面固定の描画位置（px）と `layer`（前後関係、大きいほど手前）。`Drawable` と組み合わせ、`HudSystem` が画面座標へ直接描く対象であることを示す（`WorldPos` + `Drawable` は `DrawSystem` が描く） |
@@ -76,6 +76,7 @@
 | `Hierarchy::Attach` | 子を親の先頭に O(1) で挿入する。すでに別の親を持つ場合は先に Detach し、`Hierarchy` 未所持なら自動追加したうえで `LocalOffset` を設定する |
 | `Hierarchy::Detach` | 子を親から O(1) で切り離し、`LocalOffset` を除去する。`on_destroy<Hierarchy>` に接続されているため破棄時に自動で呼ばれる |
 | `Hierarchy::DestroyWithChildren` | エンティティと全子孫を再帰的に破棄する。無効なエンティティを渡すと `throw Error` |
+| `Hierarchy::Children` | 親の子を辿る範囲（`ChildRange`）を返す。親が `Hierarchy` を持たなければ空。`size()` は使えない。辿りながら今の子を Detach すると `operator++` が `throw Error`、破棄は禁止。辿りながら Detach・破棄するときは先に `Array` へ集める |
 
 ---
 
@@ -655,7 +656,8 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestDrawSystem.cpp` | `DrawOrderLess` |
 | `TestMovementSystem.cpp` | `MovementSystem` |
 | `TestBoundarySystem.cpp` | `BoundarySystem` の境界クランプ |
-| `TestAttachmentSystem.cpp` | `AttachmentSystem` の座標伝播、`Hierarchy` の連結リスト操作 |
+| `TestAttachmentSystem.cpp` | `AttachmentSystem` の座標伝播（子・孫・複数の兄弟） |
+| `TestHierarchy.cpp` | `Hierarchy` の連結リスト操作（Attach/Detach/DestroyWithChildren）と `Children` による子の範囲 |
 | `TestHitSystem.cpp` | `HitSystem` のカプセル交差・重複ヒット防止・root 解決・`Team` による同陣営スキップ |
 | `TestLockOnSystem.cpp` | `LockOnSystem` の `AimPoint`/`Project`/`Contains`/`SelectByDirection`、マウス規則・スティック規則によるロック対象更新とレティクル同期 |
 | `TestHitReactionSystem.cpp` | `HitReactionSystem` のリアクション適用・ヒットストップ付与 |
@@ -686,7 +688,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 
 ## 部品追加時の注意
 
-- `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren）経由で操作する。
+- `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren/Children）経由で操作する。
 - `Drawable` の型変更は `std::visit` を使い、`DrawOne`・`HudSystem`・`AnimationSystem` への影響を確認する。
 - 図形（`Drawable`）に `DrawColor` を付け忘れると白（`kDefaultDrawColor`）で描かれる。意図した色にしたい場合は忘れず付与すること。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。

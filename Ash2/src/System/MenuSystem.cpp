@@ -10,16 +10,8 @@ namespace {
 Array<entt::entity> ChildrenOf(
     const entt::registry& registry, entt::entity menuEntity
 ) {
-  Array<entt::entity> children;
-  const auto* hierarchy = registry.try_get<Hierarchy>(menuEntity);
-  if (hierarchy == nullptr) {
-    return children;
-  }
-  for (entt::entity child = hierarchy->firstChild(); child != entt::null;
-       child = registry.get<Hierarchy>(child).nextSibling()) {
-    children.push_back(child);
-  }
-  return children;
+  return Hierarchy::Children(registry, menuEntity) |
+         std::ranges::to<Array<entt::entity>>();
 }
 
 /// @brief entity がメニューの子か
