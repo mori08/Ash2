@@ -6,66 +6,37 @@
 
 namespace {
 
-/// @brief メニューの子を列挙する
-Array<entt::entity> ChildrenOf(
-    const entt::registry& registry, entt::entity menuEntity
-) {
-  return Hierarchy::Children(registry, menuEntity) |
-         std::ranges::to<Array<entt::entity>>();
-}
-
-/// @brief entity がメニューの子か
-bool IsChildOf(const Array<entt::entity>& children, entt::entity entity) {
-  return children.contains(entity);
-}
-
-/// @brief メニューの構造が契約を満たすか
-// 全ボタンを設定し終えるまで検査できないため、Setup 側では行わない
-bool IsValidStructure(
-    const entt::registry& registry, entt::entity menuEntity,
-    const Array<entt::entity>& children
-) {
-  if (!registry.valid(menuEntity) || !registry.all_of<Menu>(menuEntity)) {
-    return false;
-  }
-  if (!IsChildOf(children, registry.get<Menu>(menuEntity).defaultButton)) {
-    return false;
-  }
-  for (const entt::entity child : children) {
-    if (!registry.all_of<Button, ScreenPos>(child)) {
-      return false;
-    }
-    const auto& button = registry.get<Button>(child);
-    for (const entt::entity target :
-         {button.up, button.down, button.left, button.right}) {
-      if (target != entt::null && !IsChildOf(children, target)) {
-        return false;
-      }
-    }
-  }
-  return true;
+/// @brief entity の親を返す
+/// @return Hierarchy を持たなければ entt::null
+entt::entity ParentOf(const entt::registry& registry, entt::entity entity) {
+  // 移動先の書き間違いで Hierarchy を持たないエンティティが入りうる
+  const auto* hierarchy = registry.try_get<Hierarchy>(entity);
+  return (hierarchy != nullptr) ? hierarchy->parent() : entt::null;
 }
 
 /// @brief 選択中の子を返す
 /// @return なければ entt::null
 entt::entity FindFocused(
-    const entt::registry& registry, const Array<entt::entity>& children
+    const entt::registry& registry, entt::entity menuEntity
 ) {
-  for (const entt::entity child : children) {
-    if (registry.all_of<Focused>(child)) {
-      return child;
-    }
-  }
-  return entt::null;
+  const auto children = Hierarchy::Children(registry, menuEntity);
+  const auto it = std::ranges::find_if(children, [&](entt::entity child) {
+    return registry.all_of<Focused>(child);
+  });
+  return (it != std::default_sentinel) ? *it : entt::null;
 }
 
 /// @brief 選択を target に移す。entt::null なら選択なしにする
+/// @throw Error target が null でなく、メニューの子でないとき
 void Focus(
-    entt::registry& registry, const Array<entt::entity>& children,
-    entt::entity target
+    entt::registry& registry, entt::entity menuEntity, entt::entity target
 ) {
+  // 全ボタンを設定し終えるまで検査できないため、使う瞬間に確かめる
+  if (target != entt::null && ParentOf(registry, target) != menuEntity) {
+    throw Error{U"選択の移動先がメニューの子でない"};
+  }
   // 1メニューに1つだけになるよう、先に全員から外す
-  for (const entt::entity child : children) {
+  for (const entt::entity child : Hierarchy::Children(registry, menuEntity)) {
     registry.remove<Focused>(child);
   }
   if (target != entt::null) {
@@ -75,11 +46,14 @@ void Focus(
 
 /// @brief pos の下にあるボタンを返す
 /// @return なければ entt::null
+/// @throw Error 子が Button と ScreenPos を持たないとき
 entt::entity HitTest(
-    const entt::registry& registry, const Array<entt::entity>& children,
-    Vec2 pos
+    const entt::registry& registry, entt::entity menuEntity, Vec2 pos
 ) {
-  for (const entt::entity child : children) {
+  for (const entt::entity child : Hierarchy::Children(registry, menuEntity)) {
+    if (!registry.all_of<Button, ScreenPos>(child)) {
+      throw Error{U"メニューの子が Button と ScreenPos を持たない"};
+    }
     const auto& button = registry.get<Button>(child);
     const auto& screenPos = registry.get<ScreenPos>(child);
     if (RectF{Arg::center(screenPos.pos), button.size}.intersects(pos)) {
@@ -109,44 +83,42 @@ entt::entity DestinationOf(const Button& button, NavDirection direction) {
 Optional<entt::entity> MenuSystem::Update(
     entt::registry& registry, const InputState& input, entt::entity menuEntity
 ) {
-  const Array<entt::entity> children = ChildrenOf(registry, menuEntity);
-  if (!IsValidStructure(registry, menuEntity, children)) {
-    throw Error{
-        U"メニューの構造が不正（子が Button と ScreenPos を持たない、"
-        U"または defaultButton・移動先が子でない）"
-    };
+  if (!registry.valid(menuEntity) || !registry.all_of<Menu>(menuEntity)) {
+    throw Error{U"menuEntity が Menu を持たない"};
   }
 
   if (input.pointerMoved) {
-    Focus(registry, children, HitTest(registry, children, *input.pointerMoved));
+    Focus(
+        registry, menuEntity, HitTest(registry, menuEntity, *input.pointerMoved)
+    );
   }
 
   if (input.navigate) {
-    const entt::entity focused = FindFocused(registry, children);
+    const entt::entity focused = FindFocused(registry, menuEntity);
     if (focused == entt::null) {
-      Focus(registry, children, registry.get<Menu>(menuEntity).defaultButton);
+      Focus(registry, menuEntity, registry.get<Menu>(menuEntity).defaultButton);
     } else {
       const entt::entity destination =
           DestinationOf(registry.get<Button>(focused), *input.navigate);
       if (destination != entt::null) {
-        Focus(registry, children, destination);
+        Focus(registry, menuEntity, destination);
       }
     }
   }
 
   Optional<entt::entity> pressed = none;
   if (input.confirmDown) {
-    const entt::entity focused = FindFocused(registry, children);
+    const entt::entity focused = FindFocused(registry, menuEntity);
     if (focused != entt::null) {
       pressed = focused;
     }
   }
 
   if (input.clickDown && input.pointerPos) {
-    const entt::entity hit = HitTest(registry, children, *input.pointerPos);
+    const entt::entity hit = HitTest(registry, menuEntity, *input.pointerPos);
     if (hit != entt::null) {
       // パッドで選んだ後に別のボタンをクリックした場合も、見た目を合わせる
-      Focus(registry, children, hit);
+      Focus(registry, menuEntity, hit);
       pressed = hit;
     }
   }

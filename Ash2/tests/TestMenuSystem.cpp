@@ -2,7 +2,9 @@
 #include <ThirdParty/Catch2/catch.hpp>
 #include <entt/entt.hpp>
 
+#include "Component/Hierarchy.hpp"
 #include "Component/Menu.hpp"
+#include "Component/ScreenPos.hpp"
 #include "Factory/MenuFactory.hpp"
 #include "System/MenuSystem.hpp"
 
@@ -213,6 +215,32 @@ TEST_CASE("MenuSystem - does not touch Focused of another menu") {
 
   REQUIRE(IsFocused(registry, a.lower));
   REQUIRE(IsFocused(registry, b.upper));
+}
+
+TEST_CASE("MenuSystem - navigate toward a non-child destination throws") {
+  entt::registry registry;
+  const auto m = MakeMenu(registry);
+  registry.get<Button>(m.upper).down = registry.create();
+  (void)MenuSystem::Update(registry, Moved(kUpperPos), m.menu);
+
+  REQUIRE_THROWS_AS(
+      MenuSystem::Update(
+          registry, InputState{.navigate = NavDirection::Down}, m.menu
+      ),
+      Error
+  );
+}
+
+TEST_CASE("MenuSystem - a child without Button throws on cursor move") {
+  entt::registry registry;
+  const auto m = MakeMenu(registry);
+  const entt::entity broken = registry.create();
+  registry.emplace<ScreenPos>(broken);
+  Hierarchy::Attach(registry, m.menu, broken);
+
+  REQUIRE_THROWS_AS(
+      MenuSystem::Update(registry, Moved(kNowhere), m.menu), Error
+  );
 }
 
 #endif

@@ -22,6 +22,9 @@ class MenuSystem {
   /// @return 決定されたボタン。なければ none
   /// @note `menuEntity` は `Menu` を持ち、子がすべて `Button` + `ScreenPos`
   /// を持つこと。`defaultButton` と移動先は同じメニューの子であること
+  /// @throw Error `menuEntity` が `Menu` を持たないとき。選択の移動先
+  /// （`defaultButton`・方向の移動先）がメニューの子でないとき。カーソルの
+  /// 当たり判定で辿った子が `Button` と `ScreenPos` を持たないとき
   [[nodiscard]] static Optional<entt::entity> Update(
       entt::registry& registry, const InputState& input, entt::entity menuEntity
   );
