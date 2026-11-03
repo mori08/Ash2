@@ -2,6 +2,35 @@
 
 #include "Component/LocalOffset.hpp"
 
+static_assert(std::forward_iterator<Hierarchy::ChildIterator>);
+static_assert(std::ranges::forward_range<Hierarchy::ChildRange>);
+static_assert(std::ranges::borrowed_range<Hierarchy::ChildRange>);
+static_assert(std::ranges::view<Hierarchy::ChildRange>);
+
+Hierarchy::ChildIterator::ChildIterator(
+    const entt::registry& registry, entt::entity parent
+)
+    : m_registry{&registry}, m_parent{parent}, m_current{entt::null} {
+  if (const auto* node = registry.try_get<Hierarchy>(parent)) {
+    m_current = node->firstChild();
+  }
+}
+
+Hierarchy::ChildIterator& Hierarchy::ChildIterator::operator++() {
+  const auto& node = m_registry->get<const Hierarchy>(m_current);
+  if (node.parent() != m_parent) {
+    throw Error{U"子の走査中に今の子が Detach された"};
+  }
+  m_current = node.nextSibling();
+  return *this;
+}
+
+Hierarchy::ChildRange Hierarchy::Children(
+    const entt::registry& registry, entt::entity parent
+) {
+  return ChildRange{ChildIterator{registry, parent}, std::default_sentinel};
+}
+
 void Hierarchy::Attach(
     entt::registry& registry, entt::entity parent, entt::entity child,
     LocalOffset offset

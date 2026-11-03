@@ -192,33 +192,22 @@ entt::entity MakePlayer(entt::registry& registry) {
 /// @return 見つからなければ entt::null
 template <typename Tag>
 entt::entity FindChildOrb(entt::registry& registry, entt::entity owner) {
-  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
-    auto child = hierarchy->firstChild();
-    while (child != entt::null) {
-      if (registry.all_of<Tag>(child)) {
-        return child;
-      }
-      child = registry.get<Hierarchy>(child).nextSibling();
-    }
-  }
-  return entt::null;
+  const auto children = Hierarchy::Children(registry, owner);
+  const auto it = std::ranges::find_if(children, [&](entt::entity child) {
+    return registry.all_of<Tag>(child);
+  });
+  return (it != std::default_sentinel) ? *it : entt::null;
 }
 
 /// @brief 所有者の子から `Tag` を持つエンティティをすべて収集する
 template <typename Tag>
 Array<entt::entity>
 CollectChildOrbs(entt::registry& registry, entt::entity owner) {
-  Array<entt::entity> orbs;
-  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
-    auto child = hierarchy->firstChild();
-    while (child != entt::null) {
-      if (registry.all_of<Tag>(child)) {
-        orbs.push_back(child);
-      }
-      child = registry.get<Hierarchy>(child).nextSibling();
-    }
-  }
-  return orbs;
+  return Hierarchy::Children(registry, owner) |
+         std::views::filter([&](entt::entity child) {
+           return registry.all_of<Tag>(child);
+         }) |
+         std::ranges::to<Array<entt::entity>>();
 }
 
 /// @brief 所有者の子から `AttackLightOrb::index` が一致するエンティティを返す

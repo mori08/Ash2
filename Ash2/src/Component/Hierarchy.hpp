@@ -1,5 +1,7 @@
 #pragma once
 #include <entt/entt.hpp>
+#include <iterator>
+#include <ranges>
 
 #include "Component/LocalOffset.hpp"
 
@@ -16,6 +18,62 @@ class Hierarchy {
   [[nodiscard]] entt::entity nextSibling() const { return m_nextSibling; }
   /// @return なければ entt::null
   [[nodiscard]] entt::entity prevSibling() const { return m_prevSibling; }
+
+  /// @brief 親の子を先頭から辿る forward iterator
+  ///
+  /// 辿っている間は連結を変更しない。
+  /// 特に今指している子の Detach・破棄は禁止。
+  /// registry より長くイテレータを保持してはならない。
+  class ChildIterator {
+   public:
+    using iterator_concept = std::forward_iterator_tag;
+    using value_type = entt::entity;
+    using difference_type = std::ptrdiff_t;
+
+    // メンバ初期化子ではなく初期化リストで書く。
+    // 入れ子のクラスのメンバ初期化子は外側のクラスの定義中に使えず、
+    // ChildRange（subrange）を作る時点で既定構築できないと判定されるため。
+    ChildIterator()
+        : m_registry{nullptr}, m_parent{entt::null}, m_current{entt::null} {}
+
+    /// @brief parent の最初の子を指すイテレータを作る
+    ///
+    /// parent が Hierarchy を持たなければ終端を指す。
+    ChildIterator(const entt::registry& registry, entt::entity parent);
+
+    [[nodiscard]] entt::entity operator*() const { return m_current; }
+
+    /// @throw Error 今の子が走査中に Detach されたとき
+    ChildIterator& operator++();
+    ChildIterator operator++(int) {
+      auto before = *this;
+      ++*this;
+      return before;
+    }
+
+    [[nodiscard]] bool operator==(std::default_sentinel_t) const {
+      return m_current == entt::null;
+    }
+    [[nodiscard]] bool operator==(const ChildIterator&) const = default;
+
+   private:
+    const entt::registry* m_registry;
+    entt::entity m_parent;
+    entt::entity m_current;
+  };
+
+  /// 子の範囲。`size()` は使えない
+  using ChildRange =
+      std::ranges::subrange<ChildIterator, std::default_sentinel_t>;
+
+  /// @brief 親の子を先頭から辿る範囲を返す
+  ///
+  /// 親が Hierarchy を持たなければ空の範囲。
+  /// 範囲を辿っている間は連結を変更しない。
+  /// 辿りながら Detach・破棄するときは先に Array 等へ集める。
+  [[nodiscard]] static ChildRange Children(
+      const entt::registry& registry, entt::entity parent
+  );
 
   /// @brief 子を親にアタッチする（先頭に O(1) 挿入）
   ///

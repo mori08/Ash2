@@ -84,16 +84,11 @@ void SetOrbOffset(entt::registry& registry, entt::entity orb, Vec3 offset) {
 /// @return 見つからなければ entt::null
 template <typename Tag>
 entt::entity FindAttackOrb(entt::registry& registry, entt::entity owner) {
-  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
-    auto child = hierarchy->firstChild();
-    while (child != entt::null) {
-      if (registry.all_of<Tag>(child)) {
-        return child;
-      }
-      child = registry.get<Hierarchy>(child).nextSibling();
-    }
-  }
-  return entt::null;
+  const auto children = Hierarchy::Children(registry, owner);
+  const auto it = std::ranges::find_if(children, [&](entt::entity child) {
+    return registry.all_of<Tag>(child);
+  });
+  return (it != std::default_sentinel) ? *it : entt::null;
 }
 
 /// @brief 所有者の子から `Tag` を持つ珠をすべて収集する
@@ -102,18 +97,11 @@ entt::entity FindAttackOrb(entt::registry& registry, entt::entity owner) {
 template <typename Tag>
 Array<entt::entity>
 CollectAttackOrbs(entt::registry& registry, entt::entity owner) {
-  Array<entt::entity> orbs;
-  if (const auto* hierarchy = registry.try_get<Hierarchy>(owner)) {
-    auto child = hierarchy->firstChild();
-    while (child != entt::null) {
-      const auto next = registry.get<Hierarchy>(child).nextSibling();
-      if (registry.all_of<Tag>(child)) {
-        orbs.push_back(child);
-      }
-      child = next;
-    }
-  }
-  return orbs;
+  return Hierarchy::Children(registry, owner) |
+         std::views::filter([&](entt::entity child) {
+           return registry.all_of<Tag>(child);
+         }) |
+         std::ranges::to<Array<entt::entity>>();
 }
 
 }  // namespace
