@@ -9,5 +9,6 @@ assets/config/scenario.toml
 assets/config/stage.toml
 assets/config/title.toml
 assets/images/enemy.png
+assets/images/logo.png
 assets/images/player.png
 assets/images/reticle.png

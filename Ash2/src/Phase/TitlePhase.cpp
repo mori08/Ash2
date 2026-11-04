@@ -4,7 +4,10 @@
 #include "Component/ScreenPos.hpp"
 #include "Config/TitleConfig.hpp"
 #include "FrameData.hpp"
-#include "UiFonts.hpp"
+
+namespace {
+constexpr StringView kLogoTextureKey = U"assets/images/logo.png";
+}  // namespace
 
 void TitlePhase::onAfterPush(entt::registry& registry) {
   m_logo = registry.create();
@@ -13,8 +16,7 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
       m_logo, ScreenPos{.pos = Vec2{Scene::CenterF().x, config.logoY}}
   );
   registry.emplace<Drawable>(
-      m_logo,
-      TextDrawable{.text = U"沼に焚べ", .font = FontAsset{UiFonts::kLarge}}
+      m_logo, TextureDrawable{.region = TextureAsset{kLogoTextureKey}}
   );
 }
 

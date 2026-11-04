@@ -5,7 +5,7 @@
 
 #include "IPhase.hpp"
 
-/// @brief タイトル画面フェーズ（現状は仮のタイトル文字列を表示するだけ）
+/// @brief タイトル画面フェーズ（ロゴ画像を表示するだけ）
 class TitlePhase : public IPhase {
  public:
   /// @brief TitlePhase の生成パラメータ（引数なし）
@@ -15,7 +15,7 @@ class TitlePhase : public IPhase {
 
   explicit TitlePhase(const Param& /*param*/) : TitlePhase() {}
 
-  /// @brief タイトル文字のエンティティを生成する（y 座標は
+  /// @brief ロゴ画像のエンティティを生成する（中心の y 座標は
   /// TitleConfig::logoY、x 座標は画面中央）
   void onAfterPush(entt::registry& registry) override;
 
@@ -24,10 +24,10 @@ class TitlePhase : public IPhase {
       entt::registry& registry, const FrameData& frameData
   ) override;
 
-  /// @brief タイトル文字のエンティティを破棄する
+  /// @brief ロゴ画像のエンティティを破棄する
   void onBeforePop(entt::registry& registry) override;
 
  private:
-  /// タイトル文字のエンティティ
+  /// ロゴ画像のエンティティ
   entt::entity m_logo = entt::null;
 };
