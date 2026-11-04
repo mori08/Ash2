@@ -345,7 +345,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextDrawable` の仮タイトル「沼に焚べ」を `HudSystem` に描かせる。ロゴの y 座標は `TitleConfig::logoY`、x 座標は画面中央。遷移は持たない（骨組み） |
+| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）を `HudSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。遷移は持たない（骨組み） |
 | [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `Error` を投げる。Esc の Pop は持たない |
 | [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |

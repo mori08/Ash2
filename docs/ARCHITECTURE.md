@@ -254,4 +254,5 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 ロックオンのレティクルも専用の描画システムを持たず、`TextureDrawable` を持つ子エンティティを
 `Hierarchy::Attach` でロック対象へぶら下げ、`DrawSystem` にまとめて描かせる（`LockOnSystem` 参照）。
 静止画だが 1 コマのアニメーションとして定義し、テクスチャの解決も `AnimationSystem` に通す。
-テクスチャが `Drawable` へ届く道を `SpriteAnimation` の 1 本に保つため。
+ただしこれは暫定で、方針は「動くものは `SpriteAnimation` を通し、動かないものは
+`TextureDrawable` へ直接入れる」である。レティクルの移行は #381 で行う。
