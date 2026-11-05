@@ -9,6 +9,7 @@ CDB=cdbX64.exe  # WinDbg の実行エイリアス（本体の cdb.exe はバー�
 
 LOG_DIR="$REPO_ROOT/logs"
 DUMP="$LOG_DIR/crash.dmp"
+CDB_LOG="$LOG_DIR/cdb.log"
 
 if [[ ! -f "$EXE" ]]; then
   echo "ERROR: 実行ファイルが見つかりません: $EXE"
@@ -55,9 +56,15 @@ echo "Launching under cdb: $EXE"
 # cdb の出力は CP932 のため UTF-8 に変換する
 # mktemp は /tmp/... 形式を返すため、cdb には Windows のパスに直して渡す
 # 自前の PDB は srv* より先に探させる（srv* で見つかるとシンボルキャッシュにコピーされ、ビルドごとに溜まる）
-"$CDB" -G -y "$PDB_DIR;srv*" -cf "$(cygpath -m "$CONFIG")" "$EXE" 2>&1 | iconv -f CP932 -t UTF-8
+# cdb の出力は定型の行が大半のため、ログに残して要点だけを表示する
+if ! "$CDB" -G -y "$PDB_DIR;srv*" -cf "$(cygpath -m "$CONFIG")" "$EXE" 2>&1 \
+  | iconv -f CP932 -t UTF-8 | grep -v 'NatVis script' > "$CDB_LOG"; then
+  echo "ERROR: cdb が異常終了しました。ログ: $CDB_LOG"
+  exit 1
+fi
 
 if [[ -f "$DUMP" ]]; then
+  grep '^Last event' "$CDB_LOG"
   echo "ERROR: クラッシュしました。ダンプ: $DUMP"
   exit 1
 fi

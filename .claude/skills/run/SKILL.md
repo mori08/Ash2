@@ -15,15 +15,24 @@ description: Run the app under cdb (tools/run-cdb.sh) in the background and repo
 
 ## クラッシュの調査
 
-調査を頼まれたら、`./tools/read-dump.sh` で `logs/crash.dmp` を読む。引数を省略するとスタックの上から10フレームを出力する。
+調査を頼まれたら、`./tools/read-dump.sh` で `logs/crash.dmp` の要約を読む。
 
-- `lm` の結果が `(private pdb symbols)` でなければ読まない。ゲームを再ビルドしたためなので、再現し直すようユーザーに伝える
+| 出力 | 内容 |
+|------|------|
+| `[event]` | 例外コードと種類 |
+| `[detail]` | 不正アクセスの読み書きの別とアドレス |
+| `[type]` / `[message]` | C++ 例外の型とメッセージ。メッセージ内の改行とタブは `.` になる |
+| `[assert]` / `[assert_at]` | assert の式と場所 |
+| `[stack]` | `Main` までのスタック。先頭の番号は16進数 |
+
+- PDB が一致しないエラーが出たら、再現し直すようユーザーに伝える
 - 掘り下げるときは cdb コマンドを引数で渡す
-  - C++ 例外（`eh`）のメッセージ: `.frame 1; dx ((s3d::Error*)pExceptionObject)->m_what.m_string`
+  - 指定のフレームのローカル変数: `.frame <番号>; dv /t`
   - 上から6フレームのローカル変数: `dx -r2 @$curstack.Frames.Take(6).Select(f => f.LocalVariables)`
   - 引数は `kP` ではなく `dx` で見る
 
 ## 注意
 
 - ユーザーがゲームを閉じるまでプロセスは終了しない
-- ゲームの標準出力は Win32 コンソールへ送られるため、出力ファイルには現れない。出力ファイルに現れるのは cdb の出力のみ
+- ゲームの標準出力は Win32 コンソールへ送られるため、出力ファイルには現れない
+- cdb の全出力は `logs/cdb.log` に残る
