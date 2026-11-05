@@ -9,12 +9,13 @@
 #include "Component/Hierarchy.hpp"
 #include "Component/LocalOffset.hpp"
 #include "Component/LockOn.hpp"
-#include "Component/SpriteAnimation.hpp"
 #include "Component/WorldPos.hpp"
 #include "FrameData.hpp"
 #include "Screen.hpp"
 
 namespace {
+
+constexpr StringView kReticleTextureKey = U"assets/images/reticle.png";
 
 // aim point の d は Collider のオフセット次第で target 自身の WorldPos.d と
 // 一致しうる（例: オフセットが0）。その場合の描画順の同値を避けるため、
@@ -109,10 +110,8 @@ void ApplyStickRule(
   const auto reticle = registry.create();
   // AttachmentSystem が上書きするまでの初期値として親の現在位置を置く
   registry.emplace<WorldPos>(reticle, pos);
-  // region は空のまま。同フレーム内で AnimationSystem が埋める
-  registry.emplace<Drawable>(reticle, TextureDrawable{});
-  registry.emplace<SpriteAnimation>(
-      reticle, SpriteAnimation{.dataKey = U"reticle", .currentClip = U"idle"}
+  registry.emplace<Drawable>(
+      reticle, TextureDrawable{.region = TextureAsset{kReticleTextureKey}}
   );
   registry.emplace<DrawColor>(reticle);
   Hierarchy::Attach(

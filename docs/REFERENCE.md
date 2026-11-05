@@ -175,7 +175,7 @@
 | [`BattleSystem::UpdateAftermath`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（StageClearPhase・StageGameOverPhase が毎フレーム1回呼出） | `HitstopSystem` → `FadeOutSystem` → `AnimationSystem` の順に呼ぶ。決着後は Motion・移動・判定を止め、演出だけを進める。`AnimationSystem` は `Hitstop` を除外するため `HitstopSystem` を先に呼ぶ |
 | [`BattleSystem::Cleanup`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（StagePhase の `onBeforePop`、本体破棄の後） | 独立エンティティ（`Projectile`・`FadeOut`）をタグで検索してまとめて破棄する |
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | BattleSystem 内（MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
-| [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | BattleSystem 内（HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは `SpriteAnimation`（`dataKey = reticle`）を持つエンティティとして生成し、テクスチャの解決は `AnimationSystem` に委ねる。`Dead` を持つプレイヤーは入力処理を飛ばして `target`/`halfTarget` を解除する（`Collider` を外した撃破後の被参照を避けるため） |
+| [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | BattleSystem 内（HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは専用の描画システムを持たず、`TextureDrawable` を持つ子エンティティとして `DrawSystem` に描かせる。`Dead` を持つプレイヤーは入力処理を飛ばして `target`/`halfTarget` を解除する（`Collider` を外した撃破後の被参照を避けるため） |
 | [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | BattleSystem 内（HitstopSystem の後） | `PlayerMotion::Variant` → `EnemyMotion::Variant` の順に、状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<M>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（停止中も入力の受付を続けるため） |
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | BattleSystem 内（MotionSystem の後） | `Player + Stamina + PlayerMotion::Variant` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | BattleSystem 内（StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
@@ -206,7 +206,7 @@
 |---|---|
 | `AttachmentSystem` は `MotionSystem`（子の `LocalOffset` 更新）より後、`HitSystem` より前 | 子の絶対座標が確定していないと判定がずれる |
 | `ProjectileSystem` は `MovementSystem` と `HitSystem` の後 | 着弾判定を `Attack::hitTargets` の中身で行うため |
-| `LockOnSystem` は `MotionSystem` より前（`AttachmentSystem` より前でよい） | 同フレームの `Ranged` 発射がその場のロック対象を見るため。レティクルの `WorldPos` と `TextureDrawable::region` は同フレーム内で `AttachmentSystem`・`AnimationSystem` がそれぞれ埋める |
+| `LockOnSystem` は `MotionSystem` より前（`AttachmentSystem` より前でよい） | 同フレームの `Ranged` 発射がその場のロック対象を見るため。レティクルの `WorldPos` は同フレーム内で `AttachmentSystem` が埋める |
 | `GravitySystem` の「加速」と「地面クランプ」は1つの関数に留める | 時間軸が違う（次フレーム用／今フレーム確定）。分割すると跳ね方が変わる |
 | `BoundarySystem` は `GravitySystem` の後、`AttachmentSystem` の前に置く | 座標クランプは軸ごとに担当が分かれる。`h` は `GravitySystem` の地面クランプ、`w`/`d` は `BoundarySystem` の境界クランプが扱う |
 
@@ -625,12 +625,6 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `knockback` | `MakeDamaged`（`Knockback` へ遷移する場合） |
 | `downed` | `Knockback` の `Tick()`（`Downed` へ遷移する瞬間） |
 | `get_up` | `Downed` の `Tick()`（`GetUp` へ遷移する瞬間） |
-
-`reticle.toml`（`dataKey = reticle`）:
-
-| クリップ名 | 使用箇所 |
-|---|---|
-| `idle` | `LockOnSystem` の `SpawnReticle`（静止画を 1 コマのクリップとして持つ） |
 
 `enemy.toml`（`dataKey = enemy`）:
 
