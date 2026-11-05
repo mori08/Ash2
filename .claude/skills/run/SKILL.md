@@ -15,19 +15,10 @@ description: Run the app under cdb (tools/run-cdb.sh) in the background and repo
 
 ## クラッシュの調査
 
-調査を頼まれたら、`logs/crash.dmp` を cdb で開いて読む。
+調査を頼まれたら、`./tools/read-dump.sh` で `logs/crash.dmp` を読む。引数を省略するとスタックの上から10フレームを出力する。
 
-```bash
-cdbX64.exe -z "<リポジトリ>/logs/crash.dmp" \
-  -y "<リポジトリ>/Ash2/Intermediate/Ash2/Debug;srv*" \
-  -c "ld Ash2_debug_; lm m Ash2_debug_; .lines -e; k 10; q" \
-  2>&1 | iconv -f CP932 -t UTF-8
-```
-
-- パスは `C:/...` 形式（`git rev-parse --show-toplevel` の形式）で渡す
-- `-y` を省略しない
 - `lm` の結果が `(private pdb symbols)` でなければ読まない。ゲームを再ビルドしたためなので、再現し直すようユーザーに伝える
-- 掘り下げるときは `-c` の中身を変える
+- 掘り下げるときは cdb コマンドを引数で渡す
   - C++ 例外（`eh`）のメッセージ: `.frame 1; dx ((s3d::Error*)pExceptionObject)->m_what.m_string`
   - 上から6フレームのローカル変数: `dx -r2 @$curstack.Frames.Take(6).Select(f => f.LocalVariables)`
   - 引数は `kP` ではなく `dx` で見る
