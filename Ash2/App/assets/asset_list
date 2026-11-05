@@ -1,6 +1,5 @@
 assets/config/animation/enemy.toml
 assets/config/animation/player.toml
-assets/config/animation/reticle.toml
 assets/config/arena.toml
 assets/config/enemy.toml
 assets/config/input.toml

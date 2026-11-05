@@ -22,9 +22,8 @@ class LockOnSystem {
   /// @brief LockOn を持つエンティティ（プレイヤー）のロック対象を更新し、
   /// 追従するレティクルを同期する
   /// @note MotionSystem より前に呼ぶこと（同フレームの Ranged
-  /// 発射がその場のロック対象を見るため）。AttachmentSystem・AnimationSystem
-  /// より前でよい（レティクルの WorldPos と TextureDrawable::region は
-  /// 同フレーム内でそれぞれが埋める）
+  /// 発射がその場のロック対象を見るため）。AttachmentSystem より前でよい
+  /// （レティクルの WorldPos は同フレーム内で AttachmentSystem が埋める）
   static void Update(entt::registry& registry, const FrameData& frameData);
 
   /// @brief Collider 線分の中点（狙点）のワールド座標

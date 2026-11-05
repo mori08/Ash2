@@ -247,12 +247,7 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 種別ごとの描画コードはない。`Drawable` は描画データの variant（矩形・円・テクスチャ・文字）で、色は
 `DrawColor` が別に持つ。持たないエンティティは白・不透明として扱う。
 
+動くものは `SpriteAnimation` を通し、動かないものは `TextureDrawable` へ直接入れる。
 アニメーションは `TextureDrawable` の中身の差し替えとして表す。`AnimationSystem` が
 `SpriteAnimation` の経過時間を進め、切り出した `TextureRegion` を書き込む。`DrawSystem` は
 それが動いているかどうかを知らない。
-
-ロックオンのレティクルも専用の描画システムを持たず、`TextureDrawable` を持つ子エンティティを
-`Hierarchy::Attach` でロック対象へぶら下げ、`DrawSystem` にまとめて描かせる（`LockOnSystem` 参照）。
-静止画だが 1 コマのアニメーションとして定義し、テクスチャの解決も `AnimationSystem` に通す。
-ただしこれは暫定で、方針は「動くものは `SpriteAnimation` を通し、動かないものは
-`TextureDrawable` へ直接入れる」である。レティクルの移行は #381 で行う。
