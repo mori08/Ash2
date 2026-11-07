@@ -58,22 +58,34 @@ TEST_CASE("AnimationData::FromToml - parses clip entries correctly") {
 }
 
 TEST_CASE("AnimationData::FromToml - missing width throws") {
+  // クリップを含めておき、「クリップなし」の失敗と区別する
   constexpr std::string_view kToml =
       "texture = \"assets/images/player.png\"\n"
       "height = 64\n"
       "\n"
       "[draw_offset]\n"
       "x = -8.0\n"
-      "y = -32.0\n";
+      "y = -32.0\n"
+      "\n"
+      "[idle]\n"
+      "row = 0\n"
+      "count = 4\n"
+      "speed = 8.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
 }
 
 TEST_CASE("AnimationData::FromToml - missing draw_offset throws") {
+  // クリップを含めておき、「クリップなし」の失敗と区別する
   constexpr std::string_view kToml =
       "texture = \"assets/images/player.png\"\n"
       "width = 32\n"
-      "height = 64\n";
+      "height = 64\n"
+      "\n"
+      "[idle]\n"
+      "row = 0\n"
+      "count = 4\n"
+      "speed = 8.0\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   REQUIRE_THROWS_AS((void)AnimationData::FromToml(reader), Error);
 }

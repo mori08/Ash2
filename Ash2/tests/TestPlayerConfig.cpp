@@ -162,11 +162,14 @@ TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
 }
 
 TEST_CASE("PlayerConfig::FromToml - missing melee.chain throws") {
-  constexpr std::string_view kToml =
-      "speed = 150.0\n"
-      "jump_speed = 400.0\n"
-      "gravity = 900.0\n";
-  const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
+  // melee.chain だけを除き、他の必須キーはすべて残す
+  std::string toml{kFullToml};
+  const auto begin = toml.find("[[melee.chain]]\n");
+  const auto end = toml.find("[melee.finisher]\n");
+  REQUIRE(begin != std::string::npos);
+  REQUIRE(end != std::string::npos);
+  toml.erase(begin, end - begin);
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_THROWS_AS(PlayerConfig::FromToml(reader), Error);
 }
 

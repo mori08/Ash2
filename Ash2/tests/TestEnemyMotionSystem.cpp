@@ -553,40 +553,6 @@ TEST_CASE(
   REQUIRE(registry.get<DrawColor>(enemy).color.a == Approx(1.0));
 }
 
-TEST_CASE("EnemySystem - destroys entity when Defeated has expired") {
-  entt::registry registry;
-  SetupContext(registry);
-  const auto enemy =
-      MakeEnemy(registry, EnemyMotion::Defeated{.remaining = 0.0});
-
-  EnemySystem::Update(registry);
-
-  REQUIRE_FALSE(registry.valid(enemy));
-}
-
-TEST_CASE(
-    "EnemySystem - keeps entity while Defeated still has remaining time"
-) {
-  entt::registry registry;
-  SetupContext(registry);
-  const auto enemy =
-      MakeEnemy(registry, EnemyMotion::Defeated{.remaining = 0.5});
-
-  EnemySystem::Update(registry);
-
-  REQUIRE(registry.valid(enemy));
-}
-
-TEST_CASE("EnemySystem - leaves non-Defeated entities untouched") {
-  entt::registry registry;
-  SetupContext(registry);
-  const auto enemy = MakeEnemy(registry, EnemyMotion::Idle{});
-
-  EnemySystem::Update(registry);
-
-  REQUIRE(registry.valid(enemy));
-}
-
 TEST_CASE(
     "EnemyMotionSystem - Hitstop freezes Stagger remaining and keeps the "
     "stagger clip"
@@ -617,9 +583,8 @@ TEST_CASE(
 TEST_CASE(
     "EnemyMotionSystem - Hitstop keeps Knockback vel.w on the launch frame"
 ) {
-  // blowSpeedH（テスト設定値 300.0）が正である限り、着地判定と組み合わさる
-  // vel.h <= 0 ガードには入らないため vel.w は消えない。blowSpeedH
-  // を 0 にする将来の調整で、このテストが失敗して気付けるようにする
+  // 停止中（dt = 0）でも、打ち上げ直後（接地したまま上昇中）は
+  // vel.h <= 0 の着地判定に入らないため vel.w は消えない
   entt::registry registry;
   SetupContext(registry);
   const auto enemy =

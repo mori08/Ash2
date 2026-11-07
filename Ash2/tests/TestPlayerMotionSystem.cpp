@@ -444,6 +444,98 @@ TEST_CASE("PlayerMotionSystem - melee hitbox does not hit its owner") {
   REQUIRE(registry.get<Hp>(player).current < 100);
 }
 
+TEST_CASE(
+    "PlayerMotionSystem - Neutral move input sets velocity, facing and the "
+    "move clip"
+) {
+  // 移動速度は moveAxis * speed(100.0)。向きは横方向の入力に従う
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  FrameData frameData{};
+  frameData.input.moveAxis = Vec2{0.6, 0.8};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(60.0));
+  REQUIRE(vel.d == Approx(80.0));
+  REQUIRE(registry.get<SpriteAnimation>(player).facingRight);
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"move");
+
+  frameData.input.moveAxis = Vec2{-1.0, 0.0};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE_FALSE(registry.get<SpriteAnimation>(player).facingRight);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Neutral without move input stops and keeps facing"
+) {
+  // 入力がなければ止まって idle になり、向きは直前のまま
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Velocity>(player).w = 100.0;
+  auto& anim = registry.get<SpriteAnimation>(player);
+  anim.facingRight = true;
+  anim.currentClip = U"move";
+
+  MotionSystem::Update(registry, FrameData{});
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(0.0));
+  REQUIRE(vel.d == Approx(0.0));
+  REQUIRE(registry.get<SpriteAnimation>(player).facingRight);
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"idle");
+}
+
+TEST_CASE("PlayerMotionSystem - Neutral while falling plays jump_fall") {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;
+  registry.get<Velocity>(player).h = -10.0;
+
+  MotionSystem::Update(registry, FrameData{});
+
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"jump_fall");
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Landing stops horizontal movement and returns to "
+    "Neutral on expiry"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Velocity>(player).w = 100.0;
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Landing{.timer = 0.20}
+  );
+
+  // 硬直中は移動入力があっても横移動しない
+  FrameData frameData{.dt = 0.15};
+  frameData.input.moveAxis = Vec2{1.0, 0.0};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Landing>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+  REQUIRE(registry.get<Velocity>(player).w == Approx(0.0));
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"landing");
+
+  MotionSystem::Update(registry, FrameData{.dt = 0.15});
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Neutral>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+}
+
 TEST_CASE("PlayerMotionSystem - no attack input keeps Neutral") {
   // 攻撃入力がない場合は Neutral のまま
   entt::registry registry;
@@ -993,10 +1085,10 @@ TEST_CASE("PlayerMotionSystem - MeleeChain stage 0 stops horizontal movement") {
 
 TEST_CASE(
     "PlayerMotionSystem - MeleeChain stage 0 attack input during windup "
-    "only sets comboQueued"
+    "fires the next stage once recovery B begins"
 ) {
   // windup中（elapsed < activeStart）の攻撃入力では即時遷移せず、
-  // comboQueued が立つのみ
+  // 入力のないフレームを挟んでも予約が残り、後隙Bに入ってから次段へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1008,18 +1100,28 @@ TEST_CASE(
   FrameData frameData{.dt = 0.01};
   frameData.input.attackDown = true;
   MotionSystem::Update(registry, frameData);
+  MotionSystem::Update(registry, FrameData{.dt = 0.01});
+
+  {
+    const auto& motion = registry.get<PlayerMotion::Variant>(player);
+    REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+    REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 0);
+  }
+
+  // 入力なしで後隙B（activeEnd 0.15 以降）まで進める
+  MotionSystem::Update(registry, FrameData{.dt = 0.14});
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
-  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
 }
 
 TEST_CASE(
     "PlayerMotionSystem - MeleeChain stage 0 attack input during active "
-    "only sets comboQueued"
+    "fires the next stage once recovery B begins"
 ) {
-  // active中（activeStart <= elapsed < activeEnd）の攻撃入力でも
-  // 即時遷移せず、comboQueued が立つのみ
+  // active中（activeStart <= elapsed < activeEnd）の攻撃入力でも即時遷移せず、
+  // 後隙Bに入ってから次段へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1033,9 +1135,18 @@ TEST_CASE(
   frameData.input.attackDown = true;
   MotionSystem::Update(registry, frameData);
 
+  {
+    const auto& motion = registry.get<PlayerMotion::Variant>(player);
+    REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
+    REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 0);
+  }
+
+  // 入力なしで後隙B（activeEnd 0.15 以降）まで進める
+  MotionSystem::Update(registry, FrameData{.dt = 0.05});
+
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
-  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
+  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 1);
 }
 
 TEST_CASE(
@@ -1068,8 +1179,7 @@ TEST_CASE(
     "not consume stamina when comboQueued but stamina is insufficient for "
     "the next stage"
 ) {
-  // 次段のST不足時は遷移せず MeleeChain（1段目）のまま、comboQueued
-  // はクリアされない
+  // 次段のST不足時は遷移せず MeleeChain（1段目）のまま、ST も減らない
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1087,7 +1197,6 @@ TEST_CASE(
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
   REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).stage == 0);
-  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
   REQUIRE(registry.get<Stamina>(player).current == 2);
 }
 
@@ -1177,40 +1286,6 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - MeleeChain stage 0 comboQueued accumulates "
-    "across frames"
-) {
-  // comboQueued は一度立ったら立ったまま（OR的に蓄積）
-  entt::registry registry;
-  SetupContext(registry);
-  const auto player = MakePlayer(registry);
-
-  registry.replace<PlayerMotion::Variant>(
-      player, PlayerMotion::MeleeChain{.stage = 0, .elapsed = 0.0}
-  );
-
-  // 1フレーム目：攻撃入力あり、comboQueued が立つ
-  FrameData frameData1{.dt = 0.01};
-  frameData1.input.attackDown = true;
-  MotionSystem::Update(registry, frameData1);
-
-  REQUIRE(
-      std::get<PlayerMotion::MeleeChain>(
-          registry.get<PlayerMotion::Variant>(player)
-      )
-          .comboQueued
-  );
-
-  // 2フレーム目：攻撃入力なし、comboQueued は立ったまま
-  const FrameData frameData2{.dt = 0.01};
-  MotionSystem::Update(registry, frameData2);
-
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
-  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
-}
-
-TEST_CASE(
     "PlayerMotionSystem - MeleeChain stage 1 elapsed increases but stays "
     "in MeleeChain"
 ) {
@@ -1287,32 +1362,11 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - MeleeChain stage 1 transitions to Neutral when "
-    "recoveryEnd exceeded"
-) {
-  // recoveryEnd を超えたら Neutral へ遷移する
-  entt::registry registry;
-  SetupContext(registry);
-  const auto player = MakePlayer(registry);
-
-  // recoveryEnd は windupSec+activeSec+recoveryBSec = 0.40
-  registry.replace<PlayerMotion::Variant>(
-      player, PlayerMotion::MeleeChain{.stage = 1, .elapsed = 0.39}
-  );
-
-  const FrameData frameData{.dt = 0.01};
-  MotionSystem::Update(registry, frameData);
-
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Neutral>(motion));
-}
-
-TEST_CASE(
     "PlayerMotionSystem - MeleeChain stage 1 attack input during windup "
-    "only sets comboQueued"
+    "fires MeleeFinisher once recovery B begins"
 ) {
   // windup中（elapsed < activeStart）の攻撃入力では即時遷移せず、
-  // comboQueued が立つのみ
+  // 後隙Bに入ってから締め段へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1325,9 +1379,20 @@ TEST_CASE(
   frameData.input.attackDown = true;
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
-  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::MeleeChain>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+
+  // 入力なしで後隙B（activeEnd 0.20 以降）まで進める
+  MotionSystem::Update(registry, FrameData{.dt = 0.20});
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::MeleeFinisher>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
 }
 
 TEST_CASE(
@@ -1360,8 +1425,8 @@ TEST_CASE(
     "not consume stamina when comboQueued but stamina is insufficient for "
     "MeleeFinisher"
 ) {
-  // 締め段のST不足時は遷移せず MeleeChain のまま、comboQueued
-  // はクリアされない（満了で Neutral へ戻ることでコンボが途切れる）
+  // 締め段のST不足時は遷移せず MeleeChain のまま、ST も減らない
+  // （満了で Neutral へ戻ることでコンボが途切れる）
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1378,7 +1443,6 @@ TEST_CASE(
 
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
   REQUIRE(std::holds_alternative<PlayerMotion::MeleeChain>(motion));
-  REQUIRE(std::get<PlayerMotion::MeleeChain>(motion).comboQueued);
   REQUIRE(registry.get<Stamina>(player).current == 4);
 
   // 満了まで進めるとコンボが途切れて Neutral へ戻る
@@ -1909,10 +1973,11 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Dash queues dash attack on attack input during "
-    "recovery B"
+    "PlayerMotionSystem - Dash attack input during recovery B transitions "
+    "to DashAttack on the next frame"
 ) {
-  // 後隙B中（recoveryAEnd 以降）の近接攻撃入力で dashAttackQueued が立つ
+  // 後隙B中（recoveryAEnd 以降）の近接攻撃入力は、そのフレームでは遷移せず
+  // 次フレームでダッシュ攻撃へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -1926,9 +1991,17 @@ TEST_CASE(
   frameData.input.attackDown = true;
   MotionSystem::Update(registry, frameData);
 
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+
+  MotionSystem::Update(registry, FrameData{.dt = 0.01});
+
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
-  REQUIRE(std::get<PlayerMotion::Dash>(motion).dashAttackQueued);
+  REQUIRE(std::holds_alternative<PlayerMotion::DashAttack>(motion));
+  REQUIRE_FALSE(std::get<PlayerMotion::DashAttack>(motion).air);
 }
 
 TEST_CASE(
@@ -2048,10 +2121,11 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - MeleeChain stage 0 recovery dash input is "
-    "ignored without leftover hitbox"
+    "PlayerMotionSystem - MeleeChain stage 0 dash cancel releases the "
+    "leftover hitbox"
 ) {
-  // MeleeChain 後隙からダッシュへキャンセルする際、ヒットボックスは既に解放済み
+  // 後隙入りと同じフレームのダッシュ入力でキャンセルしても、
+  // ヒットボックスは解放されて残らない
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -2267,10 +2341,11 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - air Dash queues air dash attack on attack input "
-    "during recovery B"
+    "PlayerMotionSystem - air Dash attack input during recovery B "
+    "transitions to air DashAttack on the next frame"
 ) {
-  // 後隙B中（recoveryAEnd 以降）の近接攻撃入力で dashAttackQueued が立つ
+  // 後隙B中（recoveryAEnd 以降）の近接攻撃入力は、次フレームで
+  // 空中ダッシュ攻撃（air=true）へ遷移する
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
@@ -2285,9 +2360,17 @@ TEST_CASE(
   frameData.input.attackDown = true;
   MotionSystem::Update(registry, frameData);
 
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+
+  MotionSystem::Update(registry, FrameData{.dt = 0.01});
+
   const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
-  REQUIRE(std::get<PlayerMotion::Dash>(motion).dashAttackQueued);
+  REQUIRE(std::holds_alternative<PlayerMotion::DashAttack>(motion));
+  REQUIRE(std::get<PlayerMotion::DashAttack>(motion).air);
 }
 
 TEST_CASE(
@@ -2383,8 +2466,21 @@ TEST_CASE(
   const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);
 
-  const auto& motion = registry.get<PlayerMotion::Variant>(player);
-  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+  REQUIRE(registry.get<Stamina>(player).current == 11);
+
+  // recoveryBEnd(0.45) まで進めると、DashAttack を経ずに Neutral へ戻る
+  MotionSystem::Update(registry, FrameData{.dt = 0.15});
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Neutral>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
   REQUIRE(registry.get<Stamina>(player).current == 11);
 }
 

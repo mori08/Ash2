@@ -9,8 +9,8 @@ ArenaConfig ArenaConfig::FromToml(const TOMLValue& toml) {
       .halfD = t.get<double>(U"half_d"),
   };
 
-  // BoundarySystem の Clamp 下限（-half + radius）が上限（half - radius）を
-  // 超えないよう、half は正でなければならない
+  // half は正でなければならない。BoundarySystem の Clamp 下限が上限を
+  // 超えない条件（half >= radius）は、半径を知らないここでは確かめない
   if (cfg.halfW <= 0.0 || cfg.halfD <= 0.0) {
     throw Error{U"half_w か half_d が正でない"};
   }
