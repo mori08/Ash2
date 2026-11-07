@@ -213,6 +213,7 @@
     <ClCompile Include="tests\TestPlayerConfig.cpp" />
     <ClCompile Include="tests\TestTomlTable.cpp" />
     <ClCompile Include="tests\TestScenarioData.cpp" />
+    <ClCompile Include="tests\TestScenarioPhase.cpp" />
     <ClCompile Include="tests\TestStageData.cpp" />
     <ClCompile Include="tests\TestStagePhase.cpp" />
     <ClCompile Include="tests\TestWaitPhase.cpp" />

@@ -648,13 +648,13 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 |---|---|
 | `TestWorldPos.cpp` | `WorldPos` の座標変換・接地判定 |
 | `TestDrawSystem.cpp` | `DrawOrderLess` |
-| `TestMovementSystem.cpp` | `MovementSystem` |
+| `TestMovementSystem.cpp` | `MovementSystem` の3軸の移動・`Hitstop` 除外 |
 | `TestGravitySystem.cpp` | `GravitySystem` の加速・地面クランプ・`Hitstop` 除外 |
 | `TestMotionTimeline.cpp` | `MotionTimeline` の区間境界 |
 | `TestBoundarySystem.cpp` | `BoundarySystem` の境界クランプ |
 | `TestAttachmentSystem.cpp` | `AttachmentSystem` の座標伝播（子・孫・複数の兄弟） |
 | `TestHierarchy.cpp` | `Hierarchy` の連結リスト操作（Attach/Detach/DestroyWithChildren）と `Children` による子の範囲 |
-| `TestHitSystem.cpp` | `HitSystem` の重複ヒット防止・root 解決・`Team` による同陣営スキップ |
+| `TestHitSystem.cpp` | `HitSystem` の重なり判定・`Invincible` 除外・重複ヒット防止・root 解決・`Team` による同陣営スキップ |
 | `TestLockOnSystem.cpp` | `LockOnSystem` の `AimPoint`/`Project`/`Contains`/`SelectByDirection`、マウス規則・スティック規則によるロック対象更新とレティクル同期 |
 | `TestHitReactionSystem.cpp` | `HitReactionSystem` のリアクション適用・ヒットストップ付与 |
 | `TestHitstopSystem.cpp` | `HitstopSystem` |
@@ -676,6 +676,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestStagePhase.cpp` | `StagePhase::onAfterPush` の未登録 `stageName` 検証 |
 | `TestAnimationViewerPhase.cpp` | `AnimationViewerPhase::onAfterPush` の未登録 `dataKey` 検証 |
 | `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset |
+| `TestScenarioPhase.cpp` | `ScenarioPhase` のステップの進行・終了時の Pop・未登録セクションの検証 |
 | `TestWaitPhase.cpp` | `WaitPhase` |
 | `TestInputConfig.cpp` | `InputConfig::FromToml`（欠落・範囲の検証） |
 | `TestInputDeviceSelector.cpp` | `InputDeviceSelector::ChooseDevice`（カーソル移動の積算による切り替え・切断フォールバック） |

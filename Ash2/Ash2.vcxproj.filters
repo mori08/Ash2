@@ -435,6 +435,9 @@
     <ClCompile Include="tests\TestScenarioData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestScenarioPhase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestStageData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

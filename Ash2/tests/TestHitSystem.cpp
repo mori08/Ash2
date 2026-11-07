@@ -6,10 +6,66 @@
 #include "Component/Collider.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Hp.hpp"
+#include "Component/Invincible.hpp"
 #include "Component/Team.hpp"
 #include "Component/WorldPos.hpp"
 #include "Config/ReactionLevel.hpp"
 #include "System/HitSystem.hpp"
+
+namespace {
+
+/// @brief 半径 10 の球（線分の長さ 0 のカプセル）
+const Collider kSphere{
+    .segmentStart = {0.0, 0.0, 0.0},
+    .segmentEnd = {0.0, 0.0, 0.0},
+    .radius = 10.0
+};
+
+/// @brief w の位置に Player 陣営の攻撃（ダメージ 5）を生成する
+entt::entity MakeAttacker(entt::registry& registry, double w) {
+  const auto attacker = registry.create();
+  registry.emplace<WorldPos>(attacker, WorldPos{.w = w});
+  registry.emplace<Collider>(attacker, kSphere);
+  registry.emplace<Attack>(attacker, Attack{.damage = 5});
+  registry.emplace<Team>(attacker, Team::Player);
+  return attacker;
+}
+
+/// @brief w の位置に Enemy 陣営の被弾対象（HP 100）を生成する
+entt::entity MakeTarget(entt::registry& registry, double w) {
+  const auto target = registry.create();
+  registry.emplace<WorldPos>(target, WorldPos{.w = w});
+  registry.emplace<Collider>(target, kSphere);
+  registry.emplace<Hp>(target, Hp{.max = 100, .current = 100});
+  registry.emplace<Team>(target, Team::Enemy);
+  return target;
+}
+
+}  // namespace
+
+TEST_CASE("HitSystem - separated colliders do not hit") {
+  // 中心間 25 は半径の和 20 を超えるため重ならない
+  entt::registry registry;
+  MakeAttacker(registry, 0.0);
+  const auto target = MakeTarget(registry, 25.0);
+
+  const auto hits = HitSystem::Update(registry);
+
+  REQUIRE(hits.isEmpty());
+  REQUIRE(registry.get<Hp>(target).current == 100);
+}
+
+TEST_CASE("HitSystem - an Invincible target is not hit") {
+  entt::registry registry;
+  MakeAttacker(registry, 0.0);
+  const auto target = MakeTarget(registry, 5.0);
+  registry.emplace<Invincible>(target);
+
+  const auto hits = HitSystem::Update(registry);
+
+  REQUIRE(hits.isEmpty());
+  REQUIRE(registry.get<Hp>(target).current == 100);
+}
 
 TEST_CASE("HitSystem - no repeated damage from multi-frame attack") {
   // 複数フレーム持続する攻撃で2回目以降ダメージが入らない

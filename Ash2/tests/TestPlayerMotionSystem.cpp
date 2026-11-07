@@ -444,6 +444,98 @@ TEST_CASE("PlayerMotionSystem - melee hitbox does not hit its owner") {
   REQUIRE(registry.get<Hp>(player).current < 100);
 }
 
+TEST_CASE(
+    "PlayerMotionSystem - Neutral move input sets velocity, facing and the "
+    "move clip"
+) {
+  // 移動速度は moveAxis * speed(100.0)。向きは横方向の入力に従う
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  FrameData frameData{};
+  frameData.input.moveAxis = Vec2{0.6, 0.8};
+  MotionSystem::Update(registry, frameData);
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(60.0));
+  REQUIRE(vel.d == Approx(80.0));
+  REQUIRE(registry.get<SpriteAnimation>(player).facingRight);
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"move");
+
+  frameData.input.moveAxis = Vec2{-1.0, 0.0};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE_FALSE(registry.get<SpriteAnimation>(player).facingRight);
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Neutral without move input stops and keeps facing"
+) {
+  // 入力がなければ止まって idle になり、向きは直前のまま
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Velocity>(player).w = 100.0;
+  auto& anim = registry.get<SpriteAnimation>(player);
+  anim.facingRight = true;
+  anim.currentClip = U"move";
+
+  MotionSystem::Update(registry, FrameData{});
+
+  const auto& vel = registry.get<Velocity>(player);
+  REQUIRE(vel.w == Approx(0.0));
+  REQUIRE(vel.d == Approx(0.0));
+  REQUIRE(registry.get<SpriteAnimation>(player).facingRight);
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"idle");
+}
+
+TEST_CASE("PlayerMotionSystem - Neutral while falling plays jump_fall") {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<WorldPos>(player).h = 50.0;
+  registry.get<Velocity>(player).h = -10.0;
+
+  MotionSystem::Update(registry, FrameData{});
+
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"jump_fall");
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Landing stops horizontal movement and returns to "
+    "Neutral on expiry"
+) {
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+  registry.get<Velocity>(player).w = 100.0;
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Landing{.timer = 0.20}
+  );
+
+  // 硬直中は移動入力があっても横移動しない
+  FrameData frameData{.dt = 0.15};
+  frameData.input.moveAxis = Vec2{1.0, 0.0};
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Landing>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+  REQUIRE(registry.get<Velocity>(player).w == Approx(0.0));
+  REQUIRE(registry.get<SpriteAnimation>(player).currentClip == U"landing");
+
+  MotionSystem::Update(registry, FrameData{.dt = 0.15});
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Neutral>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+}
+
 TEST_CASE("PlayerMotionSystem - no attack input keeps Neutral") {
   // 攻撃入力がない場合は Neutral のまま
   entt::registry registry;
