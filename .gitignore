@@ -99,7 +99,7 @@ __pycache__/
 
 # Saved local files
 **/App/AS_DEBUG/
-**/App/Screenshot/
+**/screenshots/
 
 # ============================================================
 # vcpkg

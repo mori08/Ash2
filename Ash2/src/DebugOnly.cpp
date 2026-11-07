@@ -77,6 +77,10 @@ void OpenDebugConsole() {
   APP_LOG(U"=== Debug Build ===");
 }
 
+void SetScreenshotDirectory() {
+  ScreenCapture::SetScreenshotDirectory(U"screenshots/");
+}
+
 void UpdateConfigReload(entt::registry& registry) {
   if (kConfigReloadKey.down()) {
     ReloadConfig(registry);

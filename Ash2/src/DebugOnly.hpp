@@ -14,6 +14,9 @@ void RunTestsIfRequested();
 /// @brief デバッグ出力の準備を行う
 void OpenDebugConsole();
 
+/// @brief スクリーンショットの保存先を App/screenshots/ にする
+void SetScreenshotDirectory();
+
 /// @brief 設定リロードキーが押されていれば設定を再読込する
 void UpdateConfigReload(entt::registry& registry);
 
@@ -23,6 +26,7 @@ void DrawColliders(const entt::registry& registry);
 #else
 inline void RunTestsIfRequested() {}
 inline void OpenDebugConsole() {}
+inline void SetScreenshotDirectory() {}
 inline void UpdateConfigReload(entt::registry&) {}
 inline void DrawColliders(const entt::registry&) {}
 #endif
