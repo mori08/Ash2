@@ -10,6 +10,7 @@ CDB=cdbX64.exe  # WinDbg の実行エイリアス（本体の cdb.exe はバー�
 LOG_DIR="$REPO_ROOT/logs"
 DUMP="$LOG_DIR/crash.dmp"
 CDB_LOG="$LOG_DIR/cdb.log"
+SCREENSHOT_DIR="$REPO_ROOT/Ash2/App/screenshots"
 
 if [[ ! -f "$EXE" ]]; then
   echo "ERROR: 実行ファイルが見つかりません: $EXE"
@@ -30,6 +31,7 @@ fi
 
 mkdir -p "$LOG_DIR"
 rm -f "$DUMP"
+rm -f "$SCREENSHOT_DIR"/*.png
 
 # 止まったときの処理（全イベント共通）
 ON_CRASH=".lastevent; .dump /ma /o $DUMP; q"

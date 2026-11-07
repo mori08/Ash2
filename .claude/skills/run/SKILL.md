@@ -1,6 +1,6 @@
 ---
 name: run
-description: Run the app under cdb (tools/run-cdb.sh) in the background and report the result. Use when asked to run, start, or test the app.
+description: Run the app under cdb (tools/run-cdb.sh) in the background and report the result. Use when asked to run, start, or test the app, or to check screenshots while it runs.
 ---
 
 `./tools/run-cdb.sh` をバックグラウンドで起動し、終了したら結果を報告する。
@@ -30,6 +30,32 @@ description: Run the app under cdb (tools/run-cdb.sh) in the background and repo
   - 指定のフレームのローカル変数: `.frame <番号>; dv /t`
   - 上から6フレームのローカル変数: `dx -r2 @$curstack.Frames.Take(6).Select(f => f.LocalVariables)`
   - 引数は `kP` ではなく `dx` で見る
+
+## スクリーンショット
+
+- 保存先は `Ash2/App/screenshots/`。`tools/run-cdb.sh` が起動時に PNG を消す
+- 撮影キーは PrintScreen と Shift などの同時押しを案内する。F12 は案内しない
+- 「確認して」と言われたら、最新の画像を Read で読む
+
+### 自動確認
+
+「撮影しながら確認する」と頼まれたときだけ、起動と同時に Monitor を `timeout_ms: 1800000` で次のコマンドで動かす。
+
+```bash
+dir=Ash2/App/screenshots
+last=$(date +%Y%m%d-%H%M%S)
+while sleep 1; do
+  new=$(ls "$dir" 2>/dev/null | grep '\.png$' | tail -n 1)
+  if [[ "$new" > "$last" ]]; then
+    echo "$new"
+    last=$new
+  fi
+done
+```
+
+- 通知されたファイルを Read で読み、問題点と気づいた点だけを短く伝える
+- ゲームの終了を通知されたら TaskStop で止める
+- 期限切れでは再開せず、頼まれたときに再開する
 
 ## 注意
 
