@@ -659,7 +659,8 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestHitReactionSystem.cpp` | `HitReactionSystem` のリアクション適用・ヒットストップ付与 |
 | `TestHitstopSystem.cpp` | `HitstopSystem` |
 | `TestPlayerMotionSystem.cpp` | プレイヤー各状態の `Tick()` |
-| `TestEnemyMotionSystem.cpp` | 敵各状態の `Tick()`、`EnemySystem` |
+| `TestEnemyMotionSystem.cpp` | 敵各状態の `Tick()` |
+| `TestEnemySystem.cpp` | `EnemySystem` の `Defeated` 満了時の破棄（子を含む） |
 | `TestFadeOutSystem.cpp` | `FadeOutSystem` の `DrawColor::color.a` 減衰・満了時の破棄 |
 | `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件（着弾・最大射程超・射程内での存続） |
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |

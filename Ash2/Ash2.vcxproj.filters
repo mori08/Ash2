@@ -381,6 +381,9 @@
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestEnemySystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestFadeOutSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
