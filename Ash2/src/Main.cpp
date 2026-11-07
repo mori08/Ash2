@@ -62,6 +62,7 @@ void Run() {
 void Main() {
   DebugOnly::RunTestsIfRequested();
   DebugOnly::OpenDebugConsole();
+  DebugOnly::SetScreenshotDirectory();
 
   try {
     Run();
