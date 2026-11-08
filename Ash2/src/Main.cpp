@@ -17,12 +17,13 @@
 
 namespace {
 
-/// @brief ウィンドウが閉じられるまでフレームの更新と描画を繰り返す
+/// @brief ウィンドウが閉じられるか終了が要求されるまで、フレームの更新と描画を
+/// 繰り返す
 void RunGameLoop(
     entt::registry& registry, InputDeviceSelector& inputSelector,
     PhaseStack& phaseStack
 ) {
-  while (System::Update()) {
+  while (not phaseStack.isExitRequested() && System::Update()) {
     const FrameData frameData{
         .dt = Scene::DeltaTime(),
         .input = inputSelector.update(registry.ctx().get<InputConfig>()),

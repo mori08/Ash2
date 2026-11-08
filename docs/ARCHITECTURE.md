@@ -126,7 +126,7 @@ EnTT を使用し、実体（Entity）とデータ（Component）、処理（Sys
 ### フェーズは自分の終わりだけを知る
 
 先頭のフェーズ（`IPhase`）の `update` だけが毎フレーム呼ばれ、`PhaseCommand`（`None` / `Pop` /
-`Push` / `Reset`）を返す。スタックを実際に操作するのは `PhaseStack` だけで、フェーズは意図を
+`Push` / `Reset` / `Exit`）を返す。スタックを実際に操作するのは `PhaseStack` だけで、フェーズは意図を
 返すに留まる。
 
 この形のため、フェーズは**次に何が動くかを知らない**。自分が終わったら `Pop` を返すだけで、
@@ -144,10 +144,16 @@ EnTT を使用し、実体（Entity）とデータ（Component）、処理（Sys
 知らない。
 
 ```
-ScenarioPhase          ← 下に残り続ける
-  └ push → TestMenuPhase   ← Pop すると ScenarioPhase の続きへ戻る
-       └ push → StagePhase
+ScenarioPhase(GameStart)   ← TitleStart の reset まで下に残る
+  └ push → TitlePhase
+       └ push → ScenarioPhase(TitleStart)
+── reset（全 Pop）──
+ScenarioPhase(Stage1)
+  └ push → StagePhase
 ```
+
+`Reset` はスタックの全フェーズを `onBeforePop` を経て取り除く。開始演出の最後のステップが
+本編へ `Reset` するので、`TitlePhase` は自分の終わりを知らずに済む。
 
 TOML を読むのは Config 層で、具象フェーズを知らない。
 

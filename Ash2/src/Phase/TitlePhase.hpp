@@ -6,6 +6,9 @@
 
 #include "IPhase.hpp"
 
+/// 「はじめる」で積む開始演出のシナリオセクション名
+inline constexpr StringView kTitleStartSectionName = U"TitleStart";
+
 /// @brief タイトル画面フェーズ（ロゴと「はじめる」「おわる」のメニュー）
 class TitlePhase : public IPhase {
  public:

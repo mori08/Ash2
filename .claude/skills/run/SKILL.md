@@ -13,6 +13,12 @@ description: Run the app under cdb (tools/run-cdb.sh) in the background and repo
    - クラッシュなら `Last event: ...` と `ERROR: クラッシュしました。ダンプ: <パス>` が出力され、終了コードは 1。`Last event` の行とダンプのパスを報告する
    - ユーザーが閉じる前にゲームが終了したら、ユーザーに確認する
 
+## 開始セクションの指定
+
+`./tools/run-cdb.sh --section <name>` で `scenario.toml` のセクションから起動する。
+
+- 起動先は既定でタイトル画面。TestMenu へ行くときは `--section TestMenu` を渡す
+
 ## クラッシュの調査
 
 調査を頼まれたら、`./tools/read-dump.sh` で `logs/crash.dmp` の要約を読む。
@@ -71,13 +77,14 @@ done
 - 失敗したら終了コードと出力を報告する。理由は `./tools/read-dump.sh` の `[message]` で確認する
 - `0` 秒は最初のフレームを撮る。`ScenarioPhase` は 1 フレーム 1 ステップ進むため、画面が未完成のことがある
 - 撮影中、ゲームのウィンドウがデスクトップに一瞬表示される
-- ステージなど途中の画面を撮るときは、`scenario.toml` に撮影用のセクションを足す
+- ステージは `./tools/capture.sh Stage1 <秒>` で撮る
+- それ以外の途中の画面を撮るときは、`scenario.toml` に撮影用のセクションを足す
 
 ```toml
-[[Stage1]]
+[[CapturePlayerAnimation]]
 action = "push"
-phase = "stage"
-param = "stage1"
+phase = "animation_viewer"
+param = "player"
 ```
 
 ## 注意

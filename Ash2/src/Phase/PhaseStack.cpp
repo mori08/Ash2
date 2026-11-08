@@ -28,6 +28,7 @@ void PhaseStack::update(entt::registry& registry, const FrameData& frameData) {
             }
             push(registry, std::move(cmd.nextPhase));
           },
+          [&](const PhaseCommand::Exit&) { m_exitRequested = true; },
       },
       command.value()
   );

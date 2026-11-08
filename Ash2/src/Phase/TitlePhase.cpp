@@ -9,6 +9,7 @@
 #include "Debug.hpp"
 #include "Factory/MenuFactory.hpp"
 #include "FrameData.hpp"
+#include "Phase/ScenarioPhase.hpp"
 #include "System/FocusColorSystem.hpp"
 #include "System/MenuSystem.hpp"
 #include "UiFonts.hpp"
@@ -69,13 +70,18 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
   AddButtonLook(registry, quitButton, U"おわる");
 
   m_actions.clear();
+  // 開始演出は自分の上に積む。演出側が Reset するため、Title は終わりを待たない
   m_actions[startButton] = [] {
     APP_LOG(U"[TitlePhase] はじめる が押された");
-    return PhaseCommand{PhaseCommand::None{}};
+    return PhaseCommand{PhaseCommand::Push{
+        .nextPhase = std::make_unique<ScenarioPhase>(
+            ScenarioPhase::Param{.sectionName = String{kTitleStartSectionName}}
+        )
+    }};
   };
   m_actions[quitButton] = [] {
     APP_LOG(U"[TitlePhase] おわる が押された");
-    return PhaseCommand{PhaseCommand::None{}};
+    return PhaseCommand{PhaseCommand::Exit{}};
   };
 }
 

@@ -340,6 +340,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | `Pop` | 先頭フェーズを取り出す |
 | `Push(phase)` | 新フェーズを積む |
 | `Reset(phase)` | スタックを全クリアして新フェーズを積む |
+| `Exit` | アプリの終了を要求する。`PhaseStack` が覚え（`isExitRequested()`）、`Main.cpp` のゲームループが見て抜ける。積まれたフェーズの `onBeforePop` は呼ばれない |
 
 ### 実装済みフェーズ
 
@@ -347,7 +348,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）と、「はじめる」「おわる」の2ボタンのメニュー（`MenuFactory` で組み、文字は `TextDrawable`、選択色は `FocusColor`）を `HudSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。毎フレーム `MenuSystem::Update` → `FocusColorSystem::Update` を呼び、押されたボタンを対応表（`HashTable<entt::entity, std::function<PhaseCommand()>>`）で引いて処理の戻り値を返す。処理は今はどちらも `APP_LOG` を出して `None` を返すだけで、遷移・終了は持たない（骨組み）。選択色は #386 で置き換える仮のもの。`onBeforePop` でメニューを `DestroyWithChildren` する |
+| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）と、「はじめる」「おわる」の2ボタンのメニュー（`MenuFactory` で組み、文字は `TextDrawable`、選択色は `FocusColor`）を `HudSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。毎フレーム `MenuSystem::Update` → `FocusColorSystem::Update` を呼び、押されたボタンを対応表（`HashTable<entt::entity, std::function<PhaseCommand()>>`）で引いて処理の戻り値を返す。「はじめる」は `kTitleStartSectionName`（`TitleStart`）を指す `ScenarioPhase` を `Push` し（そのセクションが本編へ `Reset` する。中身は #386 で差し替える仮のもの）、「おわる」は `Exit` を返す。`GameSetup` が `TitleStart` セクションの存在を起動時に検証する。選択色は #386 で置き換える仮のもの。`onBeforePop` でメニューを `DestroyWithChildren` する |
 | [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `Error` を投げる。Esc の Pop は持たない |
 | [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |
@@ -358,7 +359,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 
 | フェーズ名 | 生成される型 | TOML パラメータ |
 |---|---|---|
-| `test_menu` | `TestMenuPhase` | なし |
+| `test_menu` | `TestMenuPhase` | なし（起動先は `title`。`ASH2_START_SECTION=TestMenu`、または `tools/run-cdb.sh --section TestMenu` で行く） |
 | `title` | `TitlePhase` | なし |
 | `animation_viewer` | `AnimationViewerPhase` | `param`（`AnimationDataRegistry` のキー） |
 | `stage` | `StagePhase` | `param`（`StageData` のステージ名） |
@@ -680,14 +681,14 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestGaugeSystem.cpp` | `GaugeSystem` の割合の幅への反映・0〜1 へのクランプ・`max == 0` 時の幅 0・ゲージごとの参照先 |
 | `TestStagePhase.cpp` | `StagePhase::onAfterPush` の未登録 `stageName` 検証 |
 | `TestAnimationViewerPhase.cpp` | `AnimationViewerPhase::onAfterPush` の未登録 `dataKey` 検証 |
-| `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset |
+| `TestPhaseStack.cpp` | `PhaseStack` の push / pop / reset / exit |
 | `TestScenarioPhase.cpp` | `ScenarioPhase` のステップの進行・終了時の Pop・未登録セクションの検証 |
 | `TestWaitPhase.cpp` | `WaitPhase` |
 | `TestInputConfig.cpp` | `InputConfig::FromToml`（欠落・範囲の検証） |
 | `TestInputDeviceSelector.cpp` | `InputDeviceSelector::ChooseDevice`（カーソル移動の積算による切り替え・切断フォールバック） |
 | `TestXInputAction.cpp` | `XInputAction::StickDirection`/`HeldStickDirection`（スティック→方向、ヒステリシス） |
 | `TestMenuSystem.cpp` | `MenuSystem::Update` の選択の規則（カーソル・方向・決定・クリック）。`MenuFactory` で組んだメニューを使う |
-| `TestTitlePhase.cpp` | `TitlePhase` のメニュー生成・方向入力での選択と色・各ボタンの決定・`onBeforePop` での破棄 |
+| `TestTitlePhase.cpp` | `TitlePhase` のメニュー生成・方向入力での選択と色・「はじめる」が `Push`、「おわる」が `Exit` を返すこと・`onBeforePop` での破棄 |
 
 ---
 

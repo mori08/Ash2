@@ -12,6 +12,9 @@ class PhaseStack {
 
   void update(entt::registry& registry, const FrameData& frameData);
 
+  /// @brief `PhaseCommand::Exit` を受け取り、アプリの終了が要求されたか
+  [[nodiscard]] bool isExitRequested() const { return m_exitRequested; }
+
  private:
   /// @brief スタックの先頭フェーズを取り出す
   void pop(entt::registry& registry);
@@ -21,4 +24,7 @@ class PhaseStack {
 
   /// スタック（末尾が最前面）
   Array<std::unique_ptr<IPhase>> m_stack;
+
+  /// アプリの終了が要求されたか
+  bool m_exitRequested = false;
 };
