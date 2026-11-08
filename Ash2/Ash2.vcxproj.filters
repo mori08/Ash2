@@ -255,6 +255,9 @@
     <ClCompile Include="System\FadeOutSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\FocusColorSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="System\HitReactionSystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
@@ -390,6 +393,9 @@
     <ClCompile Include="tests\TestFadeOutSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestFocusColorSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestHitReactionSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -454,6 +460,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestMenuSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestTitlePhase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestXInputAction.cpp">
@@ -1362,6 +1371,12 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="System\FadeOutSystem.hpp">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\FocusColor.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\FocusColorSystem.hpp">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Component\Gravity.hpp">
