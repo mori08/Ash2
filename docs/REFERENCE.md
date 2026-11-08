@@ -46,6 +46,7 @@
 | [`Menu`](../Ash2/src/Component/Menu.hpp) | メニューの親エンティティ（`Hierarchy` と併用、子はボタンだけ）。選択なしで方向入力があったときに選ぶ子 `defaultButton` を持つ。`Button`/`Focused` と同じヘッダにまとめている |
 | [`Button`](../Ash2/src/Component/Menu.hpp) | メニューの子のボタン。`ScreenPos::pos` を中心とする当たり範囲 `size` と、上下左右の移動先 `up`/`down`/`left`/`right`（同じメニューの子、ない方向は `entt::null`）を持つ |
 | [`Focused`](../Ash2/src/Component/Menu.hpp) | 選択中のボタンに付けるタグ（データなし）。選択状態はここに一本化し、`Menu` には持たせない |
+| [`FocusColor`](../Ash2/src/Component/FocusColor.hpp) | 選択状態に応じた描画色（`normal`/`focused`）。`FocusColorSystem` が `Focused` の有無で `DrawColor` へ書く。メニューの仮の見た目用 |
 | [`FadeOut`](../Ash2/src/Component/FadeOut.hpp) | 透過しながら消滅する途中であることを示すコンポーネント（`duration`/`remaining`）。`FadeOutSystem` が `DrawColor::color.a` を更新し、満了時にエンティティを破棄する |
 
 ---
@@ -182,7 +183,7 @@
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | BattleSystem 内（MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
 | [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | BattleSystem 内（GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `ArenaConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
 | [`GaugeSystem::Update`](../Ash2/src/System/GaugeSystem.hpp) | 毎フレーム（フェーズ後） | `HpGauge`/`StaminaGauge` + `GaugeSource` + `Drawable` を持つエンティティの `RectDrawable` 幅を、`GaugeSource` が指す `Hp`/`Stamina` の `current / max`（0〜1 にクランプ）× `fullWidth` に更新する。`max <= 0` は幅 0。参照先が無効、または自身の `Drawable` が `RectDrawable` でない場合は `Error` を投げる |
-| [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | 現在はテストのみ（フェーズからは未使用） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`ScreenPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（`menuEntity` が `Menu` を持たない、選択の移動先が子でない、当たり判定で辿った子が `Button` + `ScreenPos` を持たない）は、その箇所を使ったときに `Error` を投げる。見た目は扱わない |
+| [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | フェーズ内（TitlePhase が毎フレーム1回呼出） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`ScreenPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（`menuEntity` が `Menu` を持たない、選択の移動先が子でない、当たり判定で辿った子が `Button` + `ScreenPos` を持たない）は、その箇所を使ったときに `Error` を投げる。見た目は扱わない |
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋BattleSystem 内（BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。BattleSystem では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が持つ `Team` の値が等しいヒットはスキップする（`Team` は両者が持つ前提で、欠落を検査しない）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。被弾側がどちらのモーションも持たなければ `throw Error`。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
@@ -194,6 +195,7 @@
 | [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
 | [`DebugDrawSystem::DrawBoundary`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DrawColliders` と同じ F2 トグルで `DrawColliders` の直後に呼ばれる） | `ArenaConfig` の半幅から4隅を `h = 0` の平面上で `WorldToScreen` へ投影し、対角2点から組んだ `RectF` の輪郭を描く（平行投影のため長方形のまま映る） |
 | [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | `ScreenPos`+`Drawable` を `(layer, entity)` の昇順にソートして `DrawOne` で描く。`layer` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。色は `DrawColor`（未所持は `kDefaultDrawColor`）から取る |
+| [`FocusColorSystem::Update`](../Ash2/src/System/FocusColorSystem.hpp) | フェーズ内（TitlePhase が `MenuSystem::Update` の直後に呼出） | `FocusColor` を持つエンティティの `DrawColor`（`get_or_emplace` で確保）に、`Focused` 付きなら `focused`、付いていなければ `normal` を書く。`Focused` 付きと `exclude<Focused>` の2ビューで扱う |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
 
@@ -345,7 +347,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）を `HudSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。遷移は持たない（骨組み） |
+| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）と、「はじめる」「おわる」の2ボタンのメニュー（`MenuFactory` で組み、文字は `TextDrawable`、選択色は `FocusColor`）を `HudSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。毎フレーム `MenuSystem::Update` → `FocusColorSystem::Update` を呼び、押されたボタンを対応表（`HashTable<entt::entity, std::function<PhaseCommand()>>`）で引いて処理の戻り値を返す。処理は今はどちらも `APP_LOG` を出して `None` を返すだけで、遷移・終了は持たない（骨組み）。選択色は #386 で置き換える仮のもの。`onBeforePop` でメニューを `DestroyWithChildren` する |
 | [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `Error` を投げる。Esc の Pop は持たない |
 | [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |
@@ -466,7 +468,9 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 
 - `Ash2/App/assets/config/title.toml` から読み込むタイトル画面の配置の設定。F5 で再読込される
 - ロゴの y 座標 `logoY` を持つ。x 座標は画面中央固定のため持たない
-- `TitlePhase::onAfterPush` で一度だけ読むため、F5 再読込は表示中のロゴには反映されない
+- メニューの配置として、1つ目のボタンの中心の y `menuY`、ボタン中心同士の縦の間隔 `menuSpacing`、
+  当たり範囲の幅 `buttonWidth`・高さ `buttonHeight` を持つ。ボタンの x 座標は画面中央固定
+- `TitlePhase::onAfterPush` で一度だけ読むため、F5 再読込は表示中のロゴ・ボタンには反映されない
 
 ### [`InputConfig`](../Ash2/src/Config/InputConfig.hpp)
 
@@ -662,6 +666,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestEnemyMotionSystem.cpp` | 敵各状態の `Tick()` |
 | `TestEnemySystem.cpp` | `EnemySystem` の `Defeated` 満了時の破棄（子を含む） |
 | `TestFadeOutSystem.cpp` | `FadeOutSystem` の `DrawColor::color.a` 減衰・満了時の破棄 |
+| `TestFocusColorSystem.cpp` | `FocusColorSystem` の選択中・非選択の色、選択の移動への追従 |
 | `TestProjectileSystem.cpp` | `ProjectileSystem` の消滅条件（着弾・最大射程超・射程内での存続） |
 | `TestNameLookup.cpp` | `NameLookupSystem` のシグナル同期 |
 | `TestPlayerConfig.cpp` | `PlayerConfig::FromToml` |
@@ -682,6 +687,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestInputDeviceSelector.cpp` | `InputDeviceSelector::ChooseDevice`（カーソル移動の積算による切り替え・切断フォールバック） |
 | `TestXInputAction.cpp` | `XInputAction::StickDirection`/`HeldStickDirection`（スティック→方向、ヒステリシス） |
 | `TestMenuSystem.cpp` | `MenuSystem::Update` の選択の規則（カーソル・方向・決定・クリック）。`MenuFactory` で組んだメニューを使う |
+| `TestTitlePhase.cpp` | `TitlePhase` のメニュー生成・方向入力での選択と色・各ボタンの決定・`onBeforePop` での破棄 |
 
 ---
 

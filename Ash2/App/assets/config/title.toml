@@ -1,1 +1,5 @@
 logo_y = 160.0
+menu_y = 440.0
+menu_spacing = 60.0
+button_width = 200.0
+button_height = 48.0
