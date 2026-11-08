@@ -9,6 +9,7 @@
 #include "Config/PlayerConfig.hpp"
 #include "Config/ScenarioData.hpp"
 #include "Config/TitleConfig.hpp"
+#include "DebugOnly.hpp"
 #include "Factory/StageData.hpp"
 #include "Phase/PhaseLoaders.hpp"
 #include "System/HierarchySystem.hpp"
@@ -80,6 +81,10 @@ void InitializeRegistry(entt::registry& registry) {
   );
   if (!scenario.sections.contains(String{kInitSectionName})) {
     throw Error{U"シナリオに init セクションがない"};
+  }
+  if (const auto start = DebugOnly::StartSectionOverride();
+      start && !scenario.sections.contains(*start)) {
+    throw Error{U"シナリオに開始セクション " + *start + U" がない"};
   }
   registry.ctx().emplace<ScenarioData>(std::move(scenario));
 }
