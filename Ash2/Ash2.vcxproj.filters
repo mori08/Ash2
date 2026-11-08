@@ -357,6 +357,9 @@
     <ClCompile Include="tests\TestAttachmentSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestDebugOnly.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestHierarchy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

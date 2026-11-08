@@ -51,9 +51,105 @@ void ReloadConfig(entt::registry& registry) {
   registry.ctx().get<AnimationDataRegistry>() = std::move(anims);
 }
 
+/// @brief 環境変数を読む。未設定と空文字は区別せず、どちらも空文字を返す
+/// @note getenv_s が返す長さは終端文字を含む
+String ReadEnv(const char* name) {
+  size_t len = 0;
+  if (getenv_s(&len, nullptr, 0, name) != 0) {
+    throw Error{U"環境変数を読めない: " + Unicode::Widen(name)};
+  }
+  if (len <= 1) {
+    return String{};
+  }
+  std::string buffer(len, '\0');
+  if (getenv_s(&len, buffer.data(), buffer.size(), name) != 0) {
+    throw Error{U"環境変数を読めない: " + Unicode::Widen(name)};
+  }
+  buffer.resize(len - 1);
+  return Unicode::FromUTF8(buffer);
+}
+
+/// @brief 撮影用の環境変数の解析結果
+struct CaptureEnv {
+  /// ASH2_START_SECTION の値。未指定なら none
+  Optional<String> startSection;
+  /// ASH2_CAPTURE_AFTER による撮影の進行。未指定なら none
+  Optional<DebugOnly::AutoCaptureProgress> progress;
+};
+
+/// @brief 撮影用の環境変数を初回アクセス時に 1 度だけ解析する
+/// @throw Error ASH2_CAPTURE_AFTER が不正な場合
+CaptureEnv& GetCaptureEnv() {
+  static CaptureEnv env = [] {
+    CaptureEnv result;
+    if (String section = ReadEnv("ASH2_START_SECTION"); !section.isEmpty()) {
+      result.startSection = std::move(section);
+    }
+    if (const auto after =
+            DebugOnly::ParseCaptureAfter(ReadEnv("ASH2_CAPTURE_AFTER"))) {
+      result.progress.emplace(*after);
+    }
+    return result;
+  }();
+  return env;
+}
+
 }  // namespace
 
 namespace DebugOnly {
+
+Optional<double> ParseCaptureAfter(StringView text) {
+  if (text.isEmpty()) {
+    return none;
+  }
+  const auto value = ParseOpt<double>(text);
+  if (!value || !IsFinite(*value) || *value < 0.0) {
+    throw Error{
+        U"ASH2_CAPTURE_AFTER は 0 以上の数値で指定する: " + String{text}
+    };
+  }
+  return *value;
+}
+
+AutoCaptureProgress::AutoCaptureProgress(double captureAfter)
+    : m_captureAfter(captureAfter) {}
+
+AutoCaptureAction AutoCaptureProgress::advance(double dt) {
+  if (m_exited) {
+    return AutoCaptureAction::None;
+  }
+  // 撮影と同じフレームで終えると保存されない
+  // 保存は次の System::Update で行われるため、1 フレーム置いてから終える
+  if (m_captured) {
+    m_exited = true;
+    return AutoCaptureAction::Exit;
+  }
+  m_elapsed += dt;
+  if (m_elapsed >= m_captureAfter) {
+    m_captured = true;
+    return AutoCaptureAction::Capture;
+  }
+  return AutoCaptureAction::None;
+}
+
+Optional<String> StartSectionOverride() { return GetCaptureEnv().startSection; }
+
+void UpdateAutoCapture(double dt) {
+  auto& progress = GetCaptureEnv().progress;
+  if (!progress) {
+    return;
+  }
+  switch (progress.value().advance(dt)) {
+    case AutoCaptureAction::Capture:
+      ScreenCapture::SaveCurrentFrame();
+      break;
+    case AutoCaptureAction::Exit:
+      System::Exit();
+      break;
+    case AutoCaptureAction::None:
+      break;
+  }
+}
 
 void RunTestsIfRequested() {
   size_t envLen = 0;

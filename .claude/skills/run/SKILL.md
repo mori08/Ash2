@@ -1,6 +1,6 @@
 ---
 name: run
-description: Run the app under cdb (tools/run-cdb.sh) in the background and report the result. Use when asked to run, start, or test the app, or to check screenshots while it runs.
+description: Run the app under cdb (tools/run-cdb.sh) in the background and report the result. Use when asked to run, start, or test the app, to check screenshots while it runs, or to capture a screenshot automatically (tools/capture.sh).
 ---
 
 `./tools/run-cdb.sh` をバックグラウンドで起動し、終了したら結果を報告する。
@@ -56,6 +56,29 @@ done
 - 通知されたファイルを Read で読み、問題点と気づいた点だけを短く伝える
 - ゲームの終了を通知されたら TaskStop で止める
 - 期限切れでは再開せず、頼まれたときに再開する
+
+### 自動撮影
+
+「画面を撮って確認して」と頼まれたときは、バックグラウンドにせずフォアグラウンドで次を実行する。
+
+```bash
+./tools/capture.sh <section> <秒>
+```
+
+- `<section>` は `scenario.toml` のセクション名。`init` から撮るときは `init` を渡す
+- `<秒>` は開始からの経過秒数。1 回の起動で 1 枚撮影し、ゲームは自動で終了する
+- 成功すると保存された PNG のパスを 1 行出力する。Read で読み、問題点と気づいた点だけを短く伝える
+- 失敗したら終了コードと出力を報告する。理由は `./tools/read-dump.sh` の `[message]` で確認する
+- `0` 秒は最初のフレームを撮る。`ScenarioPhase` は 1 フレーム 1 ステップ進むため、画面が未完成のことがある
+- 撮影中、ゲームのウィンドウがデスクトップに一瞬表示される
+- ステージなど途中の画面を撮るときは、`scenario.toml` に撮影用のセクションを足す
+
+```toml
+[[Stage1]]
+action = "push"
+phase = "stage"
+param = "stage1"
+```
 
 ## 注意
 

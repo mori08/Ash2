@@ -35,6 +35,7 @@ void RunGameLoop(
     DrawSystem::Draw(registry);
     DebugOnly::DrawColliders(registry);
     HudSystem::Draw(registry);
+    DebugOnly::UpdateAutoCapture(frameData.dt);
   }
 }
 
@@ -48,9 +49,11 @@ void Run() {
   InputDeviceSelector inputSelector;
 
   PhaseStack phaseStack(
-      std::make_unique<ScenarioPhase>(
-          ScenarioPhase::Param{.sectionName = String{kInitSectionName}}
-      ),
+      std::make_unique<ScenarioPhase>(ScenarioPhase::Param{
+          .sectionName = DebugOnly::StartSectionOverride().value_or(
+              String{kInitSectionName}
+          )
+      }),
       registry
   );
 
