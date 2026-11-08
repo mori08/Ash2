@@ -79,19 +79,31 @@ TEST_CASE("TitlePhase::update - navigate focuses the start button") {
   );
 }
 
-TEST_CASE("TitlePhase::update - clicking each button returns None") {
+TEST_CASE("TitlePhase::update - clicking start returns Push") {
   entt::registry registry;
   TitlePhase phase;
   PushTitle(registry, phase);
 
-  // 対応表に処理が登録されていなければ throw するため、両方押して確かめる
-  for (const auto label : {U"はじめる"_sv, U"おわる"_sv}) {
-    const auto pos = registry.get<ScreenPos>(FindButton(registry, label)).pos;
-    const auto command = phase.update(
-        registry, WithInput(InputState{.pointerPos = pos, .clickDown = true})
-    );
-    REQUIRE(std::holds_alternative<PhaseCommand::None>(command.value()));
-  }
+  const auto pos =
+      registry.get<ScreenPos>(FindButton(registry, U"はじめる")).pos;
+  const auto command = phase.update(
+      registry, WithInput(InputState{.pointerPos = pos, .clickDown = true})
+  );
+
+  REQUIRE(std::holds_alternative<PhaseCommand::Push>(command.value()));
+}
+
+TEST_CASE("TitlePhase::update - clicking quit returns Exit") {
+  entt::registry registry;
+  TitlePhase phase;
+  PushTitle(registry, phase);
+
+  const auto pos = registry.get<ScreenPos>(FindButton(registry, U"おわる")).pos;
+  const auto command = phase.update(
+      registry, WithInput(InputState{.pointerPos = pos, .clickDown = true})
+  );
+
+  REQUIRE(std::holds_alternative<PhaseCommand::Exit>(command.value()));
 }
 
 TEST_CASE("TitlePhase::onBeforePop - destroys the logo and the menu") {

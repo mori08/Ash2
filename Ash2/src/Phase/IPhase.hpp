@@ -30,9 +30,12 @@ class PhaseCommand {
     std::unique_ptr<IPhase> nextPhase;
   };
 
-  using Value = std::variant<None, Pop, Push, Reset>;
+  /// @brief アプリを終了する
+  struct Exit {};
 
-  /// @brief 要素型（None / Pop / Push / Reset）から暗黙に構築する
+  using Value = std::variant<None, Pop, Push, Reset, Exit>;
+
+  /// @brief 要素型（None / Pop / Push / Reset / Exit）から暗黙に構築する
   template <class T>
     requires(!std::same_as<std::remove_cvref_t<T>, PhaseCommand>) &&
             std::constructible_from<Value, T>

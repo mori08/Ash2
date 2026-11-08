@@ -5,4 +5,25 @@ param = "GameStart"
 
 [[GameStart]]
 action = "push"
+phase = "title"
+
+# 開始演出（仮）。#386 で差し替える
+[[TitleStart]]
+action = "push"
+phase = "wait"
+duration = 0.5
+
+[[TitleStart]]
+action = "reset"
+phase = "scenario"
+param = "Stage1"
+
+[[Stage1]]
+action = "push"
+phase = "stage"
+param = "stage1"
+
+# 開発用。`ASH2_START_SECTION=TestMenu` で起動する
+[[TestMenu]]
+action = "push"
 phase = "test_menu"

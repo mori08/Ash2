@@ -19,6 +19,7 @@ enum class MockCommand : uint8 {
   Pop,
   Push,
   Reset,
+  Exit,
 };
 
 class MockPhase : public IPhase {
@@ -51,6 +52,8 @@ class MockPhase : public IPhase {
         return PhaseCommand::Push{.nextPhase = std::move(m_next)};
       case MockCommand::Reset:
         return PhaseCommand::Reset{.nextPhase = std::move(m_next)};
+      case MockCommand::Exit:
+        return PhaseCommand::Exit{};
     }
     return PhaseCommand::None{};
   }
@@ -154,6 +157,18 @@ TEST_CASE("PhaseStack - Reset command pops all phases then pushes new phase") {
   stack.update(registry, FrameData{});
   REQUIRE(next->updateCount == 1);
   REQUIRE(bottom->updateCount == 1);
+}
+
+TEST_CASE("PhaseStack - Exit command requests exit") {
+  entt::registry registry;
+  auto spy = std::make_shared<PhaseSpy>();
+  PhaseStack stack{
+      std::make_unique<MockPhase>(spy, MockCommand::Exit), registry
+  };
+
+  REQUIRE_FALSE(stack.isExitRequested());
+  stack.update(registry, FrameData{});
+  REQUIRE(stack.isExitRequested());
 }
 
 #endif

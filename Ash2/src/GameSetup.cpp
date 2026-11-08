@@ -12,6 +12,7 @@
 #include "DebugOnly.hpp"
 #include "Factory/StageData.hpp"
 #include "Phase/PhaseLoaders.hpp"
+#include "Phase/TitlePhase.hpp"
 #include "System/HierarchySystem.hpp"
 #include "System/NameLookup.hpp"
 #include "UiFonts.hpp"
@@ -81,6 +82,9 @@ void InitializeRegistry(entt::registry& registry) {
   );
   if (!scenario.sections.contains(String{kInitSectionName})) {
     throw Error{U"シナリオに init セクションがない"};
+  }
+  if (!scenario.sections.contains(String{kTitleStartSectionName})) {
+    throw Error{U"シナリオに TitleStart セクションがない"};
   }
   if (const auto start = DebugOnly::StartSectionOverride();
       start && !scenario.sections.contains(*start)) {

@@ -3,6 +3,16 @@
 set -euo pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# --section <name> で開始セクションを指定する（ASH2_START_SECTION を設定して起動する）
+if [[ $# -gt 0 ]]; then
+  if [[ "$1" != "--section" || $# -ne 2 ]]; then
+    echo "使い方: $0 [--section <name>]"
+    exit 1
+  fi
+  export ASH2_START_SECTION="$2"
+fi
+
 EXE="$REPO_ROOT/Ash2/App/Ash2(debug).exe"
 PDB_DIR="$REPO_ROOT/Ash2/Intermediate/Ash2/Debug"
 CDB=cdbX64.exe  # WinDbg の実行エイリアス（本体の cdb.exe はバージョン付きフォルダにある）
