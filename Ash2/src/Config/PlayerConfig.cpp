@@ -202,6 +202,7 @@ namespace {
 PlayerConfig PlayerConfig::FromToml(const TOMLValue& toml) {
   const TomlTable t{toml};
   return PlayerConfig{
+      .maxHp = t.get<int32>(U"max_hp"),
       .speed = t.get<double>(U"speed"),
       .jumpSpeed = t.get<double>(U"jump_speed"),
       .gravity = t.get<double>(U"gravity"),

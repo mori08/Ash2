@@ -8,6 +8,7 @@ namespace {
 
 /// @brief 全必須キーを満たす PlayerConfig 用 TOML（テストの基準値）
 constexpr std::string_view kFullToml =
+    "max_hp = 120\n"
     "speed = 150.0\n"
     "jump_speed = 400.0\n"
     "gravity = 900.0\n"
@@ -115,6 +116,7 @@ constexpr std::string_view kFullToml =
 TEST_CASE("PlayerConfig::FromToml - parses all fields correctly") {
   const TOMLReader reader{MemoryViewReader{kFullToml.data(), kFullToml.size()}};
   const auto cfg = PlayerConfig::FromToml(reader);
+  REQUIRE(cfg.maxHp == 120);
   REQUIRE(cfg.speed == 150.0);
   REQUIRE(cfg.jumpSpeed == 400.0);
   REQUIRE(cfg.gravity == 900.0);

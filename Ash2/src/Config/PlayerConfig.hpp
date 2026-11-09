@@ -240,6 +240,8 @@ struct DamageConfig {
 
 /// @brief プレイヤーの設定値
 struct PlayerConfig {
+  /// 最大HP
+  int32 maxHp;
   /// 横移動速度（ピクセル/秒）
   double speed;
   /// ジャンプ初速（ピクセル/秒）
