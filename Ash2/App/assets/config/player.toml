@@ -1,3 +1,4 @@
+max_hp = 100
 speed = 200.0
 jump_speed = 400.0
 gravity = 980.0

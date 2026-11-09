@@ -16,10 +16,6 @@
 #include "Config/PlayerConfig.hpp"
 #include "System/AnimationSystem.hpp"
 
-namespace {
-constexpr int32 kPlayerMaxHp = 100;
-}
-
 entt::entity PlayerFactory::Create(
     entt::registry& registry, const Param& param
 ) {
@@ -38,9 +34,7 @@ entt::entity PlayerFactory::Create(
   registry.emplace<SpriteAnimation>(
       player, SpriteAnimation{.dataKey = U"player", .currentClip = U"idle"}
   );
-  registry.emplace<Hp>(
-      player, Hp{.max = kPlayerMaxHp, .current = kPlayerMaxHp}
-  );
+  registry.emplace<Hp>(player, Hp{.max = cfg.maxHp, .current = cfg.maxHp});
   registry.emplace<Collider>(
       player,
       Collider{

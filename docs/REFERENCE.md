@@ -315,7 +315,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 
 | ファクトリ | 役割 |
 |---|---|
-| [`PlayerFactory::Create`](../Ash2/src/Factory/PlayerFactory.hpp) | プレイヤーエンティティ（ルート）を生成する。`Param::pos`（既定 `WorldPos{}`）を初期位置とし、HP はファクトリ内の定数 `kPlayerMaxHp`、コライダー寸法・重力は `PlayerConfig`（`registry.ctx()`）から読む |
+| [`PlayerFactory::Create`](../Ash2/src/Factory/PlayerFactory.hpp) | プレイヤーエンティティ（ルート）を生成する。`Param::pos`（既定 `WorldPos{}`）を初期位置とし、最大 HP・コライダー寸法・重力は `PlayerConfig`（`registry.ctx()`）から読む |
 | [`EnemyFactory::Create`](../Ash2/src/Factory/EnemyFactory.hpp) | `EnemyConfig` に基づき、`Param::pos` の位置に敵エンティティを生成する |
 | [`EnemyFactory::Param::FromToml`](../Ash2/src/Factory/EnemyFactory.hpp) | TOML のテーブルから `Param` を生成する。`w` / `d` が必須で、`h` は持たない（接地で生成する）。欠落・型違いは `throw Error` |
 | [`StageData`](../Ash2/src/Factory/StageData.hpp) | `Ash2/App/assets/config/stage.toml` から読むステージ定義（ステージ名 → `StageDefinition`。`enemies` に `EnemyFactory::Param` の配列を持つ）。`enemies` が欠落・配列でない・空のステージは `FromToml` が throw する。`EnemyFactory::Param` を持つため Config ではなく Factory に置く。`registry.ctx()` に載り、F5 で再読込される |
@@ -402,7 +402,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 ### [`PlayerConfig`](../Ash2/src/Config/PlayerConfig.hpp)
 
 - `Ash2/App/assets/config/player.toml` から読み込むプレイヤー設定
-- 基本値（移動速度 `speed`・ジャンプ初速 `jumpSpeed`・重力 `gravity`・当たり判定カプセルの
+- 基本値（最大 HP `maxHp`・移動速度 `speed`・ジャンプ初速 `jumpSpeed`・重力 `gravity`・当たり判定カプセルの
   `capsuleRadius`/`capsuleHeight`）と、`MeleeConfig` / `RangedConfig` / `DashConfig` /
   `DashAttackConfig` / `AirAttackConfig` / `StaminaConfig` / `LandingConfig` /
   `AttackEffectConfig` / `DamageConfig` / `LockConfig` の各サブ設定を持つ
