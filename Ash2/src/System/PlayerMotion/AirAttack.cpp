@@ -44,7 +44,7 @@ AirAttack MakeAirAttack(
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.airAttack.staminaCost);
 
-  SetClip(anim, U"air_attack");
+  RestartClip(anim, U"air_attack");
   return AirAttack{.elapsed = 0.0};
 }
 

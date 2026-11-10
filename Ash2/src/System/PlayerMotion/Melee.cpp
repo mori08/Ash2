@@ -63,12 +63,6 @@ std::function<Vec3(double)> MakeMeleeOffsetFn(
   throw Error{U"近接の軌道が未知の列挙値"};
 }
 
-/// @brief クリップ名が同じでも再生位置を先頭へ強制的に戻す
-void RestartClip(SpriteAnimation& anim, const String& clip) {
-  anim.currentClip = clip;
-  anim.elapsed = 0.0;
-}
-
 /// @brief 近接判定用ヒットボックスを1つ更新する
 ///
 /// 生成するヒットボックスは常に不可視になる。
@@ -122,9 +116,6 @@ MeleeChain MakeMeleeChain(
   stamina.current =
       Max(0, stamina.current - cfg.melee.chain[stage].staminaCost);
 
-  // 段ごとに専用クリップ（melee_1/melee_2/...）へ切り替わるため、
-  // 呼び出し元（初回入場・コンボ継続いずれも）で必ずクリップ名が変わり、
-  // RestartClip と SetClip の挙動差は生じない。
   RestartClip(anim, U"melee_{}"_fmt(stage + 1));
   return MeleeChain{.stage = stage};
 }

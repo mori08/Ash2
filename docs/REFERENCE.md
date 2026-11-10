@@ -24,7 +24,7 @@
 | [`HpGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Hp` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
 | [`StaminaGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Stamina` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
 | [`GaugeSource`](../Ash2/src/Component/Gauge.hpp) | ゲージが値を読む先のエンティティ。参照先の生成・破棄には関与せず、ゲージを生成した側（`StagePhase`）が参照先より先に破棄する |
-| [`SpriteAnimation`](../Ash2/src/Component/SpriteAnimation.hpp) | アニメーション再生状態（per-entity）。共有データは `AnimationDataRegistry` を `dataKey` で参照する。同ヘッダの `SetClip`（inline 自由関数）がクリップの変化していれば差し替え、再生位置をリセットする |
+| [`SpriteAnimation`](../Ash2/src/Component/SpriteAnimation.hpp) | アニメーション再生状態（per-entity）。共有データは `AnimationDataRegistry` を `dataKey` で参照する。同ヘッダの inline 自由関数で使い分ける。`SetClip` はクリップが変化していれば差し替えて再生位置をリセットする（状態の維持用、毎フレーム呼んでよい）。`RestartClip` は同名でも先頭へ戻す（行動の開始用） |
 | [`Name`](../Ash2/src/Component/Name.hpp) | エンティティ名（`const String`、構築後不変。NameLookup と対応） |
 | [`Player`](../Ash2/src/Component/Player.hpp) | プレイヤータグ（データなし） |
 | [`Enemy`](../Ash2/src/Component/Enemy.hpp) | 敵エンティティを示すタグ（データなし）。`HitReactionSystem` がリアクション適用対象を絞り込むのに使う |

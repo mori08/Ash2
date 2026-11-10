@@ -41,7 +41,7 @@ DashAttack MakeDashAttack(
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.dashAttack.staminaCost);
 
-  SetClip(anim, U"dash_attack");
+  RestartClip(anim, U"dash_attack");
   return DashAttack{.elapsed = 0.0, .air = air, .dashDir = dashDir};
 }
 
