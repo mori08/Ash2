@@ -28,11 +28,11 @@ Variant MakeDamaged(
     vel.w = knockbackSign * cfg.damage.knockbackSpeedW;
     vel.h = cfg.damage.knockbackSpeedH;
     registry.emplace_or_replace<Invincible>(entity);
-    SetClip(anim, U"knockback");
+    RestartClip(anim, U"knockback");
     return Knockback{};
   }
 
-  SetClip(anim, U"stagger");
+  RestartClip(anim, U"stagger");
   return Stagger{.timer = cfg.damage.staggerSec};
 }
 
@@ -70,7 +70,7 @@ Optional<Variant> Tick(
     const auto& cfg = registry.ctx().get<PlayerConfig>();
     auto& anim = registry.get<SpriteAnimation>(entity);
     StopHorizontalMovement(registry, entity);
-    SetClip(anim, U"downed");
+    RestartClip(anim, U"downed");
     return Downed{.timer = cfg.damage.downSec};
   }
   return none;
@@ -88,7 +88,7 @@ Optional<Variant> Tick(
     auto& anim = registry.get<SpriteAnimation>(entity);
     // 起き上がりは無敵ではないため（設計の「無敵が切れる」を満たす）除去する
     registry.remove<Invincible>(entity);
-    SetClip(anim, U"get_up");
+    RestartClip(anim, U"get_up");
     return GetUp{.timer = cfg.damage.getUpSec};
   }
   return none;

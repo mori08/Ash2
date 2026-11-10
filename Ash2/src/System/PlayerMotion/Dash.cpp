@@ -17,7 +17,7 @@ Dash MakeDash(
 ) {
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
-  SetClip(anim, U"dash");
+  RestartClip(anim, U"dash");
   return Dash{.air = air};
 }
 

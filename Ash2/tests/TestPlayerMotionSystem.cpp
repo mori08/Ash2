@@ -2041,6 +2041,10 @@ TEST_CASE(
   registry.replace<PlayerMotion::Variant>(
       player, PlayerMotion::Dash{.elapsed = 0.29, .dashQueued = true}
   );
+  // 1回目のダッシュが最終フレームで停止済みの状態（3フレーム・7fps）
+  auto& anim = registry.get<SpriteAnimation>(player);
+  anim.currentClip = U"dash";
+  anim.elapsed = 0.43;
 
   const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);
@@ -2049,6 +2053,10 @@ TEST_CASE(
   REQUIRE(std::holds_alternative<PlayerMotion::Dash>(motion));
   REQUIRE(
       std::get<PlayerMotion::Dash>(motion).elapsed == Approx(0.0).margin(0.001)
+  );
+  // 同名クリップでも再生位置が先頭へ戻る
+  REQUIRE(
+      registry.get<SpriteAnimation>(player).elapsed == Approx(0.0).margin(0.001)
   );
 }
 
@@ -2387,6 +2395,10 @@ TEST_CASE(
       player,
       PlayerMotion::Dash{.elapsed = 0.29, .air = true, .dashQueued = true}
   );
+  // 1回目のダッシュが最終フレームで停止済みの状態（3フレーム・7fps）
+  auto& anim = registry.get<SpriteAnimation>(player);
+  anim.currentClip = U"dash";
+  anim.elapsed = 0.43;
 
   const FrameData frameData{.dt = 0.02};
   MotionSystem::Update(registry, frameData);
@@ -2396,6 +2408,10 @@ TEST_CASE(
   const auto& dash = std::get<PlayerMotion::Dash>(motion);
   REQUIRE(dash.air);
   REQUIRE(dash.elapsed == Approx(0.0).margin(0.001));
+  // 同名クリップでも再生位置が先頭へ戻る
+  REQUIRE(
+      registry.get<SpriteAnimation>(player).elapsed == Approx(0.0).margin(0.001)
+  );
 }
 
 TEST_CASE(

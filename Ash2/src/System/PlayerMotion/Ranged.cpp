@@ -105,7 +105,7 @@ Ranged MakeRanged(
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.ranged.staminaCost);
 
-  SetClip(anim, U"ranged_attack");
+  RestartClip(anim, U"ranged_attack");
   return Ranged{.timer = cfg.ranged.recoverySec};
 }
 
