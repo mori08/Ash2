@@ -1,8 +1,8 @@
 #include "Factory/MenuFactory.hpp"
 
+#include "Component/DrawPos.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Menu.hpp"
-#include "Component/ScreenPos.hpp"
 
 void MenuFactory::SetupMenu(
     entt::registry& registry, entt::entity menuEntity,
@@ -25,8 +25,8 @@ void MenuFactory::SetupButton(
           .right = param.right,
       }
   );
-  registry.emplace<ScreenPos>(
-      buttonEntity, ScreenPos{.pos = param.pos, .layer = param.layer}
+  registry.emplace<DrawPos>(
+      buttonEntity, DrawPos{.pos = param.pos, .layer = param.layer}
   );
   Hierarchy::Attach(registry, menuEntity, buttonEntity);
 }

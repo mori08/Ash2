@@ -2,6 +2,7 @@
 
 #include "Component/Boundary.hpp"
 #include "Component/Collider.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Gravity.hpp"
 #include "Component/Hp.hpp"
@@ -25,6 +26,7 @@ entt::entity PlayerFactory::Create(
   registry.emplace<Player>(player);
   registry.emplace<Team>(player, Team::Player);
   registry.emplace<WorldPos>(player, param.pos);
+  registry.emplace<DrawPos>(player, DrawPos{.layer = DrawLayer::kWorld});
   registry.emplace<Velocity>(player);
   registry.emplace<Gravity>(player, Gravity{.accel = cfg.gravity});
   registry.emplace<Name>(player, Name{U"player"});

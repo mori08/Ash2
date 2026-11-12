@@ -7,7 +7,7 @@
 #include "Component/WorldPos.hpp"
 
 /// @brief Collider のデバッグ描画（呼び出しは _DEBUG ビルドに限る）
-// DrawSystem・HudSystem とは別クラスにし、本番の描画パスへ _DEBUG
+// DrawSystem とは別クラスにし、本番の描画パスへ _DEBUG
 // 分岐を持ち込まない。DrawCapsule・DrawGroundLine は、ロック判定の可視化が
 // 拡大後のコライダーを描く際にも個別に呼べるよう公開する。
 class DebugDrawSystem {

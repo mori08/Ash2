@@ -77,16 +77,16 @@ include しない。System が Config を読むのは `registry.ctx()` 経由の
 `d` は奥行き（大きいほど奥 = 画面上方）。
 
 - 画面座標は `toScreen()` で `Vec2{ w, -(d * kDepthScale + h) }`。奥行きは画面へ投影する
-  ときだけ圧縮し、ワールド空間の判定は w-d 平面で等方のまま扱う。描画順は `d` の降順
-  （奥から手前）
+  ときだけ圧縮し、ワールド空間の判定は w-d 平面で等方のまま扱う。描画順は
+  `DrawPos` の (`layer`, `depth`) で決まる（「7. 描画」参照）
 - 高さと奥行きは圧縮された上で同じ画面軸に潰れるが、当たり判定は3軸を保ったまま行う。描画で
   潰れる `h` と `d` を、判定では区別する
 - ワールド原点の画面位置（床原点）は `WorldOrigin()`（`Screen.hpp`）が返す。床が画面の
   下半分に収まる位置に置く
 
-**基準点：** `WorldPos` は描画と当たり判定の共通基準点だが、「中心」か「接地点」かは
-エンティティごとに異なる。`DrawAnchor` のデフォルトは `Center`、接地キャラクターは生成時に
-`BottomCenter` を明示する。位置や範囲を `Vec3` で表すときは x=w、y=h、z=d に対応させる。
+**基準点：** `WorldPos` はゲーム処理専用で、描画の座標は `DrawPos` が担う（「7. 描画」参照）。
+描画の基準点（中心か接地点か）はエンティティごとに `DrawAnchor` で決める。
+位置や範囲を `Vec3` で表すときは x=w、y=h、z=d に対応させる。
 
 **位置とずれは別の型で表す。** 絶対座標は `WorldPos`、親からの相対位置は `LocalOffset` に置く。
 
@@ -245,10 +245,15 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 
 ## 7. 描画 — ワールドを画面へ
 
-画面を描くシステムは `DrawSystem` と `HudSystem` の2つだけ。見た目の話はここに閉じている。
+画面を描くシステムは `DrawSystem` の1つだけ。見た目の話はここに閉じている。
 
-**どのシステムが描くかは位置コンポーネントで決まる。** `WorldPos` + `Drawable` は `DrawSystem` が
-ワールドとして描き、`ScreenPos` + `Drawable` は `HudSystem` が画面固定で描く。
+**ワールドの座標と描画の座標は別のコンポーネントで持つ。** `WorldPos` はゲーム処理専用で、
+描画は `DrawPos` だけを見る。`WorldPos` を持つものは `ProjectionSystem` が毎フレーム
+`WorldPos` から `DrawPos` へ書き写す。HUD やメニューは `WorldPos` を持たず、生成時の
+`DrawPos` がそのまま使われる。ワールドから描画座標への変換は `ProjectionSystem` だけが行う。
+
+`DrawSystem` は `DrawPos` + `Drawable` を並べて描く。前後関係は `layer` の帯が大きく決め、
+同じ帯の中は `depth` が決める。
 
 種別ごとの描画コードはない。`Drawable` は描画データの variant（矩形・円・テクスチャ・文字）で、色は
 `DrawColor` が別に持つ。持たないエンティティは白・不透明として扱う。

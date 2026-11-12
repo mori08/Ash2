@@ -2,10 +2,10 @@
 
 #include "Component/Dead.hpp"
 #include "Component/DrawColor.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Gauge.hpp"
 #include "Component/Hierarchy.hpp"
-#include "Component/ScreenPos.hpp"
 #include "Factory/EnemyFactory.hpp"
 #include "Factory/PlayerFactory.hpp"
 #include "Factory/StageData.hpp"
@@ -35,7 +35,7 @@ void AppendGauge(
   const Vec2 pos{kGaugeX, y};
 
   const auto bg = registry.create();
-  registry.emplace<ScreenPos>(bg, ScreenPos{.pos = pos, .layer = 0});
+  registry.emplace<DrawPos>(bg, DrawPos{.pos = pos, .layer = DrawLayer::kHud});
   registry.emplace<Drawable>(
       bg,
       RectDrawable{
@@ -46,7 +46,9 @@ void AppendGauge(
   registry.emplace<DrawColor>(bg, DrawColor{.color = kGaugeBgColor});
 
   const auto fill = registry.create();
-  registry.emplace<ScreenPos>(fill, ScreenPos{.pos = pos, .layer = 1});
+  registry.emplace<DrawPos>(
+      fill, DrawPos{.pos = pos, .layer = DrawLayer::kHud + 1}
+  );
   registry.emplace<Drawable>(
       fill,
       RectDrawable{

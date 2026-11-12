@@ -1,7 +1,7 @@
 #include "Phase/StageGameOverPhase.hpp"
 
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
-#include "Component/ScreenPos.hpp"
 #include "FrameData.hpp"
 #include "Phase/TestMenuPhase.hpp"
 #include "System/BattleSystem.hpp"
@@ -15,7 +15,9 @@ constexpr double kDisplaySec = 3.0;
 void StageGameOverPhase::onAfterPush(entt::registry& registry) {
   m_elapsed = 0.0;
   m_text = registry.create();
-  registry.emplace<ScreenPos>(m_text, ScreenPos{.pos = Scene::CenterF()});
+  registry.emplace<DrawPos>(
+      m_text, DrawPos{.pos = Scene::CenterF(), .layer = DrawLayer::kHud}
+  );
   registry.emplace<Drawable>(
       m_text,
       TextDrawable{.text = U"GAME OVER", .font = FontAsset{UiFonts::kLarge}}

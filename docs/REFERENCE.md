@@ -12,7 +12,7 @@
 
 | コンポーネント | 役割 |
 |---|---|
-| [`WorldPos`](../Ash2/src/Component/WorldPos.hpp) | ワールド絶対座標（w/h/d）。`toScreen()`・`isOnGround()` を持つ |
+| [`WorldPos`](../Ash2/src/Component/WorldPos.hpp) | ワールド絶対座標（w/h/d）。ゲーム処理専用で、描画には `DrawPos` を使う。`toScreen()`・`isOnGround()` を持つ |
 | [`Velocity`](../Ash2/src/Component/Velocity.hpp) | 速度ベクトル（w/h/d、ピクセル/秒） |
 | [`Gravity`](../Ash2/src/Component/Gravity.hpp) | 重力の影響を受けるエンティティに付与する重力加速度 |
 | [`Boundary`](../Ash2/src/Component/Boundary.hpp) | アリーナ境界でのクランプ対象であることを示すタグ（データなし）。`BoundarySystem` が `WorldPos`+`Collider` と組み合わせて絞り込みに使う。弾（`Projectile`）には付与しない |
@@ -20,7 +20,8 @@
 | [`Hierarchy`](../Ash2/src/Component/Hierarchy.hpp) | 親子関係（双方向連結リスト、static メンバで操作）。子は `Hierarchy::Children` が返す範囲（`ChildRange`）で辿る |
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画データの variant。詳細は下記「描画データ型」参照 |
 | [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`kDefaultDrawColor`）として扱われる |
-| [`ScreenPos`](../Ash2/src/Component/ScreenPos.hpp) | 画面固定の描画位置（px）と `layer`（前後関係、大きいほど手前）。`Drawable` と組み合わせ、`HudSystem` が画面座標へ直接描く対象であることを示す（`WorldPos` + `Drawable` は `DrawSystem` が描く） |
+| [`DrawPos`](../Ash2/src/Component/DrawPos.hpp) | 描画専用の座標。画面座標 `pos`（px）・`layer`（前後関係の帯、大きいほど手前。既定 `DrawLayer::kWorld`）・`depth`（同じ `layer` 内の奥行き、大きいほど奥で先に描く）を持つ。`Drawable` と組み合わせて `DrawSystem` が描く |
+| [`DrawLayer`](../Ash2/src/Component/DrawPos.hpp) | `DrawPos::layer` の帯の定数。`kWorld`=0・`kWorldOverlay`=100（レティクル）・`kHud`=200（ゲージ・メニュー・ロゴ・CLEAR 文字。ゲージの fill は `kHud + 1`） |
 | [`HpGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Hp` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
 | [`StaminaGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Stamina` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
 | [`GaugeSource`](../Ash2/src/Component/Gauge.hpp) | ゲージが値を読む先のエンティティ。参照先の生成・破棄には関与せず、ゲージを生成した側（`StagePhase`）が参照先より先に破棄する |
@@ -44,7 +45,7 @@
 | [`Invincible`](../Ash2/src/Component/Invincible.hpp) | 無敵状態であることを示すタグ。`HitSystem` の被弾対象ビューから除外される。`PlayerMotion::Dash`（地上・空中いずれも）が構え・ダッシュ中は毎フレーム付与し、後隙入りで除去する。`PlayerMotion::Knockback`/`Downed` も毎フレーム付与し、`GetUp` への遷移時に除去する |
 | [`Dead`](../Ash2/src/Component/Dead.hpp) | 撃破され行動不能であることを示すタグ（データなし）。`PlayerMotion::Variant` が `PlayerMotion::Dead` へ遷移するのと同時に `HitReactionSystem` が付与する。`EnemyMotionSystem` の索敵（`FindPlayerPos`）が `entt::exclude<Dead>` で対象から外す。`LockOnSystem::Update` は `Dead` を持つプレイヤーの入力処理（`ApplyMouseRule`/`ApplyStickRule`）だけを止め、`target`/`halfTarget` を `entt::null`、`stickTilted` を `false` にする（ビュー自体は外さず、`SyncReticle` にレティクルを片付けさせる） |
 | [`Menu`](../Ash2/src/Component/Menu.hpp) | メニューの親エンティティ（`Hierarchy` と併用、子はボタンだけ）。選択なしで方向入力があったときに選ぶ子 `defaultButton` を持つ。`Button`/`Focused` と同じヘッダにまとめている |
-| [`Button`](../Ash2/src/Component/Menu.hpp) | メニューの子のボタン。`ScreenPos::pos` を中心とする当たり範囲 `size` と、上下左右の移動先 `up`/`down`/`left`/`right`（同じメニューの子、ない方向は `entt::null`）を持つ |
+| [`Button`](../Ash2/src/Component/Menu.hpp) | メニューの子のボタン。`DrawPos::pos` を中心とする当たり範囲 `size` と、上下左右の移動先 `up`/`down`/`left`/`right`（同じメニューの子、ない方向は `entt::null`）を持つ |
 | [`Focused`](../Ash2/src/Component/Menu.hpp) | 選択中のボタンに付けるタグ（データなし）。選択状態はここに一本化し、`Menu` には持たせない |
 | [`FocusColor`](../Ash2/src/Component/FocusColor.hpp) | 選択状態に応じた描画色（`normal`/`focused`）。`FocusColorSystem` が `Focused` の有無で `DrawColor` へ書く。メニューの仮の見た目用 |
 | [`FadeOut`](../Ash2/src/Component/FadeOut.hpp) | 透過しながら消滅する途中であることを示すコンポーネント（`duration`/`remaining`）。`FadeOutSystem` が `DrawColor::color.a` を更新し、満了時にエンティティを破棄する |
@@ -64,7 +65,7 @@
 | `CircleDrawable` | 円描画（半径） |
 | `TextureDrawable` | テクスチャ描画（`TextureRegion`・描画オフセット・`DrawAnchor`） |
 | `TextDrawable` | 文字描画（文字列・`Font`・`DrawAnchor`） |
-| `DrawAnchor` | `WorldPos`（または `ScreenPos`）を描画範囲のどこに合わせるか（`Center` / `BottomCenter` / `TopLeft`）。`RectDrawable`・`TextureDrawable`・`TextDrawable` が持ち、既定は `Center` |
+| `DrawAnchor` | `DrawPos::pos` を描画範囲のどこに合わせるか（`Center` / `BottomCenter` / `TopLeft`）。`RectDrawable`・`TextureDrawable`・`TextDrawable` が持ち、既定は `Center` |
 
 ---
 
@@ -176,14 +177,14 @@
 | [`BattleSystem::UpdateAftermath`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（StageClearPhase・StageGameOverPhase が毎フレーム1回呼出） | `HitstopSystem` → `FadeOutSystem` → `AnimationSystem` の順に呼ぶ。決着後は Motion・移動・判定を止め、演出だけを進める。`AnimationSystem` は `Hitstop` を除外するため `HitstopSystem` を先に呼ぶ |
 | [`BattleSystem::Cleanup`](../Ash2/src/System/BattleSystem.hpp) | フェーズ内（StagePhase の `onBeforePop`、本体破棄の後） | 独立エンティティ（`Projectile`・`FadeOut`）をタグで検索してまとめて破棄する |
 | [`HitstopSystem::Update`](../Ash2/src/System/HitstopSystem.hpp) | BattleSystem 内（MotionSystem の前） | `Hitstop` を持つエンティティの残り時間を減算し、0 以下になったら除去する |
-| [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | BattleSystem 内（HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは専用の描画システムを持たず、`TextureDrawable` を持つ子エンティティとして `DrawSystem` に描かせる。`Dead` を持つプレイヤーは入力処理を飛ばして `target`/`halfTarget` を解除する（`Collider` を外した撃破後の被参照を避けるため） |
+| [`LockOnSystem::Update`](../Ash2/src/System/LockOnSystem.hpp) | BattleSystem 内（HitstopSystem の後・MotionSystem の前） | `LockOn` を持つエンティティ（プレイヤー）のロック対象を、マウスなら `input.pointerPos` の当たり判定、ゲームパッドなら `input.lockAxis` の傾き（0.5）/離し（0.24）の2段階ヒステリシスで更新し、`target`/`halfTarget` に追従するレティクルを `Hierarchy::Attach` で同期する。レティクルは専用の描画システムを持たず、`DrawPos{.layer = DrawLayer::kWorldOverlay}` と `TextureDrawable` を持つ子エンティティとして `DrawSystem` に描かせる（キャラより手前に描かれる）。`Dead` を持つプレイヤーは入力処理を飛ばして `target`/`halfTarget` を解除する（`Collider` を外した撃破後の被参照を避けるため） |
 | [`MotionSystem::Update`](../Ash2/src/System/MotionSystem.hpp) | BattleSystem 内（HitstopSystem の後） | `PlayerMotion::Variant` → `EnemyMotion::Variant` の順に、状態ごとの `Tick()` を `std::visit` で呼び、戻り値があれば `replace<M>` する。`Hitstop` を持つエンティティには dt = 0 の `FrameData` を渡す（停止中も入力の受付を続けるため） |
 | [`StaminaSystem::Update`](../Ash2/src/System/StaminaSystem.hpp) | BattleSystem 内（MotionSystem の後） | `Player + Stamina + PlayerMotion::Variant` を持つエンティティのスタミナを回復する。Neutral 状態のみ `recoveryDelay` 秒の待機後に不足分に比例した速度（`recoveryRate`）で回復し、端数は `accum` に積み立てて誤差を防ぐ。`Hitstop` は除外しない |
 | [`MovementSystem::Update`](../Ash2/src/System/MovementSystem.hpp) | BattleSystem 内（StaminaSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity` エンティティ（Player・弾・Enemy）の位置を `vel * dt` で更新 |
 | [`GravitySystem::Update`](../Ash2/src/System/GravitySystem.hpp) | BattleSystem 内（MovementSystem の後） | `Hitstop` を持たない `WorldPos`+`Velocity`+`Gravity` エンティティに重力加速（次フレーム用）と地面クランプ（今フレームの `pos.h`・`vel.h` を 0 にする）を適用 |
 | [`BoundarySystem::Update`](../Ash2/src/System/BoundarySystem.hpp) | BattleSystem 内（GravitySystem の後） | `WorldPos`+`Boundary`+`Collider` エンティティの `pos.w`/`pos.d` を `ArenaConfig`（`registry.ctx()`）の半幅からコライダー半径を引いた範囲へ `Clamp` する。`Velocity` には触れない。`Hitstop` を除外しない（時間で進む処理ではなく、同じ入力に何度かけても結果が変わらないクランプのため） |
 | [`GaugeSystem::Update`](../Ash2/src/System/GaugeSystem.hpp) | 毎フレーム（フェーズ後） | `HpGauge`/`StaminaGauge` + `GaugeSource` + `Drawable` を持つエンティティの `RectDrawable` 幅を、`GaugeSource` が指す `Hp`/`Stamina` の `current / max`（0〜1 にクランプ）× `fullWidth` に更新する。`max <= 0` は幅 0。参照先が無効、または自身の `Drawable` が `RectDrawable` でない場合は `Error` を投げる |
-| [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | フェーズ内（TitlePhase が毎フレーム1回呼出） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`ScreenPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（`menuEntity` が `Menu` を持たない、選択の移動先が子でない、当たり判定で辿った子が `Button` + `ScreenPos` を持たない）は、その箇所を使ったときに `Error` を投げる。見た目は扱わない |
+| [`MenuSystem::Update`](../Ash2/src/System/MenuSystem.hpp) | フェーズ内（TitlePhase が毎フレーム1回呼出） | `Menu` の子の `Button` をたどり、「カーソル移動（`pointerMoved`）→ 方向入力 → 決定 → クリック」の順で選択の規則を適用し、そのフレームに決定されたボタンを `Optional<entt::entity>` で返す。選択は子の `Focused` に一本化（メニューの子だけで付け外しし、1メニューに1つ）。方向入力は選択なしなら `defaultButton` を選ぶだけで移動しない。決定は選択がなければ none。クリックは `pointerPos` の下のボタン（`DrawPos::pos` 中心・`Button::size` の矩形）を選んで返す。構造の不整合（`menuEntity` が `Menu` を持たない、選択の移動先が子でない、当たり判定で辿った子が `Button` + `DrawPos` を持たない）は、その箇所を使ったときに `Error` を投げる。見た目は扱わない |
 | [`AttachmentSystem::UpdateTransform`](../Ash2/src/System/AttachmentSystem.hpp) | 毎フレーム（フェーズ後）＋BattleSystem 内（BoundarySystem の後・HitSystem の前） | Hierarchy ルートから子孫へ WorldPos 伝播。BattleSystem では HitSystem が同フレーム内の最新座標（光の珠の LocalOffset 反映後）を見られるよう追加で呼び出す |
 | [`HitSystem::Update`](../Ash2/src/System/HitSystem.hpp) | BattleSystem 内（AttachmentSystem の後） | `Collider+Attack` と `Collider+Hp`（`Invincible` を除く）の間でカプセル重なり検出 → Hp 減算。双方が持つ `Team` の値が等しいヒットはスキップする（`Team` は両者が持つ前提で、欠落を検査しない）。攻撃側本体（ヒットボックスの `Hierarchy` 親、親を持たなければ攻撃側自身）を解決し、`Attack` の `hitstopSec`/`reaction` の写しとともに新たに成立したヒットの `HitEvent` 配列を返す |
 | [`HitReactionSystem::Apply`](../Ash2/src/System/HitReactionSystem.hpp) | BattleSystem 内（HitSystem の後） | `HitSystem::Update` が返した `HitEvent` ごとに、攻撃側本体と被弾側へ `Hitstop` を付与し、被弾側が持つモーション variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて `ApplyEnemyReaction`/`ApplyPlayerReaction`（匿名名前空間）へ分岐する。前者は `EnemyMotion::Variant` と `Velocity` を、後者は `PlayerMotion::MakeDamaged` 経由で `PlayerMotion::Variant` を、下記「リアクションの対応」に従って強制遷移させる。被弾側がどちらのモーションも持たなければ `throw Error`。`ApplyPlayerReaction` は `Dead` タグを持つ被弾側を先頭で無視し（多重ヒット対策）、`Hp` 枯渇時は `reaction` によらず `PlayerMotion::Dead` への撃破分岐へ入る |
@@ -191,10 +192,10 @@
 | [`EnemySystem::Update`](../Ash2/src/System/EnemySystem.hpp) | BattleSystem 内（ProjectileSystem の後） | `EnemyMotion::Defeated` の残り時間が尽きたエンティティを収集し、`MotionSystem` のビュー走査外で `Hierarchy::DestroyWithChildren` によりまとめて破棄する（`LockOn` のレティクルが子として付いていても連動して消える） |
 | [`FadeOutSystem::Update`](../Ash2/src/System/FadeOutSystem.hpp) | BattleSystem 内（EnemySystem の後） | `FadeOut` の残り時間を減算して `DrawColor::color.a`（`get_or_emplace` で確保）に反映し、満了したエンティティを破棄する。`Hitstop` による除外はしない |
 | [`AnimationSystem::Update`](../Ash2/src/System/AnimationSystem.hpp) | `BattleSystem::Update`・`UpdateAftermath` 内（いずれも FadeOutSystem の後）＋各 Factory（生成直後）＋ AnimationViewerPhase（単体確認用） | `Hitstop` を持たない SpriteAnimation の elapsed を進め、切り出した `TextureRegion` を `TextureDrawable` に反映する（`facingRight` なら反転）。`AnimationClip::loop` が false のクリップは最終コマで停止し、先頭へ戻らない |
-| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（HudSystem の前） | `WorldPos`+`Drawable`（`ScreenPos` を持つものは `exclude`）を奥行き順にソートして描画。`d` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。カメラは `WorldOrigin()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う）。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。種類ごとの描画は `DrawOne` に委ねる |
-| [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後・HudSystem の前） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
+| [`ProjectionSystem::Update`](../Ash2/src/System/ProjectionSystem.hpp) | 毎フレーム（`AttachmentSystem::UpdateTransform` の後・`DrawSystem` の前。`Main.cpp` が呼び、`BattleSystem` 内では呼ばない） | `WorldPos`+`DrawPos` を持つエンティティの `DrawPos` に、`pos = WorldToScreen(WorldPos)`・`depth = WorldPos::d` を書く。`layer` は書き換えない。`DrawPos` だけのエンティティ（HUD・メニュー）は対象外。カメラは `WorldOrigin()` の固定オフセットのみ（スクロールなし。`ProjectileSystem` の画面外判定も同じオフセットを使う） |
+| [`DrawSystem::Draw`](../Ash2/src/System/DrawSystem.hpp) | 毎フレーム（`ProjectionSystem` の後） | `DrawPos`+`Drawable` を `(layer 昇順, depth 降順, entity 昇順)` にソートして描画。`entity` をタイブレーカにするため、描画順は毎フレーム同じになる。`DrawColor`（未所持は白・不透明）を塗り色・テクスチャの乗算色として適用する。種類ごとの描画は `DrawOne` に委ねる |
+| [`DebugDrawSystem::DrawColliders`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DebugOnly::DrawColliders` 経由で DrawSystem の後） | `Collider` を持つエンティティをカプセル輪郭＋接地線で描く。`Collider+Attack`（赤）/`Collider+Hp`（`Attack` を除く、緑）/残り（灰）の3ビューで色分け。公開ヘルパー `DrawCapsule`/`DrawGroundLine` は拡大係数の引数を持たず、ロック判定の可視化が拡大後の `Collider` 値を組み立てて個別に呼べるようにしている |
 | [`DebugDrawSystem::DrawBoundary`](../Ash2/src/System/DebugDrawSystem.hpp) | 毎フレーム（Debug ビルドのみ、`DrawColliders` と同じ F2 トグルで `DrawColliders` の直後に呼ばれる） | `ArenaConfig` の半幅から4隅を `h = 0` の平面上で `WorldToScreen` へ投影し、対角2点から組んだ `RectF` の輪郭を描く（平行投影のため長方形のまま映る） |
-| [`HudSystem::Draw`](../Ash2/src/System/HudSystem.hpp) | 毎フレーム（DrawSystem・DebugDrawSystem の後） | `ScreenPos`+`Drawable` を `(layer, entity)` の昇順にソートして `DrawOne` で描く。`layer` が等しい場合は `entity` をタイブレーカにするため、描画順は毎フレーム同じになる。色は `DrawColor`（未所持は `kDefaultDrawColor`）から取る |
 | [`FocusColorSystem::Update`](../Ash2/src/System/FocusColorSystem.hpp) | フェーズ内（TitlePhase が `MenuSystem::Update` の直後に呼出） | `FocusColor` を持つエンティティの `DrawColor`（`get_or_emplace` で確保）に、`Focused` 付きなら `focused`、付いていなければ `normal` を書く。`Focused` 付きと `exclude<Focused>` の2ビューで扱う |
 | [`NameLookupSystem::Connect`](../Ash2/src/System/NameLookup.hpp) | 起動時 | Name 追加・削除時に NameLookup を自動同期するシグナル登録 |
 | [`HierarchySystem::Connect`](../Ash2/src/System/HierarchySystem.hpp) | 起動時 | Hierarchy 削除時に Detach を自動呼び出しするシグナル登録 |
@@ -211,6 +212,7 @@
 | `LockOnSystem` は `MotionSystem` より前（`AttachmentSystem` より前でよい） | 同フレームの `Ranged` 発射がその場のロック対象を見るため。レティクルの `WorldPos` は同フレーム内で `AttachmentSystem` が埋める |
 | `GravitySystem` の「加速」と「地面クランプ」は1つの関数に留める | 時間軸が違う（次フレーム用／今フレーム確定）。分割すると跳ね方が変わる |
 | `BoundarySystem` は `GravitySystem` の後、`AttachmentSystem` の前に置く | 座標クランプは軸ごとに担当が分かれる。`h` は `GravitySystem` の地面クランプ、`w`/`d` は `BoundarySystem` の境界クランプが扱う |
+| `ProjectionSystem` は `Main.cpp` で `AttachmentSystem::UpdateTransform` の直後・`DrawSystem` の直前に置き、`BattleSystem` 内では呼ばない | アタッチ伝播後の `WorldPos` を1フレームのずれなく投影するため。ゲーム処理が描画座標に依存しないようにする |
 
 ### リアクションの対応
 
@@ -256,9 +258,9 @@ variant（`EnemyMotion::Variant`/`PlayerMotion::Variant`）に応じて遷移先
 |---|---|
 | [`HitEvent`](../Ash2/src/System/HitSystem.hpp) | 成立したヒット1件の情報（被弾側 `target`・攻撃側本体 `attackerOwner`・ヒット成立時点の `hitstopSec`/`reaction` の写し）。`HitSystem` → `HitReactionSystem` の受け渡しに使う。攻撃側のエンティティ自体は保持せず、被弾処理で `Attack` が外れても引き直さずに済む形にしている |
 | [`MotionState`](../Ash2/src/System/MotionSystem.hpp) | variant `M` の状態型 `S` が満たすべきコンセプト（ADL で解決される `Tick()` が `Optional<M>` を返すこと） |
-| [`DrawOrderKey`](../Ash2/src/System/DrawSystem.hpp) | `DrawOrderLess` の比較キー（`d` と `entity`） |
-| [`DrawOrderLess`](../Ash2/src/System/DrawSystem.hpp) | 描画順の比較関数（`d` の降順で奥が先。`d` が等しい場合は `entity` の昇順） |
-| [`DrawOne`](../Ash2/src/System/DrawOne.hpp) | `Drawable` 1件を画面座標・色で描く自由関数。`DrawSystem`・`HudSystem` が共有する |
+| [`DrawOrderKey`](../Ash2/src/System/DrawSystem.hpp) | `DrawOrderLess` の比較キー（`layer`・`depth`・`entity`） |
+| [`DrawOrderLess`](../Ash2/src/System/DrawSystem.hpp) | 描画順の比較関数（`layer` の昇順、同じ `layer` では `depth` の降順で奥が先、`depth` も等しい場合は `entity` の昇順） |
+| [`DrawOne`](../Ash2/src/System/DrawOne.hpp) | `Drawable` 1件を画面座標・色で描く自由関数。`DrawSystem` が使う |
 | [`NameLookup`](../Ash2/src/System/NameLookup.hpp) | 名前 → エンティティの `HashTable`。`registry.ctx()` に格納。現在は引く側が `src/` にない |
 | [`ScreenCapsule`](../Ash2/src/System/LockOnSystem.hpp) | `LockOnSystem::Project` が返す、画面へ投影したカプセル（`start`/`end`/`radius`、床原点込みの画面座標）。`LockOnSystem::Contains` が判定に使う。ワールド空間ではなく投影後の画面空間で判定するため、奥行きは `kDepthScale` で圧縮された状態で扱われる（`radius` は圧縮しない） |
 
@@ -319,7 +321,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 | [`EnemyFactory::Create`](../Ash2/src/Factory/EnemyFactory.hpp) | `EnemyConfig` に基づき、`Param::pos` の位置に敵エンティティを生成する |
 | [`EnemyFactory::Param::FromToml`](../Ash2/src/Factory/EnemyFactory.hpp) | TOML のテーブルから `Param` を生成する。`w` / `d` が必須で、`h` は持たない（接地で生成する）。欠落・型違いは `throw Error` |
 | [`StageData`](../Ash2/src/Factory/StageData.hpp) | `Ash2/App/assets/config/stage.toml` から読むステージ定義（ステージ名 → `StageDefinition`。`enemies` に `EnemyFactory::Param` の配列を持つ）。`enemies` が欠落・配列でない・空のステージは `FromToml` が throw する。`EnemyFactory::Param` を持つため Config ではなく Factory に置く。`registry.ctx()` に載り、F5 で再読込される |
-| [`MenuFactory`](../Ash2/src/Factory/MenuFactory.hpp) | `SetupMenu`/`SetupButton` でメニューとボタンを設定する。`Create` の形ではなく、呼び出し側が先にまとめて作ったエンティティを受け取る（互いを参照する移動先を1回で設定するため）。`SetupButton` が付けるのは構造に必要な `Button`/`ScreenPos`/`Hierarchy::Attach` だけで、`Drawable` などの見た目は画面側で付ける |
+| [`MenuFactory`](../Ash2/src/Factory/MenuFactory.hpp) | `SetupMenu`/`SetupButton` でメニューとボタンを設定する。`Create` の形ではなく、呼び出し側が先にまとめて作ったエンティティを受け取る（互いを参照する移動先を1回で設定するため）。`SetupButton` が付けるのは構造に必要な `Button`/`DrawPos`/`Hierarchy::Attach` だけで、`Drawable` などの見た目は画面側で付ける |
 
 ---
 
@@ -348,9 +350,9 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `ScreenPos` + `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）と、「はじめる」「おわる」の2ボタンのメニュー（`MenuFactory` で組み、文字は `TextDrawable`、選択色は `FocusColor`）を `HudSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。毎フレーム `MenuSystem::Update` → `FocusColorSystem::Update` を呼び、押されたボタンを対応表（`HashTable<entt::entity, std::function<PhaseCommand()>>`）で引いて処理の戻り値を返す。「はじめる」は `kTitleStartSectionName`（`TitleStart`）を指す `ScenarioPhase` を `Push` し（そのセクションが本編へ `Reset` する。中身は #386 で差し替える仮のもの）、「おわる」は `Exit` を返す。`GameSetup` が `TitleStart` セクションの存在を起動時に検証する。選択色は #386 で置き換える仮のもの。`onBeforePop` でメニューを `DestroyWithChildren` する |
-| [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`ScreenPos` + `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `Error` を投げる。Esc の Pop は持たない |
-| [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `ScreenPos` + `TextDrawable` の「CLEAR」を `HudSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
+| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `DrawPos`（`kHud`）+ `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）と、「はじめる」「おわる」の2ボタンのメニュー（`MenuFactory` で組み、文字は `TextDrawable`、選択色は `FocusColor`）を `DrawSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。毎フレーム `MenuSystem::Update` → `FocusColorSystem::Update` を呼び、押されたボタンを対応表（`HashTable<entt::entity, std::function<PhaseCommand()>>`）で引いて処理の戻り値を返す。「はじめる」は `kTitleStartSectionName`（`TitleStart`）を指す `ScenarioPhase` を `Push` し（そのセクションが本編へ `Reset` する。中身は #386 で差し替える仮のもの）、「おわる」は `Exit` を返す。`GameSetup` が `TitleStart` セクションの存在を起動時に検証する。選択色は #386 で置き換える仮のもの。`onBeforePop` でメニューを `DestroyWithChildren` する |
+| [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`DrawPos`（背景 `kHud`・fill `kHud + 1`）+ `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `Error` を投げる。Esc の Pop は持たない |
+| [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `DrawPos`（`kHud`）+ `TextDrawable` の「CLEAR」を `DrawSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |
 | [`AnimationViewerPhase`](../Ash2/src/Phase/AnimationViewerPhase.hpp) | `animation_viewer` | アニメーションクリップ単体確認（←→切替、F反転、Rでリプレイ、Esc で Pop）。`dataKey` が `AnimationDataRegistry` に未登録なら `Error` を投げる |
 | [`WaitPhase`](../Ash2/src/Phase/WaitPhase.hpp) | `wait` | 指定秒数待機して Pop |
@@ -587,7 +589,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 
 | 名前 | 役割 |
 |---|---|
-| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `InputDeviceSelector::update`（`registry.ctx()` の `InputConfig` を渡す）→ `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `HudSystem` → `DebugOnly::UpdateAutoCapture` を回す。最初に積む `ScenarioPhase` の開始セクションは `DebugOnly::StartSectionOverride()` の値、無ければ `kInitSectionName`（Release では常に `init`）。`InitializeEngine` と `InitializeRegistry` は失敗時に throw する。例外は `catch (...)` ですべて受け、何もせずに終える。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
+| [`Main`](../Ash2/src/Main.cpp) | アプリの入口。`InitializeEngine` → registry 生成 → `InitializeRegistry` → `PhaseStack` を生成し、毎フレーム `InputDeviceSelector::update`（`registry.ctx()` の `InputConfig` を渡す）→ `PhaseStack::update` → `GaugeSystem` → `AttachmentSystem` → `ProjectionSystem` → `DrawSystem` → `DebugOnly::DrawColliders` → `DebugOnly::UpdateAutoCapture` を回す。最初に積む `ScenarioPhase` の開始セクションは `DebugOnly::StartSectionOverride()` の値、無ければ `kInitSectionName`（Release では常に `init`）。`InitializeEngine` と `InitializeRegistry` は失敗時に throw する。例外は `catch (...)` ですべて受け、何もせずに終える。起動時に `DebugOnly::RunTestsIfRequested` を呼び、Debug ビルドで環境変数 `ASH2_RUN_TESTS` が設定されていれば Catch2 のテストのみ実行し、成否を終了コードに反映して終了 |
 | [`InitializeEngine`](../Ash2/src/GameSetup.hpp) | Siv3D 側の初期設定。`RegisterAssets` → `UiFonts::Register` → シーン設定（`ResizeMode::Keep`・1280×720・`TextureFilter::Linear`）→ `ApplyWindowPreset` の順に行う。ウィンドウなど Siv3D 全体の設定の置き場。アセット・フォント登録・`ApplyWindowPreset` の失敗は `throw Error` する |
 | [`InitializeRegistry`](../Ash2/src/GameSetup.hpp) | `registry.ctx()` へ `NameLookup` / 各 Config（`InputConfig` を含む）/ `StageData` / `AnimationDataRegistry` / `ScenarioData` を登録し、シグナルを接続する。失敗は `throw Error` する |
 | [`LoadAnimations`](../Ash2/src/GameSetup.hpp) | アニメーション設定 TOML を全件読み込み `AnimationDataRegistry` を返す。`InitializeRegistry` と `DebugOnly.cpp`（無名名前空間の `ReloadConfig`）の両方から呼ばれる |
@@ -653,6 +655,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 |---|---|
 | `TestWorldPos.cpp` | `WorldPos` の座標変換・接地判定 |
 | `TestDrawSystem.cpp` | `DrawOrderLess` |
+| `TestProjectionSystem.cpp` | `ProjectionSystem::Update` |
 | `TestMovementSystem.cpp` | `MovementSystem` の3軸の移動・`Hitstop` 除外 |
 | `TestGravitySystem.cpp` | `GravitySystem` の加速・地面クランプ・`Hitstop` 除外 |
 | `TestMotionTimeline.cpp` | `MotionTimeline` の区間境界 |
@@ -695,7 +698,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 ## 部品追加時の注意
 
 - `Hierarchy` のメンバは必ず static メンバ関数（Attach/Detach/DestroyWithChildren/Children）経由で操作する。
-- `Drawable` の型変更は `std::visit` を使い、`DrawOne`・`HudSystem`・`AnimationSystem` への影響を確認する。
+- `Drawable` の型変更は `std::visit` を使い、`DrawOne`・`AnimationSystem` への影響を確認する。
 - 図形（`Drawable`）に `DrawColor` を付け忘れると白（`kDefaultDrawColor`）で描かれる。意図した色にしたい場合は忘れず付与すること。
 - 新クラス追加時は `Ash2.vcxproj` と `Ash2.vcxproj.filters` にも追加が必要。
 - `NameLookup` への挿入・削除は `NameLookupSystem::Connect` で自動化されている（`Name` コンポーネントの追加・削除に連動）。手動での `NameLookup[key] = entity` 登録は不要。

@@ -170,7 +170,7 @@
     <ClCompile Include="src\System\AttachmentSystem.cpp" />
     <ClCompile Include="src\System\DrawSystem.cpp" />
     <ClCompile Include="src\System\DrawOne.cpp" />
-    <ClCompile Include="src\System\HudSystem.cpp" />
+    <ClCompile Include="src\System\ProjectionSystem.cpp" />
     <ClCompile Include="src\System\GaugeSystem.cpp" />
     <ClCompile Include="src\System\MenuSystem.cpp" />
     <ClCompile Include="src\System\DebugDrawSystem.cpp" />
@@ -187,6 +187,7 @@
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
     <ClCompile Include="tests\TestDebugOnly.cpp" />
     <ClCompile Include="tests\TestDrawSystem.cpp" />
+    <ClCompile Include="tests\TestProjectionSystem.cpp" />
     <ClCompile Include="tests\TestEnemyConfig.cpp" />
     <ClCompile Include="tests\TestEnemyMotionSystem.cpp" />
     <ClCompile Include="tests\TestEnemySystem.cpp" />
@@ -428,7 +429,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Component\Drawable.hpp" />
-    <ClInclude Include="src\Component\ScreenPos.hpp" />
+    <ClInclude Include="src\Component\DrawPos.hpp" />
     <ClInclude Include="src\Component\Gauge.hpp" />
     <ClInclude Include="src\Component\Menu.hpp" />
     <ClInclude Include="src\Component\SpriteAnimation.hpp" />
@@ -500,7 +501,7 @@
     <ClInclude Include="src\System\LockOnSystem.hpp" />
     <ClInclude Include="src\System\HitSystem.hpp" />
     <ClInclude Include="src\System\HitReactionSystem.hpp" />
-    <ClInclude Include="src\System\HudSystem.hpp" />
+    <ClInclude Include="src\System\ProjectionSystem.hpp" />
     <ClInclude Include="src\System\GaugeSystem.hpp" />
     <ClInclude Include="src\System\MenuSystem.hpp" />
     <ClInclude Include="src\System\ProjectileSystem.hpp" />

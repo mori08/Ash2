@@ -3,7 +3,7 @@
 
 #include <variant>
 
-/// @brief WorldPos / ScreenPos を描画範囲のどの点に合わせるか
+/// @brief WorldPos / DrawPos を描画範囲のどの点に合わせるか
 enum class DrawAnchor : uint8 {
   /// 描画範囲の中心
   Center,

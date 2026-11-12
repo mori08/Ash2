@@ -11,7 +11,7 @@ struct Menu {
 
 /// @brief メニューの子のボタン
 ///
-/// `ScreenPos::pos` を中心とする矩形 `size` が当たり範囲になる。
+/// `DrawPos::pos` を中心とする矩形 `size` が当たり範囲になる。
 struct Button {
   /// 当たり範囲の大きさ（px）
   SizeF size{};

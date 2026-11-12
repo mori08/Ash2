@@ -3,6 +3,7 @@
 #include "Component/Collider.hpp"
 #include "Component/Dead.hpp"
 #include "Component/DrawColor.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
@@ -16,11 +17,6 @@
 namespace {
 
 constexpr StringView kReticleTextureKey = U"assets/images/reticle.png";
-
-// aim point の d は Collider のオフセット次第で target 自身の WorldPos.d と
-// 一致しうる（例: オフセットが0）。その場合の描画順の同値を避けるため、
-// レティクルの d をわずかに手前へ寄せる
-constexpr double kReticleDrawOrderEpsilon = 0.01;
 
 /// @brief 敵として有効なロック対象か（生存し、Defeated でない）
 [[nodiscard]] bool IsAliveEnemy(
@@ -110,6 +106,9 @@ void ApplyStickRule(
   const auto reticle = registry.create();
   // AttachmentSystem が上書きするまでの初期値として親の現在位置を置く
   registry.emplace<WorldPos>(reticle, pos);
+  registry.emplace<DrawPos>(
+      reticle, DrawPos{.layer = DrawLayer::kWorldOverlay}
+  );
   registry.emplace<Drawable>(
       reticle, TextureDrawable{.region = TextureAsset{kReticleTextureKey}}
   );
@@ -119,7 +118,7 @@ void ApplyStickRule(
       LocalOffset{
           .w = aim.w - pos.w,
           .h = aim.h - pos.h,
-          .d = aim.d - pos.d - kReticleDrawOrderEpsilon,
+          .d = aim.d - pos.d,
       }
   );
   return reticle;

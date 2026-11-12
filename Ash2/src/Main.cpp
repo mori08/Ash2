@@ -13,7 +13,7 @@
 #include "System/AttachmentSystem.hpp"
 #include "System/DrawSystem.hpp"
 #include "System/GaugeSystem.hpp"
-#include "System/HudSystem.hpp"
+#include "System/ProjectionSystem.hpp"
 
 namespace {
 
@@ -32,10 +32,10 @@ void RunGameLoop(
     phaseStack.update(registry, frameData);
     GaugeSystem::Update(registry);
     AttachmentSystem::UpdateTransform(registry);
+    ProjectionSystem::Update(registry);
 
     DrawSystem::Draw(registry);
     DebugOnly::DrawColliders(registry);
-    HudSystem::Draw(registry);
     DebugOnly::UpdateAutoCapture(frameData.dt);
   }
 }

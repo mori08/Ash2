@@ -93,7 +93,7 @@ void ApplyEnemyReaction(entt::registry& registry, const HitEvent& hit) {
 /// @brief Player 被弾側へリアクションを適用する
 ///
 /// `Hp` 枯渇時は `reaction` によらず撃破として扱い、`Collider` を外して
-/// `PlayerMotion::Dead` へ強制遷移する（`Hp` は `HudSystem`
+/// `PlayerMotion::Dead` へ強制遷移する（`Hp` は `GaugeSystem`
 /// が読むため残す）。それ以外は `reaction` が `None`
 /// の場合は遷移させず（ダメージのみ）、それ以外は `PlayerMotion::MakeDamaged`
 /// が Stagger/Knockback を決める。

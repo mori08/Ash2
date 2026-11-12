@@ -1,5 +1,6 @@
 #include "Phase/AnimationViewerPhase.hpp"
 
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/SpriteAnimation.hpp"
@@ -37,6 +38,7 @@ void AnimationViewerPhase::onAfterPush(entt::registry& registry) {
 
   m_entity = registry.create();
   registry.emplace<WorldPos>(m_entity);
+  registry.emplace<DrawPos>(m_entity, DrawPos{.layer = DrawLayer::kWorld});
   registry.emplace<Drawable>(
       m_entity, TextureDrawable{.anchor = DrawAnchor::BottomCenter}
   );

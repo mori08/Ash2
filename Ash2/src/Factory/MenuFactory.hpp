@@ -3,6 +3,8 @@
 
 #include <entt/entt.hpp>
 
+#include "Component/DrawPos.hpp"
+
 /// @brief メニューとボタンを設定するファクトリ
 /// @note `Create` は持たない。エンティティは呼び出し側が先に作る
 class MenuFactory {
@@ -13,8 +15,8 @@ class MenuFactory {
     Vec2 pos{};
     /// 当たり範囲の大きさ（px）
     SizeF size{};
-    /// `ScreenPos::layer`
-    int32 layer = 0;
+    /// `DrawPos::layer`
+    int32 layer = DrawLayer::kHud;
     /// 各方向の移動先。同じメニューの子に限る。ない方向は entt::null
     entt::entity up = entt::null;
     entt::entity down = entt::null;
@@ -30,7 +32,7 @@ class MenuFactory {
   );
 
   /// @brief 作ってあるエンティティをメニューの子のボタンとして設定する
-  /// @note 構造に必要なもの（`Button` / `ScreenPos` / `Hierarchy`）だけを
+  /// @note 構造に必要なもの（`Button` / `DrawPos` / `Hierarchy`）だけを
   /// 付ける。文字などの見た目は画面側で付けること
   static void SetupButton(
       entt::registry& registry, entt::entity buttonEntity,
