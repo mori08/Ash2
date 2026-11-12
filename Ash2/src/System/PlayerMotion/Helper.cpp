@@ -6,6 +6,7 @@
 #include "Component/AttackOrb.hpp"
 #include "Component/Collider.hpp"
 #include "Component/DrawColor.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/FadeOut.hpp"
 #include "Component/Hierarchy.hpp"
@@ -36,6 +37,7 @@ entt::entity SpawnOrb(
   registry.emplace<AttackOrb>(orb);
   Hierarchy::Attach(registry, owner, orb);
   if (visible) {
+    registry.emplace<DrawPos>(orb, DrawPos{.layer = DrawLayer::kWorld});
     registry.emplace<Drawable>(orb, CircleDrawable{.radius = radius});
     registry.emplace<DrawColor>(orb, DrawColor{.color = kMeleeOrbColor});
   }

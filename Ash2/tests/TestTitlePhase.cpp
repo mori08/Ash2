@@ -3,11 +3,11 @@
 #include <entt/entt.hpp>
 
 #include "Component/DrawColor.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/FocusColor.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Menu.hpp"
-#include "Component/ScreenPos.hpp"
 #include "Config/TitleConfig.hpp"
 #include "FrameData.hpp"
 #include "Phase/TitlePhase.hpp"
@@ -84,8 +84,7 @@ TEST_CASE("TitlePhase::update - clicking start returns Push") {
   TitlePhase phase;
   PushTitle(registry, phase);
 
-  const auto pos =
-      registry.get<ScreenPos>(FindButton(registry, U"はじめる")).pos;
+  const auto pos = registry.get<DrawPos>(FindButton(registry, U"はじめる")).pos;
   const auto command = phase.update(
       registry, WithInput(InputState{.pointerPos = pos, .clickDown = true})
   );
@@ -98,7 +97,7 @@ TEST_CASE("TitlePhase::update - clicking quit returns Exit") {
   TitlePhase phase;
   PushTitle(registry, phase);
 
-  const auto pos = registry.get<ScreenPos>(FindButton(registry, U"おわる")).pos;
+  const auto pos = registry.get<DrawPos>(FindButton(registry, U"おわる")).pos;
   const auto command = phase.update(
       registry, WithInput(InputState{.pointerPos = pos, .clickDown = true})
   );
@@ -113,7 +112,7 @@ TEST_CASE("TitlePhase::onBeforePop - destroys the logo and the menu") {
 
   phase.onBeforePop(registry);
 
-  REQUIRE(registry.view<ScreenPos>().empty());
+  REQUIRE(registry.view<DrawPos>().empty());
   REQUIRE(registry.view<Menu>().empty());
 }
 

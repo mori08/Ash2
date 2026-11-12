@@ -3,6 +3,7 @@
 #include "Component/Attack.hpp"
 #include "Component/Collider.hpp"
 #include "Component/DrawColor.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/LockOn.hpp"
 #include "Component/Projectile.hpp"
@@ -72,6 +73,7 @@ void SpawnProjectile(
   const auto bullet = registry.create();
   registry.emplace<Team>(bullet, Team::Player);
   registry.emplace<WorldPos>(bullet, spawnPos);
+  registry.emplace<DrawPos>(bullet, DrawPos{.layer = DrawLayer::kWorld});
   registry.emplace<Velocity>(
       bullet,
       Velocity{

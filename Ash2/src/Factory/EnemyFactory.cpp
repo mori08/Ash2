@@ -2,6 +2,7 @@
 
 #include "Component/Boundary.hpp"
 #include "Component/Collider.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/Enemy.hpp"
 #include "Component/EnemyMotion.hpp"
@@ -33,6 +34,7 @@ entt::entity EnemyFactory::Create(
   registry.emplace<Enemy>(enemy);
   registry.emplace<Team>(enemy, Team::Enemy);
   registry.emplace<WorldPos>(enemy, param.pos);
+  registry.emplace<DrawPos>(enemy, DrawPos{.layer = DrawLayer::kWorld});
   registry.emplace<Velocity>(enemy);
   // Knockback の放物線は GravitySystem に任せるため、プレイヤーと同じ重力
   // 加速度を与える（EnemyConfig は専用の重力値を持たない）

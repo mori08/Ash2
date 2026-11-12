@@ -20,11 +20,11 @@ class MenuSystem {
   /// 3. 決定: 選択があればそのボタンを返す
   /// 4. クリック: `pointerPos` の下のボタンを選んで返す。なければ none
   /// @return 決定されたボタン。なければ none
-  /// @note `menuEntity` は `Menu` を持ち、子がすべて `Button` + `ScreenPos`
+  /// @note `menuEntity` は `Menu` を持ち、子がすべて `Button` + `DrawPos`
   /// を持つこと。`defaultButton` と移動先は同じメニューの子であること
   /// @throw Error `menuEntity` が `Menu` を持たないとき。選択の移動先
   /// （`defaultButton`・方向の移動先）がメニューの子でないとき。カーソルの
-  /// 当たり判定で辿った子が `Button` と `ScreenPos` を持たないとき
+  /// 当たり判定で辿った子が `Button` と `DrawPos` を持たないとき
   [[nodiscard]] static Optional<entt::entity> Update(
       entt::registry& registry, const InputState& input, entt::entity menuEntity
   );

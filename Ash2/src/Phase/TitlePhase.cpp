@@ -1,10 +1,10 @@
 #include "Phase/TitlePhase.hpp"
 
 #include "Component/DrawColor.hpp"
+#include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
 #include "Component/FocusColor.hpp"
 #include "Component/Hierarchy.hpp"
-#include "Component/ScreenPos.hpp"
 #include "Config/TitleConfig.hpp"
 #include "Debug.hpp"
 #include "Factory/MenuFactory.hpp"
@@ -39,8 +39,12 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
   const auto& config = registry.ctx().get<TitleConfig>();
 
   m_logo = registry.create();
-  registry.emplace<ScreenPos>(
-      m_logo, ScreenPos{.pos = Vec2{Scene::CenterF().x, config.logoY}}
+  registry.emplace<DrawPos>(
+      m_logo,
+      DrawPos{
+          .pos = Vec2{Scene::CenterF().x, config.logoY},
+          .layer = DrawLayer::kHud
+      }
   );
   registry.emplace<Drawable>(
       m_logo, TextureDrawable{.region = TextureAsset{kLogoTextureKey}}

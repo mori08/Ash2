@@ -1,8 +1,8 @@
 #include "System/MenuSystem.hpp"
 
+#include "Component/DrawPos.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Menu.hpp"
-#include "Component/ScreenPos.hpp"
 
 namespace {
 
@@ -46,17 +46,19 @@ void Focus(
 
 /// @brief pos の下にあるボタンを返す
 /// @return なければ entt::null
-/// @throw Error 子が Button と ScreenPos を持たないとき
+/// @throw Error 子が Button と DrawPos を持たないとき
 entt::entity HitTest(
     const entt::registry& registry, entt::entity menuEntity, Vec2 pos
 ) {
   for (const entt::entity child : Hierarchy::Children(registry, menuEntity)) {
-    if (!registry.all_of<Button, ScreenPos>(child)) {
-      throw Error{U"メニューの子が Button と ScreenPos を持たない"};
+    if (!registry.all_of<Button, DrawPos>(child)) {
+      throw Error{U"メニューの子が Button と DrawPos を持たない"};
     }
     const auto& button = registry.get<Button>(child);
-    const auto& screenPos = registry.get<ScreenPos>(child);
-    if (RectF{Arg::center(screenPos.pos), button.size}.intersects(pos)) {
+    // メニューは WorldPos を持たず、DrawPos
+    // が位置の正本（投影で上書きされない）
+    const auto& drawPos = registry.get<DrawPos>(child);
+    if (RectF{Arg::center(drawPos.pos), button.size}.intersects(pos)) {
       return child;
     }
   }
