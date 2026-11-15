@@ -185,6 +185,7 @@
     <ClCompile Include="tests\TestAnimationData.cpp" />
     <ClCompile Include="tests\TestAnimationViewerPhase.cpp" />
     <ClCompile Include="tests\TestAttachmentSystem.cpp" />
+    <ClCompile Include="tests\TestBattleSystem.cpp" />
     <ClCompile Include="tests\TestDebugOnly.cpp" />
     <ClCompile Include="tests\TestDrawSystem.cpp" />
     <ClCompile Include="tests\TestProjectionSystem.cpp" />
