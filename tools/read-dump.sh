@@ -29,12 +29,15 @@ print_exception_message() {
     local str="((Ash2_debug_!s3d::Error*)0x$object)->m_what.m_string._Mypair._Myval2"
     value=$(run_cdb "dx -r0 $str._Myres > 3 ? $str._Bx._Ptr : (char32_t*)$str._Bx._Buf,s32")
   elif [[ $types == *"std::exception"* ]]; then
-    value=$(run_cdb "dx -r0 ((Ash2_debug_!std::exception*)0x$object)->_Data._What,s")
+    # ,s は UTF-8 を正しく読めず、日本語が文字化けする
+    value=$(run_cdb "dx -r0 ((Ash2_debug_!std::exception*)0x$object)->_Data._What,s8")
   fi
   # dx の出力は「式 : アドレス : "値" [Type: 型]」の形で、値がないときは引用符が付かない
+  # ,s8 では値に日本語を含むと閉じの引用符が欠けるため、型を除いてから引用符を外す
   if [[ $value == *': "'* ]]; then
     value=${value#*: \"}
-    echo "[message] ${value%\" \[Type:*}"
+    value=${value% \[Type:*}
+    echo "[message] ${value%\"}"
   fi
 }
 
