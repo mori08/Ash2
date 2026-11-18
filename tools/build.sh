@@ -31,7 +31,7 @@ mkdir -p "$REPO_ROOT/logs"
   -m \
   -v:minimal \
   -nologo \
-  -fl "-flp:logfile=$REPO_ROOT/logs/build.log;verbosity=detailed"
+  -fl "-flp:logfile=$REPO_ROOT/logs/build.log;verbosity=detailed;encoding=utf-8"
 
 # PDB が作り直され、それ以前のダンプは読めなくなるため消す
 rm -f "$REPO_ROOT/logs/crash.dmp"
