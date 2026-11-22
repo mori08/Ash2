@@ -3,6 +3,8 @@
 
 /// @brief 描画の前後関係の帯（`DrawPos::layer` に使う。大きいほど手前）
 namespace DrawLayer {
+/// タイトル画面の背景
+inline constexpr int32 kBackground = -100;
 /// キャラクター・弾・攻撃の光
 inline constexpr int32 kWorld = 0;
 /// ワールドの上に重ねるもの（レティクル）
