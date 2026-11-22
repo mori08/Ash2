@@ -24,7 +24,6 @@ Agent ツール（`subagent_type: Explore`）を起動し、以下を調べさ�
 
 - `gh issue view <number>` の内容・ラベル・コメント
 - `docs/ARCHITECTURE.md` の設計方針・レイヤー構成
-- `docs/REFERENCE.md` の関連する既存のコンポーネント・システム・フェーズ
 - `docs/game_design/` 配下の関連するゲームデザイン仕様
 - 変更が必要なファイルと該当箇所
 - 関連するクラス・関数・コンポーネントと、その呼び出し元・呼び出し先

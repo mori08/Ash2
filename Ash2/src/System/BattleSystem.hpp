@@ -7,8 +7,7 @@ struct FrameData;
 class BattleSystem {
  public:
   /// @brief `HitstopSystem` から `AnimationSystem` までを固定順で呼ぶ
-  /// @note 内部の呼び出し順は REFERENCE.md の「呼び出し順の制約」に従う。
-  ///       システムを増減・並び替えるときはこの関数を直す
+  /// @note システムを増減・並び替えるときはこの関数を直す
   static void Update(entt::registry& registry, const FrameData& frameData);
 
   /// @brief 決着後に演出だけを進める（`Hitstop`

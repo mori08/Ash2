@@ -14,19 +14,18 @@ description: Review skills, rules, agents, and docs for staleness or inconsisten
 
 ### 1. ベースラインの把握
 
-以下を並列で読む（`docs/ARCHITECTURE.md` と `docs/REFERENCE.md` はここで読む。ステップ 2 では除外する）。
+以下を並列で読む（`docs/ARCHITECTURE.md` はここで読む。ステップ 2 では除外する）。
 
 - `CLAUDE.md`
 - `docs/ARCHITECTURE.md`
-- `docs/REFERENCE.md`
 - `.claude/rules/` 以下の全ファイル
 - `.claude/skills/` 以下の全ファイル
 - `.claude/agents/` 以下の全ファイル（サブフォルダを含む）
 
 ### 2. ドキュメントの走査
 
-`docs/` 以下の全ファイルを Glob で列挙し、`ARCHITECTURE.md` と `REFERENCE.md` を除いてすべて読む
-（両ファイルはステップ 1 で読み済み）。
+`docs/` 以下の全ファイルを Glob で列挙し、`ARCHITECTURE.md` を除いてすべて読む
+（ステップ 1 で読み済み）。
 
 ### 3. コードのサマリ取得
 
@@ -80,7 +79,7 @@ Ash2/src/ 以下の .hpp / .cpp を Glob で列挙してすべて読む。
 
 #### docs のチェック
 
-`docs/ARCHITECTURE.md` / `docs/REFERENCE.md` とコードの整合は `full-review` が持つ。ここでは扱わない。
+`docs/ARCHITECTURE.md` とコードの整合は `full-review` が持つ。ここでは扱わない。
 
 - コードと矛盾する記述がないか
 - 存在しないファイル・クラス・コマンドを参照していないか

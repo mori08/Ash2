@@ -29,8 +29,6 @@ EnTT を使うコードの書き方。ECS の位置づけと全体像は
 | `entt::exclude<Hitstop>` でビューから外す | 完全に止まる |
 | 除外せず `dt = 0` の `FrameData` で呼ぶ | 時間だけが凍結し、入力の受付は続く |
 
-既存の対応は [REFERENCE.md](../REFERENCE.md) の `Hitstop` の項を参照。
-
 ## 3. ビューを書くとき
 
 ### 種別ごとの分岐を作らない
