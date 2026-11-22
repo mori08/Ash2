@@ -1,5 +1,12 @@
 logo_y = 160.0
-menu_y = 440.0
+menu_y = 486.0
 menu_spacing = 60.0
 button_width = 200.0
 button_height = 48.0
+background_color = "#E0E0E0"
+surface_line_color = "#1F1F1F"
+logo_color = "#1F1F1F"
+button_normal_color = "#8C8C8C"
+button_focused_color = "#1F1F1F"
+surface_y = 360.0
+surface_line_width = 2.0

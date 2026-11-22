@@ -17,26 +17,68 @@
 namespace {
 constexpr StringView kLogoTextureKey = U"assets/images/logo.png";
 
-// TODO(#386): 色が仮置きで、本番の見た目になっていない
-const ColorF kNormalColor{1.0};
-const ColorF kFocusedColor{Palette::Yellow};
-
 /// @brief ボタンに文字と選択色を付ける
 void AddButtonLook(
-    entt::registry& registry, entt::entity button, const String& label
+    entt::registry& registry, entt::entity button, const String& label,
+    const TitleConfig& config
 ) {
   registry.emplace<Drawable>(
       button, TextDrawable{.text = label, .font = FontAsset{UiFonts::kLarge}}
   );
-  registry.emplace<DrawColor>(button, DrawColor{.color = kNormalColor});
+  registry.emplace<DrawColor>(
+      button, DrawColor{.color = config.buttonNormalColor}
+  );
   registry.emplace<FocusColor>(
-      button, FocusColor{.normal = kNormalColor, .focused = kFocusedColor}
+      button,
+      FocusColor{
+          .normal = config.buttonNormalColor,
+          .focused = config.buttonFocusedColor
+      }
   );
 }
 }  // namespace
 
 void TitlePhase::onAfterPush(entt::registry& registry) {
   const auto& config = registry.ctx().get<TitleConfig>();
+
+  // 前後は生成順でなく depth で決める（背景が奥）
+  m_background = registry.create();
+  registry.emplace<DrawPos>(
+      m_background,
+      DrawPos{
+          .pos = Vec2{0.0, 0.0}, .layer = DrawLayer::kBackground, .depth = 1.0
+      }
+  );
+  registry.emplace<Drawable>(
+      m_background,
+      RectDrawable{.size = SizeF{Scene::Size()}, .anchor = DrawAnchor::TopLeft}
+  );
+  registry.emplace<DrawColor>(
+      m_background, DrawColor{.color = config.backgroundColor}
+  );
+
+  m_surfaceLine = registry.create();
+  registry.emplace<DrawPos>(
+      m_surfaceLine,
+      DrawPos{
+          .pos = Vec2{Scene::CenterF().x, config.surfaceY},
+          .layer = DrawLayer::kBackground,
+          .depth = 0.0
+      }
+  );
+  registry.emplace<Drawable>(
+      m_surfaceLine,
+      RectDrawable{
+          .size =
+              SizeF{
+                  static_cast<double>(Scene::Width()), config.surfaceLineWidth
+              },
+          .anchor = DrawAnchor::Center
+      }
+  );
+  registry.emplace<DrawColor>(
+      m_surfaceLine, DrawColor{.color = config.surfaceLineColor}
+  );
 
   m_logo = registry.create();
   registry.emplace<DrawPos>(
@@ -49,6 +91,7 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
   registry.emplace<Drawable>(
       m_logo, TextureDrawable{.region = TextureAsset{kLogoTextureKey}}
   );
+  registry.emplace<DrawColor>(m_logo, DrawColor{.color = config.logoColor});
 
   // 上下が互いを指すため、2ボタンを先に作ってから設定する
   m_menu = registry.create();
@@ -70,8 +113,8 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
        .size = buttonSize,
        .up = startButton}
   );
-  AddButtonLook(registry, startButton, U"はじめる");
-  AddButtonLook(registry, quitButton, U"おわる");
+  AddButtonLook(registry, startButton, U"はじめる", config);
+  AddButtonLook(registry, quitButton, U"おわる", config);
 
   m_actions.clear();
   // 開始演出は自分の上に積む。演出側が Reset するため、Title は終わりを待たない
@@ -108,5 +151,9 @@ void TitlePhase::onBeforePop(entt::registry& registry) {
   m_menu = entt::null;
   registry.destroy(m_logo);
   m_logo = entt::null;
+  registry.destroy(m_surfaceLine);
+  m_surfaceLine = entt::null;
+  registry.destroy(m_background);
+  m_background = entt::null;
   m_actions.clear();
 }

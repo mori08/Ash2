@@ -21,7 +21,7 @@
 | [`Drawable`](../Ash2/src/Component/Drawable.hpp) | 描画データの variant。詳細は下記「描画データ型」参照 |
 | [`DrawColor`](../Ash2/src/Component/DrawColor.hpp) | 描画色（`ColorF`）。図形では塗り色、テクスチャでは乗算色として使う。未所持は白・不透明（`kDefaultDrawColor`）として扱われる |
 | [`DrawPos`](../Ash2/src/Component/DrawPos.hpp) | 描画専用の座標。画面座標 `pos`（px）・`layer`（前後関係の帯、大きいほど手前。既定 `DrawLayer::kWorld`）・`depth`（同じ `layer` 内の奥行き、大きいほど奥で先に描く）を持つ。`Drawable` と組み合わせて `DrawSystem` が描く |
-| [`DrawLayer`](../Ash2/src/Component/DrawPos.hpp) | `DrawPos::layer` の帯の定数。`kWorld`=0・`kWorldOverlay`=100（レティクル）・`kHud`=200（ゲージ・メニュー・ロゴ・CLEAR 文字。ゲージの fill は `kHud + 1`） |
+| [`DrawLayer`](../Ash2/src/Component/DrawPos.hpp) | `DrawPos::layer` の帯の定数。`kBackground`=-100（タイトル画面の背景）・`kWorld`=0・`kWorldOverlay`=100（レティクル）・`kHud`=200（ゲージ・メニュー・ロゴ・CLEAR 文字。ゲージの fill は `kHud + 1`） |
 | [`HpGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Hp` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
 | [`StaminaGauge`](../Ash2/src/Component/Gauge.hpp) | `GaugeSource` が指す `Stamina` の割合を、自身の `RectDrawable` 幅へ反映するゲージ（`fullWidth`）。`GaugeSystem` が幅を更新する |
 | [`GaugeSource`](../Ash2/src/Component/Gauge.hpp) | ゲージが値を読む先のエンティティ。参照先の生成・破棄には関与せず、ゲージを生成した側（`StagePhase`）が参照先より先に破棄する |
@@ -47,7 +47,7 @@
 | [`Menu`](../Ash2/src/Component/Menu.hpp) | メニューの親エンティティ（`Hierarchy` と併用、子はボタンだけ）。選択なしで方向入力があったときに選ぶ子 `defaultButton` を持つ。`Button`/`Focused` と同じヘッダにまとめている |
 | [`Button`](../Ash2/src/Component/Menu.hpp) | メニューの子のボタン。`DrawPos::pos` を中心とする当たり範囲 `size` と、上下左右の移動先 `up`/`down`/`left`/`right`（同じメニューの子、ない方向は `entt::null`）を持つ |
 | [`Focused`](../Ash2/src/Component/Menu.hpp) | 選択中のボタンに付けるタグ（データなし）。選択状態はここに一本化し、`Menu` には持たせない |
-| [`FocusColor`](../Ash2/src/Component/FocusColor.hpp) | 選択状態に応じた描画色（`normal`/`focused`）。`FocusColorSystem` が `Focused` の有無で `DrawColor` へ書く。メニューの仮の見た目用 |
+| [`FocusColor`](../Ash2/src/Component/FocusColor.hpp) | 選択状態に応じた描画色（`normal`/`focused`）。`FocusColorSystem` が `Focused` の有無で `DrawColor` へ書く |
 | [`FadeOut`](../Ash2/src/Component/FadeOut.hpp) | 透過しながら消滅する途中であることを示すコンポーネント（`duration`/`remaining`）。`FadeOutSystem` が `DrawColor::color.a` を更新し、満了時にエンティティを破棄する |
 
 ---
@@ -350,7 +350,7 @@ System が生成する。[ARCHITECTURE.md](ARCHITECTURE.md) の「2. ECS」参�
 |---|---|---|
 | [`ScenarioPhase`](../Ash2/src/Phase/ScenarioPhase.hpp) | `scenario` | TOML シナリオを 1 ステップずつ実行（push/reset）。起動時の最初のフェーズ（`init` セクション） |
 | [`TestMenuPhase`](../Ash2/src/Phase/TestMenuPhase.hpp) | `test_menu` | テストフェーズ一覧メニュー（↑↓選択、Enter で Push） |
-| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `DrawPos`（`kHud`）+ `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）と、「はじめる」「おわる」の2ボタンのメニュー（`MenuFactory` で組み、文字は `TextDrawable`、選択色は `FocusColor`）を `DrawSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。毎フレーム `MenuSystem::Update` → `FocusColorSystem::Update` を呼び、押されたボタンを対応表（`HashTable<entt::entity, std::function<PhaseCommand()>>`）で引いて処理の戻り値を返す。「はじめる」は `kTitleStartSectionName`（`TitleStart`）を指す `ScenarioPhase` を `Push` し（そのセクションが本編へ `Reset` する。中身は #386 で差し替える仮のもの）、「おわる」は `Exit` を返す。`GameSetup` が `TitleStart` セクションの存在を起動時に検証する。選択色は #386 で置き換える仮のもの。`onBeforePop` でメニューを `DestroyWithChildren` する |
+| [`TitlePhase`](../Ash2/src/Phase/TitlePhase.hpp) | `title` | `DrawPos`（`kHud`）+ `TextureDrawable` のロゴ画像（`assets/images/logo.png`、等倍）と、「はじめる」「おわる」の2ボタンのメニュー（`MenuFactory` で組み、文字は `TextDrawable`、選択色は `FocusColor`）を `DrawSystem` に描かせる。ロゴの中心の y 座標は `TitleConfig::logoY`、x 座標は画面中央。毎フレーム `MenuSystem::Update` → `FocusColorSystem::Update` を呼び、押されたボタンを対応表（`HashTable<entt::entity, std::function<PhaseCommand()>>`）で引いて処理の戻り値を返す。「はじめる」は `kTitleStartSectionName`（`TitleStart`）を指す `ScenarioPhase` を `Push` し（そのセクションが本編へ `Reset` する。中身は #386 で差し替える仮のもの）、「おわる」は `Exit` を返す。`GameSetup` が `TitleStart` セクションの存在を起動時に検証する。背景（画面全体の `RectDrawable`、`kBackground`・depth 1.0）と水面線（横長の `RectDrawable`、`kBackground`・depth 0.0）を作り、色・位置は `TitleConfig` から読む。ロゴには `DrawColor{logoColor}` を付ける。`onBeforePop` で背景・水面線・ロゴを破棄し、メニューを `DestroyWithChildren` する |
 | [`StagePhase`](../Ash2/src/Phase/StagePhase.hpp) | `stage` | `StageData` の `stageName` に従いプレイヤーと敵を生成し、プレイヤーの HP / スタミナゲージ（背景と fill の2体1組を2つ。`DrawPos`（背景 `kHud`・fill `kHud + 1`）+ `RectDrawable` + `HpGauge`/`StaminaGauge` + `GaugeSource`）も生成する。ゲージは `onBeforePop` でプレイヤーより先に破棄する。`BattleSystem::Update` で戦闘を進める。プレイヤーが `Dead` なら `StageGameOverPhase`、生成した敵がすべて破棄されたら `StageClearPhase` を Push する（撃破判定が先）。`stageName` が `StageData` に無ければ `Error` を投げる。Esc の Pop は持たない |
 | [`StageClearPhase`](../Ash2/src/Phase/StageClearPhase.hpp) | なし | `DrawPos`（`kHud`）+ `TextDrawable` の「CLEAR」を `DrawSystem` に描かせ、`BattleSystem::UpdateAftermath` を回す。3 秒後に `Reset{TestMenuPhase}` を返す（暫定） |
 | [`StageGameOverPhase`](../Ash2/src/Phase/StageGameOverPhase.hpp) | なし | 「GAME OVER」を表示する以外は `StageClearPhase` と同じ |
@@ -470,10 +470,13 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 ### [`TitleConfig`](../Ash2/src/Config/TitleConfig.hpp)
 
 - `Ash2/App/assets/config/title.toml` から読み込むタイトル画面の配置の設定。F5 で再読込される
+- 背景色 `backgroundColor`・水面線の色 `surfaceLineColor`・ロゴの乗算色 `logoColor`・ボタン文字の
+  通常色 `buttonNormalColor`/選択色 `buttonFocusedColor` を持つ（TOML では `"#RRGGBB"` 文字列）
+- 水面線の中心の y `surfaceY` と太さ `surfaceLineWidth` を持つ。x 座標は画面中央、長さは画面幅
 - ロゴの y 座標 `logoY` を持つ。x 座標は画面中央固定のため持たない
 - メニューの配置として、1つ目のボタンの中心の y `menuY`、ボタン中心同士の縦の間隔 `menuSpacing`、
   当たり範囲の幅 `buttonWidth`・高さ `buttonHeight` を持つ。ボタンの x 座標は画面中央固定
-- `TitlePhase::onAfterPush` で一度だけ読むため、F5 再読込は表示中のロゴ・ボタンには反映されない
+- `TitlePhase::onAfterPush` で一度だけ読むため、F5 再読込は表示中の背景・水面線・ロゴ・ボタンには反映されない
 
 ### [`InputConfig`](../Ash2/src/Config/InputConfig.hpp)
 
@@ -514,7 +517,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `PlayerConfig` | プレイヤー設定 |
 | `EnemyConfig` | 敵設定 |
 | `ArenaConfig` | アリーナ境界の設定 |
-| `TitleConfig` | タイトル画面の配置の設定 |
+| `TitleConfig` | タイトル画面の配置・色の設定 |
 | `InputConfig` | 入力層の調整値（`Main` が毎フレーム取り出して `InputDeviceSelector::update` へ渡す） |
 | `StageData` | ステージ定義（`Ash2/App/assets/config/stage.toml`。ステージ名 → 敵の配置） |
 | `AnimationDataRegistry` | アニメーション共有データ |
@@ -691,7 +694,7 @@ Siv3D v0.8 予定の `ext::TOML` と同じ名前・挙動に揃えてある。�
 | `TestInputDeviceSelector.cpp` | `InputDeviceSelector::ChooseDevice`（カーソル移動の積算による切り替え・切断フォールバック） |
 | `TestXInputAction.cpp` | `XInputAction::StickDirection`/`HeldStickDirection`（スティック→方向、ヒステリシス） |
 | `TestMenuSystem.cpp` | `MenuSystem::Update` の選択の規則（カーソル・方向・決定・クリック）。`MenuFactory` で組んだメニューを使う |
-| `TestTitlePhase.cpp` | `TitlePhase` のメニュー生成・方向入力での選択と色・「はじめる」が `Push`、「おわる」が `Exit` を返すこと・`onBeforePop` での破棄 |
+| `TestTitlePhase.cpp` | `TitlePhase` のメニュー生成・背景と水面線が `kBackground` に背景が奥で作られること・方向入力での選択と色・「はじめる」が `Push`、「おわる」が `Exit` を返すこと・`onBeforePop` での破棄 |
 
 ---
 

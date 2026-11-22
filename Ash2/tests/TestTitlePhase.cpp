@@ -14,6 +14,10 @@
 
 namespace {
 
+const ColorF kBackgroundColor{0.9};
+const ColorF kButtonNormalColor{0.5};
+const ColorF kButtonFocusedColor{0.1, 0.2, 0.3};
+
 /// @brief TitleConfig を ctx に積んだ registry で TitlePhase を push 済みにする
 void PushTitle(entt::registry& registry, TitlePhase& phase) {
   registry.ctx().emplace<TitleConfig>(TitleConfig{
@@ -22,6 +26,13 @@ void PushTitle(entt::registry& registry, TitlePhase& phase) {
       .menuSpacing = 60.0,
       .buttonWidth = 200.0,
       .buttonHeight = 48.0,
+      .backgroundColor = kBackgroundColor,
+      .surfaceLineColor = ColorF{0.1},
+      .logoColor = ColorF{0.2},
+      .buttonNormalColor = kButtonNormalColor,
+      .buttonFocusedColor = kButtonFocusedColor,
+      .surfaceY = 360.0,
+      .surfaceLineWidth = 1.5,
   });
   phase.onAfterPush(registry);
 }
@@ -55,6 +66,35 @@ TEST_CASE("TitlePhase::onAfterPush - creates a menu with two buttons") {
   REQUIRE_FALSE(registry.view<Menu>().empty());
 }
 
+TEST_CASE("TitlePhase::onAfterPush - creates background behind surface line") {
+  entt::registry registry;
+  TitlePhase phase;
+  PushTitle(registry, phase);
+
+  // kBackground の矩形を、色（設定値）で背景と水面線に見分ける
+  Optional<DrawPos> background;
+  Optional<DrawPos> surfaceLine;
+  for (const auto entity :
+       registry.view<const DrawPos, const Drawable, const DrawColor>()) {
+    const auto& drawPos = registry.get<const DrawPos>(entity);
+    if (drawPos.layer != DrawLayer::kBackground) continue;
+    REQUIRE(
+        std::holds_alternative<RectDrawable>(
+            registry.get<const Drawable>(entity)
+        )
+    );
+    if (registry.get<const DrawColor>(entity).color == kBackgroundColor) {
+      background = drawPos;
+    } else {
+      surfaceLine = drawPos;
+    }
+  }
+
+  REQUIRE(background.has_value());
+  REQUIRE(surfaceLine.has_value());
+  REQUIRE(background.value().depth > surfaceLine.value().depth);
+}
+
 TEST_CASE("TitlePhase::update - navigate focuses the start button") {
   entt::registry registry;
   TitlePhase phase;
@@ -68,15 +108,8 @@ TEST_CASE("TitlePhase::update - navigate focuses the start button") {
   const auto quit = FindButton(registry, U"おわる");
   REQUIRE(std::holds_alternative<PhaseCommand::None>(command.value()));
   REQUIRE(registry.all_of<Focused>(start));
-  // 色の値は仮置きのため、FocusColor の設定どおりに反映されたかだけを見る
-  REQUIRE(
-      registry.get<DrawColor>(start).color ==
-      registry.get<FocusColor>(start).focused
-  );
-  REQUIRE(
-      registry.get<DrawColor>(quit).color ==
-      registry.get<FocusColor>(quit).normal
-  );
+  REQUIRE(registry.get<DrawColor>(start).color == kButtonFocusedColor);
+  REQUIRE(registry.get<DrawColor>(quit).color == kButtonNormalColor);
 }
 
 TEST_CASE("TitlePhase::update - clicking start returns Push") {
@@ -105,7 +138,9 @@ TEST_CASE("TitlePhase::update - clicking quit returns Exit") {
   REQUIRE(std::holds_alternative<PhaseCommand::Exit>(command.value()));
 }
 
-TEST_CASE("TitlePhase::onBeforePop - destroys the logo and the menu") {
+TEST_CASE(
+    "TitlePhase::onBeforePop - destroys the background, the logo and the menu"
+) {
   entt::registry registry;
   TitlePhase phase;
   PushTitle(registry, phase);
