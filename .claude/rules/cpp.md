@@ -74,6 +74,5 @@ s3d に相当がないものは `std` をそのまま使う（例: `std::unique_
 - 条件：以下に該当する実装を終えたとき（返答前）
 - 必読：[docs/coding_style/DOCUMENTATION.md](../../docs/coding_style/DOCUMENTATION.md)（記述ルール）
 
-全体の構成・ディレクトリ構成・複数の仕組みにまたがる制約を変更したら `docs/ARCHITECTURE.md` を、
-コンポーネント・システム・フェーズ等を追加・削除・仕様変更したら `docs/REFERENCE.md` を更新する。
+全体の構成・ディレクトリ構成・複数の仕組みにまたがる制約を変更したら `docs/ARCHITECTURE.md` を更新する。
 全体の挙動に影響しない細部の仕様は `docs/ARCHITECTURE.md` に書かない。

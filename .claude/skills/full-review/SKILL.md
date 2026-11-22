@@ -1,13 +1,13 @@
 ---
 name: full-review
-description: Read all source files, refresh ARCHITECTURE.md / REFERENCE.md, and report up to 5 findings, then optionally create GitHub Issues
+description: Read all source files, refresh ARCHITECTURE.md, and report up to 5 findings, then optionally create GitHub Issues
 ---
 
 コードベース全体を読んでレビューし、気になるポイントを報告する。
 最終的にユーザーが選択した項目を GitHub Issue として登録する。
 
-> **対象範囲**: コードの品質・バグと、コードから導かれる `docs/ARCHITECTURE.md` /
-> `docs/REFERENCE.md` の内容。この2ファイルはレビューの過程で更新する。
+> **対象範囲**: コードの品質・バグと、コードから導かれる `docs/ARCHITECTURE.md` の内容。
+> このファイルはレビューの過程で更新する。
 > スキル・ルール・エージェント・その他ドキュメントの整合性は `meta-review` スキルを使うこと。
 
 ## 手順
@@ -17,7 +17,6 @@ description: Read all source files, refresh ARCHITECTURE.md / REFERENCE.md, and 
 以下を並列で読む。
 
 - `docs/ARCHITECTURE.md`
-- `docs/REFERENCE.md`
 - `.claude/rules/` のうち frontmatter の `paths` が `Ash2/src/` または `Ash2/tests/` 以下に
   マッチするルールと、その節が「必読」としてリンクするドキュメント
 
@@ -28,9 +27,9 @@ description: Read all source files, refresh ARCHITECTURE.md / REFERENCE.md, and 
 **ドキュメント生成（1つ）**
 
 - `Ash2/src/` 以下のソースファイルをすべて読む
-- `docs/ARCHITECTURE.md` と `docs/REFERENCE.md` は読まない
-- `docs/coding_style/DOCUMENTATION.md` の分担・記述ルールに従い `docs/ARCHITECTURE.md` と
-  `docs/REFERENCE.md` を一から生成する
+- `docs/ARCHITECTURE.md` は読まない
+- `docs/coding_style/DOCUMENTATION.md` の記述ルールに従い `docs/ARCHITECTURE.md` を
+  一から生成する
 
 **ソース走査（複数）**
 
@@ -45,15 +44,15 @@ description: Read all source files, refresh ARCHITECTURE.md / REFERENCE.md, and 
 - 改善提案（パフォーマンス、可読性、設計の整理）
 - ルールへの違反
 
-### 3. ARCHITECTURE.md / REFERENCE.md の更新
+### 3. ARCHITECTURE.md の更新
 
-ドキュメント生成サブエージェントの結果と現在の両ファイルを比較する。
+ドキュメント生成サブエージェントの結果と現在のファイルを比較する。
 
 - 新版にあって旧版にない → 追記漏れの可能性
 - 旧版にあって新版にない → 古くなった記述の可能性
 - 構造・表現が大きく違う → 局所解になっていた箇所
 
-比較結果をもとに `docs/ARCHITECTURE.md` と `docs/REFERENCE.md` を更新する。
+比較結果をもとに `docs/ARCHITECTURE.md` を更新する。
 部分修正ではなく、必要なら全体を書き直すこと。
 
 ### 4. テストの確認
@@ -75,7 +74,7 @@ description: Read all source files, refresh ARCHITECTURE.md / REFERENCE.md, and 
 以下の形式でチャットに出力する。
 
 ```
-## ARCHITECTURE.md / REFERENCE.md 更新内容
+## ARCHITECTURE.md 更新内容
 
 - 追加: <追加した内容の要約>
 - 削除: <削除した内容の要約>

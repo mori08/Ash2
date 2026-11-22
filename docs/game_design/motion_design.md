@@ -109,8 +109,7 @@
 
 ## 被弾（仰け反り・吹き飛ばし・ダウン・起き上がり・撃破）の仕様
 
-`Attack.reaction`（`ReactionLevel`）に応じて、プレイヤーの被弾を4状態のいずれかで表す
-（コンポーネント一覧は[REFERENCE.md](../REFERENCE.md)の「リアクションの対応」参照）。
+`Attack.reaction`（`ReactionLevel`）に応じて、プレイヤーの被弾を4状態のいずれかで表す。
 `Hp` が尽きた場合は `reaction` によらず撃破になる。
 
 | 状態 | 演出概要 | 持続時間 | キャンセル |

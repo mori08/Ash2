@@ -60,8 +60,7 @@
 
 ###### 飛びつき型の区間・数値（実装値）
 
-状態遷移は `Idle → Chase → Windup → Leap → Landing → Idle` の一巡（`EnemyMotion::Variant`。
-詳細は [REFERENCE.md](../REFERENCE.md) の「敵（`EnemyMotion`）」参照）。数値は
+状態遷移は `Idle → Chase → Windup → Leap → Landing → Idle` の一巡（`EnemyMotion::Variant`）。数値は
 `Ash2/App/assets/config/enemy.toml` の初期値で、調整前提（[motion_design.md](motion_design.md)
 の方針と同様）。
 

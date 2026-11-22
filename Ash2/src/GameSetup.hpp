@@ -13,6 +13,7 @@
 void InitializeEngine();
 
 /// @brief registry のコンテキストを初期化する
+/// @note F5 で読み直す Config は `DebugOnly.cpp` の `ReloadConfig` にも追加する
 /// @throw Error 設定の読み込みに失敗したとき、
 /// またはシナリオに init セクションがないとき
 void InitializeRegistry(entt::registry& registry);

@@ -1,7 +1,6 @@
 # ARCHITECTURE.md
 
 「沼に焚べ」の設計の全体像。何がどう組み合わさって動いているかを説明する。
-コンポーネント・システム・フェーズ等の一覧は [REFERENCE.md](REFERENCE.md) を参照。
 
 ## 全体の構成
 
@@ -61,7 +60,7 @@ Ash2/src/
 ├── Phase/                # フェーズ管理（ゲーム状態機械）
 ├── System/               # ECS システム（ロジックのみ）
 │   └── PlayerMotion/     # PlayerMotionSystem の状態別 Tick() 実装
-├── Factory/              # エンティティ本体の生成（部品一覧は REFERENCE.md 参照）
+├── Factory/              # エンティティ本体の生成
 └── Util/                 # フレームワーク非依存の汎用ヘルパー
 ```
 

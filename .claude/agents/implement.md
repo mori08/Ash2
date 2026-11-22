@@ -17,7 +17,6 @@ The path to the plan file is provided in the input prompt (e.g. `tmp/plan-42.md`
 
 Read in parallel:
 - `docs/ARCHITECTURE.md` — architecture, constraints, and directory structure
-- `docs/REFERENCE.md` — existing components/systems/phases and part-specific constraints
 - `.claude/rules/*.md` — coding rules whose `paths` frontmatter matches the files
   you will change
 - The plan file at the path specified in the input
@@ -38,7 +37,7 @@ From the plan, focus on:
 
 Follow the plan's implementation order.
 Apply changes using Edit (for modifications) or Write (for new files).
-Adhere to all constraints described in `ARCHITECTURE.md` and `REFERENCE.md`.
+Adhere to all constraints described in `ARCHITECTURE.md`.
 
 ### 3. Report
 
