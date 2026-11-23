@@ -15,6 +15,7 @@ Dash MakeDash(
     entt::registry& registry, entt::entity entity, const PlayerConfig& cfg,
     SpriteAnimation& anim, bool air
 ) {
+  registry.emplace_or_replace<Invincible>(entity);
   auto& stamina = registry.get<Stamina>(entity);
   stamina.current = Max(0, stamina.current - cfg.dash.staminaCost);
   RestartClip(anim, U"dash");
@@ -42,10 +43,9 @@ Optional<Variant> Tick(
     return Landing{.timer = cfg.landing.recoverySec};
   }
 
-  // 構え・ダッシュ中（後隙入り前）は無敵、後隙入りで除去する
-  if (state.elapsed < timeline.activeEnd()) {
-    registry.emplace_or_replace<Invincible>(entity);
-  } else {
+  // 後隙に入ったら無敵を外す（付与は MakeDash）。再ダッシュで付けた無敵を
+  // 同じフレームで外さないよう、遷移判定より前に評価する
+  if (state.elapsed >= timeline.activeEnd()) {
     registry.remove<Invincible>(entity);
   }
 

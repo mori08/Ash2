@@ -31,7 +31,7 @@ Ranged MakeRanged(
     SpriteAnimation& anim
 );
 
-/// @brief Dash へ移行する（スタミナ消費、クリップの設定）
+/// @brief Dash へ移行する（スタミナ消費、無敵の付与、クリップの設定）
 /// @param air 空中発動か（true: 空中ダッシュ相当）
 Dash MakeDash(
     entt::registry& registry, entt::entity entity, const PlayerConfig& cfg,
