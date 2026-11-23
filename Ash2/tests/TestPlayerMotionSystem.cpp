@@ -1886,20 +1886,27 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - Dash grants Invincible during windup and dash"
+    "PlayerMotionSystem - dash input grants Invincible from the transition "
+    "frame through the dash"
 ) {
-  // 構え・ダッシュ中（elapsed < activeEnd）は Invincible が付与される
+  // 遷移したフレームから Invincible を持ち、ダッシュ中（activeEnd 前）も続く
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
 
-  // dash.timeline.windupSec(0.0) + activeSec(0.15) = 0.15 未満
-  registry.replace<PlayerMotion::Variant>(
-      player, PlayerMotion::Dash{.elapsed = 0.0}
-  );
+  FrameData dashInput{};
+  dashInput.input.dashDown = true;
+  MotionSystem::Update(registry, dashInput);
 
-  const FrameData frameData{.dt = 0.1};
-  MotionSystem::Update(registry, frameData);
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+  REQUIRE(registry.all_of<Invincible>(player));
+
+  // dash.timeline.windupSec(0.0) + activeSec(0.15) = 0.15 未満
+  MotionSystem::Update(registry, FrameData{.dt = 0.1});
 
   REQUIRE(registry.all_of<Invincible>(player));
   REQUIRE(
@@ -2026,6 +2033,31 @@ TEST_CASE(
   REQUIRE(
       std::get<PlayerMotion::Dash>(motion).elapsed == Approx(0.0).margin(0.001)
   );
+}
+
+TEST_CASE(
+    "PlayerMotionSystem - Dash grants Invincible on the frame it cancels "
+    "into Dash"
+) {
+  // 後隙B（Invincible なし）からの再ダッシュ直後に Invincible を持つ
+  entt::registry registry;
+  SetupContext(registry);
+  const auto player = MakePlayer(registry);
+
+  registry.replace<PlayerMotion::Variant>(
+      player, PlayerMotion::Dash{.elapsed = 0.29}
+  );
+
+  FrameData frameData{.dt = 0.02};
+  frameData.input.dashDown = true;
+  MotionSystem::Update(registry, frameData);
+
+  REQUIRE(
+      std::holds_alternative<PlayerMotion::Dash>(
+          registry.get<PlayerMotion::Variant>(player)
+      )
+  );
+  REQUIRE(registry.all_of<Invincible>(player));
 }
 
 TEST_CASE(
@@ -2206,22 +2238,26 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "PlayerMotionSystem - air Dash grants Invincible during windup and "
-    "dash"
+    "PlayerMotionSystem - air dash input grants Invincible from the "
+    "transition frame through the dash"
 ) {
-  // 構え・ダッシュ中（elapsed < activeEnd）は Invincible が付与される
+  // 遷移したフレームから Invincible を持ち、ダッシュ中（activeEnd 前）も続く
   entt::registry registry;
   SetupContext(registry);
   const auto player = MakePlayer(registry);
   registry.get<WorldPos>(player).h = 50.0;  // 空中（接地遷移を避ける）
 
-  // dash.timeline.windupSec(0.0) + activeSec(0.15) = 0.15 未満
-  registry.replace<PlayerMotion::Variant>(
-      player, PlayerMotion::Dash{.elapsed = 0.0, .air = true}
-  );
+  FrameData dashInput{};
+  dashInput.input.dashDown = true;
+  MotionSystem::Update(registry, dashInput);
 
-  const FrameData frameData{.dt = 0.1};
-  MotionSystem::Update(registry, frameData);
+  const auto& afterTransition = registry.get<PlayerMotion::Variant>(player);
+  REQUIRE(std::holds_alternative<PlayerMotion::Dash>(afterTransition));
+  REQUIRE(std::get<PlayerMotion::Dash>(afterTransition).air);
+  REQUIRE(registry.all_of<Invincible>(player));
+
+  // dash.timeline.windupSec(0.0) + activeSec(0.15) = 0.15 未満
+  MotionSystem::Update(registry, FrameData{.dt = 0.1});
 
   REQUIRE(registry.all_of<Invincible>(player));
   REQUIRE(
