@@ -131,6 +131,8 @@
     <ClCompile Include="src\Factory\PlayerFactory.cpp" />
     <ClCompile Include="src\Factory\EnemyFactory.cpp" />
     <ClCompile Include="src\Factory\MenuFactory.cpp" />
+    <ClCompile Include="src\Factory\PlantFactory.cpp" />
+    <ClCompile Include="src\System\PlantSwaySystem.cpp" />
     <ClCompile Include="src\Factory\StageData.cpp" />
     <ClCompile Include="src\DebugOnly.cpp" />
     <ClCompile Include="src\GameSetup.cpp" />
@@ -206,6 +208,7 @@
     <ClCompile Include="tests\TestTitleConfig.cpp" />
     <ClCompile Include="tests\TestMenuSystem.cpp" />
     <ClCompile Include="tests\TestTitlePhase.cpp" />
+    <ClCompile Include="tests\TestPlantSwaySystem.cpp" />
     <ClCompile Include="tests\TestXInputAction.cpp" />
     <ClCompile Include="tests\TestInputDeviceSelector.cpp" />
     <ClCompile Include="tests\TestInputConfig.cpp" />
@@ -466,6 +469,9 @@
     <ClInclude Include="src\Factory\PlayerFactory.hpp" />
     <ClInclude Include="src\Factory\EnemyFactory.hpp" />
     <ClInclude Include="src\Factory\MenuFactory.hpp" />
+    <ClInclude Include="src\Factory\PlantFactory.hpp" />
+    <ClInclude Include="src\System\PlantSwaySystem.hpp" />
+    <ClInclude Include="src\Component\Plant.hpp" />
     <ClInclude Include="src\Factory\StageData.hpp" />
     <ClInclude Include="src\Phase\ScenarioPhase.hpp" />
     <ClInclude Include="src\Phase\WaitPhase.hpp" />

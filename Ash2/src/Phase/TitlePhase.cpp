@@ -8,10 +8,12 @@
 #include "Config/TitleConfig.hpp"
 #include "Debug.hpp"
 #include "Factory/MenuFactory.hpp"
+#include "Factory/PlantFactory.hpp"
 #include "FrameData.hpp"
 #include "Phase/ScenarioPhase.hpp"
 #include "System/FocusColorSystem.hpp"
 #include "System/MenuSystem.hpp"
+#include "System/PlantSwaySystem.hpp"
 #include "UiFonts.hpp"
 
 namespace {
@@ -80,6 +82,11 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
       m_surfaceLine, DrawColor{.color = config.surfaceLineColor}
   );
 
+  m_plants.clear();
+  for (const auto& plant : config.plants) {
+    m_plants.push_back(PlantFactory::Create(registry, config, plant));
+  }
+
   m_logo = registry.create();
   registry.emplace<DrawPos>(
       m_logo,
@@ -135,6 +142,7 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
 PhaseCommand TitlePhase::update(
     entt::registry& registry, const FrameData& frameData
 ) {
+  PlantSwaySystem::Update(registry, frameData.dt);
   const auto pressed = MenuSystem::Update(registry, frameData.input, m_menu);
   FocusColorSystem::Update(registry);
 
@@ -149,6 +157,10 @@ PhaseCommand TitlePhase::update(
 void TitlePhase::onBeforePop(entt::registry& registry) {
   Hierarchy::DestroyWithChildren(registry, m_menu);
   m_menu = entt::null;
+  for (const auto plant : m_plants) {
+    Hierarchy::DestroyWithChildren(registry, plant);
+  }
+  m_plants.clear();
   registry.destroy(m_logo);
   m_logo = entt::null;
   registry.destroy(m_surfaceLine);

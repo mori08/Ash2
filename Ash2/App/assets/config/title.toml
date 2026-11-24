@@ -10,3 +10,45 @@ button_normal_color = "#8C8C8C"
 button_focused_color = "#1F1F1F"
 surface_y = 360.0
 surface_line_width = 2.0
+plant_color = "#1F1F1F"
+plant_stem_width = 3.0
+plant_spread_amplitude = 0.45   # 間隔の振れ幅（0.55〜1.45 倍）
+
+# 株の形。全株で共通
+[[plant_stems]]
+dx = -6.0
+height = 58.0
+
+[[plant_stems]]
+dx = 0.0
+height = 44.0
+
+[[plant_stems]]
+dx = 6.0
+height = 30.0
+
+# 株の配置と揺れ方。period は1往復の秒数、offset は1周期を 1.0 とした出だしのずれ
+[[plants]]
+x = 110.0
+period = 8.0
+offset = 0.25
+
+[[plants]]
+x = 290.0
+period = 6.5
+offset = 0.7
+
+[[plants]]
+x = 900.0
+period = 7.0
+offset = 0.55
+
+[[plants]]
+x = 1030.0
+period = 10.0
+offset = 0.85
+
+[[plants]]
+x = 1190.0
+period = 5.5
+offset = 0.4
