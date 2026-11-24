@@ -15,6 +15,8 @@
 namespace {
 
 const ColorF kBackgroundColor{0.9};
+const ColorF kSurfaceLineColor{0.1};
+const ColorF kPlantColor{0.3};
 const ColorF kButtonNormalColor{0.5};
 const ColorF kButtonFocusedColor{0.1, 0.2, 0.3};
 
@@ -27,12 +29,17 @@ void PushTitle(entt::registry& registry, TitlePhase& phase) {
       .buttonWidth = 200.0,
       .buttonHeight = 48.0,
       .backgroundColor = kBackgroundColor,
-      .surfaceLineColor = ColorF{0.1},
+      .surfaceLineColor = kSurfaceLineColor,
       .logoColor = ColorF{0.2},
       .buttonNormalColor = kButtonNormalColor,
       .buttonFocusedColor = kButtonFocusedColor,
       .surfaceY = 360.0,
       .surfaceLineWidth = 1.5,
+      .plantColor = kPlantColor,
+      .plantStemWidth = 3.0,
+      .plantSpreadAmplitude = 0.45,
+      .plantStems = {{.dx = -9.0, .height = 36.0}, {.dx = 9.0, .height = 28.0}},
+      .plants = {{.x = 90.0, .period = 8.0, .offset = 0.25}},
   });
   phase.onAfterPush(registry);
 }
@@ -83,9 +90,10 @@ TEST_CASE("TitlePhase::onAfterPush - creates background behind surface line") {
             registry.get<const Drawable>(entity)
         )
     );
-    if (registry.get<const DrawColor>(entity).color == kBackgroundColor) {
+    const auto color = registry.get<const DrawColor>(entity).color;
+    if (color == kBackgroundColor) {
       background = drawPos;
-    } else {
+    } else if (color == kSurfaceLineColor) {
       surfaceLine = drawPos;
     }
   }
@@ -93,6 +101,26 @@ TEST_CASE("TitlePhase::onAfterPush - creates background behind surface line") {
   REQUIRE(background.has_value());
   REQUIRE(surfaceLine.has_value());
   REQUIRE(background.value().depth > surfaceLine.value().depth);
+}
+
+TEST_CASE(
+    "TitlePhase::onAfterPush - draws plants between background and surface line"
+) {
+  entt::registry registry;
+  TitlePhase phase;
+  PushTitle(registry, phase);
+
+  size_t stemCount = 0;
+  for (const auto entity :
+       registry.view<const DrawPos, const Drawable, const DrawColor>()) {
+    if (registry.get<const DrawColor>(entity).color != kPlantColor) continue;
+    ++stemCount;
+    const auto& drawPos = registry.get<const DrawPos>(entity);
+    REQUIRE(drawPos.layer == DrawLayer::kBackground);
+    REQUIRE(drawPos.depth > 0.0);
+    REQUIRE(drawPos.depth < 1.0);
+  }
+  REQUIRE(stemCount == 2);
 }
 
 TEST_CASE("TitlePhase::update - navigate focuses the start button") {

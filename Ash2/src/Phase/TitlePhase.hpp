@@ -9,8 +9,8 @@
 /// 「はじめる」で積む開始演出のシナリオセクション名
 inline constexpr StringView kTitleStartSectionName = U"TitleStart";
 
-/// @brief タイトル画面フェーズ（背景・水面線・ロゴと「はじめる」「おわる」の
-/// メニュー）
+/// @brief タイトル画面フェーズ（背景・水面線・植物・ロゴと「はじめる」
+/// 「おわる」のメニュー）
 class TitlePhase : public IPhase {
  public:
   /// @brief TitlePhase の生成パラメータ（引数なし）
@@ -42,6 +42,8 @@ class TitlePhase : public IPhase {
   entt::entity m_surfaceLine = entt::null;
   /// ロゴ画像のエンティティ
   entt::entity m_logo = entt::null;
+  /// 植物の親エンティティ（子は棒）
+  Array<entt::entity> m_plants;
   /// メニューの親エンティティ（子はボタン）
   entt::entity m_menu = entt::null;
   /// ボタンのエンティティ → 押されたときの処理
