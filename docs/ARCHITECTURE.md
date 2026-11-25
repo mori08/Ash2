@@ -37,7 +37,7 @@
 | 語 | 意味 |
 |---|---|
 | w / h / d | 座標の3軸。横／高さ／奥行き。`WorldPos` コンポーネントのメンバ名 |
-| `FrameData` | そのフレームの更新データ（経過時間 `dt` と入力）。`Main` が組み立てる |
+| `FrameData` | そのフレームの更新データ（経過時間 `dt`・入力・乱数 `random`）。`Main` が組み立てる |
 | フェーズ | 「今どの局面か」を表す単位（プレイ中・メニュー・ビューア等）。`IPhase` の実装 |
 | シナリオ | フェーズの進行順を書いた TOML（`assets/config/scenario.toml`） |
 | モーション | エンティティの排他的な行動状態（`PlayerMotion::Variant` / `EnemyMotion::Variant` コンポーネント） |
@@ -49,7 +49,9 @@ Ash2/src/
 ├── Main.cpp              # エントリポイント・ゲームループ
 ├── GameSetup.hpp/.cpp    # Siv3D 側・registry 側の初期化・アニメーション設定読み込み
 ├── Asset.hpp             # アセット登録・パス解決ユーティリティ
-├── FrameData.hpp         # フレームごとの更新データ（dt + InputState）
+├── FrameData.hpp         # フレームごとの更新データ（dt + InputState + RandomSource）
+├── RandomSource.hpp      # 乱数の取り出し口（エンジンは所有しない）
+├── Screen.hpp            # 床原点とワールド座標から画面座標への変換
 ├── UiFonts.hpp           # UI フォントの FontAsset キーと登録
 ├── WindowPreset.hpp      # ウィンドウサイズのプリセットと適用
 ├── Debug.hpp             # APP_LOG マクロ等のデバッグ用ユーティリティ

@@ -426,6 +426,9 @@
     <ClCompile Include="tests\TestAnimationViewerPhase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TestRandomSource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="tests\TestWorldPos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1272,6 +1275,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Debug.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomSource.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Screen.hpp">
