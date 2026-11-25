@@ -2,6 +2,7 @@
 #include <ThirdParty/Catch2/catch.hpp>
 #include <entt/entt.hpp>
 
+#include "Component/Bubble.hpp"
 #include "Component/DrawColor.hpp"
 #include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
@@ -19,6 +20,7 @@ const ColorF kSurfaceLineColor{0.1};
 const ColorF kPlantColor{0.3};
 const ColorF kButtonNormalColor{0.5};
 const ColorF kButtonFocusedColor{0.1, 0.2, 0.3};
+constexpr double kBubbleInterval = 1.0;
 
 /// @brief TitleConfig を ctx に積んだ registry で TitlePhase を push 済みにする
 void PushTitle(entt::registry& registry, TitlePhase& phase) {
@@ -40,6 +42,18 @@ void PushTitle(entt::registry& registry, TitlePhase& phase) {
       .plantSpreadAmplitude = 0.45,
       .plantStems = {{.dx = -9.0, .height = 36.0}, {.dx = 9.0, .height = 28.0}},
       .plants = {{.x = 90.0, .period = 8.0, .offset = 0.25}},
+      // 泡が途中で割れて数が変わらないよう、昇る距離を大きく速さを小さくする
+      .bubble = {
+          .color = ColorF{0.6},
+          .interval = kBubbleInterval,
+          .intervalJitter = 0.5,
+          .popMargin = 5.0,
+          .farScale = 0.35,
+          .popAlpha = 0.8,
+          .rise = 1.0e6,
+          .speed = 1.0,
+          .radius = 5.0,
+      },
   });
   phase.onAfterPush(registry);
 }
@@ -166,6 +180,39 @@ TEST_CASE("TitlePhase::update - clicking quit returns Exit") {
   REQUIRE(std::holds_alternative<PhaseCommand::Exit>(command.value()));
 }
 
+TEST_CASE("TitlePhase::update - spawns one bubble on the first update") {
+  entt::registry registry;
+  TitlePhase phase;
+  PushTitle(registry, phase);
+  REQUIRE(registry.view<Bubble>().empty());
+
+  (void)phase.update(registry, WithInput(InputState{}));
+
+  REQUIRE(registry.view<Bubble>().size() == 1);
+}
+
+TEST_CASE("TitlePhase::update - spawns the next bubble within the jitter") {
+  entt::registry registry;
+  TitlePhase phase;
+  PushTitle(registry, phase);
+  // 時間を進めずに最初の1つを出し、次までの間隔だけを測る
+  (void)phase.update(registry, FrameData{.dt = 0.0});
+  REQUIRE(registry.view<Bubble>().size() == 1);
+
+  // 間隔の 0.5 倍より前は出ない
+  constexpr double kStep = kBubbleInterval / 100.0;
+  for (int32 i = 0; i < 49; ++i) {
+    (void)phase.update(registry, FrameData{.dt = kStep});
+  }
+  REQUIRE(registry.view<Bubble>().size() == 1);
+
+  // 間隔の 1.5 倍までには出る
+  for (int32 i = 49; i < 151; ++i) {
+    (void)phase.update(registry, FrameData{.dt = kStep});
+  }
+  REQUIRE(registry.view<Bubble>().size() >= 2);
+}
+
 TEST_CASE(
     "TitlePhase::onBeforePop - destroys the background, the logo and the menu"
 ) {
@@ -177,6 +224,19 @@ TEST_CASE(
 
   REQUIRE(registry.view<DrawPos>().empty());
   REQUIRE(registry.view<Menu>().empty());
+}
+
+TEST_CASE("TitlePhase::onBeforePop - destroys the bubbles") {
+  entt::registry registry;
+  TitlePhase phase;
+  PushTitle(registry, phase);
+  (void)phase.update(registry, WithInput(InputState{}));
+  REQUIRE_FALSE(registry.view<Bubble>().empty());
+
+  phase.onBeforePop(registry);
+
+  REQUIRE(registry.view<Bubble>().empty());
+  REQUIRE(registry.view<DrawPos>().empty());
 }
 
 #endif

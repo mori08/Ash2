@@ -19,6 +19,28 @@ struct PlantConfig {
   double offset;
 };
 
+/// @brief 泡の出方と動き
+struct BubbleConfig {
+  /// 泡の色（不透明度は使わない）
+  ColorF color;
+  /// 泡を出す間隔の平均（秒。0 より大きい）
+  double interval;
+  /// 間隔のばらつき。`interval` に対する割合（0 以上 1 未満）
+  double intervalJitter;
+  /// 割れる位置の上端を水面から下げる量（px）
+  double popMargin;
+  /// 水面での縮小率。画面の下端では 1
+  double farScale;
+  /// 割れるときの不透明度（生まれたときは 0）
+  double popAlpha;
+  /// 縮小する前の昇る距離（px。0 より大きい）
+  double rise;
+  /// 縮小する前の昇る速さ（px/秒。0 より大きい）
+  double speed;
+  /// 半径（px。0 より大きい。奥行きで縮小しない）
+  double radius;
+};
+
 /// @brief タイトル画面の配置・色の設定値
 struct TitleConfig {
   /// ロゴの中心の y 座標（論理座標、px）
@@ -55,8 +77,11 @@ struct TitleConfig {
   Array<PlantStemConfig> plantStems;
   /// 株の配置と揺れ方。空なら植物は出ない
   Array<PlantConfig> plants;
+  /// 泡の出方と動き
+  BubbleConfig bubble;
 
   /// @brief TOML からタイトル画面の設定を生成する
-  /// @throw Error 必須キーの欠落・型違い、`period` が 0 以下のとき
+  /// @throw Error 必須キーの欠落・型違い、`period` が 0 以下のとき、
+  /// `[bubble]` の値が不正なとき
   [[nodiscard]] static TitleConfig FromToml(const TOMLValue& toml);
 };

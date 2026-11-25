@@ -321,6 +321,9 @@
     <ClCompile Include="System\PlantSwaySystem.cpp">
       <Filter>Source Files\System</Filter>
     </ClCompile>
+    <ClCompile Include="System\BubbleSystem.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
     <ClCompile Include="Factory\StageData.cpp">
       <Filter>Source Files\Factory</Filter>
     </ClCompile>
@@ -481,6 +484,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestPlantSwaySystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TestBubbleSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tests\TestXInputAction.cpp">
@@ -1453,6 +1459,12 @@
     </ClInclude>
     <ClInclude Include="Component\Plant.hpp">
       <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Bubble.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="System\BubbleSystem.hpp">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Factory\StageData.hpp">
       <Filter>Header Files\Factory</Filter>
