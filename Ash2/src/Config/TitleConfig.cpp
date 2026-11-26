@@ -45,10 +45,12 @@ ParseTableArray(const TOMLValue& toml, StringView key, ParseFn parse) {
 
 /// @brief 0 より大きい必須の数値を読む
 /// @throw Error キーの欠落・型違い、0 以下のとき
-[[nodiscard]] double ParsePositive(const TomlTable& table, StringView key) {
+[[nodiscard]] double ParsePositive(
+    const TomlTable& table, StringView tableName, StringView key
+) {
   const auto value = table.get<double>(key);
   if (value <= 0.0) {
-    throw Error{U"泡の {} が 0 以下"_fmt(key)};
+    throw Error{U"{}の {} が 0 以下"_fmt(tableName, key)};
   }
   return value;
 }
@@ -57,20 +59,33 @@ ParseTableArray(const TOMLValue& toml, StringView key, ParseFn parse) {
   const TomlTable t{TomlMember(toml, U"bubble")};
   const BubbleConfig bubble{
       .color = t.get<ColorF>(U"color"),
-      .interval = ParsePositive(t, U"interval"),
+      .interval = ParsePositive(t, U"泡", U"interval"),
       .intervalJitter = t.get<double>(U"interval_jitter"),
       .popMargin = t.get<double>(U"pop_margin"),
       .farScale = t.get<double>(U"far_scale"),
       .popAlpha = t.get<double>(U"pop_alpha"),
-      .rise = ParsePositive(t, U"rise"),
-      .speed = ParsePositive(t, U"speed"),
-      .radius = ParsePositive(t, U"radius"),
+      .rise = ParsePositive(t, U"泡", U"rise"),
+      .speed = ParsePositive(t, U"泡", U"speed"),
+      .radius = ParsePositive(t, U"泡", U"radius"),
   };
   // 間隔が 0 以下になりうると、泡を出すループが終わらない
   if (bubble.intervalJitter < 0.0 || bubble.intervalJitter >= 1.0) {
     throw Error{U"泡の interval_jitter が 0 以上 1 未満でない"};
   }
   return bubble;
+}
+
+[[nodiscard]] RippleConfig ParseRipple(const TOMLValue& toml) {
+  const TomlTable t{TomlMember(toml, U"ripple")};
+  return RippleConfig{
+      .color = t.get<ColorF>(U"color"),
+      .life = ParsePositive(t, U"波紋", U"life"),
+      .startRadius = ParsePositive(t, U"波紋", U"start_radius"),
+      .endRadius = ParsePositive(t, U"波紋", U"end_radius"),
+      .aspect = ParsePositive(t, U"波紋", U"aspect"),
+      .thickness = ParsePositive(t, U"波紋", U"thickness"),
+      .farScale = t.get<double>(U"far_scale"),
+  };
 }
 
 }  // namespace
@@ -98,5 +113,6 @@ TitleConfig TitleConfig::FromToml(const TOMLValue& toml) {
       ),
       .plants = ParseTableArray<PlantConfig>(toml, U"plants", ParsePlant),
       .bubble = ParseBubble(toml),
+      .ripple = ParseRipple(toml),
   };
 }

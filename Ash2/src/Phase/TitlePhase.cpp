@@ -6,6 +6,7 @@
 #include "Component/Drawable.hpp"
 #include "Component/FocusColor.hpp"
 #include "Component/Hierarchy.hpp"
+#include "Component/Ripple.hpp"
 #include "Config/TitleConfig.hpp"
 #include "Debug.hpp"
 #include "Factory/MenuFactory.hpp"
@@ -16,6 +17,7 @@
 #include "System/FocusColorSystem.hpp"
 #include "System/MenuSystem.hpp"
 #include "System/PlantSwaySystem.hpp"
+#include "System/RippleSystem.hpp"
 #include "UiFonts.hpp"
 
 namespace {
@@ -173,6 +175,11 @@ void TitlePhase::onBeforePop(entt::registry& registry) {
   for (const auto bubble : bubbles) {
     registry.destroy(bubble);
   }
+  const auto ripples =
+      registry.view<Ripple>() | std::ranges::to<Array<entt::entity>>();
+  for (const auto ripple : ripples) {
+    registry.destroy(ripple);
+  }
   registry.destroy(m_logo);
   m_logo = entt::null;
   registry.destroy(m_surfaceLine);
@@ -201,5 +208,9 @@ void TitlePhase::updateBubbles(
         );
     BubbleSystem::Spawn(registry, frameData, bubble, swamp);
   }
-  BubbleSystem::Update(registry, frameData);
+  const auto pops = BubbleSystem::Update(registry, frameData);
+
+  // 生まれたフレームで時間を進めないよう、Update の後に Spawn する
+  RippleSystem::Update(registry, frameData.dt);
+  RippleSystem::Spawn(registry, pops, config.ripple);
 }

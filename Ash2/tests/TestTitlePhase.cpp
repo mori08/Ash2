@@ -9,9 +9,12 @@
 #include "Component/FocusColor.hpp"
 #include "Component/Hierarchy.hpp"
 #include "Component/Menu.hpp"
+#include "Component/Ripple.hpp"
 #include "Config/TitleConfig.hpp"
 #include "FrameData.hpp"
 #include "Phase/TitlePhase.hpp"
+#include "System/BubbleSystem.hpp"
+#include "System/RippleSystem.hpp"
 
 namespace {
 
@@ -43,16 +46,26 @@ void PushTitle(entt::registry& registry, TitlePhase& phase) {
       .plantStems = {{.dx = -9.0, .height = 36.0}, {.dx = 9.0, .height = 28.0}},
       .plants = {{.x = 90.0, .period = 8.0, .offset = 0.25}},
       // 泡が途中で割れて数が変わらないよう、昇る距離を大きく速さを小さくする
-      .bubble = {
-          .color = ColorF{0.6},
-          .interval = kBubbleInterval,
-          .intervalJitter = 0.5,
-          .popMargin = 5.0,
+      .bubble =
+          {
+              .color = ColorF{0.6},
+              .interval = kBubbleInterval,
+              .intervalJitter = 0.5,
+              .popMargin = 5.0,
+              .farScale = 0.35,
+              .popAlpha = 0.8,
+              .rise = 1.0e6,
+              .speed = 1.0,
+              .radius = 5.0,
+          },
+      .ripple = {
+          .color = ColorF{0.4},
+          .life = 3.6,
+          .startRadius = 6.0,
+          .endRadius = 80.0,
+          .aspect = 0.3,
+          .thickness = 2.0,
           .farScale = 0.35,
-          .popAlpha = 0.8,
-          .rise = 1.0e6,
-          .speed = 1.0,
-          .radius = 5.0,
       },
   });
   phase.onAfterPush(registry);
@@ -236,6 +249,22 @@ TEST_CASE("TitlePhase::onBeforePop - destroys the bubbles") {
   phase.onBeforePop(registry);
 
   REQUIRE(registry.view<Bubble>().empty());
+  REQUIRE(registry.view<DrawPos>().empty());
+}
+
+TEST_CASE("TitlePhase::onBeforePop - destroys the ripples") {
+  entt::registry registry;
+  TitlePhase phase;
+  PushTitle(registry, phase);
+  RippleSystem::Spawn(
+      registry, {BubblePop{.pos = Vec2{100.0, 400.0}, .depthRate = 0.5}},
+      registry.ctx().get<TitleConfig>().ripple
+  );
+  REQUIRE_FALSE(registry.view<Ripple>().empty());
+
+  phase.onBeforePop(registry);
+
+  REQUIRE(registry.view<Ripple>().empty());
   REQUIRE(registry.view<DrawPos>().empty());
 }
 

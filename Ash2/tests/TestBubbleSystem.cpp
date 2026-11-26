@@ -35,11 +35,20 @@ void SpawnMany(entt::registry& registry) {
 
 /// @brief 昇る途中の泡を作る（200 で生まれ、100 で割れ、毎秒 10 昇る）
 /// @param y 現在の y 座標
-entt::entity MakeBubble(entt::registry& registry, double y) {
+/// @param depthRate 割れる位置の奥行き
+entt::entity MakeBubble(
+    entt::registry& registry, double y, double depthRate = 0.5
+) {
   const auto entity = registry.create();
   registry.emplace<Bubble>(
       entity,
-      Bubble{.popY = 100.0, .startY = 200.0, .speed = 10.0, .popAlpha = 0.8}
+      Bubble{
+          .popY = 100.0,
+          .startY = 200.0,
+          .depthRate = depthRate,
+          .speed = 10.0,
+          .popAlpha = 0.8
+      }
   );
   registry.emplace<DrawPos>(entity, DrawPos{.pos = Vec2{50.0, y}});
   registry.emplace<DrawColor>(
@@ -103,7 +112,7 @@ TEST_CASE("BubbleSystem::Update - bubble rises by speed times dt") {
   entt::registry registry;
   const auto bubble = MakeBubble(registry, 200.0);
 
-  BubbleSystem::Update(registry, FrameData{.dt = 0.5});
+  (void)BubbleSystem::Update(registry, FrameData{.dt = 0.5});
 
   REQUIRE(registry.get<DrawPos>(bubble).pos.y == Approx(195.0));
   REQUIRE(registry.get<DrawPos>(bubble).pos.x == 50.0);
@@ -114,11 +123,11 @@ TEST_CASE("BubbleSystem::Update - bubble gets denser as it rises") {
   const auto bubble = MakeBubble(registry, 200.0);
 
   // 半分（200 → 150）昇ると 0.8 * 0.5^2
-  BubbleSystem::Update(registry, FrameData{.dt = 5.0});
+  (void)BubbleSystem::Update(registry, FrameData{.dt = 5.0});
   REQUIRE(registry.get<DrawColor>(bubble).color.a == Approx(0.2));
 
   // 割れる直前（150 → 101）は 0.8 * 0.99^2
-  BubbleSystem::Update(registry, FrameData{.dt = 4.9});
+  (void)BubbleSystem::Update(registry, FrameData{.dt = 4.9});
   REQUIRE(registry.get<DrawColor>(bubble).color.a == Approx(0.8 * 0.99 * 0.99));
 }
 
@@ -128,7 +137,7 @@ TEST_CASE("BubbleSystem::Update - bubble is destroyed on reaching popY") {
   const auto passing = MakeBubble(registry, 101.0);
 
   // 105 - 5 = 100 は割れる位置に着いたので消える
-  BubbleSystem::Update(registry, FrameData{.dt = 0.5});
+  (void)BubbleSystem::Update(registry, FrameData{.dt = 0.5});
 
   REQUIRE_FALSE(registry.valid(reaching));
   REQUIRE_FALSE(registry.valid(passing));
@@ -139,10 +148,41 @@ TEST_CASE("BubbleSystem::Update - bubble stays before reaching popY") {
   entt::registry registry;
   const auto bubble = MakeBubble(registry, 105.0);
 
-  BubbleSystem::Update(registry, FrameData{.dt = 0.4});
+  (void)BubbleSystem::Update(registry, FrameData{.dt = 0.4});
 
   REQUIRE(registry.valid(bubble));
   REQUIRE(registry.get<DrawPos>(bubble).pos.y == Approx(101.0));
+}
+
+TEST_CASE("BubbleSystem::Update - returns the pop position and depth rate") {
+  entt::registry registry;
+  (void)MakeBubble(registry, 105.0, 0.25);
+
+  const auto pops = BubbleSystem::Update(registry, FrameData{.dt = 0.5});
+
+  REQUIRE(pops.size() == 1);
+  REQUIRE(pops[0].pos.x == 50.0);
+  REQUIRE(pops[0].pos.y == 100.0);
+  REQUIRE(pops[0].depthRate == 0.25);
+}
+
+TEST_CASE("BubbleSystem::Update - returns nothing while no bubble pops") {
+  entt::registry registry;
+  (void)MakeBubble(registry, 105.0);
+
+  const auto pops = BubbleSystem::Update(registry, FrameData{.dt = 0.4});
+
+  REQUIRE(pops.isEmpty());
+}
+
+TEST_CASE("BubbleSystem::Spawn - depth rate stays between 0 and 1") {
+  entt::registry registry;
+  SpawnMany(registry);
+
+  for (const auto [entity, bubble] : registry.view<const Bubble>().each()) {
+    REQUIRE(bubble.depthRate >= 0.0);
+    REQUIRE(bubble.depthRate <= 1.0);
+  }
 }
 
 #endif

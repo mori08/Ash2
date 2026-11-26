@@ -37,7 +37,7 @@ class TitlePhase : public IPhase {
   void onBeforePop(entt::registry& registry) override;
 
  private:
-  /// @brief 間隔が来たら泡を出し、出ている泡を昇らせる
+  /// @brief 間隔が来たら泡を出し、出ている泡を昇らせ、割れた所に波紋を出す
   void updateBubbles(entt::registry& registry, const FrameData& frameData);
 
   /// 背景（画面全体の矩形）のエンティティ

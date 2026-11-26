@@ -49,9 +49,32 @@ std::string MakeBubbleToml(const BubbleToml& v = {}) {
          v.rise + "\nspeed = " + v.speed + "\nradius = " + v.radius + "\n";
 }
 
-/// @brief トップレベルのキーに続けて [bubble] を置いた TOML を読む
-TitleConfig ParseWithBubble(const BubbleToml& bubble = {}) {
-  const std::string toml = std::string{kTopLevelToml} + MakeBubbleToml(bubble);
+/// @brief [ripple] の各値の TOML 表記（既定は正常値。差分だけ上書きする）
+struct RippleToml {
+  std::string life = "3.6";
+  std::string startRadius = "6.0";
+  std::string endRadius = "80.0";
+  std::string aspect = "0.3";
+  std::string thickness = "2.0";
+};
+
+/// @brief [ripple] テーブルの TOML を組み立てる
+std::string MakeRippleToml(const RippleToml& v = {}) {
+  return "[ripple]\n"
+         "color = \"#5A5A5A\"\n"
+         "life = " +
+         v.life + "\nstart_radius = " + v.startRadius +
+         "\nend_radius = " + v.endRadius + "\naspect = " + v.aspect +
+         "\nthickness = " + v.thickness + "\nfar_scale = 0.35\n";
+}
+
+/// @brief トップレベルのキーに続けて [bubble] と [ripple] を置いた TOML を読む
+TitleConfig ParseWithBubble(
+    const BubbleToml& bubble = {}, const RippleToml& ripple = {}
+) {
+  const std::string toml =
+      std::string{kTopLevelToml} + MakeBubbleToml(bubble) +
+      MakeRippleToml(ripple);
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   return TitleConfig::FromToml(reader);
 }
@@ -94,7 +117,15 @@ TEST_CASE("TitleConfig::FromToml - parses all fields correctly") {
       "pop_alpha = 0.8\n"
       "rise = 120.0\n"
       "speed = 25.0\n"
-      "radius = 5.0\n";
+      "radius = 5.0\n"
+      "[ripple]\n"
+      "color = \"#5A5A5A\"\n"
+      "life = 3.6\n"
+      "start_radius = 6.0\n"
+      "end_radius = 80.0\n"
+      "aspect = 0.3\n"
+      "thickness = 2.0\n"
+      "far_scale = 0.35\n";
   const TOMLReader reader{MemoryViewReader{kToml.data(), kToml.size()}};
   const auto cfg = TitleConfig::FromToml(reader);
   REQUIRE(cfg.logoY == 160.0);
@@ -130,6 +161,13 @@ TEST_CASE("TitleConfig::FromToml - parses all fields correctly") {
   REQUIRE(cfg.bubble.rise == 120.0);
   REQUIRE(cfg.bubble.speed == 25.0);
   REQUIRE(cfg.bubble.radius == 5.0);
+  REQUIRE(cfg.ripple.color == ColorF{Color{0x5A, 0x5A, 0x5A}});
+  REQUIRE(cfg.ripple.life == 3.6);
+  REQUIRE(cfg.ripple.startRadius == 6.0);
+  REQUIRE(cfg.ripple.endRadius == 80.0);
+  REQUIRE(cfg.ripple.aspect == 0.3);
+  REQUIRE(cfg.ripple.thickness == 2.0);
+  REQUIRE(cfg.ripple.farScale == 0.35);
 }
 
 TEST_CASE("TitleConfig::FromToml - plant arrays may be omitted") {
@@ -145,16 +183,38 @@ TEST_CASE("TitleConfig::FromToml - plant period of zero throws") {
       "x = 90.0\n"
       "period = 0.0\n"
       "offset = 0.25\n" +
-      MakeBubbleToml();
+      MakeBubbleToml() + MakeRippleToml();
   const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_THROWS_AS((void)TitleConfig::FromToml(reader), Error);
 }
 
 TEST_CASE("TitleConfig::FromToml - missing bubble table throws") {
-  const TOMLReader reader{
-      MemoryViewReader{kTopLevelToml.data(), kTopLevelToml.size()}
-  };
+  const std::string toml = std::string{kTopLevelToml} + MakeRippleToml();
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
   REQUIRE_THROWS_AS((void)TitleConfig::FromToml(reader), Error);
+}
+
+TEST_CASE("TitleConfig::FromToml - missing ripple table throws") {
+  const std::string toml = std::string{kTopLevelToml} + MakeBubbleToml();
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_THROWS_AS((void)TitleConfig::FromToml(reader), Error);
+}
+
+TEST_CASE("TitleConfig::FromToml - missing ripple key throws") {
+  const std::string toml =
+      std::string{kTopLevelToml} + MakeBubbleToml() +
+      "[ripple]\n"
+      "color = \"#5A5A5A\"\n";
+  const TOMLReader reader{MemoryViewReader{toml.data(), toml.size()}};
+  REQUIRE_THROWS_AS((void)TitleConfig::FromToml(reader), Error);
+}
+
+TEST_CASE("TitleConfig::FromToml - non-positive ripple value throws") {
+  REQUIRE_THROWS_AS((void)ParseWithBubble({}, {.life = "0.0"}), Error);
+  REQUIRE_THROWS_AS((void)ParseWithBubble({}, {.startRadius = "0.0"}), Error);
+  REQUIRE_THROWS_AS((void)ParseWithBubble({}, {.endRadius = "-1.0"}), Error);
+  REQUIRE_THROWS_AS((void)ParseWithBubble({}, {.aspect = "0.0"}), Error);
+  REQUIRE_THROWS_AS((void)ParseWithBubble({}, {.thickness = "0.0"}), Error);
 }
 
 TEST_CASE("TitleConfig::FromToml - missing bubble key throws") {

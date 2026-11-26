@@ -41,6 +41,24 @@ struct BubbleConfig {
   double radius;
 };
 
+/// @brief 泡が割れたときの波紋の出方と広がり方
+struct RippleConfig {
+  /// 波紋の色（不透明度は使わない）
+  ColorF color;
+  /// 出てから消えるまでの秒数（0 より大きい）
+  double life;
+  /// 広がり始めの横半径（px。奥行きの倍率を掛ける前。0 より大きい）
+  double startRadius;
+  /// 広がりきったときの横半径（px。奥行きの倍率を掛ける前。0 より大きい）
+  double endRadius;
+  /// 縦半径 / 横半径（0 より大きい）
+  double aspect;
+  /// 線の太さ（px。0 より大きい）
+  double thickness;
+  /// 水面での大きさの倍率。画面の下端では 1
+  double farScale;
+};
+
 /// @brief タイトル画面の配置・色の設定値
 struct TitleConfig {
   /// ロゴの中心の y 座標（論理座標、px）
@@ -79,9 +97,11 @@ struct TitleConfig {
   Array<PlantConfig> plants;
   /// 泡の出方と動き
   BubbleConfig bubble;
+  /// 泡が割れたときの波紋の出方と広がり方
+  RippleConfig ripple;
 
   /// @brief TOML からタイトル画面の設定を生成する
   /// @throw Error 必須キーの欠落・型違い、`period` が 0 以下のとき、
-  /// `[bubble]` の値が不正なとき
+  /// `[bubble]` `[ripple]` の値が不正なとき
   [[nodiscard]] static TitleConfig FromToml(const TOMLValue& toml);
 };

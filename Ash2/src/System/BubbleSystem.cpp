@@ -23,6 +23,7 @@ void CreateBubble(
       Bubble{
           .popY = popPos.y,
           .startY = startY,
+          .depthRate = depthRate,
           .speed = config.speed * scale,
           .popAlpha = config.popAlpha
       }
@@ -55,15 +56,22 @@ void BubbleSystem::Spawn(
   CreateBubble(registry, config, area, popPos);
 }
 
-void BubbleSystem::Update(
+Array<BubblePop> BubbleSystem::Update(
     entt::registry& registry, const FrameData& frameData
 ) {
   Array<entt::entity> popped;
+  Array<BubblePop> pops;
   for (const auto [entity, bubble, drawPos, drawColor] :
        registry.view<const Bubble, DrawPos, DrawColor>().each()) {
     drawPos.pos.y -= bubble.speed * frameData.dt;
     if (drawPos.pos.y <= bubble.popY) {
       popped.push_back(entity);
+      pops.push_back(
+          BubblePop{
+              .pos = Vec2{drawPos.pos.x, bubble.popY},
+              .depthRate = bubble.depthRate
+          }
+      );
       continue;
     }
 
@@ -75,4 +83,5 @@ void BubbleSystem::Update(
   for (const auto entity : popped) {
     registry.destroy(entity);
   }
+  return pops;
 }

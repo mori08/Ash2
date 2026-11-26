@@ -6,6 +6,14 @@
 #include "Config/TitleConfig.hpp"
 #include "FrameData.hpp"
 
+/// @brief 泡が割れたことの知らせ
+struct BubblePop {
+  /// 割れた位置（画面座標、px）
+  Vec2 pos;
+  /// 割れた位置の奥行き。水面で 0、画面の下端で 1
+  double depthRate;
+};
+
 /// @brief 泡を生み、昇らせ、割れたら消すシステム
 class BubbleSystem {
  public:
@@ -18,5 +26,8 @@ class BubbleSystem {
   );
 
   /// @brief 泡を昇らせ、濃さを変え、割れた泡を消す
-  static void Update(entt::registry& registry, const FrameData& frameData);
+  /// @return このフレームで割れた泡の知らせ
+  [[nodiscard]] static Array<BubblePop> Update(
+      entt::registry& registry, const FrameData& frameData
+  );
 };

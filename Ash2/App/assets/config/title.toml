@@ -64,3 +64,13 @@ pop_alpha = 0.8
 rise = 120.0
 speed = 25.0
 radius = 5.0
+
+# 泡が割れたときの波紋。半径は奥行きの倍率を掛ける前の値（横半径。縦は aspect を掛ける）
+[ripple]
+color = "#5A5A5A"
+life = 3.6
+start_radius = 6.6667
+end_radius = 83.3333
+aspect = 0.3
+thickness = 2.0
+far_scale = 0.35
