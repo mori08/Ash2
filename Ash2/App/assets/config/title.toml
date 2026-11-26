@@ -52,3 +52,15 @@ offset = 0.85
 x = 1190.0
 period = 5.5
 offset = 0.4
+
+# 泡。rise と speed は奥行きで縮小する前の値
+[bubble]
+color = "#1F1F1F"
+interval = 1.75
+interval_jitter = 0.5
+pop_margin = 5.0
+far_scale = 0.35
+pop_alpha = 0.8
+rise = 120.0
+speed = 25.0
+radius = 5.0

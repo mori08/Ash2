@@ -1,5 +1,6 @@
 #include "Phase/TitlePhase.hpp"
 
+#include "Component/Bubble.hpp"
 #include "Component/DrawColor.hpp"
 #include "Component/DrawPos.hpp"
 #include "Component/Drawable.hpp"
@@ -11,6 +12,7 @@
 #include "Factory/PlantFactory.hpp"
 #include "FrameData.hpp"
 #include "Phase/ScenarioPhase.hpp"
+#include "System/BubbleSystem.hpp"
 #include "System/FocusColorSystem.hpp"
 #include "System/MenuSystem.hpp"
 #include "System/PlantSwaySystem.hpp"
@@ -123,6 +125,8 @@ void TitlePhase::onAfterPush(entt::registry& registry) {
   AddButtonLook(registry, startButton, U"はじめる", config);
   AddButtonLook(registry, quitButton, U"おわる", config);
 
+  m_bubbleWait = 0.0;
+
   m_actions.clear();
   // 開始演出は自分の上に積む。演出側が Reset するため、Title は終わりを待たない
   m_actions[startButton] = [] {
@@ -143,6 +147,8 @@ PhaseCommand TitlePhase::update(
     entt::registry& registry, const FrameData& frameData
 ) {
   PlantSwaySystem::Update(registry, frameData.dt);
+  updateBubbles(registry, frameData);
+
   const auto pressed = MenuSystem::Update(registry, frameData.input, m_menu);
   FocusColorSystem::Update(registry);
 
@@ -161,6 +167,12 @@ void TitlePhase::onBeforePop(entt::registry& registry) {
     Hierarchy::DestroyWithChildren(registry, plant);
   }
   m_plants.clear();
+  // 走査中に destroy しないよう、先に集める
+  const auto bubbles =
+      registry.view<Bubble>() | std::ranges::to<Array<entt::entity>>();
+  for (const auto bubble : bubbles) {
+    registry.destroy(bubble);
+  }
   registry.destroy(m_logo);
   m_logo = entt::null;
   registry.destroy(m_surfaceLine);
@@ -168,4 +180,26 @@ void TitlePhase::onBeforePop(entt::registry& registry) {
   registry.destroy(m_background);
   m_background = entt::null;
   m_actions.clear();
+}
+
+void TitlePhase::updateBubbles(
+    entt::registry& registry, const FrameData& frameData
+) {
+  const auto& config = registry.ctx().get<TitleConfig>();
+  const auto& bubble = config.bubble;
+  const RectF swamp{
+      0.0, config.surfaceY, static_cast<double>(Scene::Width()),
+      Scene::Height() - config.surfaceY
+  };
+
+  m_bubbleWait -= frameData.dt;
+  while (m_bubbleWait <= 0.0) {
+    m_bubbleWait +=
+        bubble.interval *
+        frameData.random.range(
+            1.0 - bubble.intervalJitter, 1.0 + bubble.intervalJitter
+        );
+    BubbleSystem::Spawn(registry, frameData, bubble, swamp);
+  }
+  BubbleSystem::Update(registry, frameData);
 }

@@ -43,6 +43,36 @@ ParseTableArray(const TOMLValue& toml, StringView key, ParseFn parse) {
   return plant;
 }
 
+/// @brief 0 より大きい必須の数値を読む
+/// @throw Error キーの欠落・型違い、0 以下のとき
+[[nodiscard]] double ParsePositive(const TomlTable& table, StringView key) {
+  const auto value = table.get<double>(key);
+  if (value <= 0.0) {
+    throw Error{U"泡の {} が 0 以下"_fmt(key)};
+  }
+  return value;
+}
+
+[[nodiscard]] BubbleConfig ParseBubble(const TOMLValue& toml) {
+  const TomlTable t{TomlMember(toml, U"bubble")};
+  const BubbleConfig bubble{
+      .color = t.get<ColorF>(U"color"),
+      .interval = ParsePositive(t, U"interval"),
+      .intervalJitter = t.get<double>(U"interval_jitter"),
+      .popMargin = t.get<double>(U"pop_margin"),
+      .farScale = t.get<double>(U"far_scale"),
+      .popAlpha = t.get<double>(U"pop_alpha"),
+      .rise = ParsePositive(t, U"rise"),
+      .speed = ParsePositive(t, U"speed"),
+      .radius = ParsePositive(t, U"radius"),
+  };
+  // 間隔が 0 以下になりうると、泡を出すループが終わらない
+  if (bubble.intervalJitter < 0.0 || bubble.intervalJitter >= 1.0) {
+    throw Error{U"泡の interval_jitter が 0 以上 1 未満でない"};
+  }
+  return bubble;
+}
+
 }  // namespace
 
 TitleConfig TitleConfig::FromToml(const TOMLValue& toml) {
@@ -67,5 +97,6 @@ TitleConfig TitleConfig::FromToml(const TOMLValue& toml) {
           toml, U"plant_stems", ParsePlantStem
       ),
       .plants = ParseTableArray<PlantConfig>(toml, U"plants", ParsePlant),
+      .bubble = ParseBubble(toml),
   };
 }
