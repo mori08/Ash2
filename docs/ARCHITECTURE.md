@@ -256,7 +256,7 @@ XInputAction ────────┴→ InputDeviceSelector ── InputStat
 `DrawSystem` は `DrawPos` + `Drawable` を並べて描く。前後関係は `layer` の帯が大きく決め、
 同じ帯の中は `depth` が決める。
 
-種別ごとの描画コードはない。`Drawable` は描画データの variant（矩形・円・テクスチャ・文字）で、色は
+種別ごとの描画コードはない。`Drawable` は描画データの variant で、色は
 `DrawColor` が別に持つ。持たないエンティティは白・不透明として扱う。
 
 動くものは `SpriteAnimation` を通し、動かないものは `TextureDrawable` へ直接入れる。

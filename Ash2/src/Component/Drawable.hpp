@@ -25,6 +25,14 @@ struct CircleDrawable {
   double radius;
 };
 
+/// @brief 楕円の枠線の描画データ
+struct EllipseFrameDrawable {
+  /// 横・縦の半径（px）
+  Vec2 radius;
+  /// 線の太さ（px）
+  double thickness;
+};
+
 /// @brief テクスチャ描画データ
 struct TextureDrawable {
   TextureRegion region;
@@ -42,5 +50,6 @@ struct TextDrawable {
 };
 
 /// @brief 描画コンポーネント（描画データの variant）
-using Drawable =
-    std::variant<RectDrawable, CircleDrawable, TextureDrawable, TextDrawable>;
+using Drawable = std::variant<
+    RectDrawable, CircleDrawable, EllipseFrameDrawable, TextureDrawable,
+    TextDrawable>;
