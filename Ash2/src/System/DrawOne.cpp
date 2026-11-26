@@ -31,6 +31,11 @@ void DrawOne(
             const Circle circle{screenPos, data.radius};
             circle.draw(color);
           },
+          [&screenPos, &color](const EllipseFrameDrawable& data) {
+            // 図形なので位置は丸めない
+            const Ellipse ellipse{screenPos, data.radius.x, data.radius.y};
+            ellipse.drawFrame(data.thickness, color);
+          },
           [&screenPos, &color](const TextureDrawable& data) {
             // 図形は AA が効くので丸めない。テクスチャのみ整数化する
             const Vec2 anchorPos = Math::Round(screenPos + data.drawOffset);
