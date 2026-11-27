@@ -3,6 +3,7 @@
 #include "GameSetup.hpp"
 
 #include "Asset.hpp"
+#include "Config/AnimationData.hpp"
 #include "Config/ArenaConfig.hpp"
 #include "Config/EnemyConfig.hpp"
 #include "Config/InputConfig.hpp"
@@ -23,9 +24,10 @@ namespace {
 ///
 /// ウィンドウサイズとは別の概念のため、WindowPreset と値を共有しない。
 constexpr Size kSceneSize{1280, 720};
-}  // namespace
 
-AnimationDataRegistry LoadAnimations() {
+/// @brief アニメーション設定 TOML を全件読み込む
+/// @throw Error TOML を開けない、またはテクスチャが未登録・読み込めないとき
+[[nodiscard]] AnimationDataRegistry LoadAnimations() {
   AnimationDataRegistry animReg;
   for (const auto& path : GetAssetList()) {
     if (FileSystem::Extension(path) != U"toml") continue;
@@ -42,6 +44,7 @@ AnimationDataRegistry LoadAnimations() {
   }
   return animReg;
 }
+}  // namespace
 
 void InitializeEngine() {
   RegisterAssets();
@@ -52,30 +55,35 @@ void InitializeEngine() {
   ApplyWindowPreset(kDefaultWindowPreset);
 }
 
+void LoadConfigs(entt::registry& registry) {
+  auto& ctx = registry.ctx();
+  ctx.insert_or_assign(
+      PlayerConfig::FromToml(OpenToml(U"assets/config/player.toml"))
+  );
+  ctx.insert_or_assign(
+      EnemyConfig::FromToml(OpenToml(U"assets/config/enemy.toml"))
+  );
+  ctx.insert_or_assign(
+      ArenaConfig::FromToml(OpenToml(U"assets/config/arena.toml"))
+  );
+  ctx.insert_or_assign(
+      TitleConfig::FromToml(OpenToml(U"assets/config/title.toml"))
+  );
+  ctx.insert_or_assign(
+      InputConfig::FromToml(OpenToml(U"assets/config/input.toml"))
+  );
+  ctx.insert_or_assign(
+      StageData::FromToml(OpenToml(U"assets/config/stage.toml"))
+  );
+  ctx.insert_or_assign(LoadAnimations());
+}
+
 void InitializeRegistry(entt::registry& registry) {
   registry.ctx().emplace<NameLookup>();
   NameLookupSystem::Connect(registry);
   HierarchySystem::Connect(registry);
 
-  registry.ctx().emplace<PlayerConfig>(
-      PlayerConfig::FromToml(OpenToml(U"assets/config/player.toml"))
-  );
-  registry.ctx().emplace<EnemyConfig>(
-      EnemyConfig::FromToml(OpenToml(U"assets/config/enemy.toml"))
-  );
-  registry.ctx().emplace<ArenaConfig>(
-      ArenaConfig::FromToml(OpenToml(U"assets/config/arena.toml"))
-  );
-  registry.ctx().emplace<TitleConfig>(
-      TitleConfig::FromToml(OpenToml(U"assets/config/title.toml"))
-  );
-  registry.ctx().emplace<InputConfig>(
-      InputConfig::FromToml(OpenToml(U"assets/config/input.toml"))
-  );
-  registry.ctx().emplace<StageData>(
-      StageData::FromToml(OpenToml(U"assets/config/stage.toml"))
-  );
-  registry.ctx().emplace<AnimationDataRegistry>(LoadAnimations());
+  LoadConfigs(registry);
 
   auto scenario = ScenarioData::FromToml(
       OpenToml(U"assets/config/scenario.toml"), GetPhaseLoaders()

@@ -7,14 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "Asset.hpp"
-#include "Config/ArenaConfig.hpp"
-#include "Config/EnemyConfig.hpp"
-#include "Config/InputConfig.hpp"
-#include "Config/PlayerConfig.hpp"
-#include "Config/TitleConfig.hpp"
 #include "Debug.hpp"
-#include "Factory/StageData.hpp"
 #include "GameSetup.hpp"
 #include "System/DebugDrawSystem.hpp"
 
@@ -30,26 +23,6 @@ constexpr Input kColliderDrawKey = KeyF2;
 
 /// Collider のデバッグ描画を表示中か（既定は非表示）
 bool colliderDrawEnabled = false;
-
-/// @brief 設定を再読込する
-/// @note 読み込みに失敗すると throw し、ゲームが終了する
-void ReloadConfig(entt::registry& registry) {
-  auto player = PlayerConfig::FromToml(OpenToml(U"assets/config/player.toml"));
-  auto enemy = EnemyConfig::FromToml(OpenToml(U"assets/config/enemy.toml"));
-  auto arena = ArenaConfig::FromToml(OpenToml(U"assets/config/arena.toml"));
-  auto title = TitleConfig::FromToml(OpenToml(U"assets/config/title.toml"));
-  auto input = InputConfig::FromToml(OpenToml(U"assets/config/input.toml"));
-  auto stage = StageData::FromToml(OpenToml(U"assets/config/stage.toml"));
-  auto anims = LoadAnimations();
-
-  registry.ctx().get<PlayerConfig>() = std::move(player);
-  registry.ctx().get<EnemyConfig>() = enemy;
-  registry.ctx().get<ArenaConfig>() = arena;
-  registry.ctx().get<TitleConfig>() = title;
-  registry.ctx().get<InputConfig>() = input;
-  registry.ctx().get<StageData>() = std::move(stage);
-  registry.ctx().get<AnimationDataRegistry>() = std::move(anims);
-}
 
 /// @brief 環境変数を読む。未設定と空文字は区別せず、どちらも空文字を返す
 /// @note getenv_s が返す長さは終端文字を含む
@@ -179,7 +152,7 @@ void SetScreenshotDirectory() {
 
 void UpdateConfigReload(entt::registry& registry) {
   if (kConfigReloadKey.down()) {
-    ReloadConfig(registry);
+    LoadConfigs(registry);
   }
 }
 

@@ -220,7 +220,7 @@ MotionSystem::Update(registry, frameData)
 数値はコードに埋めず TOML に置き、`FromToml` で構造体に変換して `registry.ctx()` に載せる。
 キー欠落や型不一致は起動時の失敗になる。
 
-Debug ビルドでは F5 で再読込できる（`DebugOnly` が判定・実行を持つ）。
+Debug ビルドでは F5 で再読込できる（判定は `DebugOnly`、読み込みは `GameSetup` の `LoadConfigs`。起動時と共通）。
 
 アセットは `Ash2/App/assets/asset_list` を単一の入り口として扱い、Debug はファイルから・Release は
 埋め込みリソースから読む差異を `Asset.hpp` に閉じ込める。パス解決は必ず `AssetPath()` を通す。
