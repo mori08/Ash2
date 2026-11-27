@@ -3,8 +3,6 @@
 
 #include <entt/entt.hpp>
 
-#include "Config/AnimationData.hpp"
-
 /// @brief Siv3D 側の初期設定を行う
 ///
 /// アセット・UI フォントの登録、シーンの設定、ウィンドウプリセットの適用を
@@ -13,11 +11,14 @@
 void InitializeEngine();
 
 /// @brief registry のコンテキストを初期化する
-/// @note F5 で読み直す Config は `DebugOnly.cpp` の `ReloadConfig` にも追加する
 /// @throw Error 設定の読み込みに失敗したとき、
 /// またはシナリオに init セクションがないとき
 void InitializeRegistry(entt::registry& registry);
 
-/// @brief アニメーション設定 TOML を全件読み込む
-/// @throw Error TOML を開けない、またはテクスチャが未登録・読み込めないとき
-[[nodiscard]] AnimationDataRegistry LoadAnimations();
+/// @brief 設定を読み込んで registry のコンテキストに載せる
+///
+/// 起動時の InitializeRegistry と、F5 の再読込（DebugOnly::UpdateConfigReload）
+/// の両方から呼ばれる。既に載っている設定は上書きする。
+/// ScenarioData は ScenarioPhase が実行中にステップ番号を持つため含めない。
+/// @throw Error 設定の読み込みに失敗したとき
+void LoadConfigs(entt::registry& registry);
